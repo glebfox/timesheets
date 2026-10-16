@@ -1,0 +1,35 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:is(#id, [theme~='danger'], [theme~='error'], .aura-accent-red, .v-error) {
+    --aura-accent-color-light: var(--ts-danger-color-light);
+    --aura-accent-color-dark: var(--ts-danger-color-dark);
+}
+
+:is(#id, [theme~='success'], .aura-accent-green, .v-success) {
+    --aura-accent-color-light: var(--ts-success-color-light);
+    --aura-accent-color-dark: var(--ts-success-color-dark);
+}
+
+:is(#id, [theme~='warning'], .aura-accent-yellow, .v-warning) {
+    --aura-accent-color-light: var(--ts-warning-color-light);
+    --aura-accent-color-dark: var(--ts-warning-color-dark);
+}
+
+:is(#id, [theme~='info'], .aura-accent-blue, .v-info) {
+    --aura-accent-color-light: var(--ts-primary-color-light);
+    --aura-accent-color-dark: var(--ts-primary-color-dark);
+}

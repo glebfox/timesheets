@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.92" y2="1">
+      <stop offset="0" stop-color="#214f91"/>
+      <stop offset="0.38" stop-color="#123975"/>
+      <stop offset="1" stop-color="#061b3e"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="0.19" cy="0.09" r="0.85">
+      <stop offset="0" stop-color="#467cbd" stop-opacity=".26"/>
+      <stop offset="0.66" stop-color="#3165aa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1=".13" y1=".08" x2=".89" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".45" stop-color="#e9f3ff"/>
+      <stop offset="1" stop-color="#83ace7"/>
+    </linearGradient>
+    <radialGradient id="face" cx=".66" cy=".37" r=".85">
+      <stop offset="0" stop-color="#184d8f"/>
+      <stop offset=".6" stop-color="#113b77"/>
+      <stop offset="1" stop-color="#08254e"/>
+    </radialGradient>
+    <linearGradient id="hands" x1="0" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d6e7ff"/>
+    </linearGradient>
+    <linearGradient id="sheet" x1=".15" y1="0" x2=".78" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".42" stop-color="#f0f8ff"/>
+      <stop offset="1" stop-color="#c9def9"/>
+    </linearGradient>
+    <linearGradient id="tab" x1=".15" y1="0" x2=".85" y2="1">
+      <stop offset="0" stop-color="#8de0ff"/>
+      <stop offset=".38" stop-color="#52adfc"/>
+      <stop offset="1" stop-color="#1b58c6"/>
+    </linearGradient>
+    <linearGradient id="cellBlue" x1="0" y1="0" x2=".95" y2="1">
+      <stop offset="0" stop-color="#49aeff"/>
+      <stop offset="1" stop-color="#3477e7"/>
+    </linearGradient>
+    <linearGradient id="cellGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#51d9b2"/>
+      <stop offset="1" stop-color="#11b999"/>
+    </linearGradient>
+    <linearGradient id="cellPale" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9e9fb"/>
+      <stop offset="1" stop-color="#a9c6eb"/>
+    </linearGradient>
+    <linearGradient id="cellPaleBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9fc5f5"/>
+      <stop offset="1" stop-color="#6fa4e8"/>
+    </linearGradient>
+    <clipPath id="roundedSquare"><rect x="1" y="3" width="1022" height="1018" rx="202"/></clipPath>
+  </defs>
+
+  <!-- Opaque app tile. Transparent outside rounded corners. -->
+  <g clip-path="url(#roundedSquare)">
+    <rect x="1" y="3" width="1022" height="1018" rx="202" fill="url(#bg)"/>
+    <rect x="1" y="3" width="1022" height="1018" rx="202" fill="url(#bgGlow)"/>
+    <rect x="2" y="4" width="1020" height="1016" rx="201" fill="none" stroke="#4b91d6" stroke-opacity=".30" stroke-width="4"/>
+
+    <!-- Clock: soft shadow, white edge, dark dial. -->
+    <circle cx="432" cy="446" r="309" fill="#051d3e" opacity=".22"/>
+    <circle cx="432" cy="440" r="308" fill="url(#ring)"/>
+    <circle cx="432" cy="440" r="240" fill="url(#face)"/>
+    <circle cx="432" cy="440" r="240" fill="none" stroke="#cde5ff" stroke-opacity=".20" stroke-width="3"/>
+
+    <!-- Simple clock hands; generously rounded for small-scale legibility. -->
+    <path d="M446 434 L446 288" fill="none" stroke="#f5f9ff" stroke-width="45" stroke-linecap="round"/>
+    <path d="M439 447 L293 375" fill="none" stroke="url(#hands)" stroke-width="46" stroke-linecap="round"/>
+    <circle cx="443" cy="453" r="45" fill="url(#hands)"/>
+
+    <!-- Calendar shadow and page. -->
+    <path d="M582 432 C552 431 516 454 506 498 L431 805 C419 844 439 867 480 870 L788 880 C850 884 899 847 904 792 L932 493 C938 452 910 420 867 420 L643 419 Z"
+          fill="#051b3d" opacity=".29" transform="translate(7 13)"/>
+    <path d="M582 421 C550 420 518 443 507 485 L430 797 C416 844 441 862 484 864 L780 874 C845 878 892 846 898 790 L927 492 C933 447 906 413 868 414 L642 413 Z"
+          fill="url(#sheet)"/>
+    <path d="M583 422 C552 421 521 444 509 486 L433 796 C419 836 438 858 482 861" fill="none" stroke="#ffffff" stroke-opacity=".72" stroke-width="4"/>
+
+    <!-- Blue calendar fasteners. -->
+    <rect x="576" y="368" width="62" height="112" rx="31" fill="#477ac5" opacity=".46"/>
+    <rect x="582" y="368" width="57" height="109" rx="28" fill="url(#tab)" stroke="#b9eaff" stroke-width="2"/>
+    <rect x="793" y="360" width="67" height="116" rx="33" fill="#2b5baf" opacity=".37"/>
+    <rect x="800" y="361" width="60" height="112" rx="30" fill="url(#tab)" stroke="#a7e3ff" stroke-width="2"/>
+
+    <!-- Six timesheet entries, gently angled in perspective. -->
+    <path d="M567 527 L683 524 Q700 523 697 541 L690 584 Q689 601 676 602 L554 603 Q540 603 542 587 L551 544 Q555 528 567 527 Z" fill="url(#cellBlue)"/>
+    <path d="M734 522 L836 521 Q852 521 850 538 L845 580 Q843 596 828 597 L730 599 Q713 598 716 582 L721 539 Q724 523 734 522 Z" fill="url(#cellBlue)"/>
+    <path d="M548 626 L670 624 Q686 623 683 639 L676 684 Q673 701 661 701 L536 703 Q521 702 523 688 L531 643 Q533 627 548 626 Z" fill="url(#cellGreen)"/>
+    <path d="M723 623 L826 622 Q842 621 840 636 L834 683 Q832 697 816 698 L714 699 Q700 699 702 685 L707 639 Q709 623 723 623 Z" fill="url(#cellPale)"/>
+    <path d="M526 726 L652 724 Q670 723 668 739 L660 784 Q659 800 644 800 L515 800 Q498 800 501 785 L511 741 Q514 727 526 726 Z" fill="url(#cellPaleBlue)"/>
+    <path d="M705 725 L816 721 Q831 720 829 735 L823 781 Q821 796 806 797 L700 799 Q683 799 685 783 L691 742 Q694 726 705 725 Z" fill="url(#cellPale)"/>
+  </g>
+</svg>

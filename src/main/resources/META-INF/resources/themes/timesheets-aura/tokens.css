@@ -1,0 +1,42 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:where(:root),
+:where(:host) {
+    /* App specific */
+    --ts-filter-layout-column-min-width: 20rem;
+    --ts-filter-layout-column-gap: var(--vaadin-gap-s);
+
+    /* Colors */
+    --ts-primary-color-light: oklch(0.46 0.15 255);
+    --ts-primary-color-dark: oklch(0.59 0.2 277);
+    --ts-primary-color: light-dark(var(--ts-primary-color-light), var(--ts-primary-color-dark));
+
+    --ts-danger-color-light: oklch(0.46 0.2 25);
+    --ts-danger-color-dark: oklch(0.59 0.2 25);
+    --ts-danger-color: light-dark(var(--ts-danger-color-light), var(--ts-danger-color-dark));
+
+    --ts-success-color-light: oklch(0.46 0.15 150);
+    --ts-success-color-dark: oklch(0.59 0.2 150);
+    --ts-success-color: light-dark(var(--ts-success-color-light), var(--ts-success-color-dark));
+
+    --ts-warning-color-light: oklch(0.89 0.2 98);
+    --ts-warning-color-dark: oklch(0.89 0.2 98);
+    --ts-warning-color: light-dark(var(--ts-warning-color-light), var(--ts-warning-color-dark));
+
+    --aura-accent-color-light: var(--ts-primary-color-light);
+    --aura-accent-color-dark: var(--ts-primary-color-dark);
+}

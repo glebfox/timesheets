@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<mainView xmlns="http://jmix.io/schema/tabmod/main-view"
+          title="msg://MainView.title">
+    <actions>
+        <action id="logoutAction" type="logout"
+                text="msg:///actions.logout.text" icon="gravity-ui:arrow-right-from-square"/>
+    </actions>
+    <appLayout classNames="jmix-main-view-app-layout">
+        <navigationBar>
+            <header id="header" classNames="jmix-main-view-header">
+                <drawerToggle id="drawerToggle"
+                              classNames="jmix-main-view-drawer-toggle"
+                              ariaLabel="msg://drawerToggle.ariaLabel"/>
+                <h2 id="applicationTitle"
+                    text="msg://applicationTitle.text"
+                    classNames="jmix-main-view-application-title">
+                </h2>
+
+                <userMenu id="userMenu"
+                          themeNames="tertiary" classNames="jmix-main-view-user-menu">
+                    <items>
+                        <separator/>
+                        <actionItem id="substituteUserMenuItem"
+                                    themeNames="non-checkable">
+                            <action id="substituteUserAction" type="sec_userMenuSubstituteUser"
+                                    icon="gravity-ui:arrow-right-arrow-left"/>
+                        </actionItem>
+                        <separator/>
+                        <actionItem id="themeSwitchMenuItem"
+                                    themeNames="non-checkable">
+                            <action id="themeSwitchAction" type="userMenu_themeSwitch"/>
+                        </actionItem>
+                        <separator/>
+                        <actionItem id="logoutMenuItem" ref="logoutAction"
+                                    themeNames="non-checkable"/>
+                    </items>
+                </userMenu>
+            </header>
+        </navigationBar>
+        <drawerLayout>
+            <section id="section" classNames="jmix-main-view-section">
+                <nav id="navigation"
+                     classNames="jmix-main-view-navigation"
+                     ariaLabel="msg://navigation.ariaLabel">
+                    <listMenu id="menu" themeNames="toggle-reverse"/>
+                </nav>
+            </section>
+        </drawerLayout>
+        <workArea id="workArea"
+                  classNames="jmix-work-area">
+            <mainTabSheet id="mainTabSheet"
+                          classNames="jmix-main-tabsheet"
+                          tabsDraggable="true"
+                          width="100%" height="100%">
+                <actions>
+                    <action id="closeThisTabAction" type="tabmod_closeThisTab"/>
+                    <action id="closeOthersTabsAction" type="tabmod_closeOtherTabs"/>
+                    <action id="closeAllTabsAction" type="tabmod_closeAllTabs"/>
+                </actions>
+            </mainTabSheet>
+            <initialLayout id="initialLayout" classNames="jmix-initial-layout">
+            </initialLayout>
+        </workArea>
+    </appLayout>
+</mainView>

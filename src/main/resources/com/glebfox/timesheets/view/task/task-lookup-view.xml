@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:c="http://jmix.io/schema/flowui/jpql-condition"
+      title="msg://taskLookupView.title"
+      focusComponent="projectFilterField">
+    <data>
+        <collection id="tasksDc"
+                    class="com.glebfox.timesheets.entity.task.Task">
+            <fetchPlan extends="_base">
+                <property name="type" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader id="tasksDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_Task e
+                             where e.project.status = @enum(com.glebfox.timesheets.entity.project.ProjectStatus.OPEN)
+                                   and e.status = @enum(com.glebfox.timesheets.entity.task.TaskStatus.ACTIVE)
+                             order by e.project.name asc, e.name asc]]>
+                    <condition>
+                        <and>
+                            <c:jpql>
+                                <c:where>(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF
+                                    e.project.participants
+                                </c:where>
+                            </c:jpql>
+                        </and>
+                    </condition>
+                </query>
+            </loader>
+        </collection>
+        <collection id="projectsDc" class="com.glebfox.timesheets.entity.project.Project">
+            <fetchPlan extends="_base"/>
+            <loader id="projectsDl" readOnly="true">
+                <query>
+                    <![CDATA[select distinct e from ts_Project e
+                             where e.status = @enum(com.glebfox.timesheets.entity.project.ProjectStatus.OPEN)
+                             order by e.name asc]]>
+                    <condition>
+                        <and>
+                            <c:jpql>
+                                <c:where>(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF
+                                    e.participants
+                                </c:where>
+                            </c:jpql>
+                        </and>
+                    </condition>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="selectAction" type="lookup_select"/>
+        <action id="discardAction" type="lookup_discard"/>
+    </actions>
+    <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <gridLayout id="filterLayout"
+                        width="100%"
+                        columnMinWidth="var(--ts-filter-layout-column-min-width)"
+                        gap="var(--ts-filter-layout-column-gap)">
+                <propertyFilter id="projectFilter"
+                                dataLoader="tasksDl" property="project"
+                                operation="EQUAL"
+                                labelVisible="false">
+                    <entityComboBox id="projectFilterField"
+                                    metaClass="ts_Project"
+                                    itemsContainer="projectsDc"
+                                    placeholder="msg://projectFilter.placeholder"
+                                    width="100%">
+                        <actions>
+                            <action id="clear" type="entity_clear"/>
+                        </actions>
+                        <prefix>
+                            <icon icon="gravity-ui:magnifier"/>
+                        </prefix>
+                    </entityComboBox>
+                </propertyFilter>
+
+                <propertyFilter id="nameFilter"
+                                dataLoader="tasksDl" property="name"
+                                operation="CONTAINS"
+                                labelVisible="false">
+                    <textField id="nameFilterField"
+                               placeholder="msg://nameFilter.placeholder"
+                               clearButtonVisible="true"
+                               width="100%">
+                        <prefix>
+                            <icon icon="gravity-ui:magnifier"/>
+                        </prefix>
+                    </textField>
+                </propertyFilter>
+            </gridLayout>
+
+            <hbox id="buttonsPanel" classNames="buttons-panel">
+                <simplePagination id="pagination" dataLoader="tasksDl"/>
+            </hbox>
+            <dataGrid id="tasksDataGrid"
+                      width="100%"
+                      minHeight="20em"
+                      dataContainer="tasksDc"
+                      columnReorderingAllowed="true">
+                <columns resizable="true">
+                    <column property="project"/>
+                    <column property="name"/>
+                    <column property="type"/>
+                    <column property="description" flexGrow="2"/>
+                </columns>
+            </dataGrid>
+        </vbox>
+        <hbox id="lookupActions" visible="false"
+              classNames="footer-panel">
+            <button id="selectBtn" action="selectAction"/>
+            <button id="discardBtn" action="discardAction"/>
+        </hbox>
+    </layout>
+</view>

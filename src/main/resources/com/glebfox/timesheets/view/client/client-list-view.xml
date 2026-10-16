@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://clientListView.title"
+      focusComponent="nameFilterField">
+    <data readOnly="true">
+        <collection id="clientsDc"
+                    class="com.glebfox.timesheets.entity.client.Client">
+            <fetchPlan extends="_base"/>
+            <loader id="clientsDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_Client e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+        <urlQueryParameters>
+            <pagination component="pagination"/>
+            <propertyFilter component="nameFilter"/>
+        </urlQueryParameters>
+    </facets>
+    <layout classNames="client-list-view">
+        <propertyFilter id="nameFilter"
+                        dataLoader="clientsDl" property="name"
+                        operation="CONTAINS"
+                        labelVisible="false"
+                        width="100%" maxWidth="30em">
+            <textField id="nameFilterField"
+                       placeholder="msg://nameFilter.placeholder"
+                       clearButtonVisible="true">
+                <prefix>
+                    <icon icon="gravity-ui:magnifier"/>
+                </prefix>
+            </textField>
+        </propertyFilter>
+
+        <hbox id="buttonsPanel" classNames="buttons-panel">
+            <button id="createBtn" text="msg:///actions.Create" icon="gravity-ui:plus" themeNames="primary"/>
+            <simplePagination id="pagination" dataLoader="clientsDl"/>
+        </hbox>
+        <vbox id="noDataContainer"
+              classNames="no-data-container"
+              justifyContent="CENTER"
+              alignItems="CENTER"
+              height="20em"
+              visible="true">
+            <h3 id="noDataHeader" text="msg://noData.text"/>
+        </vbox>
+        <virtualList id="clientsList" itemsContainer="clientsDc"/>
+    </layout>
+</view>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://taskDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="taskDc"
+                  class="com.glebfox.timesheets.entity.task.Task">
+            <fetchPlan extends="_base">
+                <property name="type" fetchPlan="_instance_name"/>
+                <property name="requiredTagGroups" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader/>
+            <collection id="requiredTagGroupsDc" property="requiredTagGroups"/>
+        </instance>
+        <collection id="taskTypesDc"
+                    class="com.glebfox.timesheets.entity.task.TaskType">
+            <fetchPlan extends="_base"/>
+            <loader id="taskTypesDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_TaskType e order by e.name]]>
+                </query>
+            </loader>
+        </collection>
+        <collection id="tagGroupsDc" class="com.glebfox.timesheets.entity.tag.TagGroup">
+            <loader id="tagGroupsDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_TagGroup e where e.project = :project order by e.name]]>
+                </query>
+            </loader>
+            <fetchPlan extends="_base"/>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true">
+            <refresh loader="tagGroupsDl">
+                <onViewEvent type="Ready"/>
+            </refresh>
+        </dataLoadCoordinator>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout padding="false" expand="form" alignItems="STRETCH">
+        <formLayout id="form"
+                    dataContainer="taskDc"
+                    classNames="margin-inline-m">
+            <textField id="nameField" property="name" colspan="2">
+                <prefix>
+                    <icon icon="fontawesome-regular:address-card"/>
+                </prefix>
+            </textField>
+            <textArea id="descriptionField" property="description"
+                      minRows="5" maxRows="5" colspan="2">
+                <prefix>
+                    <icon icon="gravity-ui:comment"/>
+                </prefix>
+            </textArea>
+            <entityPicker id="projectField" property="project">
+                <prefix>
+                    <icon icon="gravity-ui:briefcase"/>
+                </prefix>
+                <actions>
+                    <action id="entityLookup" type="entity_lookup"/>
+                    <action id="entityClear" type="entity_clear"/>
+                </actions>
+            </entityPicker>
+            <entityComboBox id="typeField" property="type" itemsContainer="taskTypesDc">
+                <prefix>
+                    <icon icon="gravity-ui:tags"/>
+                </prefix>
+                <actions>
+                    <action id="entityLookup" type="entity_lookup"/>
+                    <action id="entityClear" type="entity_clear"/>
+                </actions>
+            </entityComboBox>
+            <select id="statusField" property="status" noVerticalOverlap="true"/>
+            <multiSelectComboBoxPicker id="requiredTagGroupsField"
+                                       property="requiredTagGroups" itemsContainer="tagGroupsDc"
+                                       colspan="2">
+                <actions>
+                    <action id="entityLookup" type="entity_lookup"/>
+                    <action id="entityClear" type="entity_clear"/>
+                </actions>
+            </multiSelectComboBoxPicker>
+        </formLayout>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

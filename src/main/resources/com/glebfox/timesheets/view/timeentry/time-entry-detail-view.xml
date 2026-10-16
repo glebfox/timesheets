@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://timeEntryDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="timeEntryDc"
+                  class="com.glebfox.timesheets.entity.timeentry.TimeEntry">
+            <fetchPlan extends="_base">
+                <property name="user" fetchPlan="_base"/>
+                <property name="tags" fetchPlan="_base"/>
+            </fetchPlan>
+            <collection id="tagsDc" property="tags"/>
+            <loader/>
+        </instance>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout padding="false" spacing="false"
+            alignItems="STRETCH" classNames="time-entry-detail-view"
+            expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <formLayout id="form"
+                        dataContainer="timeEntryDc">
+                <datePicker id="dateField" property="date">
+                    <prefix>
+                        <icon icon="gravity-ui:calendar"/>
+                    </prefix>
+                </datePicker>
+                <entityComboBox id="userField" property="user" readOnly="true">
+                    <prefix>
+                        <icon icon="gravity-ui:person"/>
+                    </prefix>
+                    <actions>
+                        <action id="assignSelf" icon="gravity-ui:person-plus" text="msg://actions.assignSelf.description"/>
+                        <action id="entityLookup" type="entity_lookup"/>
+                        <action id="entityClear" type="entity_clear"/>
+                    </actions>
+                    <itemsQuery class="com.glebfox.timesheets.entity.user.User"
+                                searchStringFormat="(?i)%${inputString}%"
+                                escapeValueForLike="true">
+                        <fetchPlan extends="_instance_name">
+                            <property name="avatar"/>
+                            <property name="active"/>
+                        </fetchPlan>
+                        <query>
+                            <![CDATA[select e from ts_User e
+                                        where e.username like :searchString
+                                            or e.firstName like :searchString
+                                            or e.lastName like :searchString
+                                            escape '\' order by e.username asc]]>
+                        </query>
+                    </itemsQuery>
+                </entityComboBox>
+                <entityComboBox id="taskField" property="task">
+                    <prefix>
+                        <icon icon="gravity-ui:file-text"/>
+                    </prefix>
+                    <actions>
+                        <action id="entityLookup" type="entity_lookup"/>
+                        <action id="entityClear" type="entity_clear"/>
+                    </actions>
+                </entityComboBox>
+                <textField id="spentTimeField" property="spentTime" placeholder="msg://spentTimeField.placeholder">
+                    <prefix>
+                        <icon icon="gravity-ui:clock"/>
+                    </prefix>
+                </textField>
+                <select id="statusField" property="status" noVerticalOverlap="true"/>
+                <textArea id="descriptionField" property="description"
+                          minRows="5" maxRows="5" colspan="2">
+                    <prefix>
+                        <icon icon="gravity-ui:comment"/>
+                    </prefix>
+                </textArea>
+                <textArea id="rejectionReasonField" property="rejectionReason" required="true"
+                          minRows="5" maxRows="5" colspan="2">
+                    <prefix>
+                        <icon icon="gravity-ui:circle-exclamation"/>
+                    </prefix>
+                </textArea>
+            </formLayout>
+
+            <h4 id="tagsTitle"
+                text="msg://com.glebfox.timesheets.entity.timeentry/TimeEntry.tags"
+                classNames="text-divider"
+                visible="false"/>
+
+            <formLayout id="tagsForm" visible="false"/>
+        </vbox>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

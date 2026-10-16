@@ -1,0 +1,31 @@
+/*
+ * Copyright 2024 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.glebfox.timesheets.event;
+
+import com.glebfox.timesheets.entity.timeentry.TimeEntry;
+import org.springframework.context.ApplicationEvent;
+
+/**
+ * Represents an application event that is published when the status of a {@link TimeEntry} changes.
+ * This event can be used to notify other parts of the application about the status updates of a time entry.
+ */
+public class TimeEntryStatusChangedEvent extends ApplicationEvent {
+
+    public TimeEntryStatusChangedEvent(Object source) {
+        super(source);
+    }
+}

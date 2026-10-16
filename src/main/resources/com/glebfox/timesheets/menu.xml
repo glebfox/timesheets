@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<menu-config xmlns="http://jmix.io/schema/flowui/menu">
+    <menu id="timesheets" title="msg://com.glebfox.timesheets/menu.timesheets.title"
+          icon="fontawesome-solid:rectangle-list"
+          opened="true">
+        <item view="ts_TimeEntry.my"
+              title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title"
+              icon="fontawesome-solid:calendar-day"/>
+        <item view="ts_Task.my"
+              title="msg://com.glebfox.timesheets.view.task/myTaskListView.title"
+              icon="fontawesome-solid:file-lines"/>
+    </menu>
+
+    <menu id="projects" title="msg://com.glebfox.timesheets/menu.projects.title"
+          icon="fontawesome-solid:building"
+          opened="true">
+        <item view="ts_Client.list"
+              title="msg://com.glebfox.timesheets.view.client/clientListView.title"
+              icon="fontawesome-solid:user-tie"/>
+        <item view="ts_Project.list"
+              title="msg://com.glebfox.timesheets.view.project/projectListView.title"
+              icon="fontawesome-solid:briefcase"/>
+        <separator/>
+        <item view="ts_TimeEntry.list"
+              title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title"
+              icon="fontawesome-solid:calendar-days"/>
+    </menu>
+
+    <menu id="settings" title="msg://com.glebfox.timesheets/menu.settings.title"
+          icon="fontawesome-solid:gear"
+          opened="true">
+        <item view="ts_TaskType.list"
+              title="msg://com.glebfox.timesheets.view.tasktype/taskTypeListView.title"
+              icon="fontawesome-solid:tags"/>
+        <item view="ts_ProjectRole.list"
+              title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title"
+              icon="fontawesome-solid:user-tag"/>
+    </menu>
+
+    <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"
+          icon="fontawesome-solid:user-gear"
+          opened="true">
+        <item view="ts_User.list"
+              title="msg://com.glebfox.timesheets.view.user/UserListView.title"
+              icon="fontawesome-solid:user-group"/>
+    </menu>
+
+    <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"
+          icon="fontawesome-solid:shield-halved">
+        <item view="sec_ResourceRoleModel.list"
+              title="msg://io.jmix.securityflowui.view.resourcerole/resourceRoleModelListView.menu"
+              icon="fontawesome-solid:file-shield"/>
+        <item view="sec_RowLevelRoleModel.list"
+              title="msg://io.jmix.securityflowui.view.rowlevelrole/rowLevelRoleModelListView.menu"
+              icon="fontawesome-solid:file-shield"/>
+    </menu>
+    <menu id="datatools" title="msg://com.glebfox.timesheets/menu.datatools.title"
+          icon="fontawesome-solid:database">
+        <item view="datatl_entityInspectorListView"
+              title="msg://io.jmix.datatoolsflowui.view.entityinspector/listTitle"
+              icon="fontawesome-solid:magnifying-glass"/>
+    </menu>
+    <menu id="pessimisticlock" title="msg://com.glebfox.timesheets/menu.pessimisticlock.title"
+          icon="fontawesome-solid:lock">
+        <item view="pslock_LockInfo.list"
+              title="msg://io.jmix.pessimisticlockflowui/pessimisticLockListView.menu"
+              icon="fontawesome-solid:lock"/>
+    </menu>
+
+</menu-config>

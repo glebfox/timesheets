@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://taskTypeListView.title"
+      focusComponent="nameFilterField">
+    <data readOnly="true">
+        <collection id="taskTypesDc"
+                    class="com.glebfox.timesheets.entity.task.TaskType">
+            <fetchPlan extends="_base"/>
+            <loader id="taskTypesDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_TaskType e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+        <urlQueryParameters>
+            <pagination component="pagination"/>
+            <propertyFilter component="nameFilter"/>
+        </urlQueryParameters>
+    </facets>
+    <actions>
+        <action id="selectAction" type="lookup_select"/>
+        <action id="discardAction" type="lookup_discard"/>
+    </actions>
+    <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <propertyFilter id="nameFilter"
+                            dataLoader="taskTypesDl" property="name"
+                            operation="CONTAINS"
+                            labelVisible="false"
+                            width="100%" maxWidth="30em">
+                <textField id="nameFilterField"
+                           placeholder="msg://nameFilter.placeholder"
+                           clearButtonVisible="true">
+                    <prefix>
+                        <icon icon="gravity-ui:magnifier"/>
+                    </prefix>
+                </textField>
+            </propertyFilter>
+
+            <hbox id="buttonsPanel" classNames="buttons-panel">
+                <button id="createBtn" action="taskTypesDataGrid.create"/>
+                <button id="editBtn" action="taskTypesDataGrid.edit"/>
+                <button id="removeBtn" action="taskTypesDataGrid.remove"/>
+                <simplePagination id="pagination" dataLoader="taskTypesDl"/>
+            </hbox>
+            <dataGrid id="taskTypesDataGrid"
+                      width="100%"
+                      minHeight="20em"
+                      dataContainer="taskTypesDc">
+                <actions>
+                    <action id="create" type="list_create"/>
+                    <action id="edit" type="list_edit"/>
+                    <action id="remove" type="list_remove"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="name"/>
+                    <column property="description" autoWidth="true" flexGrow="2"/>
+                </columns>
+            </dataGrid>
+        </vbox>
+        <hbox id="lookupActions" visible="false"
+              classNames="footer-panel">
+            <button id="selectBtn" action="selectAction"/>
+            <button id="discardBtn" action="discardAction"/>
+        </hbox>
+    </layout>
+</view>

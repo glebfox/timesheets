@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://projectDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="projectDc"
+                  class="com.glebfox.timesheets.entity.project.Project">
+            <fetchPlan extends="_base">
+                <property name="client" fetchPlan="_base"/>
+                <property name="tasks" fetchPlan="_base">
+                    <property name="type" fetchPlan="_instance_name"/>
+                </property>
+                <property name="participants" fetchPlan="_base">
+                    <property name="role" fetchPlan="_base"/>
+                </property>
+                <property name="tagGroups" fetchPlan="_base"/>
+            </fetchPlan>
+            <collection id="tasksDc" property="tasks"/>
+            <collection id="participantsDc" property="participants"/>
+            <collection id="tagGroupsDc" property="tagGroups"/>
+            <loader/>
+        </instance>
+        <collection id="clientsDc" class="com.glebfox.timesheets.entity.client.Client">
+            <fetchPlan extends="_base"/>
+            <loader id="clientsDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_Client e]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout alignItems="STRETCH" classNames="project-detail-view"
+            padding="false" spacing="false"
+            expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto" expand="tabSheet">
+            <formLayout id="form" dataContainer="projectDc">
+                <textField id="nameField" property="name" colspan="2">
+                    <prefix>
+                        <icon icon="fontawesome-regular:address-card"/>
+                    </prefix>
+                </textField>
+                <textArea id="descriptionField" property="description"
+                          minRows="5" maxRows="5" colspan="2">
+                    <prefix>
+                        <icon icon="gravity-ui:comment"/>
+                    </prefix>
+                </textArea>
+                <entityComboBox id="clientField" property="client" itemsContainer="clientsDc">
+                    <actions>
+                        <action id="entityLookup" type="entity_lookup"/>
+                        <action id="entityClear" type="entity_clear"/>
+                    </actions>
+                    <prefix>
+                        <icon icon="gravity-ui:person"/>
+                    </prefix>
+                </entityComboBox>
+                <select id="statusField" property="status"  noVerticalOverlap="true"/>
+            </formLayout>
+
+            <tabSheet id="tabSheet" alignSelf="STRETCH" minHeight="30em" themeNames="bordered">
+                <tab id="tasksTab" label="msg://com.glebfox.timesheets.entity.project/Project.tasks">
+                    <vbox id="tasksWrapper" padding="false" height="100%">
+                        <hbox id="tasksButtonsPanel" classNames="buttons-panel">
+                            <button id="taskCreateBtn" action="tasksDataGrid.create"/>
+                            <button id="taskEditBtn" action="tasksDataGrid.edit"/>
+                            <button id="taskRemoveBtn" action="tasksDataGrid.remove"/>
+                            <button id="taskCloseBtn" action="tasksDataGrid.taskClose" themeNames="contrast"/>
+                        </hbox>
+                        <dataGrid id="tasksDataGrid"
+                                  dataContainer="tasksDc"
+                                  width="100%">
+                            <actions>
+                                <action id="create" type="list_create">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="edit" type="list_edit">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="remove" type="list_remove"/>
+                                <action id="taskClose" type="list_itemTracking"
+                                        text="msg://taskCloseAction.text" icon="gravity-ui:xmark"/>
+                            </actions>
+                            <columns>
+                                <column property="name"/>
+                                <column property="type"/>
+                                <column property="status"/>
+                                <column property="description" flexGrow="2"/>
+                            </columns>
+                        </dataGrid>
+                    </vbox>
+                </tab>
+                <tab id="participantsTab" label="msg://com.glebfox.timesheets.entity.project/Project.participants">
+                    <vbox id="participantsWrapper" padding="false" height="100%">
+                        <hbox id="participantsButtonsPanel" classNames="buttons-panel">
+                            <button id="participantCreateBtn" action="participantsDataGrid.create"/>
+                            <button id="participantEditBtn" action="participantsDataGrid.edit"/>
+                            <button id="participantRemoveBtn" action="participantsDataGrid.remove"/>
+                            <dropdownButton id="addParticipantsDropdown"
+                                            text="msg://addParticipantsDropdown.text"
+                                            icon="gravity-ui:person-plus"/>
+                        </hbox>
+                        <dataGrid id="participantsDataGrid"
+                                  dataContainer="participantsDc"
+                                  width="100%">
+                            <actions>
+                                <action id="create" type="list_create">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="edit" type="list_edit">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="remove" type="list_remove"/>
+                            </actions>
+                            <columns>
+                                <column property="user" flexGrow="2"/>
+                                <column property="role"/>
+                            </columns>
+                        </dataGrid>
+                    </vbox>
+                </tab>
+                <tab id="tagGroupsTab" label="msg://com.glebfox.timesheets.entity.project/Project.tagGroups">
+                    <vbox id="tagGroupsWrapper" padding="false" height="100%">
+                        <hbox id="tagGroupsButtonsPanel" classNames="buttons-panel">
+                            <button id="tagGroupCreateBtn" action="tagGroupsDataGrid.create"/>
+                            <button id="tagGroupEditBtn" action="tagGroupsDataGrid.edit"/>
+                            <button id="tagGroupRemoveBtn" action="tagGroupsDataGrid.remove"/>
+                        </hbox>
+                        <dataGrid id="tagGroupsDataGrid"
+                                  dataContainer="tagGroupsDc"
+                                  width="100%">
+                            <actions>
+                                <action id="create" type="list_create">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="edit" type="list_edit">
+                                    <properties>
+                                        <property name="openMode" value="DIALOG"/>
+                                    </properties>
+                                </action>
+                                <action id="remove" type="list_remove"/>
+                            </actions>
+                            <columns>
+                                <column property="name"/>
+                            </columns>
+                        </dataGrid>
+                    </vbox>
+                </tab>
+            </tabSheet>
+        </vbox>
+
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

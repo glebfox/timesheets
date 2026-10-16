@@ -1,0 +1,163 @@
+/*
+ * Copyright 2023 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id 'io.jmix' version '3.1.0-RC1'
+    id 'java'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
+    id 'com.diffplug.spotless' version '8.6.0'
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'com.vaadin'
+
+jmix {
+    bomVersion = '3.1.0-RC1'
+    projectId = 'ts'
+}
+
+vaadin {
+    optimizeBundle = false
+    productionMode = false
+}
+
+group = 'com.glebfox'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://nexus.jmix.io/repository/public'
+    }
+    maven {
+        url = 'https://nexus.jmix.io/repository/premium'
+        credentials {
+            username = rootProject.hasProperty('premiumRepoUser')
+                    ? rootProject['premiumRepoUser']
+                    : System.getenv('PREMIUM_REPO_USER')
+            password = rootProject.hasProperty('premiumRepoPass')
+                    ? rootProject['premiumRepoPass']
+                    : System.getenv('PREMIUM_REPO_PASS')
+        }
+    }
+}
+
+dependencies {
+    implementation 'io.jmix.core:jmix-core-starter'
+    implementation 'io.jmix.gridexport:jmix-gridexport-flowui-starter'
+    implementation 'io.jmix.pessimisticlock:jmix-pessimisticlock-starter'
+    implementation 'io.jmix.pessimisticlock:jmix-pessimisticlock-flowui-starter'
+    implementation 'io.jmix.data:jmix-eclipselink-starter'
+    implementation 'io.jmix.security:jmix-security-starter'
+    implementation 'io.jmix.security:jmix-security-flowui-starter'
+    implementation 'io.jmix.security:jmix-security-data-starter'
+    implementation 'io.jmix.localfs:jmix-localfs-starter'
+    implementation 'io.jmix.flowui:jmix-flowui-starter'
+    implementation 'io.jmix.flowui:jmix-flowui-data-starter'
+    implementation 'io.jmix.flowui:jmix-flowui-themes'
+    implementation 'io.jmix.datatools:jmix-datatools-starter'
+    implementation 'io.jmix.datatools:jmix-datatools-flowui-starter'
+    implementation 'io.jmix.translations:jmix-translations-ru'
+    implementation 'io.jmix.tabbedmode:jmix-tabbedmode-flowui-starter'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'io.jmix.tabbedmode:jmix-tabbedmode-test-assist'
+    testImplementation 'org.springframework.boot:spring-boot-jdbc-test'
+
+    implementation 'org.postgresql:postgresql'
+    testRuntimeOnly 'org.hsqldb:hsqldb'
+    implementation 'com.vaadin:vaadin-dev'
+}
+
+configurations.implementation {
+    exclude group: 'com.vaadin', module: 'hilla'
+    exclude group: 'com.vaadin', module: 'hilla-dev'
+    exclude group: 'com.vaadin', module: 'copilot'
+}
+
+idea {
+    module {
+        excludeDirs.addAll(files '.jmix', 'node_modules', 'src/main/frontend/generated/', 'frontend/generated/', 'src/main/bundles')
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def licenseLines = '''\
+Copyright $YEAR Gleb Gorelov
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.'''.readLines()
+
+def licenseComment = { String open, String prefix, String close ->
+    ([open] + licenseLines.collect { (prefix + it).stripTrailing() } + [close]).join('\n') + '\n\n'
+}
+
+def generatedFrontend = ['src/main/frontend/generated/**', 'src/main/bundles/**']
+
+// JavaScript is not covered: the only scripts are third-party icon sets, which keep their own notices (see NOTICE)
+spotless {
+    java {
+        licenseHeader licenseComment('/*', ' * ', ' */')
+    }
+    // The java block skips package-info files, which start with an annotation
+    format 'packageInfo', {
+        target 'src/*/java/**/package-info.java'
+        licenseHeader licenseComment('/*', ' * ', ' */'), '(package|@)'
+    }
+    format 'xml', {
+        target 'src/**/*.xml', 'src/**/*.xsd'
+        targetExclude generatedFrontend
+        licenseHeader(licenseComment('<!--', '  ~ ', '  -->'), '<[^!?]')
+                .skipLinesMatching('^<\\?xml.*\\?>$')
+    }
+    format 'html', {
+        target 'src/**/*.html'
+        targetExclude generatedFrontend
+        licenseHeader(licenseComment('<!--', '  ~ ', '  -->'), '<[^!]')
+                .skipLinesMatching('^<!DOCTYPE.*>$')
+    }
+    format 'css', {
+        target 'src/**/*.css'
+        targetExclude generatedFrontend
+        // \z lets an empty stylesheet get the header too
+        licenseHeader licenseComment('/*', ' * ', ' */'), '(?!/\\*$)\\S|\\z'
+    }
+    format 'properties', {
+        target 'src/**/*.properties'
+        targetExclude generatedFrontend
+        licenseHeader licenseComment('#', '# ', '#'), '[^#\\s]'
+    }
+    format 'gradle', {
+        target '*.gradle'
+        licenseHeader licenseComment('/*', ' * ', ' */'), '(plugins|rootProject)'
+    }
+}

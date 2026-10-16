@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2023 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://timeEntryListView.title"
+      focusComponent="timeEntriesDataGrid">
+    <data>
+        <collection id="timeEntriesDc"
+                    class="com.glebfox.timesheets.entity.timeentry.TimeEntry">
+            <fetchPlan extends="_base">
+                <property name="user" fetchPlan="_base"/>
+                <property name="tags" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader id="timeEntriesDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_TimeEntry e order by e.date desc]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+        <urlQueryParameters>
+            <genericFilter component="genericFilter"/>
+            <pagination component="pagination"/>
+        </urlQueryParameters>
+    </facets>
+    <actions>
+        <action id="selectAction" type="lookup_select"/>
+        <action id="discardAction" type="lookup_discard"/>
+    </actions>
+    <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <genericFilter id="genericFilter"
+                           dataLoader="timeEntriesDl">
+                <properties include=".*"/>
+            </genericFilter>
+            <hbox id="buttonsPanel" classNames="buttons-panel">
+                <button id="createBtn" action="timeEntriesDataGrid.create"/>
+                <button id="editBtn" action="timeEntriesDataGrid.edit"/>
+                <button id="removeBtn" action="timeEntriesDataGrid.remove"/>
+                <button id="copyBtn" action="timeEntriesDataGrid.copy"/>
+                <simplePagination id="pagination" dataLoader="timeEntriesDl"/>
+            </hbox>
+            <dataGrid id="timeEntriesDataGrid"
+                      width="100%"
+                      minHeight="20em"
+                      dataContainer="timeEntriesDc"
+                      columnReorderingAllowed="true">
+                <actions>
+                    <action id="create" type="list_create"/>
+                    <action id="edit" type="list_edit"/>
+                    <action id="remove" type="list_remove"/>
+                    <action id="copy" type="list_timeEntry_copy"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="date" autoWidth="true" flexGrow="0"/>
+                    <column property="task"/>
+                    <column property="user" autoWidth="true" flexGrow="0"/>
+                    <column property="spentTime" autoWidth="true" flexGrow="0"/>
+                    <column property="status" autoWidth="true" flexGrow="0"/>
+                    <column property="description" flexGrow="2">
+                        <popoverRenderer/>
+                    </column>
+                    <column property="tags"/>
+                    <column property="rejectionReason" flexGrow="2">
+                        <popoverRenderer/>
+                    </column>
+                </columns>
+            </dataGrid>
+        </vbox>
+        <hbox id="lookupActions" visible="false"
+              classNames="footer-panel">
+            <button id="selectBtn" action="selectAction"/>
+            <button id="discardBtn" action="discardAction"/>
+        </hbox>
+    </layout>
+</view>
