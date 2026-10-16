@@ -11,6 +11,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
   - `testing.md` — how the tests run, the harness specifics, and what only a live check can verify.
   - `database.md` — changelog layout, demo data, and how soft delete shapes uniqueness.
   - `design-system.md` — the Aura theme, color, typography, and spacing tokens, and the project's own colors. Read when building or reviewing UI.
+  - `full-calendar.md` — where the FullCalendar add-on behaves in ways the calendar screen has to work around.
 - **docs/decisions/** — append-only log of significant decisions and the alternatives they beat; only choices that are hard to reverse, counterintuitive, or keep getting re-litigated get a file. The filenames are the index. Not created yet: created with the first decision that clears the bar.
 - **docs/reference/** — dated external research; frozen. Never a source for what the product does. Not created yet: created at first need.
 - **docs/specs/data-model/*.md** — what each entity and value type is: its meaning, rules, and lifecycle, and what no test covers. `README.md` gives the overview and the rules that hold for every entity.
