@@ -23,7 +23,6 @@ import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
-import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.base.Preconditions;
@@ -32,14 +31,12 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.*;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
 import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.core.security.CurrentAuthentication;
-import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.accesscontext.UiEntityContext;
@@ -56,17 +53,18 @@ import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.EntityCalendarEvent;
 import io.jmix.fullcalendarflowui.component.event.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Route(value = "calendar", layout = MainView.class)
 @ViewController("ts_CalendarView")
@@ -75,6 +73,7 @@ public class CalendarView extends StandardView {
 
     private static final Logger log = LoggerFactory.getLogger(CalendarView.class);
 
+    private static final String MATCHING_TIME_CLASS_NAME = "matching-time";
     private static final String EXCESS_TIME_CLASS_NAME = "excess-time";
     private static final String INSUFFICIENT_TIME_CLASS_NAME = "insufficient-time";
 
@@ -110,13 +109,13 @@ public class CalendarView extends StandardView {
     @Autowired
     private CurrentAuthentication currentAuthentication;
     @Autowired
-    private CurrentUserSubstitution currentUserSubstitution;
-    @Autowired
     private CalendarSupport calendarSupport;
 
     @ViewComponent
     private MessageBundle messageBundle;
 
+    private YearMonth displayedMonth;
+    private DayOfWeek firstDayOfWeek;
     private Map<LocalDate, SpentTime> spentTimeByDay = Collections.emptyMap();
 
     private UiEntityContext entityContext;
@@ -149,18 +148,21 @@ public class CalendarView extends StandardView {
         contextMenu.setContentMenuHandler(context -> {
             contextMenu.removeAll();
 
-            if (context.getCalendarEvent() != null) {
+            CalendarEvent calendarEvent = context.getCalendarEvent();
+            DayCell dayCell = context.getDayCell();
+
+            if (calendarEvent != null) {
                 contextMenu.addItem(messages.getMessage("actions.Copy"), __ ->
-                        copyTimeEntry(context.getCalendarEvent()));
+                        copyTimeEntry(calendarEvent));
                 contextMenu.addItem(messages.getMessage("actions.Remove"), __ ->
-                        removeTimeEntry(context.getCalendarEvent()));
+                        removeTimeEntry(calendarEvent));
 
                 return true;
-            } else if (context.getDayCell() != null) {
+            } else if (dayCell != null) {
                 contextMenu.addItem(messages.getMessage("actions.Add"), __ ->
-                        addTimeEntry(context.getDayCell()));
+                        addTimeEntry(dayCell));
 
-                return !context.getDayCell().isDisabled();
+                return !dayCell.isDisabled();
             }
 
             return false;
@@ -213,40 +215,32 @@ public class CalendarView extends StandardView {
     @Subscribe(id = "timeEntriesDc", target = Target.DATA_CONTAINER)
     private void onTimeEntriesDcCollectionChange(
             final CollectionContainer.CollectionChangeEvent<TimeEntryCalendarWrapper> event) {
-        LocalDate firstDayOfCurrentMonth = calendarSupport.getFirstDayOfCurrentMonth(calendar.getDate());
-        updateHoursSummary(firstDayOfCurrentMonth);
+        spentTimeByDay = calendarSupport.calculateSpentTimeByDay(event.getSource().getItems());
 
-        calculateSpentTimeByDay(event.getSource().getItems());
-    }
-
-    private void calculateSpentTimeByDay(List<TimeEntryCalendarWrapper> items) {
-        spentTimeByDay = items.stream()
-                .collect(Collectors.groupingBy(
-                        TimeEntryCalendarWrapper::getDate,
-                        Collectors.mapping(
-                                TimeEntryCalendarWrapper::getSpentTime,
-                                Collectors.reducing(
-                                        SpentTime.ZERO,
-                                        (spentTime1, spentTime2) ->
-                                                SpentTime.fromHours(spentTime1.asHours().add(spentTime2.asHours()))
-                                )
-                        )
-                ));
+        updateHoursSummary();
+        resetDayCellBottomTextClassNames();
     }
 
     @Subscribe("calendar")
     private void onCalendarDatesSet(final DatesSetEvent event) {
-        LocalDate firstDayOfCurrentMonth = calendarSupport.getFirstDayOfCurrentMonth(calendar.getDate());
-        updateMonthHeader(firstDayOfCurrentMonth);
-        updateTodayButton(firstDayOfCurrentMonth);
+        DisplayModeInfo displayModeInfo = event.getDisplayModeInfo();
+        displayedMonth = YearMonth.from(displayModeInfo.getCurrentStartDate());
+        // The month grid starts with the first day of a week
+        firstDayOfWeek = displayModeInfo.getActiveStartDate().getDayOfWeek();
+
+        updateMonthHeader();
+        updateTodayButton();
 
         loadTimeEntries(event.getStartDate(), event.getEndDate());
     }
 
-    private void updateHoursSummary(LocalDate firstDayOfMonth) {
-        // TODO: gg, do not load entities again, take from container
-        FactAndPlan[] weeksSummary = calendarSupport.calculateWeeksSummary(firstDayOfMonth,
-                ((User) currentUserSubstitution.getEffectiveUser()));
+    private void updateHoursSummary() {
+        if (displayedMonth == null || firstDayOfWeek == null) {
+            return;
+        }
+
+        List<FactAndPlan> weeksSummary =
+                calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         updateWeeksSummary(weeksSummary);
@@ -256,19 +250,19 @@ public class CalendarView extends StandardView {
     private void updateMonthSummary(FactAndPlan monthTotalHours) {
         if (monthTotalHours.isMatch()) {
             this.monthSummary.setText(messageBundle.formatMessage("monthTotalHours.text",
-                    metadataTools.format(monthTotalHours.getFact())));
-            this.monthSummary.removeClassNames(EXCESS_TIME_CLASS_NAME, INSUFFICIENT_TIME_CLASS_NAME);
+                    metadataTools.format(monthTotalHours.fact())));
         } else {
             this.monthSummary.setText(messageBundle.formatMessage("monthTotalHours.error.text",
-                    metadataTools.format(monthTotalHours.getFact()),
-                    metadataTools.format(monthTotalHours.getPlan())));
-            this.monthSummary.addClassName(monthTotalHours.isInsufficient()
-                    ? INSUFFICIENT_TIME_CLASS_NAME
-                    : EXCESS_TIME_CLASS_NAME);
+                    metadataTools.format(monthTotalHours.fact()),
+                    metadataTools.format(monthTotalHours.plan())));
         }
+
+        this.monthSummary.removeClassNames(MATCHING_TIME_CLASS_NAME,
+                EXCESS_TIME_CLASS_NAME, INSUFFICIENT_TIME_CLASS_NAME);
+        this.monthSummary.addClassName(getTimeClassName(monthTotalHours));
     }
 
-    private void updateWeeksSummary(FactAndPlan[] weekTotals) {
+    private void updateWeeksSummary(List<FactAndPlan> weekTotals) {
         weeksSummaryWrapper.removeAll();
 
         for (FactAndPlan weekSummary : weekTotals) {
@@ -276,19 +270,39 @@ public class CalendarView extends StandardView {
             weekSummaryText.setClassName("calendar-view-week-summary");
 
             if (weekSummary.isMatch()) {
-                weekSummaryText.setText(metadataTools.format(weekSummary.getFact()));
+                weekSummaryText.setText(metadataTools.format(weekSummary.fact()));
             } else {
                 weekSummaryText.setText("%s (%s)".formatted(
-                        metadataTools.format(weekSummary.getFact()),
-                        metadataTools.format(weekSummary.getPlan())
+                        metadataTools.format(weekSummary.fact()),
+                        metadataTools.format(weekSummary.plan())
                 ));
-                weekSummaryText.addClassName(weekSummary.isInsufficient()
-                        ? INSUFFICIENT_TIME_CLASS_NAME
-                        : EXCESS_TIME_CLASS_NAME);
             }
+            weekSummaryText.addClassName(getTimeClassName(weekSummary));
 
             weeksSummaryWrapper.add(weekSummaryText);
         }
+    }
+
+    private String getTimeClassName(FactAndPlan factAndPlan) {
+        if (factAndPlan.isInsufficient()) {
+            return INSUFFICIENT_TIME_CLASS_NAME;
+        } else if (factAndPlan.isExcess()) {
+            return EXCESS_TIME_CLASS_NAME;
+        } else {
+            return MATCHING_TIME_CLASS_NAME;
+        }
+    }
+
+    private void resetDayCellBottomTextClassNames() {
+        // The calendar adds the generated class names to the bottom text, but never removes
+        // the previous ones, so a day whose time changes would keep the old state's colors.
+        // The bottom text is regenerated after the calendar receives the changed events,
+        // which happens after this script runs.
+        // TODO: gg, remove when the calendar replaces the class names itself
+        calendar.getElement().executeJs("""
+                this.querySelectorAll('.jmix-day-cell-bottom-text')
+                    .forEach(bottomText => bottomText.className = 'jmix-day-cell-bottom-text');
+                """);
     }
 
     private void loadTimeEntries(LocalDate startDate, LocalDate endDate) {
@@ -368,7 +382,8 @@ public class CalendarView extends StandardView {
 
             showTimeEntrySavedNotification();
         } else {
-            // TODO: gg, WA for
+            // EventDropEvent cannot revert the drop, so the calendar is given back the unchanged date.
+            // TODO: gg, use revert when https://github.com/jmix-framework/jmix/issues/4696 is fixed
             timeEntryWrapper.discardDate();
             timeEntriesDc.replaceItem(timeEntryWrapper);
 
@@ -387,23 +402,19 @@ public class CalendarView extends StandardView {
         return spentTimeByDay.getOrDefault(context.getDate(), SpentTime.ZERO).toString();
     }
 
+    @Nullable
     @Install(to = "calendar", subject = "dayCellBottomTextClassNamesGenerator")
     private List<String> calendarDayCellBottomTextClassNamesGenerator(final DayCellBottomTextClassNamesContext context) {
-        SpentTime spentTime = spentTimeByDay.getOrDefault(context.getDate(), SpentTime.ZERO);
-
-        // TODO: gg, actual check
-        boolean workDay = context.getDate().getDayOfWeek().getValue() <= 5;
-
-        // TODO: gg, implement
-        if (!workDay) {
+        LocalDate date = context.getDate();
+        if (!calendarSupport.isWorkday(date)) {
             return null;
-        } else if (spentTime.getHours() > 8) {
-            return Collections.singletonList(EXCESS_TIME_CLASS_NAME);
-        } else if (spentTime.getHours() < 8) {
-            return Collections.singletonList(INSUFFICIENT_TIME_CLASS_NAME);
-        } else {
-            return Collections.singletonList("day-summary");
         }
+
+        FactAndPlan daySummary = new FactAndPlan(
+                spentTimeByDay.getOrDefault(date, SpentTime.ZERO),
+                calendarSupport.getPlannedTime(date));
+
+        return List.of(getTimeClassName(daySummary));
     }
 
     @Subscribe("jumpToDatePicker")
@@ -438,21 +449,21 @@ public class CalendarView extends StandardView {
 
     private void showTimeEntryMovePreventedNotification(TimeEntryStatus status) {
         notifications.create(messageBundle.getMessage("info.TimeEntry.movePrevented." + status.getId() + ".text"))
-                .withThemeVariant(NotificationVariant.LUMO_WARNING)
+                .withType(Notifications.Type.WARNING)
                 .withPosition(Notification.Position.TOP_END)
                 .show();
     }
 
-    private void updateMonthHeader(LocalDate firstDayOfMonth) {
+    private void updateMonthHeader() {
         monthHeader.setText(String.format("%s %d",
-                StringUtils.capitalize(firstDayOfMonth.getMonth()
+                StringUtils.capitalize(displayedMonth.getMonth()
                         .getDisplayName(TextStyle.FULL_STANDALONE, currentAuthentication.getLocale())),
-                firstDayOfMonth.getYear()
+                displayedMonth.getYear()
         ));
     }
 
-    private void updateTodayButton(LocalDate firstDayOfCurrentMonth) {
-        todayBtn.setEnabled(!firstDayOfCurrentMonth.getMonth().equals(LocalDate.now().getMonth()));
+    private void updateTodayButton() {
+        todayBtn.setEnabled(!displayedMonth.equals(YearMonth.now()));
     }
 
     @Nullable

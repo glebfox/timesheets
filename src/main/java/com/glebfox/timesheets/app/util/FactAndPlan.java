@@ -17,45 +17,53 @@
 package com.glebfox.timesheets.app.util;
 
 import com.glebfox.timesheets.datatype.SpentTime;
+import com.google.common.base.Preconditions;
 
-public class FactAndPlan {
+/**
+ * The time actually spent in a period against the time planned for it.
+ *
+ * @param fact the time spent
+ * @param plan the time planned
+ */
+public record FactAndPlan(SpentTime fact, SpentTime plan) {
 
-    private SpentTime fact;
-    private SpentTime plan;
+    /**
+     * No time spent and none planned.
+     */
+    public static final FactAndPlan ZERO = new FactAndPlan(SpentTime.ZERO, SpentTime.ZERO);
 
-    public FactAndPlan() {
-        this(SpentTime.ofHours(0), SpentTime.ofHours(0));
+    public FactAndPlan {
+        Preconditions.checkNotNull(fact);
+        Preconditions.checkNotNull(plan);
     }
 
-    public FactAndPlan(SpentTime fact, SpentTime plan) {
-        this.fact = fact;
-        this.plan = plan;
+    /**
+     * Returns the sum of this and the specified fact and plan, adding facts to facts and plans to plans.
+     *
+     * @param other the fact and plan to add
+     * @return a new {@link FactAndPlan} instance representing the sum
+     */
+    public FactAndPlan plus(FactAndPlan other) {
+        return new FactAndPlan(fact.plus(other.fact), plan.plus(other.plan));
     }
 
-    public SpentTime getFact() {
-        return fact;
-    }
-
-    public SpentTime getPlan() {
-        return plan;
-    }
-
-    public void plusPlan(SpentTime plan) {
-        this.plan = SpentTime.fromHours(this.plan.asHours().add(plan.asHours()));
-    }
-
-    public void plusFact(SpentTime fact) {
-        this.fact = SpentTime.fromHours(this.fact.asHours().add(fact.asHours()));
-    }
-
+    /**
+     * @return {@code true} if the time spent equals the time planned
+     */
     public boolean isMatch() {
         return fact.compareTo(plan) == 0;
     }
 
+    /**
+     * @return {@code true} if less time is spent than planned
+     */
     public boolean isInsufficient() {
         return fact.compareTo(plan) < 0;
     }
 
+    /**
+     * @return {@code true} if more time is spent than planned
+     */
     public boolean isExcess() {
         return fact.compareTo(plan) > 0;
     }

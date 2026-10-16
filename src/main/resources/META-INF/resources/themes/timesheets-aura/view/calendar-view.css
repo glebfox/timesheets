@@ -129,6 +129,6 @@
 
 /* Bottom Text */
 
-.jmix-day-cell-bottom-text.day-summary {
+.jmix-day-cell-bottom-text.matching-time {
     color: var(--aura-green-text);
 }

@@ -20,12 +20,10 @@ import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
-import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Messages;
 import io.jmix.core.common.util.Preconditions;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.Dialogs;
 import io.jmix.flowui.action.DialogAction;
 import io.jmix.flowui.kit.action.ActionVariant;
@@ -33,11 +31,14 @@ import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.WeekFields;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Utility class that provides functionalities for managing calendar-related data,
@@ -46,18 +47,18 @@ import java.util.function.Consumer;
 @Component("ts_CalendarSupport")
 public class CalendarSupport {
 
-    private final CurrentAuthentication currentAuthentication;
+    // TODO: gg, setting
+    private static final SpentTime DAILY_WORK_TIME = SpentTime.ofHours(8);
+
     private final TimeEntrySupport timeEntrySupport;
     private final DataManager dataManager;
     private final Messages messages;
     private final Dialogs dialogs;
 
-    public CalendarSupport(CurrentAuthentication currentAuthentication,
-                           TimeEntrySupport timeEntrySupport,
+    public CalendarSupport(TimeEntrySupport timeEntrySupport,
                            DataManager dataManager,
                            Messages messages,
                            Dialogs dialogs) {
-        this.currentAuthentication = currentAuthentication;
         this.timeEntrySupport = timeEntrySupport;
         this.dataManager = dataManager;
         this.messages = messages;
@@ -88,92 +89,84 @@ public class CalendarSupport {
     }
 
     /**
-     * Calculates the first day of the month for the specified date.
+     * Determines whether the specified date is a workday. Workdays are Monday to Friday.
      *
-     * @param date the date from which to determine the first day of the current month
-     * @return the first day of the month
+     * @param date the date to check
+     * @return {@code true} if the date is a workday
      */
-    public LocalDate getFirstDayOfCurrentMonth(LocalDate date) {
+    public boolean isWorkday(LocalDate date) {
         Preconditions.checkNotNullArgument(date);
 
-        return date.with(TemporalAdjusters.firstDayOfMonth());
+        // TODO: gg, settings
+        return date.getDayOfWeek() != DayOfWeek.SATURDAY
+                && date.getDayOfWeek() != DayOfWeek.SUNDAY;
     }
 
     /**
-     * Calculates the last day of the month for the specified date.
+     * Returns the time planned for the specified date: the daily work time on workdays and zero on other days.
      *
-     * @param date the date from which to determine the last day of the current month
-     * @return the first day of the month
+     * @param date the date to get the planned time for
+     * @return the time planned for the date
+     * @see #isWorkday(LocalDate)
      */
-    public LocalDate getLastDayOfCurrentMonth(LocalDate date) {
-        Preconditions.checkNotNullArgument(date);
-
-        return date.with(TemporalAdjusters.lastDayOfMonth());
+    public SpentTime getPlannedTime(LocalDate date) {
+        return isWorkday(date) ? DAILY_WORK_TIME : SpentTime.ZERO;
     }
 
     /**
-     * Calculates the weekly summary of actual and planned work hours for a specified user and date.
+     * Sums the time spent in the specified time entries by day.
+     *
+     * @param timeEntries the time entries to sum
+     * @return the time spent by day; a day without time entries has no key
+     */
+    public Map<LocalDate, SpentTime> calculateSpentTimeByDay(Collection<TimeEntryCalendarWrapper> timeEntries) {
+        Preconditions.checkNotNullArgument(timeEntries);
+
+        return timeEntries.stream()
+                .filter(timeEntry -> timeEntry.getDate() != null && timeEntry.getSpentTime() != null)
+                .collect(Collectors.toMap(
+                        TimeEntryCalendarWrapper::getDate,
+                        TimeEntryCalendarWrapper::getSpentTime,
+                        SpentTime::plus
+                ));
+    }
+
+    /**
+     * Calculates the time spent and the time planned in each week of the specified month.
      * <p>
-     * This method computes the weekly breakdown of work hours based on the given date
-     * and user. It aggregates the actual and planned work hours into an array
-     * of {@code FactAndPlan} objects, where each element represents a week within
-     * the month of the specified date.
+     * Weeks are the rows of a month calendar that starts its weeks on the specified day: the first week
+     * contains the first day of the month, the last week contains the last day of the month. Only the days
+     * of the month are counted, so the first and the last weeks may be shorter than seven days.
      *
-     * @param date the date to calculate the weeks summary for
-     * @param user the user for whom the summary is calculated
-     * @return an array of {@link FactAndPlan} objects, where each element represents
-     * the aggregated work hours for a week within the specified date's month
+     * @param month          the month to calculate the summary for
+     * @param firstDayOfWeek the day the weeks start on
+     * @param spentTimeByDay the time spent by day, as calculated by {@link #calculateSpentTimeByDay(Collection)};
+     *                       days outside the month are ignored
+     * @return the time spent and planned for each week of the month, in order
      */
-    public FactAndPlan[] calculateWeeksSummary(LocalDate date, User user) {
-        return calculateWeeksSummary(date, user, currentAuthentication.getLocale());
-    }
+    public List<FactAndPlan> calculateWeeksSummary(YearMonth month, DayOfWeek firstDayOfWeek,
+                                                   Map<LocalDate, SpentTime> spentTimeByDay) {
+        Preconditions.checkNotNullArgument(month);
+        Preconditions.checkNotNullArgument(firstDayOfWeek);
+        Preconditions.checkNotNullArgument(spentTimeByDay);
 
-    /**
-     * Calculates the weekly summary of actual and planned work hours for a specified user, date, and locale.
-     * <p>
-     * This method calculates weekly summaries of work hours for the month of the given date, based on the
-     * specified locale. It aggregates the actual and planned work hours into an array of {@link FactAndPlan}
-     * objects, with each element in the array corresponding to a week within the month.
-     *
-     * @param date   the date to calculate the weeks summary for, determining the month and year
-     * @param user   the user for whom the summary is calculated
-     * @param locale the locale used to determine the first day of the week
-     * @return an array of {@link FactAndPlan} objects, where each element represents the aggregated
-     * work hours for a single week in the specified month
-     */
-    public FactAndPlan[] calculateWeeksSummary(LocalDate date, User user, Locale locale) {
-        Preconditions.checkNotNullArgument(date);
-        Preconditions.checkNotNullArgument(user);
-        Preconditions.checkNotNullArgument(locale);
+        LocalDate firstDayOfMonth = month.atDay(1);
+        LocalDate lastDayOfMonth = month.atEndOfMonth();
 
-        LocalDate firstDayOfMonth = getFirstDayOfCurrentMonth(date);
-        LocalDate lastDayOfMonth = getLastDayOfCurrentMonth(date);
-
-        DayOfWeek firstDayOfWeekForLocale = WeekFields.of(locale).getFirstDayOfWeek();
-        WeekFields weekFields = WeekFields.of(firstDayOfWeekForLocale, 1);
-        int weeksNumber = lastDayOfMonth.get(weekFields.weekOfMonth());
-
-        FactAndPlan[] weeksSummary = new FactAndPlan[weeksNumber];
-
-        LocalDate start = firstDayOfMonth;
-        for (int i = 0; i < weeksNumber; i++) {
-            LocalDate firstDayOfWeek = start.with(weekFields.dayOfWeek(), 1);
-            LocalDate lastDayOfWeek = start.with(weekFields.dayOfWeek(), 7);
-
-            if (firstDayOfWeek.isBefore(firstDayOfMonth)) {
-                firstDayOfWeek = firstDayOfMonth;
+        List<FactAndPlan> weeksSummary = new ArrayList<>();
+        for (LocalDate weekStart = firstDayOfMonth.with(TemporalAdjusters.previousOrSame(firstDayOfWeek));
+             !weekStart.isAfter(lastDayOfMonth);
+             weekStart = weekStart.plusWeeks(1)) {
+            FactAndPlan weekSummary = FactAndPlan.ZERO;
+            for (LocalDate day = weekStart; day.isBefore(weekStart.plusWeeks(1)); day = day.plusDays(1)) {
+                if (!day.isBefore(firstDayOfMonth) && !day.isAfter(lastDayOfMonth)) {
+                    weekSummary = weekSummary.plus(new FactAndPlan(
+                            spentTimeByDay.getOrDefault(day, SpentTime.ZERO),
+                            getPlannedTime(day)));
+                }
             }
 
-            if (lastDayOfWeek.isAfter(lastDayOfMonth)) {
-                lastDayOfWeek = lastDayOfMonth;
-            }
-
-            weeksSummary[i] = new FactAndPlan(
-                    actualWorkHoursForPeriod(firstDayOfWeek, lastDayOfWeek, user),
-                    plannedWorkHoursForPeriod(firstDayOfWeek, lastDayOfWeek, user)
-            );
-
-            start = start.plusWeeks(1);
+            weeksSummary.add(weekSummary);
         }
 
         return weeksSummary;
@@ -183,19 +176,16 @@ public class CalendarSupport {
      * Aggregates the weekly summaries of actual and planned work hours into a single
      * monthly summary.
      *
-     * @param weeksSummary an array of {@link FactAndPlan} objects representing the
-     *                     weekly summaries of actual and planned work hours
+     * @param weeksSummary the weekly summaries of actual and planned work hours,
+     *                     as calculated by {@link #calculateWeeksSummary(YearMonth, DayOfWeek, Map)}
      * @return a {@link FactAndPlan} object containing the aggregated monthly summary
      * of actual and planned work hours
      */
-    public FactAndPlan calculateMonthSummary(FactAndPlan[] weeksSummary) {
-        FactAndPlan monthSummary = new FactAndPlan();
-        for (FactAndPlan factAndPlan : weeksSummary) {
-            monthSummary.plusFact(factAndPlan.getFact());
-            monthSummary.plusPlan(factAndPlan.getPlan());
-        }
+    public FactAndPlan calculateMonthSummary(Collection<FactAndPlan> weeksSummary) {
+        Preconditions.checkNotNullArgument(weeksSummary);
 
-        return monthSummary;
+        return weeksSummary.stream()
+                .reduce(FactAndPlan.ZERO, FactAndPlan::plus);
     }
 
     /**
@@ -217,7 +207,7 @@ public class CalendarSupport {
      * and performs an action after successful removal.
      *
      * @param timeEntryWrapper   the {@link TimeEntryCalendarWrapper} containing the time entry to be removed
-     * @param afterRemoveHandler a hadler to execute additional logic after the time entry is removed
+     * @param afterRemoveHandler a handler to execute additional logic after the time entry is removed
      */
     public void removeTimeEntry(TimeEntryCalendarWrapper timeEntryWrapper,
                                 Consumer<TimeEntryCalendarWrapper> afterRemoveHandler) {
@@ -261,39 +251,5 @@ public class CalendarSupport {
         TimeEntryCalendarWrapper wrapper = dataManager.create(TimeEntryCalendarWrapper.class);
         wrapper.setTimeEntry(timeEntry);
         return wrapper;
-    }
-
-    private SpentTime plannedWorkHoursForPeriod(LocalDate start, LocalDate end, User user) {
-        SpentTime dailyPlan = SpentTime.ofHours(8); // TODO: gg, setting
-        SpentTime totalWorkHours = SpentTime.ofHours(0);
-
-        for (LocalDate current = start; !current.isAfter(end); current = current.plusDays(1)) {
-            if (isWorkday(current)) { // TODO: gg, bean
-                // TODO: gg, add methods
-                totalWorkHours = SpentTime.fromHours(totalWorkHours.asHours().add(dailyPlan.asHours()));
-            }
-        }
-
-        return totalWorkHours;
-    }
-
-    private SpentTime actualWorkHoursForPeriod(LocalDate start, LocalDate end, User user) {
-        List<TimeEntry> timeEntries = timeEntrySupport.getTimeEntriesForPeriod(start, end, user);
-        if (timeEntries.isEmpty()) {
-            return SpentTime.ofHours(0);
-        }
-
-        SpentTime totalWorkHours = SpentTime.ofHours(0);
-        for (TimeEntry timeEntry : timeEntries) {
-            // TODO: gg, add methods
-            totalWorkHours = SpentTime.fromHours(totalWorkHours.asHours().add(timeEntry.getSpentTime().asHours()));
-        }
-
-        return totalWorkHours;
-    }
-
-    private boolean isWorkday(LocalDate date) {
-        // TODO: gg, settings
-        return date.getDayOfWeek().getValue() <= 5;
     }
 }
