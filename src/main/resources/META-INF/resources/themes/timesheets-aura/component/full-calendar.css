@@ -1,0 +1,20 @@
+.fc-day-other .fc-daygrid-day-events {
+    opacity: 0.3;
+}
+
+.fc .fc-col-header-cell-cushion {
+    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
+}
+
+.fc .fc-daygrid-day-number {
+    padding: var(--vaadin-padding-xs);
+}
+
+.fc-daygrid-day.jmix-has-bottom-text .jmix-day-cell-bottom-text {
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-xs);
+}
+
+.fc-daygrid-day.jmix-has-bottom-text .fc-daygrid-day-frame {
+    padding-bottom: calc(var(--aura-font-size-s) + var(--vaadin-padding-xs) * 3);
+}

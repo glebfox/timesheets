@@ -83,8 +83,8 @@ public class TimeEntry {
 
     @OnDelete(DeletePolicy.CASCADE)
     @JoinTable(name = "TS_TIME_ENTRY_TAG_LINK",
-            joinColumns = @JoinColumn(name = "TIME_ENTRY_ID"),
-            inverseJoinColumns = @JoinColumn(name = "TAG_ID"))
+            joinColumns = @JoinColumn(name = "TIME_ENTRY_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "TAG_ID", referencedColumnName = "ID"))
     @ManyToMany
     private List<Tag> tags;
 
@@ -203,7 +203,8 @@ public class TimeEntry {
 
     @InstanceName
     @DependsOnProperties({"date", "task"})
-    public String getInstanceName(MetadataTools metadataTools, DatatypeFormatter datatypeFormatter) {
+    public String getInstanceName(MetadataTools metadataTools,
+                                  DatatypeFormatter datatypeFormatter) {
         return String.format("%s %s",
                 datatypeFormatter.formatLocalDate(date),
                 metadataTools.format(task));

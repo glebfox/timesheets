@@ -29,7 +29,12 @@ import java.math.RoundingMode;
  * and thread-safe. It provides utility methods to create and convert time
  * representations using hours, minutes, or decimal hour values.
  */
-public class SpentTime implements Serializable {
+public class SpentTime implements Serializable, Comparable<SpentTime> {
+
+    /**
+     * A constant representing a time period of zero hours and zero minutes.
+     */
+    public static final SpentTime ZERO = new SpentTime(0, 0);
 
     private static final BigDecimal MINUTES_IN_HOUR = BigDecimal.valueOf(60);
 
@@ -149,5 +154,10 @@ public class SpentTime implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(hours, minutes);
+    }
+
+    @Override
+    public int compareTo(SpentTime o) {
+        return asHours().compareTo(o.asHours());
     }
 }

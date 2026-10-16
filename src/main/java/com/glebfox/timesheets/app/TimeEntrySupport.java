@@ -20,7 +20,11 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import io.jmix.core.*;
 import io.jmix.core.common.util.Preconditions;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Utility class for managing and manipulating {@link TimeEntry} entities.
@@ -80,5 +84,29 @@ public class TimeEntrySupport {
                 "and e.status = @enum(com.glebfox.timesheets.entity.timeentry.TimeEntryStatus.REJECTED)");
 
         return dataManager.getCount(loadContext);
+    }
+
+    /**
+     * Retrieves a list of {@link TimeEntry} instances for a specific user within the given date range.
+     *
+     * @param start the start date of the period (inclusive)
+     * @param end   the end date of the period (inclusive)
+     * @param user  the {@link UserDetails} object representing the user whose time entries are to be retrieved
+     * @return a list of {@link TimeEntry} objects that fall within the specified date range for the given user
+     * or an empty list if no entries are found
+     */
+    public List<TimeEntry> getTimeEntriesForPeriod(LocalDate start, LocalDate end, UserDetails user) {
+        Preconditions.checkNotNullArgument(start);
+        Preconditions.checkNotNullArgument(end);
+        Preconditions.checkNotNullArgument(user);
+
+        return dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e " +
+                        "where e.user.username = :username " +
+                        "and (e.date between :start and :end)")
+                .parameter("username", user.getUsername())
+                .parameter("start", start)
+                .parameter("end", end)
+                .list();
     }
 }

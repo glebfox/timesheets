@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:calendar="http://jmix.io/schema/fullcalendar/ui"
+      title="msg://calendarView.title">
+    <data>
+        <collection id="timeEntriesDc"
+                    class="com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper">
+            <loader id="timeEntriesDl" readOnly="true"/>
+        </collection>
+    </data>
+    <layout classNames="calendar-view">
+        <div id="topPanel"
+             classNames="calendar-view-top-panel">
+            <h2 id="monthHeader" classNames="calendar-view-month-header"/>
+
+            <hbox id="controlsPanel"
+                  classNames="calendar-view-controls"
+                  alignItems="CENTER" width="100%">
+                <button id="refreshBtn" icon="gravity-ui:arrows-rotate-left">
+                    <tooltip text="msg://refreshBtn.tooltip"/>
+                </button>
+                <flexLayout id="navigationWrapper" classNames="component-group">
+                    <button id="prevBtn" icon="gravity-ui:chevron-left">
+                        <tooltip text="msg://prevBtn.tooltip"/>
+                    </button>
+                    <button id="todayBtn" text="msg:///datepicker.today" enabled="false">
+                        <tooltip text="msg://todayBtn.tooltip"/>
+                    </button>
+                    <button id="nextBtn" icon="gravity-ui:chevron-right">
+                        <tooltip text="msg://nextBtn.tooltip"/>
+                    </button>
+                </flexLayout>
+                <datePicker id="jumpToDatePicker" datatype="localDate"
+                            placeholder="msg://jumpToDatePicker.placeholder">
+                    <tooltip text="msg://jumpToDatePicker.tooltip"/>
+                </datePicker>
+            </hbox>
+        </div>
+
+        <hbox id="calendarBox"
+              expand="calendar"
+              spacing="false"
+              width="100%" height="100%">
+            <calendar:calendar id="calendar"
+                               height="100%"
+                               dayMaxEvents="4"
+                               displayEventTime="false"
+                               eventStartEditable="true"
+                               defaultBusinessHoursEnabled="true"
+                               navigationLinksEnabled="true">
+                <calendar:displayModeProperties>
+                    <calendar:dayGridMonth fixedWeekCount="false"/>
+                </calendar:displayModeProperties>
+                <calendar:dataProviders>
+                    <calendar:containerDataProvider id="timeEntriesDataProvider"
+                                                    dataContainer="timeEntriesDc"
+                                                    title="title"
+                                                    description="description"
+                                                    startDateTime="date"
+                                                    endDateTime="date"
+                                                    classNames="styleName"
+                    />
+                </calendar:dataProviders>
+            </calendar:calendar>
+
+            <flexLayout id="weeksSummaryBox"
+                        flexDirection="COLUMN"
+                        alignItems="CENTER"
+                        classNames="calendar-view-weeks-summary">
+                <h3 id="weeksSummaryHeader"
+                    text="msg://weeksSummaryHeader.text"
+                    classNames="calendar-view-weeks-summary-header"/>
+                <flexLayout id="weeksSummaryWrapper"
+                            flexDirection="COLUMN"
+                            alignItems="CENTER"
+                            classNames="calendar-view-weeks-summary-wrapper"
+                            width="100%" height="100%"/>
+            </flexLayout>
+        </hbox>
+
+        <div id="monthSummary" classNames="calendar-view-month-summary"/>
+    </layout>
+</view>

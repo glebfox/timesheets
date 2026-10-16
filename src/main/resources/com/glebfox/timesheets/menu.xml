@@ -19,6 +19,9 @@
     <menu id="timesheets" title="msg://com.glebfox.timesheets/menu.timesheets.title"
           icon="fontawesome-solid:rectangle-list"
           opened="true">
+        <item view="ts_CalendarView"
+              title="msg://com.glebfox.timesheets.view.calendar/calendarView.title"
+              icon="fontawesome-solid:calendar-days"/>
         <item view="ts_TimeEntry.my"
               title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title"
               icon="fontawesome-solid:calendar-day"/>
