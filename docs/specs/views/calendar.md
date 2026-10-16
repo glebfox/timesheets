@@ -8,7 +8,7 @@ Source: `view/calendar/`, `app/CalendarSupport.java`, `app/util/FactAndPlan.java
 
 - **Header** — the month and year of the displayed month.
 - **Controls** — Refresh reloads the entries and confirms it with a notification; previous, Today, and next move by a month, and Today is disabled while the current month is displayed; Jump to date moves to the month of the chosen date.
-- **Grid** — one row per week that has a day of the month; days of the neighboring months fill the first and last rows. Weeks start on Sunday in English and on Monday in Russian. A day shows up to four entries and a "+N more" link for the rest.
+- **Grid** — one row per week that has a day of the month; days of the neighboring months fill the first and last rows. Weeks start on Sunday in English and on Monday in Russian. Rows have equal heights: a day with more entries than fit shows a "+N more" link.
 - Reloading the page keeps the displayed month.
 
 ## Entries

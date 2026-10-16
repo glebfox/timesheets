@@ -59,7 +59,7 @@
               width="100%" height="100%">
             <calendar:calendar id="calendar"
                                height="100%"
-                               dayMaxEvents="4"
+                               defaultDayMaxEventsEnabled="true"
                                displayEventTime="false"
                                eventStartEditable="true"
                                defaultBusinessHoursEnabled="true"
