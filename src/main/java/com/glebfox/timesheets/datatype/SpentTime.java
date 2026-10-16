@@ -138,6 +138,18 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
         return BigDecimal.valueOf(toMinutes()).divide(MINUTES_IN_HOUR, 2, RoundingMode.DOWN);
     }
 
+    /**
+     * Returns the sum of this time and the specified one. The sum is exact to the minute.
+     *
+     * @param other the time to add
+     * @return a new {@link SpentTime} instance representing the sum
+     */
+    public SpentTime plus(SpentTime other) {
+        Preconditions.checkNotNull(other);
+
+        return ofMinutes(toMinutes() + other.toMinutes());
+    }
+
     @Override
     public String toString() {
         return String.format("%02d:%02d", hours, minutes);
@@ -158,6 +170,6 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
 
     @Override
     public int compareTo(SpentTime o) {
-        return asHours().compareTo(o.asHours());
+        return Long.compare(toMinutes(), o.toMinutes());
     }
 }

@@ -83,6 +83,20 @@ public class SpentTimeTest {
     }
 
     @Test
+    void arithmeticTest() {
+        // 20 minutes is 0.33 as decimal hours, so summing decimal hours loses a minute
+        SpentTime third = SpentTime.ofMinutes(20);
+        assertThat(third.plus(third).plus(third)).isEqualTo(SpentTime.ofHours(1));
+
+        assertThat(SpentTime.of(7, 45).plus(SpentTime.of(1, 30))).isEqualTo(SpentTime.of(9, 15));
+        assertThat(SpentTime.ofHours(8).plus(SpentTime.ZERO)).isEqualTo(SpentTime.ofHours(8));
+
+        assertThat(SpentTime.of(8, 1)).isGreaterThan(SpentTime.ofHours(8));
+        assertThat(SpentTime.of(7, 59)).isLessThan(SpentTime.ofHours(8));
+        assertThat(SpentTime.ofMinutes(480)).isEqualByComparingTo(SpentTime.ofHours(8));
+    }
+
+    @Test
     void timeParserTest() throws ParseException {
         SpentTime spentTime = timeParser.parse("04:30");
         assertThat(spentTime.getHours()).isEqualTo(4);
