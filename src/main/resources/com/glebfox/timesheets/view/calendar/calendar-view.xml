@@ -95,6 +95,36 @@
             </flexLayout>
         </hbox>
 
-        <div id="monthSummary" classNames="calendar-view-month-summary"/>
+        <div id="monthSummary" classNames="calendar-view-month-summary" width="100%">
+            <div classNames="calendar-view-month-summary-item">
+                <icon icon="gravity-ui:clock" classNames="calendar-view-month-summary-icon"/>
+                <div classNames="calendar-view-month-summary-figure">
+                    <span id="monthLoggedValue" classNames="calendar-view-month-summary-value"/>
+                    <span text="msg://monthSummary.logged.text" classNames="calendar-view-month-summary-label"/>
+                </div>
+            </div>
+            <div classNames="calendar-view-month-summary-item">
+                <icon icon="gravity-ui:target" classNames="calendar-view-month-summary-icon"/>
+                <div classNames="calendar-view-month-summary-figure">
+                    <span id="monthTargetValue" classNames="calendar-view-month-summary-value"/>
+                    <span text="msg://monthSummary.target.text" classNames="calendar-view-month-summary-label"/>
+                </div>
+            </div>
+            <div classNames="calendar-view-month-summary-item">
+                <icon icon="gravity-ui:stopwatch" classNames="calendar-view-month-summary-icon"/>
+                <div classNames="calendar-view-month-summary-figure">
+                    <span id="monthRemainingValue" classNames="calendar-view-month-summary-value"/>
+                    <span id="monthRemainingLabel" classNames="calendar-view-month-summary-label"/>
+                </div>
+            </div>
+            <div classNames="calendar-view-month-summary-item">
+                <icon icon="gravity-ui:percent" classNames="calendar-view-month-summary-icon"/>
+                <div classNames="calendar-view-month-summary-figure">
+                    <span id="monthPercentValue" classNames="calendar-view-month-summary-value"/>
+                    <progressBar id="monthPercentBar" classNames="calendar-view-month-summary-progress"/>
+                    <span text="msg://monthSummary.percent.text" classNames="calendar-view-month-summary-label"/>
+                </div>
+            </div>
+        </div>
     </layout>
 </view>

@@ -90,9 +90,19 @@ public class CalendarView extends StandardView {
     @ViewComponent
     private JmixButton todayBtn;
     @ViewComponent
-    private Div monthSummary;
-    @ViewComponent
     private FlexLayout weeksSummaryWrapper;
+    @ViewComponent
+    private Span monthLoggedValue;
+    @ViewComponent
+    private Span monthTargetValue;
+    @ViewComponent
+    private Span monthRemainingValue;
+    @ViewComponent
+    private Span monthRemainingLabel;
+    @ViewComponent
+    private Span monthPercentValue;
+    @ViewComponent
+    private ProgressBar monthPercentBar;
 
     @ViewComponent
     private CollectionContainer<TimeEntryCalendarWrapper> timeEntriesDc;
@@ -251,19 +261,23 @@ public class CalendarView extends StandardView {
         updateMonthSummary(monthSummary);
     }
 
-    private void updateMonthSummary(FactAndPlan monthTotalHours) {
-        if (monthTotalHours.isMatch()) {
-            this.monthSummary.setText(messageBundle.formatMessage("monthTotalHours.text",
-                    metadataTools.format(monthTotalHours.fact())));
-        } else {
-            this.monthSummary.setText(messageBundle.formatMessage("monthTotalHours.error.text",
-                    metadataTools.format(monthTotalHours.fact()),
-                    metadataTools.format(monthTotalHours.plan())));
-        }
+    private void updateMonthSummary(FactAndPlan month) {
+        monthLoggedValue.setText(formatTotal(month.fact()));
+        monthTargetValue.setText(formatTotal(month.plan()));
 
-        this.monthSummary.removeClassNames(MATCHING_TIME_CLASS_NAME,
-                EXCESS_TIME_CLASS_NAME, INSUFFICIENT_TIME_CLASS_NAME);
-        this.monthSummary.addClassName(getTimeClassName(monthTotalHours));
+        String difference = formatTotal(month.difference());
+        if (month.isExcess()) {
+            monthRemainingValue.setText(messageBundle.formatMessage("monthSummary.overValue.text", difference));
+            monthRemainingLabel.setText(messageBundle.getMessage("monthSummary.overTarget.text"));
+        } else {
+            monthRemainingValue.setText(difference);
+            monthRemainingLabel.setText(messageBundle.getMessage("monthSummary.remaining.text"));
+        }
+        monthRemainingValue.setClassName("calendar-view-month-summary-value-over", month.isExcess());
+
+        int percentOfPlan = month.percentOfPlan();
+        monthPercentValue.setText(messageBundle.formatMessage("monthSummary.percentValue.text", percentOfPlan));
+        monthPercentBar.setValue(Math.min(percentOfPlan / 100.0, 1));
     }
 
     private void updateWeeksSummary(List<WeekSummary> weeks) {

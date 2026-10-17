@@ -180,9 +180,80 @@
 }
 
 .calendar-view-month-summary {
-    align-self: end;
-    font-size: var(--aura-font-size-l);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--vaadin-gap-m);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-xs);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+    background: var(--aura-surface-color);
+}
+
+.calendar-view-month-summary-item {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    padding-inline: var(--vaadin-padding-s);
+}
+
+/* Two columns: a divider between them only */
+.calendar-view-month-summary-item:nth-child(even) {
+    border-inline-start: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.calendar-view-month-summary-icon {
+    --vaadin-icon-size: var(--aura-line-height-xl);
+    flex-shrink: 0;
+    color: var(--vaadin-text-color-secondary);
+}
+
+.calendar-view-month-summary-figure {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.calendar-view-month-summary-value {
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-xl);
     font-weight: bold;
+    line-height: var(--aura-line-height-xl);
+}
+
+.calendar-view-month-summary-value-over {
+    color: var(--aura-accent-text-color);
+}
+
+.calendar-view-month-summary-label {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-medium);
+    line-height: var(--aura-line-height-s);
+}
+
+/* As wide as the figure's text */
+.calendar-view-month-summary-progress {
+    --vaadin-progress-bar-height: var(--vaadin-gap-xs);
+    --vaadin-progress-bar-value-background: var(--aura-accent-color);
+    margin-block: var(--vaadin-gap-xs);
+}
+
+@container main (min-width: 800px) {
+    .calendar-view-month-summary {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calendar-view-month-summary-item {
+        padding-inline: var(--vaadin-padding-m);
+    }
+
+    .calendar-view-month-summary-item:not(:first-child) {
+        border-inline-start: 1px solid var(--vaadin-border-color-secondary);
+    }
 }
 
 .excess-time {
