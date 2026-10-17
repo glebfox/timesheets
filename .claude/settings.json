@@ -1,0 +1,67 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Edit|Write|NotebookEdit|Bash)$|^mcp__(idea|jetbrains)__(create_new_file|reformat_file|apply_patch|rename_refactoring|execute_terminal_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-changelogs.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__execute_terminal_command$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-clean.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^Write$|^mcp__(idea|jetbrains)__create_new_file$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/license-header.sh",
+            "timeout": 120,
+            "statusMessage": "Adding the license header"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__(apply_patch|rename_refactoring|execute_terminal_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-changelogs.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__(apply_patch|rename_refactoring|execute_terminal_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-changelogs.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-bundles.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

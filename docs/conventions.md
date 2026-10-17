@@ -22,6 +22,10 @@ A UI piece that several views show the same way, such as an avatar, a user cell,
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>: <short description>` — imperative, one subject line, no scope and no prose body. Types in use: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
+## Branches and pull requests
+
+A branch is named `<type>/<slug>`, with type `feature`, `fix`, `refactor`, `docs`, or `chore`, such as `fix/calendar-entry-stale-after-edit`. A pull request is squash-merged, so its title is a Conventional Commits subject; when it resolves an issue, its body starts with `Closes #<issue>.`
+
 ## Markdown
 
 Paragraphs, list items, table rows, and blockquote lines are not hard-wrapped: each stays on one line, and the renderer wraps it. Code blocks keep their formatting verbatim.
