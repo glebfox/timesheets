@@ -91,13 +91,21 @@
 
 /* Summary */
 
+/* The week column continues the calendar's grid and its frame. The calendar's own right line is
+   the seam between them. The lines take the calendar's grid color: Jmix's FullCalendar styles set
+   --fc-border-color to --vaadin-border-color on the calendar element only, so it is not inherited here */
 .calendar-view-weeks-summary {
     width: 10rem;
+    border-block-start: 1px solid var(--vaadin-border-color);
+    border-inline-end: 1px solid var(--vaadin-border-color);
 }
 
+/* As tall as the calendar's day-name cells: the same padding, type size, and bottom line */
 .calendar-view-weeks-summary-header {
+    text-align: center;
     text-transform: uppercase;
     padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
+    border-block-end: 1px solid var(--vaadin-border-color);
 
     font-size: var(--aura-font-size-m);
     font-weight: bold;
@@ -108,6 +116,9 @@
     min-height: 0;
 }
 
+/* Every cell, the last one included, has a bottom line, so the equal cells split the same height
+   as the calendar's rows and their lines sit level with the rows' lines. The block padding is 1px
+   less than the token to give back the height the lines take. The background is the month footer's */
 .calendar-view-week-summary {
     display: flex;
     flex-direction: column;
@@ -116,8 +127,9 @@
     gap: var(--vaadin-gap-xs);
     min-height: 0;
     overflow: hidden;
-    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
-    border-radius: var(--vaadin-radius-m);
+    padding: calc(var(--vaadin-padding-xs) - 1px) var(--vaadin-padding-s);
+    border-block-end: 1px solid var(--vaadin-border-color);
+    background: var(--aura-surface-color);
 }
 
 .calendar-view-week-summary-current {
@@ -194,6 +206,7 @@
 }
 
 .calendar-view-month-summary {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: var(--vaadin-gap-m);
@@ -213,9 +226,15 @@
     padding-inline: var(--vaadin-padding-s);
 }
 
-/* Two columns: a divider between them only */
-.calendar-view-month-summary-item:nth-child(even) {
-    border-inline-start: 1px solid var(--vaadin-border-color-secondary);
+/* Two columns: one divider between them, across the row gap. The columns are equal and the
+   inline padding symmetric, so the boundary between them is the middle */
+.calendar-view-month-summary::before {
+    content: "";
+    position: absolute;
+    inset-block: var(--vaadin-padding-s);
+    inset-inline-start: 50%;
+    width: 1px;
+    background: var(--vaadin-border-color-secondary);
 }
 
 .calendar-view-month-summary-icon {
@@ -249,16 +268,21 @@
     line-height: var(--aura-line-height-s);
 }
 
-/* As wide as the figure's text */
+/* As wide as the figure's text. Takes no height: it lies in the bottom of the value's line, under the
+   digits, so all figures are equally tall and their values and labels sit level */
 .calendar-view-month-summary-progress {
     --vaadin-progress-bar-height: var(--vaadin-gap-xs);
     --vaadin-progress-bar-value-background: var(--aura-accent-color);
-    margin-block: var(--vaadin-gap-xs);
+    margin-block-start: calc(var(--vaadin-gap-xs) * -1);
 }
 
 @container main (min-width: 800px) {
     .calendar-view-month-summary {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calendar-view-month-summary::before {
+        content: none;
     }
 
     .calendar-view-month-summary-item {

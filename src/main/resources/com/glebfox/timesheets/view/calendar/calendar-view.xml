@@ -83,7 +83,7 @@
 
             <flexLayout id="weeksSummaryBox"
                         flexDirection="COLUMN"
-                        alignItems="CENTER"
+                        alignItems="STRETCH"
                         classNames="calendar-view-weeks-summary">
                 <h3 id="weeksSummaryHeader"
                     text="msg://weeksSummaryHeader.text"
@@ -98,17 +98,17 @@
 
         <div id="monthSummary" classNames="calendar-view-month-summary" width="100%">
             <div classNames="calendar-view-month-summary-item">
-                <icon icon="gravity-ui:clock" classNames="calendar-view-month-summary-icon"/>
-                <div classNames="calendar-view-month-summary-figure">
-                    <span id="monthLoggedValue" classNames="calendar-view-month-summary-value"/>
-                    <span text="msg://monthSummary.logged.text" classNames="calendar-view-month-summary-label"/>
-                </div>
-            </div>
-            <div classNames="calendar-view-month-summary-item">
                 <icon icon="gravity-ui:target" classNames="calendar-view-month-summary-icon"/>
                 <div classNames="calendar-view-month-summary-figure">
                     <span id="monthTargetValue" classNames="calendar-view-month-summary-value"/>
                     <span text="msg://monthSummary.target.text" classNames="calendar-view-month-summary-label"/>
+                </div>
+            </div>
+            <div classNames="calendar-view-month-summary-item">
+                <icon icon="gravity-ui:clock" classNames="calendar-view-month-summary-icon"/>
+                <div classNames="calendar-view-month-summary-figure">
+                    <span id="monthLoggedValue" classNames="calendar-view-month-summary-value"/>
+                    <span text="msg://monthSummary.logged.text" classNames="calendar-view-month-summary-label"/>
                 </div>
             </div>
             <div classNames="calendar-view-month-summary-item">
