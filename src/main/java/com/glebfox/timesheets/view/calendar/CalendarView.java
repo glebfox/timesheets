@@ -19,6 +19,7 @@ package com.glebfox.timesheets.view.calendar;
 
 import com.glebfox.timesheets.app.CalendarSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
+import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
@@ -240,7 +241,7 @@ public class CalendarView extends StandardView {
             return;
         }
 
-        List<FactAndPlan> weeksSummary =
+        List<WeekSummary> weeksSummary =
                 calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
@@ -263,10 +264,12 @@ public class CalendarView extends StandardView {
         this.monthSummary.addClassName(getTimeClassName(monthTotalHours));
     }
 
-    private void updateWeeksSummary(List<FactAndPlan> weekTotals) {
+    private void updateWeeksSummary(List<WeekSummary> weeksSummary) {
         weeksSummaryWrapper.removeAll();
 
-        for (FactAndPlan weekSummary : weekTotals) {
+        for (WeekSummary week : weeksSummary) {
+            FactAndPlan weekSummary = week.total();
+
             Span weekSummaryText = new Span();
             weekSummaryText.setClassName("calendar-view-week-summary");
 

@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.FactAndPlan;
+import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
@@ -136,15 +137,16 @@ public class CalendarSupport {
      * <p>
      * Weeks are the rows of a month calendar that starts its weeks on the specified day: the first week
      * contains the first day of the month, the last week contains the last day of the month. Only the days
-     * of the month are counted, so the first and the last weeks may be shorter than seven days.
+     * of the month are counted, so the first and the last weeks may be shorter than seven days, and their
+     * first and last days are limited to the month accordingly.
      *
      * @param month          the month to calculate the summary for
      * @param firstDayOfWeek the day the weeks start on
      * @param spentTimeByDay the time spent by day, as calculated by {@link #calculateSpentTimeByDay(Collection)};
      *                       days outside the month are ignored
-     * @return the time spent and planned for each week of the month, in order
+     * @return the first and last day, and the time spent and planned, of each week of the month, in order
      */
-    public List<FactAndPlan> calculateWeeksSummary(YearMonth month, DayOfWeek firstDayOfWeek,
+    public List<WeekSummary> calculateWeeksSummary(YearMonth month, DayOfWeek firstDayOfWeek,
                                                    Map<LocalDate, SpentTime> spentTimeByDay) {
         Preconditions.checkNotNullArgument(month);
         Preconditions.checkNotNullArgument(firstDayOfWeek);
@@ -153,20 +155,22 @@ public class CalendarSupport {
         LocalDate firstDayOfMonth = month.atDay(1);
         LocalDate lastDayOfMonth = month.atEndOfMonth();
 
-        List<FactAndPlan> weeksSummary = new ArrayList<>();
+        List<WeekSummary> weeksSummary = new ArrayList<>();
         for (LocalDate weekStart = firstDayOfMonth.with(TemporalAdjusters.previousOrSame(firstDayOfWeek));
              !weekStart.isAfter(lastDayOfMonth);
              weekStart = weekStart.plusWeeks(1)) {
-            FactAndPlan weekSummary = FactAndPlan.ZERO;
-            for (LocalDate day = weekStart; day.isBefore(weekStart.plusWeeks(1)); day = day.plusDays(1)) {
-                if (!day.isBefore(firstDayOfMonth) && !day.isAfter(lastDayOfMonth)) {
-                    weekSummary = weekSummary.plus(new FactAndPlan(
-                            spentTimeByDay.getOrDefault(day, SpentTime.ZERO),
-                            getPlannedTime(day)));
-                }
+            LocalDate firstDay = weekStart.isBefore(firstDayOfMonth) ? firstDayOfMonth : weekStart;
+            LocalDate weekEnd = weekStart.plusDays(6);
+            LocalDate lastDay = weekEnd.isAfter(lastDayOfMonth) ? lastDayOfMonth : weekEnd;
+
+            FactAndPlan total = FactAndPlan.ZERO;
+            for (LocalDate day = firstDay; !day.isAfter(lastDay); day = day.plusDays(1)) {
+                total = total.plus(new FactAndPlan(
+                        spentTimeByDay.getOrDefault(day, SpentTime.ZERO),
+                        getPlannedTime(day)));
             }
 
-            weeksSummary.add(weekSummary);
+            weeksSummary.add(new WeekSummary(firstDay, lastDay, total));
         }
 
         return weeksSummary;
@@ -181,10 +185,11 @@ public class CalendarSupport {
      * @return a {@link FactAndPlan} object containing the aggregated monthly summary
      * of actual and planned work hours
      */
-    public FactAndPlan calculateMonthSummary(Collection<FactAndPlan> weeksSummary) {
+    public FactAndPlan calculateMonthSummary(Collection<WeekSummary> weeksSummary) {
         Preconditions.checkNotNullArgument(weeksSummary);
 
         return weeksSummary.stream()
+                .map(WeekSummary::total)
                 .reduce(FactAndPlan.ZERO, FactAndPlan::plus);
     }
 

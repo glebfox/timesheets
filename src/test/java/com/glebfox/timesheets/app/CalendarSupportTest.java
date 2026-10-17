@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.FactAndPlan;
+import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
@@ -113,12 +114,12 @@ public class CalendarSupportTest {
         Map<LocalDate, SpentTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
 
         /* When */
-        List<FactAndPlan> weeksSummary =
+        List<WeekSummary> weeksSummary =
                 calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, spentTimeByDay);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         /* Then */
-        assertThat(weeksSummary).containsExactly(
+        assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
                 // Nov 25 - Dec 1: only Sunday, Dec 1, is in the month
                 factAndPlan(SpentTime.ofHours(2), SpentTime.ZERO),
                 // Dec 2 - Dec 8
@@ -133,9 +134,15 @@ public class CalendarSupportTest {
                 factAndPlan(SpentTime.of(1, 30), SpentTime.ofHours(16))
         );
 
-        assertThat(weeksSummary.get(0).isExcess()).isTrue();
-        assertThat(weeksSummary.get(1).isMatch()).isTrue();
-        assertThat(weeksSummary.get(5).isInsufficient()).isTrue();
+        assertThat(weeksSummary.get(0).total().isExcess()).isTrue();
+        assertThat(weeksSummary.get(1).total().isMatch()).isTrue();
+        assertThat(weeksSummary.get(5).total().isInsufficient()).isTrue();
+
+        // Only the days of the month, not of the whole calendar row
+        assertThat(weeksSummary.get(0).firstDay()).isEqualTo(LocalDate.of(2024, 12, 1));
+        assertThat(weeksSummary.get(0).lastDay()).isEqualTo(LocalDate.of(2024, 12, 1));
+        assertThat(weeksSummary.get(5).firstDay()).isEqualTo(LocalDate.of(2024, 12, 30));
+        assertThat(weeksSummary.get(5).lastDay()).isEqualTo(LocalDate.of(2024, 12, 31));
 
         assertThat(monthSummary).isEqualTo(factAndPlan(SpentTime.of(43, 30), SpentTime.ofHours(176)));
     }
@@ -146,12 +153,12 @@ public class CalendarSupportTest {
         Map<LocalDate, SpentTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
 
         /* When */
-        List<FactAndPlan> weeksSummary =
+        List<WeekSummary> weeksSummary =
                 calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.SUNDAY, spentTimeByDay);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         /* Then */
-        assertThat(weeksSummary).containsExactly(
+        assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
                 // Dec 1 - Dec 7
                 factAndPlan(SpentTime.ofHours(42), SpentTime.ofHours(40)),
                 // Dec 8 - Dec 14
@@ -163,6 +170,12 @@ public class CalendarSupportTest {
                 // Dec 29 - Jan 4: only Sunday to Tuesday are in the month
                 factAndPlan(SpentTime.of(1, 30), SpentTime.ofHours(16))
         );
+
+        // Only the days of the month, not of the whole calendar row
+        assertThat(weeksSummary.get(0).firstDay()).isEqualTo(LocalDate.of(2024, 12, 1));
+        assertThat(weeksSummary.get(0).lastDay()).isEqualTo(LocalDate.of(2024, 12, 7));
+        assertThat(weeksSummary.get(4).firstDay()).isEqualTo(LocalDate.of(2024, 12, 29));
+        assertThat(weeksSummary.get(4).lastDay()).isEqualTo(LocalDate.of(2024, 12, 31));
 
         assertThat(monthSummary).isEqualTo(factAndPlan(SpentTime.of(43, 30), SpentTime.ofHours(176)));
     }

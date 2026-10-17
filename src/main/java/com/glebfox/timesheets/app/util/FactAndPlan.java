@@ -19,6 +19,9 @@ package com.glebfox.timesheets.app.util;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.google.common.base.Preconditions;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * The time actually spent in a period against the time planned for it.
  *
@@ -45,6 +48,32 @@ public record FactAndPlan(SpentTime fact, SpentTime plan) {
      */
     public FactAndPlan plus(FactAndPlan other) {
         return new FactAndPlan(fact.plus(other.fact), plan.plus(other.plan));
+    }
+
+    /**
+     * Returns how far the time spent is from the time planned, whichever of the two is greater.
+     *
+     * @return the absolute difference between the time spent and the time planned
+     */
+    public SpentTime difference() {
+        return SpentTime.ofMinutes(Math.abs(fact.toMinutes() - plan.toMinutes()));
+    }
+
+    /**
+     * Returns the time spent as a percentage of the time planned, computed in minutes
+     * and rounded half up. It exceeds 100 when more time is spent than planned.
+     *
+     * @return the percentage of the plan spent, or {@code 0} if nothing is planned
+     */
+    public int percentOfPlan() {
+        if (plan.toMinutes() == 0) {
+            return 0;
+        }
+
+        return BigDecimal.valueOf(fact.toMinutes())
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(plan.toMinutes()), 0, RoundingMode.HALF_UP)
+                .intValueExact();
     }
 
     /**
