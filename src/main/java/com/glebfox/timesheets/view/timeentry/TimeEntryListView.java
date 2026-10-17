@@ -20,7 +20,8 @@ import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.view.main.MainView;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
@@ -62,9 +63,9 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
             wrapper.addClassNames("gap-s");
 
             for (Tag tag : tags) {
-                Span tagSpan = new Span(metadataTools.format(tag));
-                tagSpan.getElement().setAttribute("theme", "badge small");
-                wrapper.add(tagSpan);
+                Badge tagBadge = new Badge(metadataTools.format(tag));
+                tagBadge.addThemeVariants(BadgeVariant.SMALL);
+                wrapper.add(tagBadge);
             }
 
             return wrapper;
