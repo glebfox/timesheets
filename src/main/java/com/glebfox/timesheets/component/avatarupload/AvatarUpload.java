@@ -204,11 +204,13 @@ public class AvatarUpload extends CustomField<byte[]>
     private void bindUploadItem() {
         // The open sub-menu treats the synthetic click on the hidden file input as an outside click and
         // cancels it, so the file picker is opened right after the item's click, still within its user
-        // activation. Flow recreates the client element on re-attach, hence the flag against binding twice.
+        // activation. Runs on every attach, since Flow can recreate either client element: the button is
+        // looked up at click time, and the flag keeps a surviving item element from getting a second listener.
         uploadItem.getElement().executeJs("""
+                this.__avatarUploadButton = $0;
                 if (!this.__avatarUploadBound) {
                     this.__avatarUploadBound = true;
-                    this.addEventListener('click', () => setTimeout(() => $0.openFilePicker()));
+                    this.addEventListener('click', () => setTimeout(() => this.__avatarUploadButton.openFilePicker()));
                 }""", uploadButton.getElement());
     }
 

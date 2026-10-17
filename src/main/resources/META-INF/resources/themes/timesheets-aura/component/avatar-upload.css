@@ -23,7 +23,13 @@
     border-radius: 50%;
 }
 
-.avatar-upload-menu-bar vaadin-menu-bar-button {
+/* The drop zone's own square drag-over overlay; the avatar shows its own hint */
+.avatar-upload-drop-zone::after {
+    display: none;
+}
+
+/* Two classes outweigh Aura's padding rule for buttons with a sub-menu */
+.avatar-upload .avatar-upload-menu-bar vaadin-menu-bar-button {
     padding: 0;
     min-width: 0;
     height: auto;
@@ -32,9 +38,17 @@
     box-shadow: none;
 }
 
+.avatar-upload-menu-bar vaadin-menu-bar-button::part(suffix) {
+    display: none;
+}
+
 .avatar-upload[readonly] .avatar-upload-menu-bar vaadin-menu-bar-button,
 .avatar-upload[disabled] .avatar-upload-menu-bar vaadin-menu-bar-button {
     cursor: default;
+}
+
+.avatar-upload[readonly] .avatar-upload-menu-bar vaadin-menu-bar-button::before {
+    display: none;
 }
 
 .avatar-upload-avatar {
@@ -99,8 +113,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--vaadin-gap-xs);
+    border: 2px dashed var(--aura-accent-color);
     border-radius: 50%;
-    background: var(--aura-accent-surface);
+    background: var(--aura-surface-color-solid);
     color: var(--aura-accent-text-color);
     font-size: var(--aura-font-size-xs);
 }
@@ -109,14 +124,10 @@
     display: flex;
 }
 
-.avatar-upload-drop-zone[dragover] .avatar-upload-avatar {
-    outline: 2px dashed var(--aura-accent-color);
-    outline-offset: 3px;
-}
-
+/* The menu bar button's label clips anything outside the circle, so the ring sits inside it */
 .avatar-upload-progress {
     position: absolute;
-    inset: -5px;
+    inset: 0;
     display: none;
     border: 3px solid transparent;
     border-top-color: var(--aura-accent-color);
