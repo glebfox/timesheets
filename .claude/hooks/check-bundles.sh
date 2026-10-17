@@ -1,12 +1,16 @@
 #!/bin/bash
 # Stop: keep messages_en and messages_ru_RU key-for-key in sync (docs/conventions.md, "User-visible text").
-# Runs the key comparison only while a bundle differs from origin/main, so other turns cost one git call.
+# Checks the checkout the session works in, and only while a bundle differs from origin/main (deletion included),
+# so other turns cost a few git calls.
+input=$(cat)
+. "$(dirname "$0")/lib.sh"
+root=$(checkout_of "$(jq -r '.cwd // empty' <<<"$input")") || root=$(checkout_of "$CLAUDE_PROJECT_DIR") || exit 0
+cd "$root" || exit 0
 dir=src/main/resources/com/glebfox/timesheets
-cd "$CLAUDE_PROJECT_DIR" || exit 0
-active=$(jq -r '.stop_hook_active // false')
-git diff --quiet origin/main -- "$dir"/messages_*.properties 2>/dev/null && exit 0
+active=$(jq -r '.stop_hook_active // false' <<<"$input")
+git diff --quiet origin/main -- "$dir/messages_*.properties" 2>/dev/null && exit 0
 
-keys() { grep -E '^[^#! ][^=]*=' "$1" | cut -d= -f1 | sed 's/[[:space:]]*$//' | sort; }
+keys() { [ -f "$1" ] && grep -E '^[^#! ][^=]*=' "$1" | cut -d= -f1 | sed 's/[[:space:]]*$//' | sort; }
 d=$(diff <(keys "$dir/messages_en.properties") <(keys "$dir/messages_ru_RU.properties")) && exit 0
 missing=$(echo "$d" | sed -n 's/^< \(.*\)/messages_ru_RU lacks: \1/p; s/^> \(.*\)/messages_en lacks: \1/p')
 

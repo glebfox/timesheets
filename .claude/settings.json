@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "^(Edit|Write|NotebookEdit|Bash)$|^mcp__(idea|jetbrains)__(create_new_file|reformat_file|apply_patch|rename_refactoring|execute_terminal_command)$",
         "hooks": [
           {
             "type": "command",
@@ -11,18 +11,18 @@
         ]
       },
       {
-        "matcher": "Bash|mcp__idea__execute_terminal_command",
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__execute_terminal_command$",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-clean.sh"
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-clean.py"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "^Write$|^mcp__(idea|jetbrains)__create_new_file$",
         "hooks": [
           {
             "type": "command",
@@ -33,7 +33,18 @@
         ]
       },
       {
-        "matcher": "Bash",
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__(apply_patch|rename_refactoring|execute_terminal_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-changelogs.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "^Bash$|^mcp__(idea|jetbrains)__(apply_patch|rename_refactoring|execute_terminal_command)$",
         "hooks": [
           {
             "type": "command",
