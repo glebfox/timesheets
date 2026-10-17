@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.project;
 
 import com.glebfox.timesheets.data.renderer.BadgeRender;
+import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.view.main.MainView;
 import com.vaadin.flow.data.renderer.Renderer;
@@ -40,8 +41,8 @@ public class ProjectListView extends StandardListView<Project> {
         return new BadgeRender<>(
                 project -> metadataTools.format(project.getStatus()),
                 project -> switch (project.getStatus()) {
-                    case OPEN -> "success";
-                    case CLOSED -> "error";
+                    case OPEN -> BadgeStyle.SUCCESS;
+                    case CLOSED -> BadgeStyle.ERROR;
                 }
         );
     }

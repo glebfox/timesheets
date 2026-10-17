@@ -42,7 +42,7 @@ public class ProjectRoleListView extends StandardListView<ProjectRole> {
     private Renderer<ProjectRole> projectRolesDataGridTypeRenderer() {
         return new BadgeRender<>(
                 projectRole -> metadataTools.format(projectRole.getType()),
-                componentSupport.createProjectRoleTypeThemeProvider(ProjectRole::getType)
+                componentSupport.createProjectRoleTypeStyleProvider(ProjectRole::getType)
         );
     }
 }

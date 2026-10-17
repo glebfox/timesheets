@@ -23,6 +23,8 @@ import com.google.common.base.Strings;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.router.Route;
@@ -167,10 +169,11 @@ public class MainView extends StandardTabbedModeMainView {
     private void updateRejectedTimeEntries() {
         long count = timeEntrySupport.getRejectedCount();
 
-        Span badge = null;
+        Badge badge = null;
         if (count > 0) {
-            badge = new Span("" + count);
-            badge.getElement().getThemeList().add("badge error");
+            badge = new Badge();
+            badge.setNumber(Math.toIntExact(count));
+            badge.addThemeVariants(BadgeVariant.ERROR);
         }
 
         ListMenu.MenuItem teMenuItem = menu.getMenuItem("ts_TimeEntry.my");

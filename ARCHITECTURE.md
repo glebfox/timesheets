@@ -11,7 +11,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `app/` — beans with the domain queries and helpers that views call (`*Support`, `TimeParser`). `app/util/` holds the value types behind the calendar's totals (`FactAndPlan`, `WeekSummary`, `WeekStatus`) and `ComponentSupport`, which builds shared UI pieces: avatars, the user cell, the time-entry status badge, project-role badge colors, and the task-with-project cell. Not every view uses it yet: the tags badges, the project and task status badges, and the main view's avatar are still built in their views.
 - `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions (`list_timeEntry_copy`).
-- `data/renderer/` — reusable grid renderers (badge, user).
+- `data/renderer/` — reusable grid renderers (badge, user), and `BadgeStyle`, the badge looks the badge renderer applies.
 - `component/` — custom UI components and icon sets. `imageUpload` is usable in descriptors through the `app-ui-components.xsd` namespace and is registered in `TimesheetsApplication`; the icon sets' JavaScript is in `src/main/frontend/src/component/icon/`. `component/themeswitcher` is not used: the user menu uses the framework's theme-switch action.
 - `listener/`, `event/` — the time-entry listener and the UI event it publishes to open sessions.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.

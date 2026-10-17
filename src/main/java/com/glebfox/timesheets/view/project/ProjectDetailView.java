@@ -20,6 +20,7 @@ import com.glebfox.timesheets.app.ProjectSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
+import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
@@ -100,8 +101,8 @@ public class ProjectDetailView extends StandardDetailView<Project> {
         return new BadgeRender<>(
                 task -> metadataTools.format(task.getStatus()),
                 task -> switch (task.getStatus()) {
-                    case ACTIVE -> "success";
-                    case INACTIVE -> "error";
+                    case ACTIVE -> BadgeStyle.SUCCESS;
+                    case INACTIVE -> BadgeStyle.ERROR;
                 }
         );
     }
@@ -110,7 +111,7 @@ public class ProjectDetailView extends StandardDetailView<Project> {
     private Renderer<ProjectParticipant> participantsDataGridRoleRenderer() {
         return new BadgeRender<>(
                 projectParticipant -> metadataTools.format(projectParticipant.getRole()),
-                componentSupport.createProjectRoleTypeThemeProvider(projectParticipant ->
+                componentSupport.createProjectRoleTypeStyleProvider(projectParticipant ->
                         projectParticipant.getRole().getType())
         );
     }

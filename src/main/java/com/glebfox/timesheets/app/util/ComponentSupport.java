@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.app.util;
 
 import com.glebfox.timesheets.data.renderer.BadgeRender;
+import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
@@ -121,38 +122,38 @@ public class ComponentSupport {
 
     /**
      * Creates a {@link BadgeRender} specifically configured for rendering the status of {@link TimeEntry} entities.
-     * The returned renderer formats the status as a string and applies a theme based on the status value.
+     * The returned renderer formats the status as a string and applies a style based on the status value.
      *
      * @return a {@link BadgeRender} instance for rendering {@link TimeEntry} status with appropriate formatting
-     * and theming.
+     * and styling.
      */
     public BadgeRender<TimeEntry> createTimeEntryStatusRender() {
         return new BadgeRender<>(
                 timeEntry -> metadataTools.format(timeEntry.getStatus()),
                 timeEntry -> switch (timeEntry.getStatus()) {
-                    case NEW -> "warning";
-                    case APPROVED -> "success";
-                    case REJECTED -> "error";
-                    case CLOSED -> "contrast";
+                    case NEW -> BadgeStyle.WARNING;
+                    case APPROVED -> BadgeStyle.SUCCESS;
+                    case REJECTED -> BadgeStyle.ERROR;
+                    case CLOSED -> BadgeStyle.NEUTRAL;
                 }
         );
     }
 
     /**
-     * Creates a function that maps items to theme names based on their {@link ProjectRoleType}.
+     * Creates a function that maps items to badge styles based on their {@link ProjectRoleType}.
      * The returned function uses the provided {@link Function} to determine the {@link ProjectRoleType}
-     * of a given item and maps it to a string representing a theme.
+     * of a given item and maps it to a {@link BadgeStyle}.
      *
      * @param <ITEM>   the type of the items to be processed
      * @param provider a {@link Function} that determines the {@link ProjectRoleType} of a given item
-     * @return a function mapping items to theme names based on their {@link ProjectRoleType}
+     * @return a function mapping items to badge styles based on their {@link ProjectRoleType}
      */
-    public <ITEM> Function<ITEM, String> createProjectRoleTypeThemeProvider(Function<ITEM, ProjectRoleType> provider) {
+    public <ITEM> Function<ITEM, BadgeStyle> createProjectRoleTypeStyleProvider(Function<ITEM, ProjectRoleType> provider) {
         return item -> switch (provider.apply(item)) {
-            case MANAGER -> "primary";
-            case APPROVER -> "success";
-            case OBSERVER -> "contrast";
-            case MEMBER -> "";
+            case MANAGER -> BadgeStyle.FILLED;
+            case APPROVER -> BadgeStyle.SUCCESS;
+            case OBSERVER -> BadgeStyle.NEUTRAL;
+            case MEMBER -> BadgeStyle.DEFAULT;
         };
     }
 
