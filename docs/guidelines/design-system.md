@@ -62,7 +62,7 @@ Use accent class names (e.g. `.aura-accent-purple`) on `<html>` or individual co
 | Warning | `warning` | `.aura-accent-yellow`, `.v-warning` | `--ts-warning-color` |
 | Info | `info` | `.aura-accent-blue`, `.v-info` | `--ts-primary-color` |
 
-Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly.
+Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange or neutral; such rules use `--aura-orange` and `--aura-neutral`.
 
 ---
 

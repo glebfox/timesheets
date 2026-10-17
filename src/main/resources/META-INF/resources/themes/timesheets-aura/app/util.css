@@ -64,3 +64,28 @@ hr {
 .gap-s {
     gap: var(--vaadin-gap-s);
 }
+
+.component-group > * {
+    border-radius: 0;
+    --vaadin-input-field-border-radius: 0;
+}
+
+.component-group > *:first-child {
+    border-start-start-radius: var(--vaadin-radius-m);
+    border-end-start-radius: var(--vaadin-radius-m);
+
+    --vaadin-input-field-top-start-radius: var(--vaadin-radius-m);
+    --vaadin-input-field-bottom-start-radius: var(--vaadin-radius-m);
+}
+
+.component-group > *:last-child {
+    border-start-end-radius: var(--vaadin-radius-m);
+    border-end-end-radius: var(--vaadin-radius-m);
+
+    --vaadin-input-field-top-end-radius: var(--vaadin-radius-m);
+    --vaadin-input-field-bottom-end-radius: var(--vaadin-radius-m);
+}
+
+.component-group > vaadin-button:not(:first-child) {
+    border-inline-start: none;
+}

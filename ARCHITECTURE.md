@@ -6,9 +6,9 @@ A single-module Jmix application (Spring Boot, Vaadin Flow UI) for logging time 
 
 Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors, message bundles, and changelogs are under the same package in `src/main/resources`.
 
-- `entity/<area>/` — JPA entities and their enums: `client`, `project` (projects, participants, project roles), `task` (tasks, task types), `tag` (tag groups, tags), `timeentry`, `user`, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
+- `entity/<area>/` — JPA entities and their enums: `client`, `project` (projects, participants, project roles), `task` (tasks, task types), `tag` (tag groups, tags), `timeentry`, `user`, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`. `timeentry` also holds `TimeEntryCalendarWrapper`, a non-persistent wrapper that the calendar binds in place of the entity.
 - `datatype/` — the `SpentTime` value type, its Jmix datatype, and its JPA converter.
-- `app/` — beans with the domain queries and helpers that views call (`*Support`, `TimeParser`). `app/util/ComponentSupport` builds shared UI pieces: avatars, the user cell, the time-entry status badge, project-role badge colors, and the task-with-project cell. Not every view uses it yet: the tags badges, the project and task status badges, and the main view's avatar are still built in their views.
+- `app/` — beans with the domain queries and helpers that views call (`*Support`, `TimeParser`). `app/util/` holds the value types behind the calendar's totals (`FactAndPlan`, `WeekSummary`, `WeekStatus`) and `ComponentSupport`, which builds shared UI pieces: avatars, the user cell, the time-entry status badge, project-role badge colors, and the task-with-project cell. Not every view uses it yet: the tags badges, the project and task status badges, and the main view's avatar are still built in their views.
 - `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions (`list_timeEntry_copy`).
 - `data/renderer/` — reusable grid renderers (badge, user).

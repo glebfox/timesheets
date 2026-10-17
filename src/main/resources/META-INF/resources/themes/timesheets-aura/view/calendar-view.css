@@ -1,0 +1,343 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.calendar-view {
+    container-name: main;
+    container-type: inline-size;
+}
+
+/* Top Panel */
+
+.calendar-view-top-panel {
+    display: grid;
+    grid-template: "header"
+                   "controls";
+    row-gap: var(--vaadin-gap-m);
+    width: 100%;
+}
+
+.calendar-view-month-header {
+    grid-area: header;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    column-gap: var(--vaadin-gap-s);
+    text-align: center;
+}
+
+.calendar-view-month-header-year {
+    color: var(--vaadin-text-color-secondary);
+    font-weight: var(--aura-font-weight-medium);
+}
+
+.calendar-view-controls {
+    grid-area: controls;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Stretches over the row's height: Aura defines no button or field height to size it by */
+.calendar-view-controls-divider {
+    width: 1px;
+    align-self: stretch;
+    margin-block: var(--vaadin-gap-xs);
+    background: var(--vaadin-border-color-secondary);
+}
+
+@container main (min-width: 800px) {
+    .calendar-view-top-panel {
+        grid-template: "header controls";
+        grid-template-columns: auto 1fr;
+        grid-column-gap: var(--vaadin-gap-m);
+    }
+
+    .calendar-view-month-header {
+        width: max-content;
+    }
+
+    .calendar-view-controls {
+        justify-content: end;
+    }
+}
+
+@container main (min-width: 1366px) {
+    .calendar-view-top-panel {
+        grid-template: "prefix header controls";
+        grid-template-columns: 1fr auto 1fr;
+    }
+}
+
+/* Calendar */
+
+/* Together with the weeks summary wrapper, lets the week cards shrink with the calendar rows
+   instead of pushing the layout taller than the screen */
+.calendar-view-calendar-box {
+    min-height: 0;
+}
+
+/* Summary */
+
+/* The week column continues the calendar's grid and its frame. The calendar's own right line is
+   the seam between them. The lines take the calendar's grid color: Jmix's FullCalendar styles set
+   --fc-border-color to --vaadin-border-color on the calendar element only, so it is not inherited here */
+.calendar-view-weeks-summary {
+    width: 10rem;
+    border-block-start: 1px solid var(--vaadin-border-color);
+    border-inline-end: 1px solid var(--vaadin-border-color);
+}
+
+/* As tall as the calendar's day-name cells: the same padding, type size, and bottom line */
+.calendar-view-weeks-summary-header {
+    text-align: center;
+    text-transform: uppercase;
+    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
+    border-block-end: 1px solid var(--vaadin-border-color);
+
+    font-size: var(--aura-font-size-m);
+    font-weight: bold;
+    line-height: var(--aura-line-height-m);
+}
+
+.calendar-view-weeks-summary-wrapper {
+    min-height: 0;
+}
+
+/* Every cell, the last one included, has a bottom line, so the equal cells split the same height
+   as the calendar's rows and their lines sit level with the rows' lines. The zero basis keeps the
+   cells equal whatever their content. The block padding is 1px less than the token to give back
+   the height the lines take. The background is the month footer's */
+.calendar-view-week-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1 1 0;
+    gap: var(--vaadin-gap-xs);
+    min-height: 0;
+    overflow: hidden;
+    padding: calc(var(--vaadin-padding-xs) - 1px) var(--vaadin-padding-s);
+    border-block-end: 1px solid var(--vaadin-border-color);
+    background: var(--aura-surface-color);
+}
+
+.calendar-view-week-summary-current {
+    background: var(--aura-accent-surface);
+}
+
+.calendar-view-week-summary-totals {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--vaadin-gap-xs);
+    white-space: nowrap;
+}
+
+.calendar-view-week-summary-fact {
+    font-size: var(--aura-font-size-l);
+    font-weight: bold;
+    line-height: var(--aura-line-height-l);
+}
+
+/* The part of an over-long totals line that gives way, with an ellipsis */
+.calendar-view-week-summary-plan {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-medium);
+    line-height: var(--aura-line-height-s);
+}
+
+.calendar-view-week-summary-progress {
+    flex-shrink: 0;
+}
+
+.calendar-view-week-summary-note {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xs);
+}
+
+.calendar-view-week-summary-over {
+    --vaadin-progress-bar-value-background: var(--aura-accent-color);
+}
+
+.calendar-view-week-summary-over .calendar-view-week-summary-note {
+    color: var(--aura-accent-text-color);
+}
+
+.calendar-view-week-summary-on-plan {
+    --vaadin-progress-bar-value-background: var(--ts-success-color);
+}
+
+.calendar-view-week-summary-on-plan .calendar-view-week-summary-note {
+    color: var(--ts-success-color);
+}
+
+.calendar-view-week-summary-short {
+    --vaadin-progress-bar-value-background: var(--aura-orange);
+}
+
+.calendar-view-week-summary-short .calendar-view-week-summary-note {
+    color: var(--aura-orange-text);
+}
+
+.calendar-view-week-summary-in-progress,
+.calendar-view-week-summary-upcoming {
+    --vaadin-progress-bar-value-background: color-mix(in srgb, var(--aura-accent-color) 50%, transparent);
+}
+
+.calendar-view-week-summary-upcoming .calendar-view-week-summary-fact {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.calendar-view-month-summary {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--vaadin-gap-m);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-xs);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+    background: var(--aura-surface-color);
+}
+
+.calendar-view-month-summary-item {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    padding-inline: var(--vaadin-padding-s);
+}
+
+/* Two columns: one divider between them, across the row gap. The columns are equal and the
+   inline padding symmetric, so the boundary between them is the middle */
+.calendar-view-month-summary::before {
+    content: "";
+    position: absolute;
+    inset-block: var(--vaadin-padding-s);
+    inset-inline-start: 50%;
+    width: 1px;
+    background: var(--vaadin-border-color-secondary);
+}
+
+.calendar-view-month-summary-icon {
+    --vaadin-icon-size: var(--aura-line-height-xl);
+    flex-shrink: 0;
+    color: var(--vaadin-text-color-secondary);
+}
+
+.calendar-view-month-summary-figure {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.calendar-view-month-summary-value {
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-xl);
+    font-weight: bold;
+    line-height: var(--aura-line-height-xl);
+}
+
+.calendar-view-month-summary-value-over {
+    color: var(--aura-accent-text-color);
+}
+
+.calendar-view-month-summary-label {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-medium);
+    line-height: var(--aura-line-height-s);
+}
+
+/* As wide as the figure's text. Takes no height: it lies in the bottom of the value's line, under the
+   digits, so all figures are equally tall and their values and labels sit level */
+.calendar-view-month-summary-progress {
+    --vaadin-progress-bar-height: var(--vaadin-gap-xs);
+    --vaadin-progress-bar-value-background: var(--aura-accent-color);
+    margin-block-start: calc(var(--vaadin-gap-xs) * -1);
+}
+
+@container main (min-width: 800px) {
+    .calendar-view-month-summary {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .calendar-view-month-summary::before {
+        content: none;
+    }
+
+    .calendar-view-month-summary-item {
+        padding-inline: var(--vaadin-padding-m);
+    }
+
+    .calendar-view-month-summary-item:not(:first-child) {
+        border-inline-start: 1px solid var(--vaadin-border-color-secondary);
+    }
+}
+
+.excess-time {
+    color: var(--aura-accent-color);
+}
+
+.insufficient-time {
+    color: var(--ts-danger-color);
+}
+
+/* Events */
+
+.time-entry {
+    font-size: round(var(--aura-font-size-m) * 0.8, 0.0625rem); /* less than --aura-font-size-xs */
+}
+
+.fc-direction-ltr .time-entry.fc-daygrid-event,
+.fc-direction-rtl .time-entry.fc-daygrid-event {
+    margin: 0;
+    padding-block: 0;
+}
+
+.time-entry-new > .fc-daygrid-event-dot {
+    border-color: var(--ts-warning-color);
+}
+
+.time-entry-approved > .fc-daygrid-event-dot {
+    border-color: var(--ts-success-color);
+}
+
+.time-entry-rejected > .fc-daygrid-event-dot {
+    border-color: var(--ts-danger-color);
+}
+
+.time-entry-closed > .fc-daygrid-event-dot {
+    border-color: var(--aura-neutral);
+}
+
+/* Bottom Text */
+
+.jmix-day-cell-bottom-text.matching-time {
+    color: var(--ts-success-color);
+}

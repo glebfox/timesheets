@@ -8,6 +8,7 @@ A duration in whole hours and minutes: the time spent in a [time entry](time-ent
 
 - Hours are zero or more, with no upper bound; minutes are 0–59. Any other combination is rejected.
 - Two values are equal when their hours and minutes are equal.
+- Values add up and compare exactly to the minute: three times 20 minutes is one hour.
 - As decimal hours, a value is truncated to two decimals: 20 minutes is 0.33.
 
 ## Display
