@@ -225,7 +225,8 @@ public class CalendarView extends StandardView {
     private void onCalendarDatesSet(final DatesSetEvent event) {
         DisplayModeInfo displayModeInfo = event.getDisplayModeInfo();
         displayedMonth = YearMonth.from(displayModeInfo.getCurrentStartDate());
-        // The month grid starts with the first day of a week
+        // The month grid starts with the first day of a week, which the calendar takes
+        // from its own messages rather than from the locale
         firstDayOfWeek = displayModeInfo.getActiveStartDate().getDayOfWeek();
 
         updateMonthHeader();
@@ -298,7 +299,7 @@ public class CalendarView extends StandardView {
         // the previous ones, so a day whose time changes would keep the old state's colors.
         // The bottom text is regenerated after the calendar receives the changed events,
         // which happens after this script runs.
-        // TODO: gg, remove when the calendar replaces the class names itself
+        // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/5840 is fixed
         calendar.getElement().executeJs("""
                 this.querySelectorAll('.jmix-day-cell-bottom-text')
                     .forEach(bottomText => bottomText.className = 'jmix-day-cell-bottom-text');
@@ -399,6 +400,7 @@ public class CalendarView extends StandardView {
 
     @Install(to = "calendar", subject = "dayCellBottomTextGenerator")
     private String calendarDayCellBottomTextGenerator(final DayCellBottomTextContext context) {
+        // Always return a text: the calendar keeps the previous text in place of a null one
         return spentTimeByDay.getOrDefault(context.getDate(), SpentTime.ZERO).toString();
     }
 
