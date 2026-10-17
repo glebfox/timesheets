@@ -9,6 +9,15 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-changelogs.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|mcp__idea__execute_terminal_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-clean.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
