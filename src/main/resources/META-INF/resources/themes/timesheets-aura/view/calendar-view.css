@@ -84,11 +84,87 @@
 
 .calendar-view-week-summary {
     display: flex;
-    align-items: center;
-
-    font-size: var(--aura-font-size-s);
-    font-weight: bold;
+    flex-direction: column;
+    justify-content: center;
     flex-grow: 1;
+    gap: var(--vaadin-gap-xs);
+    min-height: 0;
+    overflow: hidden;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border-radius: var(--vaadin-radius-m);
+}
+
+.calendar-view-week-summary-current {
+    background: var(--aura-accent-surface);
+}
+
+.calendar-view-week-summary-totals {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--vaadin-gap-xs);
+    white-space: nowrap;
+}
+
+.calendar-view-week-summary-fact {
+    font-size: var(--aura-font-size-l);
+    font-weight: bold;
+    line-height: var(--aura-line-height-l);
+}
+
+.calendar-view-week-summary-plan {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-medium);
+    line-height: var(--aura-line-height-s);
+}
+
+.calendar-view-week-summary-progress {
+    flex-shrink: 0;
+}
+
+.calendar-view-week-summary-note {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xs);
+}
+
+.calendar-view-week-summary-over {
+    --vaadin-progress-bar-value-background: var(--aura-accent-color);
+}
+
+.calendar-view-week-summary-over .calendar-view-week-summary-note {
+    color: var(--aura-accent-text-color);
+}
+
+.calendar-view-week-summary-on-plan {
+    --vaadin-progress-bar-value-background: var(--aura-green);
+}
+
+.calendar-view-week-summary-on-plan .calendar-view-week-summary-note {
+    color: var(--aura-green-text);
+}
+
+.calendar-view-week-summary-short {
+    --vaadin-progress-bar-value-background: var(--aura-orange);
+}
+
+.calendar-view-week-summary-short .calendar-view-week-summary-note {
+    color: var(--aura-orange-text);
+}
+
+.calendar-view-week-summary-in-progress,
+.calendar-view-week-summary-upcoming {
+    --vaadin-progress-bar-value-background: color-mix(in srgb, var(--aura-accent-color) 50%, transparent);
+}
+
+.calendar-view-week-summary-upcoming .calendar-view-week-summary-fact {
+    color: var(--vaadin-text-color-secondary);
 }
 
 .calendar-view-month-summary {

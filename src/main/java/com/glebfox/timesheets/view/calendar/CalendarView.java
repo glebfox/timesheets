@@ -19,6 +19,7 @@ package com.glebfox.timesheets.view.calendar;
 
 import com.glebfox.timesheets.app.CalendarSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
+import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.datatype.SpentTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -33,6 +34,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.*;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
@@ -264,27 +266,81 @@ public class CalendarView extends StandardView {
         this.monthSummary.addClassName(getTimeClassName(monthTotalHours));
     }
 
-    private void updateWeeksSummary(List<WeekSummary> weeksSummary) {
+    private void updateWeeksSummary(List<WeekSummary> weeks) {
         weeksSummaryWrapper.removeAll();
 
-        for (WeekSummary week : weeksSummary) {
-            FactAndPlan weekSummary = week.total();
-
-            Span weekSummaryText = new Span();
-            weekSummaryText.setClassName("calendar-view-week-summary");
-
-            if (weekSummary.isMatch()) {
-                weekSummaryText.setText(metadataTools.format(weekSummary.fact()));
-            } else {
-                weekSummaryText.setText("%s (%s)".formatted(
-                        metadataTools.format(weekSummary.fact()),
-                        metadataTools.format(weekSummary.plan())
-                ));
-            }
-            weekSummaryText.addClassName(getTimeClassName(weekSummary));
-
-            weeksSummaryWrapper.add(weekSummaryText);
+        LocalDate today = getToday();
+        for (WeekSummary week : weeks) {
+            weeksSummaryWrapper.add(createWeekSummary(week, today));
         }
+    }
+
+    private Div createWeekSummary(WeekSummary week, LocalDate today) {
+        FactAndPlan total = week.total();
+        WeekStatus status = week.getStatus(today);
+
+        Span fact = new Span(formatTotal(total.fact()));
+        fact.setClassName("calendar-view-week-summary-fact");
+
+        Span plan = new Span(messageBundle.formatMessage("weekSummary.plan.text", formatTotal(total.plan())));
+        plan.setClassName("calendar-view-week-summary-plan");
+
+        Div totals = new Div(fact, plan);
+        totals.setClassName("calendar-view-week-summary-totals");
+
+        ProgressBar progress = new ProgressBar();
+        progress.setValue(getProgress(total));
+        progress.setClassName("calendar-view-week-summary-progress");
+
+        Span note = new Span(getWeekStatusNote(status, total));
+        note.setClassName("calendar-view-week-summary-note");
+
+        Div weekSummary = new Div(totals, progress, note);
+        weekSummary.addClassNames("calendar-view-week-summary", getWeekStatusClassName(status));
+        if (week.isCurrent(today)) {
+            weekSummary.addClassName("calendar-view-week-summary-current");
+        }
+
+        return weekSummary;
+    }
+
+    private double getProgress(FactAndPlan total) {
+        long planMinutes = total.plan().toMinutes();
+        if (planMinutes == 0) {
+            return total.fact().toMinutes() > 0 ? 1 : 0;
+        }
+
+        return Math.min((double) total.fact().toMinutes() / planMinutes, 1);
+    }
+
+    private String getWeekStatusClassName(WeekStatus status) {
+        return switch (status) {
+            case OVER -> "calendar-view-week-summary-over";
+            case ON_PLAN -> "calendar-view-week-summary-on-plan";
+            case SHORT -> "calendar-view-week-summary-short";
+            case IN_PROGRESS -> "calendar-view-week-summary-in-progress";
+            case UPCOMING -> "calendar-view-week-summary-upcoming";
+            case NO_WORKDAYS -> "calendar-view-week-summary-no-workdays";
+        };
+    }
+
+    private String getWeekStatusNote(WeekStatus status, FactAndPlan total) {
+        String difference = formatTotal(total.difference());
+
+        return switch (status) {
+            case OVER -> messageBundle.formatMessage("weekStatus.over.text", difference);
+            case ON_PLAN -> messageBundle.getMessage("weekStatus.onPlan.text");
+            case SHORT -> messageBundle.formatMessage("weekStatus.short.text", difference);
+            case IN_PROGRESS -> messageBundle.formatMessage("weekStatus.inProgress.text", difference);
+            case UPCOMING -> messageBundle.getMessage("weekStatus.upcoming.text");
+            case NO_WORKDAYS -> messageBundle.getMessage("weekStatus.noWorkdays.text");
+        };
+    }
+
+    private String formatTotal(SpentTime time) {
+        return time.getMinutes() == 0
+                ? messageBundle.formatMessage("totalHours.format", time.getHours())
+                : metadataTools.format(time);
     }
 
     private String getTimeClassName(FactAndPlan factAndPlan) {
@@ -468,7 +524,11 @@ public class CalendarView extends StandardView {
     }
 
     private void updateTodayButton() {
-        todayBtn.setEnabled(!displayedMonth.equals(YearMonth.now()));
+        todayBtn.setEnabled(!displayedMonth.equals(YearMonth.from(getToday())));
+    }
+
+    private LocalDate getToday() {
+        return LocalDate.now();
     }
 
     @Nullable

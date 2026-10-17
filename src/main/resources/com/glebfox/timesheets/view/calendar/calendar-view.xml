@@ -88,7 +88,7 @@
                     classNames="calendar-view-weeks-summary-header"/>
                 <flexLayout id="weeksSummaryWrapper"
                             flexDirection="COLUMN"
-                            alignItems="CENTER"
+                            alignItems="STRETCH"
                             classNames="calendar-view-weeks-summary-wrapper"
                             width="100%" height="100%"/>
             </flexLayout>
