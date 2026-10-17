@@ -187,11 +187,11 @@
 }
 
 .calendar-view-week-summary-on-plan {
-    --vaadin-progress-bar-value-background: var(--aura-green);
+    --vaadin-progress-bar-value-background: var(--ts-success-color);
 }
 
 .calendar-view-week-summary-on-plan .calendar-view-week-summary-note {
-    color: var(--aura-green-text);
+    color: var(--ts-success-color);
 }
 
 .calendar-view-week-summary-short {
@@ -305,7 +305,7 @@
 }
 
 .insufficient-time {
-    color: var(--aura-red);
+    color: var(--ts-danger-color);
 }
 
 /* Events */
@@ -321,15 +321,15 @@
 }
 
 .time-entry-new > .fc-daygrid-event-dot {
-    border-color: var(--aura-yellow);
+    border-color: var(--ts-warning-color);
 }
 
 .time-entry-approved > .fc-daygrid-event-dot {
-    border-color: var(--aura-green);
+    border-color: var(--ts-success-color);
 }
 
 .time-entry-rejected > .fc-daygrid-event-dot {
-    border-color: var(--aura-red);
+    border-color: var(--ts-danger-color);
 }
 
 .time-entry-closed > .fc-daygrid-event-dot {
@@ -339,5 +339,5 @@
 /* Bottom Text */
 
 .jmix-day-cell-bottom-text.matching-time {
-    color: var(--aura-green-text);
+    color: var(--ts-success-color);
 }
