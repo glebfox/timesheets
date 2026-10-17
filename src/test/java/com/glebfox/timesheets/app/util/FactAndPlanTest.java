@@ -38,6 +38,8 @@ class FactAndPlanTest {
         assertThat(new FactAndPlan(SpentTime.of(131, 30), SpentTime.ofHours(176)).percentOfPlan()).isEqualTo(75);
         assertThat(new FactAndPlan(SpentTime.ofHours(185), SpentTime.ofHours(176)).percentOfPlan()).isEqualTo(105);
         assertThat(new FactAndPlan(SpentTime.ofHours(40), SpentTime.ofHours(40)).percentOfPlan()).isEqualTo(100);
+        // 12.5% rounds half up to 13; half even would give 12
+        assertThat(new FactAndPlan(SpentTime.ofMinutes(1), SpentTime.ofMinutes(8)).percentOfPlan()).isEqualTo(13);
         assertThat(new FactAndPlan(SpentTime.ZERO, SpentTime.ZERO).percentOfPlan()).isZero();
         assertThat(new FactAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)).percentOfPlan()).isZero();
     }
