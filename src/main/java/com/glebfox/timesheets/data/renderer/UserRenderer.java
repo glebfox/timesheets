@@ -18,8 +18,9 @@ package com.glebfox.timesheets.data.renderer;
 
 import com.glebfox.timesheets.entity.user.User;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.streams.DownloadHandler;
@@ -61,7 +62,7 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
 
         Avatar avatar = createAvatar(name, user.getAvatar());
         Div title = createTitle(name);
-        Span activeBadge = createStatusBadge(user);
+        Badge activeBadge = createStatusBadge(user);
 
         Div wrapper = new Div();
         wrapper.setClassName("user-name-layout");
@@ -108,14 +109,11 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
         return fullNameDiv;
     }
 
-    private Span createStatusBadge(User user) {
-        Span activeBadge = new Span();
-        activeBadge.setText(statusProvider.apply(user));
+    private Badge createStatusBadge(User user) {
+        Badge activeBadge = new Badge(statusProvider.apply(user));
         activeBadge.setClassName("title-suffix");
-        activeBadge.getElement()
-                .setAttribute("theme", "badge small " +
-                        (Boolean.TRUE.equals(user.getActive()) ? "success" : "error")
-                );
+        activeBadge.addThemeVariants(BadgeVariant.SMALL,
+                Boolean.TRUE.equals(user.getActive()) ? BadgeVariant.SUCCESS : BadgeVariant.ERROR);
         return activeBadge;
     }
 

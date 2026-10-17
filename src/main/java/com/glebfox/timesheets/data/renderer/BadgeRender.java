@@ -16,26 +16,25 @@
 
 package com.glebfox.timesheets.data.renderer;
 
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 import java.util.function.Function;
 
 /**
- * A renderer for displaying badge-style components in a user interface.
+ * A renderer for displaying badges in a user interface.
  * This class is a generic specialization of ComponentRenderer, designed to render
- * items into a {@link Span} component with a "badge" theme applied based on the item's properties.
+ * items into a {@link Badge} component styled based on the item's properties.
  *
  * @param <ITEM> the type of the items being rendered
  */
-public class BadgeRender<ITEM> extends ComponentRenderer<Span, ITEM> {
+public class BadgeRender<ITEM> extends ComponentRenderer<Badge, ITEM> {
 
     public BadgeRender(Function<ITEM, String> valueProvider,
-                       Function<ITEM, String> themeProvider) {
-        super(Span::new, (span, item) -> {
-            String theme = themeProvider.apply(item);
-            span.getElement().setAttribute("theme", "badge " + theme);
-            span.setText(valueProvider.apply(item));
+                       Function<ITEM, BadgeStyle> styleProvider) {
+        super(Badge::new, (badge, item) -> {
+            badge.setText(valueProvider.apply(item));
+            styleProvider.apply(item).applyTo(badge);
         });
     }
 }
