@@ -20,7 +20,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.
 
-Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each; `.claude/skills/` and `.agents/skills/` link to them by symlinks, so Claude Code and other agents read the same files. Claude Code subagents are in `.claude/agents/`, and its hooks are in `.claude/hooks/`, wired in `.claude/settings.json`; the hooks need `jq` on the PATH.
+Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each; `.claude/skills/` and `.agents/skills/` link to them by symlinks, so Claude Code and other agents read the same files. Claude Code subagents are in `.claude/agents/`, and its hooks are in `.claude/hooks/`, wired in `.claude/settings.json`. The hooks need `jq` and `python3` on the PATH, and the skills that touch GitHub need `gh` signed in with the `project` scope.
 
 ## Profiles
 

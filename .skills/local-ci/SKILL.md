@@ -19,7 +19,7 @@ A quick loop over one test class can stay in this checkout, since it does not cl
 
 - **PASSED** — the clone is deleted.
 - **FAILED** — the clone is kept; the script prints the failing tasks, the failing test classes, the report, and the log.
-- A `spotlessCheck` failure is a missing license header: run `./gradlew spotlessApply` in this checkout (it does not touch `build/`).
+- A `spotlessCheck` failure is a missing license header: run `./gradlew spotlessApply` in this checkout. It neither cleans nor compiles, so the running app keeps its classes.
 - The clone has no `.jmix/conf`. A test that passes here but fails in this checkout points at a stale local override (`docs/guidelines/testing.md`).
 
 It proves what CI proves. How screens render needs a live check: the `live-checker` agent.
