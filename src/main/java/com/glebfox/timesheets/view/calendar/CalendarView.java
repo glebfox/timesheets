@@ -421,8 +421,12 @@ public class CalendarView extends StandardView {
         dialogWindows.detail(this, TimeEntry.class)
                 .withViewClass(TimeEntryDetailView.class)
                 .editEntity(timeEntryToEdit.getTimeEntry())
-                .withViewConfigurer(view ->
-                        view.setOwnTimeEntry(true))
+                .withViewConfigurer(view -> {
+                    // Without a reload, the edited entity keeps the version it had before the save,
+                    // and a later remove or move of the entry fails as a concurrent change
+                    view.setReloadSaved(true);
+                    view.setOwnTimeEntry(true);
+                })
                 .withAfterCloseListener(closeEvent -> {
                     if (closeEvent.closedWith(StandardOutcome.SAVE)) {
                         TimeEntry timeEntry = closeEvent.getView().getEditedEntity();

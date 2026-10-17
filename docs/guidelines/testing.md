@@ -8,6 +8,7 @@ Project-specific mechanics of the test harness. How to write Jmix tests in gener
 - The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, as the existing tests do, so no rows are left for the next test.
 - Non-UI tests authenticate through the `test_support/AuthenticatedAsAdmin` extension.
 - UI tests boot with `TabbedModeTestAssistConfiguration` in place of the skill's `FlowuiTestAssistConfiguration`, because the main view is a tabbed-mode main view. See `UserUiTest`.
+- The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled`. Without it, option and message dialogs publish no opened event, and `UiTestUtils.getLastOpenedDialog()` returns null even while a dialog is open. See `CalendarUiTest`.
 - HSQLDB has none of the unique indexes (`docs/guidelines/database.md`), so no test can check name uniqueness.
 
 ## Local overrides in `.jmix/conf`
