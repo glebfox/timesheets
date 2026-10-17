@@ -8,9 +8,12 @@ work=$(mktemp -d "${TMPDIR:-/tmp}/local-ci.XXXXXX")
 
 git clone --quiet --no-checkout "$root" "$work" &&
   git -C "$work" checkout --quiet --detach "$(git -C "$root" rev-parse HEAD)" || exit 1
-git -C "$root" diff --binary HEAD >"$work/.local-ci.patch"
+# Pin the diff format, so that a user's diff settings (no prefixes, an external diff tool, color) cannot break the patch.
+git -C "$root" -c diff.noprefix=false -c diff.mnemonicPrefix=false -c diff.relative=false \
+  diff --no-ext-diff --no-color --binary HEAD >"$work/.local-ci.patch"
 if [ -s "$work/.local-ci.patch" ]; then
-  git -C "$work" apply "$work/.local-ci.patch" || { echo "Could not apply the uncommitted changes; clone kept at $work" >&2; exit 1; }
+  git -C "$work" apply --whitespace=nowarn "$work/.local-ci.patch" ||
+    { echo "Could not apply the uncommitted changes; clone kept at $work" >&2; exit 1; }
 fi
 rm -f "$work/.local-ci.patch"
 git -C "$root" ls-files --others --exclude-standard -z | tar -C "$root" --null -T - -cf - | tar -C "$work" -xf -

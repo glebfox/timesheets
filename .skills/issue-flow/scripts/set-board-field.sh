@@ -4,8 +4,10 @@
 # DRY_RUN=1 resolves the ids and prints them without changing the board.
 set -euo pipefail
 [ $# -eq 3 ] || { echo "usage: $0 <issue-number> <field> <option>" >&2; exit 64; }
-issue=$1 field=$2 option=$3
+issue=${1#\#} field=$2 option=$3
+[[ $issue =~ ^[0-9]+$ ]] || { echo "Not an issue number: $1" >&2; exit 64; }
 owner=glebfox repo=timesheets board=3
+trap 'echo "A gh call failed. If it says a resource is not accessible, grant the project scope: gh auth refresh -s project" >&2' ERR
 
 item_id=$(gh api graphql -F n="$issue" -f query="
   query(\$n: Int!) { repository(owner: \"$owner\", name: \"$repo\") { issue(number: \$n) {
@@ -18,11 +20,11 @@ fi
 
 ids=$(gh project field-list "$board" --owner "$owner" --format json |
   jq -r --arg f "$field" --arg o "$option" '.fields[] | select(.name == $f) | "\(.id) \(.options[]? | select(.name == $o) | .id)"')
-field_id=${ids%% *} option_id=${ids#* }
-if [ -z "$ids" ] || [ "$option_id" = "$ids" ]; then
-  echo "The board has no option \"$option\" in field \"$field\"." >&2
+if [ -z "$ids" ]; then
+  echo "The board has no option \"$option\" in a field \"$field\"." >&2
   exit 1
 fi
+field_id=${ids%% *} option_id=${ids#* }
 project_id=$(gh project view "$board" --owner "$owner" --format json --jq .id)
 
 if [ -n "${DRY_RUN:-}" ]; then
