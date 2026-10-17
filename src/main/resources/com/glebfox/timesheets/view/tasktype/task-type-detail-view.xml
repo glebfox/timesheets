@@ -46,12 +46,8 @@
                     <icon icon="fontawesome-regular:address-card"/>
                 </prefix>
             </textField>
-            <textArea id="descriptionField" property="description"
-                      minRows="5" maxRows="5">
-                <prefix>
-                    <icon icon="gravity-ui:comment"/>
-                </prefix>
-            </textArea>
+            <markdownEditor id="descriptionField" property="description"
+                            minHeight="15rem" maxHeight="15rem"/>
         </formLayout>
         <hbox id="detailActions"
               classNames="footer-panel">

@@ -75,7 +75,9 @@
                 <column property="project"/>
                 <column property="name"/>
                 <column property="type"/>
-                <column property="description" flexGrow="2"/>
+                <column property="description" flexGrow="2">
+                    <popoverRenderer markdown="true"/>
+                </column>
             </columns>
         </dataGrid>
     </layout>

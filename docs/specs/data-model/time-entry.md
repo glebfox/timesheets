@@ -7,10 +7,10 @@ One user's time spent on one task on one day. Any number of entries may share a 
 ## Attributes
 
 - **Date, user, task, spent time** — required. Spent time is a [spent time](spent-time.md) value.
-- **Description** — optional free text.
+- **Description** — optional, in Markdown.
 - **Tags** — any number of [tags](tag-group.md).
 - **Status** — New, Approved, Rejected, or Closed; every new entry starts as New.
-- **Rejection reason** — free text that explains a rejection. It is kept when the status later changes.
+- **Rejection reason** — Markdown text that explains a rejection. It is kept when the status later changes.
 - Shown as `<date> [<project>] <task>`.
 
 ## Status

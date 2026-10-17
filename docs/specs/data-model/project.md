@@ -8,7 +8,7 @@ Work done for a client, and the container for its tasks, participants, and tag g
 
 - **Name** — required; unique among non-deleted projects (`docs/guidelines/database.md`).
 - **Client** — required ([client](client.md)).
-- **Description** — optional.
+- **Description** — optional, in Markdown.
 - **Status** — Open or Closed; every new project starts as Open. Closing a project makes its tasks no longer [bookable](task.md#bookable-tasks); it does not lock the project or the time entries already logged on it.
 - **Tasks**, **participants**, **tag groups** — owned by the project ([task](task.md), [project participant](project-participant.md), [tag group](tag-group.md)): they are edited inside the project and saved with it.
 

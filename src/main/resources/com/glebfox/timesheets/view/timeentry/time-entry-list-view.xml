@@ -74,11 +74,11 @@
                     <column property="spentTime" autoWidth="true" flexGrow="0"/>
                     <column property="status" autoWidth="true" flexGrow="0"/>
                     <column property="description" flexGrow="2">
-                        <popoverRenderer/>
+                        <popoverRenderer markdown="true"/>
                     </column>
                     <column property="tags"/>
                     <column property="rejectionReason" flexGrow="2">
-                        <popoverRenderer/>
+                        <popoverRenderer markdown="true"/>
                     </column>
                 </columns>
             </dataGrid>

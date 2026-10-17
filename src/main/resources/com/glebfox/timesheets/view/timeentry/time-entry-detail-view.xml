@@ -52,7 +52,8 @@
                         <icon icon="gravity-ui:person"/>
                     </prefix>
                     <actions>
-                        <action id="assignSelf" icon="gravity-ui:person-plus" text="msg://actions.assignSelf.description"/>
+                        <action id="assignSelf" icon="gravity-ui:person-plus"
+                                text="msg://actions.assignSelf.description"/>
                         <action id="entityLookup" type="entity_lookup"/>
                         <action id="entityClear" type="entity_clear"/>
                     </actions>
@@ -87,18 +88,12 @@
                     </prefix>
                 </textField>
                 <select id="statusField" property="status" noVerticalOverlap="true"/>
-                <textArea id="descriptionField" property="description"
-                          minRows="5" maxRows="5" colspan="2">
-                    <prefix>
-                        <icon icon="gravity-ui:comment"/>
-                    </prefix>
-                </textArea>
-                <textArea id="rejectionReasonField" property="rejectionReason" required="true"
-                          minRows="5" maxRows="5" colspan="2">
-                    <prefix>
-                        <icon icon="gravity-ui:circle-exclamation"/>
-                    </prefix>
-                </textArea>
+                <markdownEditor id="descriptionField" property="description"
+                                minHeight="15rem" maxHeight="15rem"
+                                colspan="2"/>
+                <markdownEditor id="rejectionReasonField" property="rejectionReason"
+                                minHeight="15rem" maxHeight="15rem"
+                                required="true" colspan="2"/>
             </formLayout>
 
             <h4 id="tagsTitle"

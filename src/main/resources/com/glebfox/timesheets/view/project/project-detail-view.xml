@@ -62,12 +62,8 @@
                         <icon icon="fontawesome-regular:address-card"/>
                     </prefix>
                 </textField>
-                <textArea id="descriptionField" property="description"
-                          minRows="5" maxRows="5" colspan="2">
-                    <prefix>
-                        <icon icon="gravity-ui:comment"/>
-                    </prefix>
-                </textArea>
+                <markdownEditor id="descriptionField" property="description"
+                                minHeight="15rem" maxHeight="15rem" colspan="2"/>
                 <entityComboBox id="clientField" property="client" itemsContainer="clientsDc">
                     <actions>
                         <action id="entityLookup" type="entity_lookup"/>
@@ -111,7 +107,9 @@
                                 <column property="name"/>
                                 <column property="type"/>
                                 <column property="status"/>
-                                <column property="description" flexGrow="2"/>
+                                <column property="description" flexGrow="2">
+                                    <popoverRenderer markdown="true"/>
+                                </column>
                             </columns>
                         </dataGrid>
                     </vbox>

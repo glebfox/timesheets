@@ -6,7 +6,7 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 ## My tasks
 
-`my-tasks`, menu Timesheets. Lists the tasks [bookable](../data-model/task.md#bookable-tasks) for the current user, by project name and then task name, with the project, name, type, and description. It offers a filter on any attribute and pagination, both kept in the URL.
+`my-tasks`, menu Timesheets. Lists the tasks [bookable](../data-model/task.md#bookable-tasks) for the current user, by project name and then task name, with the project, name, type, and description, which is cut short with the full text in a plain-text popover. It offers a filter on any attribute and pagination, both kept in the URL.
 
 - **Create time entry** — the primary action; needs one selected task and is available only to users who may create time entries. It opens the [time entry editor](time-entries.md#editor) in a dialog on a new own entry for the selected task, with the task locked.
 - **Read** — opens the task editor read-only, in a dialog.
@@ -15,7 +15,7 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 `tasks/:id`, an 800px dialog when opened as one; it is opened from the Tasks tab of the [project editor](projects.md#project-editor).
 
-- **Name**, **description**.
+- **Name**, **description** — the description in a Markdown editor with a preview.
 - **Project** — shown only when the task has no project yet, which happens only when the editor is opened by URL; opened from a project, the task's project is fixed.
 - **Type** — a drop-down of task types by name, or the task type picker.
 - **Status** — Active or Inactive.

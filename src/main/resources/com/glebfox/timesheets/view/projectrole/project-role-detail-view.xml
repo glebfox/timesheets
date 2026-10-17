@@ -46,12 +46,8 @@
                     <icon icon="gravity-ui:tag"/>
                 </prefix>
             </select>
-            <textArea id="descriptionField" property="description"
-                      minRows="5" maxRows="5" colspan="2">
-                <prefix>
-                    <icon icon="gravity-ui:comment"/>
-                </prefix>
-            </textArea>
+            <markdownEditor id="descriptionField" property="description"
+                            minHeight="15rem" maxHeight="15rem" colspan="2"/>
         </formLayout>
         <hbox id="detailActions"
               classNames="footer-panel">

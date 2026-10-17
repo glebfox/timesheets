@@ -43,16 +43,16 @@ import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.formlayout.JmixFormLayout;
+import io.jmix.flowui.component.markdowneditor.MarkdownEditor;
 import io.jmix.flowui.component.multiselectcombobox.JmixMultiSelectComboBox;
 import io.jmix.flowui.component.select.JmixSelect;
-import io.jmix.flowui.component.textarea.JmixTextArea;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.model.CollectionPropertyContainer;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -75,7 +75,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @ViewComponent
     private EntityComboBox<Task> taskField;
     @ViewComponent
-    private JmixTextArea rejectionReasonField;
+    private MarkdownEditor rejectionReasonField;
     @ViewComponent
     private H4 tagsTitle;
     @ViewComponent

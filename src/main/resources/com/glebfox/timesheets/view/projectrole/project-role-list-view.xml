@@ -95,7 +95,9 @@
                 <columns resizable="true">
                     <column property="name"/>
                     <column property="type" autoWidth="true" flexGrow="0"/>
-                    <column property="description" flexGrow="2"/>
+                    <column property="description" flexGrow="2">
+                        <popoverRenderer markdown="true"/>
+                    </column>
                 </columns>
             </dataGrid>
         </vbox>

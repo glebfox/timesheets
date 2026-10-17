@@ -33,3 +33,4 @@ webpack.generated.js
 
 ### Superpowers working designs and plans ###
 docs/superpowers/
+.superpowers/*

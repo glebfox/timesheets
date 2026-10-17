@@ -9,7 +9,7 @@ A piece of work within a project that people log time against.
 - **Name** — required; unique within its project among non-deleted tasks (`docs/guidelines/database.md`).
 - **Project** — required. A task is part of its [project](project.md): it is edited inside the project and deleted with it.
 - **Type** — required, from the [task type](task-type.md) catalog.
-- **Description** — optional.
+- **Description** — optional, in Markdown.
 - **Status** — Active or Inactive; every new task starts as Active. Inactive retires a task without deleting it.
 - **Required tag groups** — tag groups from which every time entry on this task must carry at least one tag ([time entry](time-entry.md#rules-applied-when-editing)). They are meant to be groups of the task's own project: the editor offers only those, but a save does not check it.
 - Shown as `[<project>] <name>`.
