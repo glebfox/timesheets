@@ -29,6 +29,7 @@ import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -149,7 +150,9 @@ public class CalendarView extends StandardView {
         monthYear = new Span();
         monthYear.setClassName("calendar-view-month-header-year");
 
-        monthHeader.add(monthName, monthYear);
+        // The space keeps the heading's text "September 2026" for assistive technology;
+        // it is not rendered as a flex item, so the visual gap stays the header's column gap
+        monthHeader.add(monthName, new Text(" "), monthYear);
     }
 
     @Install(to = "timeEntriesDl", target = Target.DATA_LOADER)
