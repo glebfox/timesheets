@@ -5,4 +5,5 @@ This product includes third-party assets distributed under their own licenses:
 
 - Font Awesome Free 6.5.2 icons (src/main/frontend/src/component/icon/fontawesome-*-icons.js), Copyright 2024 Fonticons, Inc. Icons: CC BY 4.0; code: MIT License. https://fontawesome.com/license/free
 - Gravity UI Icons 2.10.0 (src/main/frontend/src/component/icon/gravity-ui-icons.js), Copyright (c) 2022 YANDEX LLC. MIT License. https://github.com/gravity-ui/icons
+- Lucide user-round and user-round-plus icons (src/main/resources/META-INF/resources/images/lucide-user-round*.svg), lucide-static 0.460.0, Copyright (c) Lucide Contributors 2022; portions Copyright (c) 2013-2022 Cole Bemis (Feather). ISC License. https://lucide.dev/license
 - User-plus icon (src/main/resources/META-INF/resources/images/user-plus-duotone.svg), from SVG Repo. https://www.svgrepo.com

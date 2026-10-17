@@ -19,6 +19,7 @@
     /* App specific */
     --ts-filter-layout-column-min-width: 20rem;
     --ts-filter-layout-column-gap: var(--vaadin-gap-s);
+    --ts-avatar-upload-size: 6rem;
 
     /* Colors */
     --ts-primary-color-light: oklch(0.46 0.15 255);
