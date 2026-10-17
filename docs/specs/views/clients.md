@@ -1,6 +1,6 @@
 # Client screens
 
-Source: `view/client/`, `component/imageupload/`
+Source: `view/client/`, `component/avatarupload/`
 
 The client list, the client editor, and the client picker. What a client is: [client](../data-model/client.md).
 
@@ -15,7 +15,7 @@ The client list, the client editor, and the client picker. What a client is: [cl
 
 `clients/:id`, opened as a page, with the name field focused.
 
-- **Logo** — the image, or a placeholder when there is none, with upload and clear controls. The controls are hidden only when security forbids changing the logo attribute; an editor that is read-only for any other reason still shows them.
+- **Image** — the client's logo, in the same round field as the user editor's avatar ([users](users.md#user-editor)), with the same person placeholder. The field is read-only whenever the editor is.
 - **Name**.
 - **Contact information** — email, phone, URL, and address.
 
@@ -25,5 +25,6 @@ The client list, the client editor, and the client picker. What a client is: [cl
 
 ## Not covered
 
-- All of these screens: no UI test exists for them.
+- The client list, the client picker, and the client editor beyond its image field storing an upload in the client: no UI test exists for them.
+- The image field in a read-only client editor: no test; read-only is tested only in the user editor. The field in a browser: as for the user editor's avatar ([users](users.md#not-covered)).
 - How the cards, logo, and placeholders look: only a live check shows it.
