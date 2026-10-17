@@ -32,9 +32,6 @@
             <hbox id="controlsPanel"
                   classNames="calendar-view-controls"
                   alignItems="CENTER" width="100%">
-                <button id="refreshBtn" icon="gravity-ui:arrows-rotate-left">
-                    <tooltip text="msg://refreshBtn.tooltip"/>
-                </button>
                 <flexLayout id="navigationWrapper" classNames="component-group">
                     <button id="prevBtn" icon="gravity-ui:chevron-left">
                         <tooltip text="msg://prevBtn.tooltip"/>
@@ -50,6 +47,10 @@
                             placeholder="msg://jumpToDatePicker.placeholder">
                     <tooltip text="msg://jumpToDatePicker.tooltip"/>
                 </datePicker>
+                <div classNames="calendar-view-controls-divider"/>
+                <button id="refreshBtn" icon="gravity-ui:arrows-rotate-left">
+                    <tooltip text="msg://refreshBtn.tooltip"/>
+                </button>
             </hbox>
         </div>
 

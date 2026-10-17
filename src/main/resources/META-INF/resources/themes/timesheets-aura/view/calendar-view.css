@@ -35,13 +35,27 @@
     width: 100%;
     justify-content: center;
     align-items: center;
+    column-gap: var(--vaadin-gap-s);
     text-align: center;
+}
+
+.calendar-view-month-header-year {
+    color: var(--vaadin-text-color-secondary);
+    font-weight: var(--aura-font-weight-medium);
 }
 
 .calendar-view-controls {
     grid-area: controls;
     flex-wrap: wrap;
     justify-content: center;
+}
+
+/* Stretches over the row's height: Aura defines no button or field height to size it by */
+.calendar-view-controls-divider {
+    width: 1px;
+    align-self: stretch;
+    margin-block: var(--vaadin-gap-xs);
+    background: var(--vaadin-border-color-secondary);
 }
 
 @container main (min-width: 800px) {

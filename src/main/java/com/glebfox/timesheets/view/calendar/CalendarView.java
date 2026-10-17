@@ -127,6 +127,9 @@ public class CalendarView extends StandardView {
     @ViewComponent
     private MessageBundle messageBundle;
 
+    private Span monthName;
+    private Span monthYear;
+
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
     private Map<LocalDate, SpentTime> spentTimeByDay = Collections.emptyMap();
@@ -136,7 +139,17 @@ public class CalendarView extends StandardView {
 
     @Subscribe
     private void onInit(final InitEvent event) {
+        initMonthHeader();
         initCalendarContextMenu();
+    }
+
+    private void initMonthHeader() {
+        monthName = new Span();
+
+        monthYear = new Span();
+        monthYear.setClassName("calendar-view-month-header-year");
+
+        monthHeader.add(monthName, monthYear);
     }
 
     @Install(to = "timeEntriesDl", target = Target.DATA_LOADER)
@@ -530,11 +543,9 @@ public class CalendarView extends StandardView {
     }
 
     private void updateMonthHeader() {
-        monthHeader.setText(String.format("%s %d",
-                StringUtils.capitalize(displayedMonth.getMonth()
-                        .getDisplayName(TextStyle.FULL_STANDALONE, currentAuthentication.getLocale())),
-                displayedMonth.getYear()
-        ));
+        monthName.setText(StringUtils.capitalize(displayedMonth.getMonth()
+                .getDisplayName(TextStyle.FULL_STANDALONE, currentAuthentication.getLocale())));
+        monthYear.setText(String.valueOf(displayedMonth.getYear()));
     }
 
     private void updateTodayButton() {
