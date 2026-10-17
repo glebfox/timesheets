@@ -6,18 +6,18 @@ A single-module Jmix application (Spring Boot, Vaadin Flow UI) for logging time 
 
 Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors, message bundles, and changelogs are under the same package in `src/main/resources`.
 
-- `entity/<area>/` — JPA entities and their enums: `client`, `project` (projects, participants, project roles), `task` (tasks, task types), `tag` (tag groups, tags), `timeentry`, `user`, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`. `timeentry` also holds `TimeEntryCalendarWrapper`, a non-persistent wrapper that the calendar binds in place of the entity.
-- `datatype/` — the `SpentTime` value type, its Jmix datatype, and its JPA converter.
-- `app/` — beans with the domain queries and helpers that views call (`*Support`, `TimeParser`). `app/util/` holds the value types behind the calendar's totals (`FactAndPlan`, `WeekSummary`, `WeekStatus`) and `ComponentSupport`, which builds shared UI pieces: avatars, the user cell, the time-entry status badge, project-role badge colors, and the task-with-project cell. Not every view uses it yet: the tags badges, the project and task status badges, and the main view's avatar are still built in their views.
+- `entity/<area>/` — entities and their enums, one subpackage per domain area, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
+- `datatype/` — custom value types with their Jmix datatypes and JPA converters.
+- `app/` — beans with the domain queries and helpers that views call (`*Support`); `app/util/` holds the value types they return and the builders of UI pieces that several views share.
 - `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
-- `action/` — custom list actions (`list_timeEntry_copy`).
-- `data/renderer/` — reusable grid renderers (badge, user), and `BadgeStyle`, the badge looks the badge renderer applies.
-- `component/` — custom UI components and icon sets. `imageUpload` is usable in descriptors through the `app-ui-components.xsd` namespace and is registered in `TimesheetsApplication`; the icon sets' JavaScript is in `src/main/frontend/src/component/icon/`. `component/themeswitcher` is not used: the user menu uses the framework's theme-switch action.
-- `listener/`, `event/` — the time-entry listener and the UI event it publishes to open sessions.
+- `action/` — custom list actions.
+- `data/renderer/` — reusable grid renderers.
+- `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; the icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
+- `listener/`, `event/` — entity event listeners and the UI events they publish to open sessions.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
-- `router/error/` — custom "not found" and "access denied" pages; their HTML templates are in `META-INF/resources/errorpages/`.
+- `router/error/` — custom error pages; their HTML templates are in `META-INF/resources/errorpages/`.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`) and demo data in `init-data/`. See `docs/guidelines/database.md`.
-- `menu.xml`, `messages_en.properties`, `messages_ru_RU.properties` — the main menu and the two message bundles.
+- `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.
 
 ## Profiles

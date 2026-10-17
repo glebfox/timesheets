@@ -35,6 +35,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 
 - A spec states what a unit does, not how: a statement belongs only if it survives a behavior-preserving refactor. Platform mechanics go to guidelines; when unsure, leave it in the spec.
 - "Spec" means the per-unit docs in `docs/specs/`; a design or a plan is not one.
+- `ARCHITECTURE.md` maps packages and their roles, not classes: a statement belongs only if it stays true when a class is added, renamed, or removed. Specific classes are named in the specs' `Source:` and in the guidelines that need them.
 - Living docs describe what is built, never what is planned. A planned change lives in its issue until it lands.
 - Rationale lives in `docs/decisions/`, and living docs link to it. A decision is superseded, never edited, and never a source for current state.
 - Rules that tooling enforces are not restated in prose.
