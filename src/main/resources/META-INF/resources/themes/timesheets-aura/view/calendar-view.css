@@ -117,13 +117,14 @@
 }
 
 /* Every cell, the last one included, has a bottom line, so the equal cells split the same height
-   as the calendar's rows and their lines sit level with the rows' lines. The block padding is 1px
-   less than the token to give back the height the lines take. The background is the month footer's */
+   as the calendar's rows and their lines sit level with the rows' lines. The zero basis keeps the
+   cells equal whatever their content. The block padding is 1px less than the token to give back
+   the height the lines take. The background is the month footer's */
 .calendar-view-week-summary {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    flex-grow: 1;
+    flex: 1 1 0;
     gap: var(--vaadin-gap-xs);
     min-height: 0;
     overflow: hidden;
@@ -150,7 +151,12 @@
     line-height: var(--aura-line-height-l);
 }
 
+/* The part of an over-long totals line that gives way, with an ellipsis */
 .calendar-view-week-summary-plan {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     font-weight: var(--aura-font-weight-medium);
