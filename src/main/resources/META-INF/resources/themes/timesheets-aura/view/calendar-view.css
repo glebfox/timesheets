@@ -67,6 +67,14 @@
     }
 }
 
+/* Calendar */
+
+/* Together with the weeks summary wrapper, lets the week cards shrink with the calendar rows
+   instead of pushing the layout taller than the screen */
+.calendar-view-calendar-box {
+    min-height: 0;
+}
+
 /* Summary */
 
 .calendar-view-weeks-summary {
@@ -80,6 +88,10 @@
     font-size: var(--aura-font-size-m);
     font-weight: bold;
     line-height: var(--aura-line-height-m);
+}
+
+.calendar-view-weeks-summary-wrapper {
+    min-height: 0;
 }
 
 .calendar-view-week-summary {
