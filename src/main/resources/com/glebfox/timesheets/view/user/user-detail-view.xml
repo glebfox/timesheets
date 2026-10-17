@@ -37,8 +37,9 @@
             padding="false" spacing="false"
             expand="contentBox">
         <vbox id="contentBox" classNames="overflow-auto">
-            <app:imageUpload id="imageUpload"
-                             dataContainer="userDc" property="avatar"/>
+            <app:avatarUpload id="avatarUpload"
+                              dataContainer="userDc" property="avatar"
+                              label="msg://com.glebfox.timesheets.entity.user/User.avatar"/>
             <formLayout id="form"
                         dataContainer="userDc">
                 <textField id="usernameField" property="username" readOnly="true">

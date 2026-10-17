@@ -16,6 +16,8 @@
 
 package com.glebfox.timesheets;
 
+import com.glebfox.timesheets.component.avatarupload.AvatarUpload;
+import com.glebfox.timesheets.component.avatarupload.AvatarUploadLoader;
 import com.glebfox.timesheets.component.imageupload.ImageUpload;
 import com.glebfox.timesheets.component.imageupload.ImageUploadLoader;
 import com.google.common.base.Strings;
@@ -86,6 +88,13 @@ public class TimesheetsApplication implements AppShellConfigurator {
     public ComponentRegistration imageUpload() {
         return ComponentRegistrationBuilder.create(ImageUpload.class)
                 .withComponentLoader("imageUpload", ImageUploadLoader.class)
+                .build();
+    }
+
+    @Bean
+    public ComponentRegistration avatarUpload() {
+        return ComponentRegistrationBuilder.create(AvatarUpload.class)
+                .withComponentLoader("avatarUpload", AvatarUploadLoader.class)
                 .build();
     }
 }
