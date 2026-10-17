@@ -19,6 +19,7 @@ package com.glebfox.timesheets.component.avatarupload;
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.customfield.CustomField;
+import com.vaadin.flow.component.html.Div;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.UiComponents;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
@@ -122,6 +123,34 @@ class AvatarUploadUiTest {
 
         assertFalse(field.isEditable());
         assertFalse(field.getBadge().isVisible());
+    }
+
+    @Test
+    void readOnlyOffersNoChangeControl() {
+        field.setReadOnly(true);
+
+        assertFalse(field.getAvatarItem().isEnabled());
+        assertFalse(field.getAccessibleName().isVisible());
+
+        field.setReadOnly(false);
+
+        assertTrue(field.getAvatarItem().isEnabled());
+        assertTrue(field.getAccessibleName().isVisible());
+    }
+
+    @Test
+    void disabledAncestorHidesBadge() {
+        Div parent = new Div(field);
+
+        parent.setEnabled(false);
+
+        assertFalse(field.isEditable());
+        assertFalse(field.getBadge().isVisible());
+
+        parent.setEnabled(true);
+
+        assertTrue(field.isEditable());
+        assertTrue(field.getBadge().isVisible());
     }
 
     @Test

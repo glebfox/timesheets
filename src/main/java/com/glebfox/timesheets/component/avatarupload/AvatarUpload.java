@@ -68,6 +68,7 @@ import java.util.stream.Collectors;
 public class AvatarUpload extends CustomField<byte[]>
         implements SupportsValueSource<byte[]>, ApplicationContextAware, InitializingBean {
 
+    // Images are stored in the database and loaded with every list that shows them, so phone photos are refused
     public static final int DEFAULT_MAX_FILE_SIZE = 2 * 1024 * 1024;
 
     private static final String CLASS_NAME = "avatar-upload";
@@ -92,12 +93,14 @@ public class AvatarUpload extends CustomField<byte[]>
 
     private UploadManager uploadManager;
     private UploadButton uploadButton;
+    private MenuItem avatarItem;
     private MenuItem uploadItem;
     private MenuItem removeItem;
     private Image imageComponent;
     private Svg editablePlaceholder;
     private Svg readOnlyPlaceholder;
     private Span badge;
+    private Span accessibleName;
 
     public AvatarUpload() {
         super(null, true);
@@ -131,12 +134,12 @@ public class AvatarUpload extends CustomField<byte[]>
         uploadButton = new UploadButton(uploadManager);
         uploadButton.addClassName(CLASS_NAME + "-button");
 
+        // A menu bar opens its sub-menu below the avatar and from the keyboard; a context menu opens at the pointer
         MenuBar menuBar = new MenuBar();
         menuBar.addClassName(CLASS_NAME + "-menu-bar");
         menuBar.addThemeVariants(MenuBarVariant.TERTIARY);
 
-        MenuItem avatarItem = menuBar.addItem(createAvatar());
-        avatarItem.setAriaLabel(getMessage("menu.ariaLabel"));
+        avatarItem = menuBar.addItem(createAvatar());
 
         SubMenu subMenu = avatarItem.getSubMenu();
         uploadItem = subMenu.addItem(getMessage("uploadItem.text"));
@@ -172,7 +175,12 @@ public class AvatarUpload extends CustomField<byte[]>
         Div progress = new Div();
         progress.addClassName(CLASS_NAME + "-progress");
 
-        Div avatar = new Div(imageComponent, editablePlaceholder, readOnlyPlaceholder, badge, dropHint, progress);
+        // Names the avatar button for assistive technology; an aria-label on the menu item does not reach it
+        accessibleName = new Span(getMessage("menu.ariaLabel"));
+        accessibleName.addClassName(CLASS_NAME + "-accessible-name");
+
+        Div avatar = new Div(imageComponent, editablePlaceholder, readOnlyPlaceholder, badge, dropHint, progress,
+                accessibleName);
         avatar.addClassName(CLASS_NAME + "-avatar");
         return avatar;
     }
@@ -348,6 +356,13 @@ public class AvatarUpload extends CustomField<byte[]>
         updateState();
     }
 
+    @Override
+    public void onEnabledStateChanged(boolean enabled) {
+        super.onEnabledStateChanged(enabled);
+        // Also called when an ancestor is disabled or enabled
+        updateState();
+    }
+
     boolean isEditable() {
         return !isReadOnly() && isEnabled();
     }
@@ -357,8 +372,8 @@ public class AvatarUpload extends CustomField<byte[]>
             return;
         }
 
-        // Disable the manager only: it disables the drop zone and the button,
-        // while a disabled button would no longer open the file picker once enabled again
+        // The manager is the server-side gate of the upload: when disabled, it refuses uploads
+        // and disables the drop zone and the button on the client
         uploadManager.setEnabled(isEditable());
         updatePresentation();
     }
@@ -380,6 +395,9 @@ public class AvatarUpload extends CustomField<byte[]>
         editablePlaceholder.setVisible(!hasImage && editable);
         readOnlyPlaceholder.setVisible(!hasImage && !editable);
         badge.setVisible(editable);
+        // A field that cannot be changed offers no control: the avatar is not focusable and opens nothing
+        avatarItem.setEnabled(editable);
+        accessibleName.setVisible(editable);
         uploadItem.setVisible(editable);
         removeItem.setVisible(editable && hasImage);
     }
@@ -406,6 +424,14 @@ public class AvatarUpload extends CustomField<byte[]>
 
     Component getBadge() {
         return badge;
+    }
+
+    Component getAccessibleName() {
+        return accessibleName;
+    }
+
+    MenuItem getAvatarItem() {
+        return avatarItem;
     }
 
     MenuItem getUploadItem() {

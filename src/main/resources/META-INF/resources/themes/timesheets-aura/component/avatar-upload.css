@@ -42,13 +42,10 @@
     display: none;
 }
 
-.avatar-upload[readonly] .avatar-upload-menu-bar vaadin-menu-bar-button,
-.avatar-upload[disabled] .avatar-upload-menu-bar vaadin-menu-bar-button {
+/* A field that cannot be changed disables the avatar button; the avatar itself is dimmed only for a disabled field */
+.avatar-upload-menu-bar vaadin-menu-bar-button[disabled] {
+    opacity: 1;
     cursor: default;
-}
-
-.avatar-upload[readonly] .avatar-upload-menu-bar vaadin-menu-bar-button::before {
-    display: none;
 }
 
 .avatar-upload-avatar {
@@ -147,6 +144,15 @@
 .avatar-upload-placeholder[hidden],
 .avatar-upload-badge[hidden] {
     display: none;
+}
+
+.avatar-upload-accessible-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .avatar-upload-remove-item {
