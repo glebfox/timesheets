@@ -28,10 +28,10 @@ Copy, Remove, and Move are confirmed with a notification. After any of these, th
 The plan is 8 hours for each workday, Monday to Friday, and nothing for Saturday and Sunday; holidays are not known. Spent time is summed exactly to the minute.
 
 - **Day** — the bottom of each day shows the day's total as `hh:mm`. On a workday it is red under the plan, green at the plan, and in the accent color over it; on a weekend it is not colored.
-- **Week** — the Total column beside the grid shows one total per week, counting only the days of the displayed month: the spent time alone when it equals the plan, otherwise `<spent> (<planned>)`, red under the plan and in the accent color over it. Time spent on a weekend adds to the spent total and not to the plan.
+- **Week** — the Total column beside the grid shows one total per week, level with the week's row, counting only the days of the displayed month: the spent time alone when it equals the plan, otherwise `<spent> (<planned>)`, red under the plan and in the accent color over it. Time spent on a weekend adds to the spent total and not to the plan.
 - **Month** — "Total for the month" below the grid, in the same form and colors as a week.
 
 ## Not covered
 
-- The whole screen: no UI test exists for it. The totals are tested in `CalendarSupportTest`; how they are shown was checked live on 2026-10-17, together with the day colors after creating, editing, copying, removing, and moving an entry, the Today button, reloading the page, and the Monday week start in Russian.
+- The whole screen: no UI test exists for it. The totals are tested in `CalendarSupportTest`; how they are shown was checked live on 2026-10-17, together with the day colors after creating, editing, copying, removing, and moving an entry, the Today button, reloading the page, the Monday week start in Russian, and the Total column staying level with the rows in five- and six-week months at 1440×900 and 1280×720.
 - Moving an entry the user may not change: not checked live, since no seed user holds a role that forbids it.
