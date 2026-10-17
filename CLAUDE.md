@@ -27,6 +27,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 ## Workflow
 
 - Implementation cycle: GitHub issue → branch → design and plan → execute → verify → consolidate → pull request → merge.
+- The `issue-flow` skill (`/issue-flow start <issue>`, `/issue-flow pr`) runs the cycle's GitHub steps: the branch, the issue's Status on the Timesheets board, consolidation, local CI, and the pull request. A new issue is filed with the `create-issue` skill.
 - When execution changes scope, interfaces, approach, or task order, update the design or plan at once.
 - Consolidate before the merge: specs for changed behavior, including their **Not covered**; `ARCHITECTURE.md` for changed layout or commands; `docs/conventions.md` for a rule adopted; `docs/guidelines/` for a non-obvious mechanic; `docs/decisions/` for decisions that clear the bar. The design and plan are not committed, so consolidation is the only way anything in them outlives the work.
 - Bug fixes, refactors, and chores skip the design and plan, but not consolidation.
