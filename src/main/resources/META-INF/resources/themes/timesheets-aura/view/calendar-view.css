@@ -108,7 +108,13 @@
 /* Events */
 
 .time-entry {
-    font-size: var(--aura-font-size-xs);
+    font-size: round(var(--aura-font-size-m) * 0.8, 0.0625rem); /* less than --aura-font-size-xs */
+}
+
+.fc-direction-ltr .time-entry.fc-daygrid-event,
+.fc-direction-rtl .time-entry.fc-daygrid-event {
+    margin: 0;
+    padding-block: 0;
 }
 
 .time-entry-new > .fc-daygrid-event-dot {
