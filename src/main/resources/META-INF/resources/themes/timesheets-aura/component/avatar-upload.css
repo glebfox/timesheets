@@ -42,8 +42,10 @@
     display: none;
 }
 
-/* A field that cannot be changed disables the avatar button; the avatar itself is dimmed only for a disabled field */
-.avatar-upload-menu-bar vaadin-menu-bar-button[disabled] {
+/* A field that cannot be changed disables the avatar button and its item, which would dim the avatar;
+   a read-only avatar stays readable, and only a disabled field dims it */
+.avatar-upload-menu-bar vaadin-menu-bar-button[disabled],
+.avatar-upload-menu-bar vaadin-menu-bar-item[disabled] {
     opacity: 1;
     cursor: default;
 }
@@ -53,6 +55,17 @@
     width: var(--ts-avatar-upload-size);
     height: var(--ts-avatar-upload-size);
     border-radius: 50%;
+}
+
+/* The ring the Avatar component draws over its image, so the avatar stands out from any background */
+.avatar-upload-avatar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    outline: var(--vaadin-avatar-border-width, 1px) solid var(--vaadin-avatar-border-color, transparent);
+    outline-offset: calc(var(--vaadin-avatar-border-width, 1px) * -1);
+    pointer-events: none;
 }
 
 .avatar-upload-image {
@@ -157,6 +170,13 @@
 
 .avatar-upload-remove-item {
     color: var(--ts-danger-color);
+}
+
+@media (forced-colors: active) {
+    /* The custom field's baseline box has a transparent border, which forced colors would draw */
+    .avatar-upload::before {
+        forced-color-adjust: none;
+    }
 }
 
 @keyframes avatar-upload-spin {
