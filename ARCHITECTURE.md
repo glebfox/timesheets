@@ -12,7 +12,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions.
 - `data/renderer/` — reusable grid renderers.
-- `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd`, registered in `TimesheetsApplication`, and described for Jmix Studio in the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources; the icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
+- `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; Jmix Studio learns of a component from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
 - `listener/`, `event/` — entity event listeners and the UI events they publish to open sessions.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
 - `router/error/` — custom error pages; their HTML templates are in `META-INF/resources/errorpages/`.

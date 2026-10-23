@@ -168,6 +168,11 @@
     white-space: nowrap;
 }
 
+/* The items are never checkable, so they need no room for a checkmark */
+.avatar-upload-menu-item::part(checkmark) {
+    display: none;
+}
+
 .avatar-upload-remove-item {
     color: var(--ts-danger-color);
 }

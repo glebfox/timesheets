@@ -145,10 +145,12 @@ public class AvatarUpload extends CustomField<byte[]>
         SubMenu subMenu = avatarItem.getSubMenu();
         uploadItem = subMenu.addItem(getMessage("uploadItem.text"));
         uploadItem.addComponentAsFirst(GravityUiIcon.ARROW_UP_FROM_LINE.create());
+        uploadItem.getElement().getClassList().add(CLASS_NAME + "-menu-item");
         uploadItem.addAttachListener(event -> bindUploadItem());
 
         removeItem = subMenu.addItem(getMessage("removeItem.text"), event -> handleRemove());
         removeItem.addComponentAsFirst(GravityUiIcon.TRASH_BIN.create());
+        removeItem.getElement().getClassList().add(CLASS_NAME + "-menu-item");
         removeItem.getElement().getClassList().add(CLASS_NAME + "-remove-item");
 
         UploadDropZone dropZone = new UploadDropZone(menuBar, uploadManager);
