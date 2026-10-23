@@ -40,8 +40,9 @@
             padding="false" spacing="false"
             expand="contentBox">
         <vbox id="contentBox" classNames="overflow-auto">
-            <app:imageUpload id="imageUpload"
-                             dataContainer="clientDc" property="image"/>
+            <app:avatarUpload id="avatarUpload"
+                              dataContainer="clientDc" property="image"
+                              label="msg://com.glebfox.timesheets.entity.client/Client.image"/>
 
             <textField id="nameField"
                        dataContainer="clientDc" property="name"

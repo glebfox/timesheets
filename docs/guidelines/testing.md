@@ -8,7 +8,8 @@ Project-specific mechanics of the test harness. How to write Jmix tests in gener
 - The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, as the existing tests do, so no rows are left for the next test.
 - Non-UI tests authenticate through the `test_support/AuthenticatedAsAdmin` extension.
 - UI tests boot with `TabbedModeTestAssistConfiguration` in place of the skill's `FlowuiTestAssistConfiguration`, because the main view is a tabbed-mode main view. See `UserUiTest`.
-- The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled`. Without it, option and message dialogs publish no opened event, and `UiTestUtils.getLastOpenedDialog()` returns null even while a dialog is open. See `CalendarUiTest`.
+- The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled` and `jmix.ui.component.notifications-opened-change-events-enabled`. Without them, option and message dialogs and notifications publish no opened event, so `UiTestUtils.getLastOpenedDialog()` and `UiTestUtils.getLastOpenedNotification()` return null even while one is shown. See `CalendarUiTest` and `AvatarUploadUiTest`.
+- A view that exists only for tests, such as one that loads a component with every XML attribute set, lives in `src/test` under the base package, with its descriptor in `src/test/resources`: Jmix finds views on the test classpath too. See `AvatarUploadTestView`.
 - HSQLDB has none of the unique indexes (`docs/guidelines/database.md`), so no test can check name uniqueness.
 - The `clean test` gate of the `jmix-verify-bootrun` skill runs through local CI (`ARCHITECTURE.md`), never as `./gradlew clean` in this checkout: `bootRun` and the IDE run the app from this checkout's `build/`, and `clean` deletes the classes under it. A plain `SPRING_PROFILES_ACTIVE=test ./gradlew test` here is fine.
 
@@ -21,6 +22,7 @@ Jmix reads a resource from `jmix.core.conf-dir` (`.jmix/conf/` in the project di
 Start the application with the `dev` profile for demo data (users in `liquibase/changelog/init-data/010-init-user.xml`); the render walk is described in the `jmix-verify-bootrun` skill. Only a live check can verify:
 
 - server-push updates, such as the rejected-entries badge refreshing in another user's open session;
-- how screens look: badge colors, icons, card layouts.
+- how screens look: badge colors, icons, card layouts;
+- file uploads: the file picker, drag and drop, and the transfer itself; UI tests run without a browser, so they reach an upload field only through its server side.
 
 A running app picks up Java changes only after a restart; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.

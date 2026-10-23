@@ -21,16 +21,44 @@
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:layout="http://jmix.io/schema/flowui/layout">
 
-    <xs:element name="imageUpload">
+    <xs:element name="avatarUpload">
         <xs:complexType>
             <xs:complexContent>
                 <xs:extension base="layout:baseComponent">
-                    <xs:attributeGroup ref="layout:hasDataContainer"/>
+                    <xs:attribute name="maxFileSize" type="xs:int"/>
+                    <xs:attribute name="acceptedFileTypes" type="avatarUploadAcceptedFileTypes"/>
 
+                    <xs:attributeGroup ref="layout:hasDataContainer"/>
+                    <xs:attributeGroup ref="layout:hasLabel"/>
+                    <xs:attributeGroup ref="layout:hasHelperText"/>
                     <xs:attributeGroup ref="layout:hasEnabled"/>
+                    <xs:attributeGroup ref="layout:hasValueAndElement"/>
                     <xs:attributeGroup ref="layout:hasClassNames"/>
+                    <xs:attributeGroup ref="layout:hasSize"/>
                 </xs:extension>
             </xs:complexContent>
         </xs:complexType>
     </xs:element>
+
+    <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports -->
+    <xs:simpleType name="avatarUploadAcceptedFileTypes">
+        <xs:union>
+            <xs:simpleType>
+                <xs:restriction base="xs:string"/>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="image/png"/>
+                    <xs:enumeration value="image/jpeg"/>
+                    <xs:enumeration value="image/gif"/>
+                    <xs:enumeration value="image/webp"/>
+                    <xs:enumeration value=".png"/>
+                    <xs:enumeration value=".jpg"/>
+                    <xs:enumeration value=".jpeg"/>
+                    <xs:enumeration value=".gif"/>
+                    <xs:enumeration value=".webp"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:union>
+    </xs:simpleType>
 </xs:schema>

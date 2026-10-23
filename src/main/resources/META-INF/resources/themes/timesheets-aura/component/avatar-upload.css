@@ -1,0 +1,191 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.avatar-upload-button {
+    display: none;
+}
+
+.avatar-upload-drop-zone {
+    display: inline-block;
+    border-radius: 50%;
+}
+
+/* The drop zone's own square drag-over overlay; the avatar shows its own hint */
+.avatar-upload-drop-zone::after {
+    display: none;
+}
+
+/* Two classes outweigh Aura's padding rule for buttons with a sub-menu */
+.avatar-upload .avatar-upload-menu-bar vaadin-menu-bar-button {
+    padding: 0;
+    min-width: 0;
+    height: auto;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+}
+
+.avatar-upload-menu-bar vaadin-menu-bar-button::part(suffix) {
+    display: none;
+}
+
+/* A field that cannot be changed disables the avatar button and its item, which would dim the avatar;
+   a read-only avatar stays readable, and only a disabled field dims it */
+.avatar-upload-menu-bar vaadin-menu-bar-button[disabled],
+.avatar-upload-menu-bar vaadin-menu-bar-item[disabled] {
+    opacity: 1;
+    cursor: default;
+}
+
+.avatar-upload-avatar {
+    position: relative;
+    width: var(--ts-avatar-upload-size);
+    height: var(--ts-avatar-upload-size);
+    border-radius: 50%;
+}
+
+/* The ring the Avatar component draws over its image, so the avatar stands out from any background */
+.avatar-upload-avatar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    outline: var(--vaadin-avatar-border-width, 1px) solid var(--vaadin-avatar-border-color, transparent);
+    outline-offset: calc(var(--vaadin-avatar-border-width, 1px) * -1);
+    pointer-events: none;
+}
+
+.avatar-upload-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-upload-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--aura-accent-surface);
+    color: var(--aura-accent-text-color);
+}
+
+.avatar-upload-placeholder svg {
+    width: 50%;
+    height: 50%;
+    stroke-width: 1.5;
+}
+
+.avatar-upload-badge {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: 50%;
+    background: var(--aura-surface-color-solid);
+    color: var(--vaadin-text-color);
+    box-shadow: var(--aura-shadow-xs);
+    font-size: var(--aura-font-size-s);
+}
+
+.avatar-upload-badge vaadin-icon {
+    width: 1em;
+    height: 1em;
+}
+
+.avatar-upload-drop-hint {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--vaadin-gap-xs);
+    border: 2px dashed var(--aura-accent-color);
+    border-radius: 50%;
+    background: var(--aura-surface-color-solid);
+    color: var(--aura-accent-text-color);
+    font-size: var(--aura-font-size-xs);
+}
+
+.avatar-upload-drop-zone[dragover] .avatar-upload-drop-hint {
+    display: flex;
+}
+
+/* The menu bar button's label clips anything outside the circle, so the ring sits inside it */
+.avatar-upload-progress {
+    position: absolute;
+    inset: 0;
+    display: none;
+    border: 3px solid transparent;
+    border-top-color: var(--aura-accent-color);
+    border-radius: 50%;
+    animation: avatar-upload-spin 1s linear infinite;
+}
+
+.avatar-upload[uploading] .avatar-upload-progress {
+    display: block;
+}
+
+.avatar-upload[disabled] .avatar-upload-avatar {
+    opacity: 0.5;
+}
+
+.avatar-upload-image[hidden],
+.avatar-upload-placeholder[hidden],
+.avatar-upload-badge[hidden] {
+    display: none;
+}
+
+.avatar-upload-accessible-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* The items are never checkable, so they need no room for a checkmark */
+.avatar-upload-menu-item::part(checkmark) {
+    display: none;
+}
+
+.avatar-upload-remove-item {
+    color: var(--ts-danger-color);
+}
+
+@media (forced-colors: active) {
+    /* The custom field's baseline box has a transparent border, which forced colors would draw */
+    .avatar-upload::before {
+        forced-color-adjust: none;
+    }
+}
+
+@keyframes avatar-upload-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

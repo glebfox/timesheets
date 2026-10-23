@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-.image-upload {
-    border: 1px solid var(--vaadin-border-color);
-    border-radius: var(--vaadin-radius-m);
+package com.glebfox.timesheets.component.avatarupload;
 
-    align-items: center;
-    width: 100%;
-    max-width: var(--ts-image-upload-width, 30em);
+import com.glebfox.timesheets.view.main.MainView;
+import com.vaadin.flow.router.Route;
+import io.jmix.flowui.view.StandardView;
+import io.jmix.flowui.view.ViewController;
+import io.jmix.flowui.view.ViewDescriptor;
 
-    box-shadow: var(--aura-shadow-xs);
-}
-
-.image-upload-placeholder svg {
-    height: 100%;
-    fill: var(--aura-accent-text-color);
+/**
+ * Loads an {@link AvatarUpload} with every attribute of its XML element set, for {@link AvatarUploadXmlLoadTest}.
+ */
+@Route(value = "avatar-upload-test", layout = MainView.class)
+@ViewController("ts_AvatarUploadTestView")
+@ViewDescriptor("avatar-upload-test-view.xml")
+public class AvatarUploadTestView extends StandardView {
 }

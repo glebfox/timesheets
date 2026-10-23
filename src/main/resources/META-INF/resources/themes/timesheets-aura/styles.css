@@ -21,10 +21,10 @@
 @import url('view/project-detail-view.css');
 @import url('view/time-entry-detail-view.css');
 
+@import url('component/avatar-upload.css');
 @import url('component/details.css');
 @import url('component/full-calendar.css');
 @import url('component/icon.css');
-@import url('component/image-upload.css');
 
 @import url('app/error-page.css');
 @import url('app/popover-renderer.css');
