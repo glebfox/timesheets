@@ -9,7 +9,7 @@ The screens for logging and reviewing time: My time entries, Time entries, and t
 **My time entries** (`my-time-entries`, menu Timesheets) lists the current user's own entries; **Time entries** (`time-entries`, menu Project Management) lists everyone's and adds a user column. Both:
 
 - order entries by date, newest first;
-- show the date, the task with its project beneath it, the spent time, the status as a badge (New yellow, Approved green, Rejected red, Closed neutral), the description, the tags as badges, and the rejection reason; a long description or rejection reason is cut short, with the full text in a plain-text popover;
+- show the date, the task with its project beneath it, the spent time, the status as a badge (New yellow, Approved green, Rejected red, Closed neutral), the description, the tags as badges, and the rejection reason; a long description or rejection reason is cut short, with the full text in a popover that renders the Markdown;
 - offer a filter on any attribute and pagination, both kept in the URL;
 - offer Create, Edit, Remove, and Copy.
 
