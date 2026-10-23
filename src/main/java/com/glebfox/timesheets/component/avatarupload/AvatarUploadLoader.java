@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.component.avatarupload;
 
-import com.google.common.base.Splitter;
+import io.jmix.flowui.kit.xml.layout.support.LoaderUtils;
 import io.jmix.flowui.xml.layout.loader.AbstractComponentLoader;
 import io.jmix.flowui.xml.layout.support.DataLoaderSupport;
 
@@ -42,11 +42,8 @@ public class AvatarUploadLoader extends AbstractComponentLoader<AvatarUpload> {
 
         loadInteger(element, "maxFileSize", resultComponent::setMaxFileSize);
         loadString(element, "acceptedFileTypes")
-                .map(fileTypes -> Splitter.onPattern("[\\s,]+")
-                        .omitEmptyStrings()
-                        .trimResults()
-                        .splitToList(fileTypes))
-                .ifPresent(fileTypes -> resultComponent.setAcceptedFileTypes(fileTypes.toArray(new String[0])));
+                .map(LoaderUtils::split)
+                .ifPresent(fileTypes -> resultComponent.setAcceptedFileTypes(fileTypes.toArray(String[]::new)));
     }
 
     protected DataLoaderSupport getDataLoaderSupport() {

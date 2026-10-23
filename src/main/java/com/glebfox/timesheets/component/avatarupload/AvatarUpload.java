@@ -104,7 +104,6 @@ public class AvatarUpload extends CustomField<byte[]>
 
     public AvatarUpload() {
         super(null, true);
-        addClassName(CLASS_NAME);
     }
 
     @Override
@@ -121,10 +120,12 @@ public class AvatarUpload extends CustomField<byte[]>
         //noinspection unchecked
         fieldDelegate = applicationContext.getBean(FieldDelegate.class, this);
 
-        initContent();
+        initComponent();
     }
 
-    private void initContent() {
+    private void initComponent() {
+        addClassName(CLASS_NAME);
+
         uploadManager = new UploadManager(this, createUploadHandler());
         uploadManager.setMaxFiles(1);
         uploadManager.addAllFinishedListener(event -> uploadManager.clearFileList());
