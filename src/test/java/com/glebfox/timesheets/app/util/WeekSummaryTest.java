@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -34,7 +34,7 @@ class WeekSummaryTest {
     @Test
     void noWorkdaysTest() {
         // Saturday, Aug 1: the only day of its row in August
-        WeekSummary week = week(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 1), SpentTime.ZERO, SpentTime.ZERO);
+        WeekSummary week = week(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 1), WorkTime.ZERO, WorkTime.ZERO);
 
         assertThat(week.getStatus(LocalDate.of(2026, 7, 15))).isEqualTo(WeekStatus.NO_WORKDAYS);
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.NO_WORKDAYS);
@@ -43,7 +43,7 @@ class WeekSummaryTest {
     @Test
     void weekendTimeWithoutWorkdaysIsOverTest() {
         WeekSummary week = week(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 1),
-                SpentTime.ofHours(2), SpentTime.ZERO);
+                WorkTime.ofHours(2), WorkTime.ZERO);
 
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.OVER);
     }
@@ -51,7 +51,7 @@ class WeekSummaryTest {
     @Test
     void overTest() {
         WeekSummary week = week(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 5),
-                SpentTime.ofHours(36), SpentTime.ofHours(32));
+                WorkTime.ofHours(36), WorkTime.ofHours(32));
 
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.OVER);
     }
@@ -59,7 +59,7 @@ class WeekSummaryTest {
     @Test
     void onPlanTest() {
         WeekSummary week = week(LocalDate.of(2026, 9, 13), LocalDate.of(2026, 9, 19),
-                SpentTime.ofHours(40), SpentTime.ofHours(40));
+                WorkTime.ofHours(40), WorkTime.ofHours(40));
 
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.ON_PLAN);
     }
@@ -67,7 +67,7 @@ class WeekSummaryTest {
     @Test
     void shortTest() {
         WeekSummary week = week(LocalDate.of(2026, 9, 6), LocalDate.of(2026, 9, 12),
-                SpentTime.of(35, 30), SpentTime.ofHours(40));
+                WorkTime.of(35, 30), WorkTime.ofHours(40));
 
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.SHORT);
     }
@@ -75,7 +75,7 @@ class WeekSummaryTest {
     @Test
     void inProgressTest() {
         WeekSummary week = week(LocalDate.of(2026, 9, 20), LocalDate.of(2026, 9, 26),
-                SpentTime.ofHours(20), SpentTime.ofHours(40));
+                WorkTime.ofHours(20), WorkTime.ofHours(40));
 
         assertThat(week.getStatus(TODAY)).isEqualTo(WeekStatus.IN_PROGRESS);
         assertThat(week.getStatus(LocalDate.of(2026, 9, 20))).isEqualTo(WeekStatus.IN_PROGRESS);
@@ -85,9 +85,9 @@ class WeekSummaryTest {
     @Test
     void currentWeekAtOrOverPlanTest() {
         WeekSummary onPlan = week(LocalDate.of(2026, 9, 20), LocalDate.of(2026, 9, 26),
-                SpentTime.ofHours(40), SpentTime.ofHours(40));
+                WorkTime.ofHours(40), WorkTime.ofHours(40));
         WeekSummary over = week(LocalDate.of(2026, 9, 20), LocalDate.of(2026, 9, 26),
-                SpentTime.ofHours(42), SpentTime.ofHours(40));
+                WorkTime.ofHours(42), WorkTime.ofHours(40));
 
         assertThat(onPlan.isCurrent(TODAY)).isTrue();
         assertThat(onPlan.getStatus(TODAY)).isEqualTo(WeekStatus.ON_PLAN);
@@ -98,9 +98,9 @@ class WeekSummaryTest {
     @Test
     void upcomingTest() {
         WeekSummary empty = week(LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 30),
-                SpentTime.ZERO, SpentTime.ofHours(24));
+                WorkTime.ZERO, WorkTime.ofHours(24));
         WeekSummary started = week(LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 30),
-                SpentTime.ofHours(2), SpentTime.ofHours(24));
+                WorkTime.ofHours(2), WorkTime.ofHours(24));
 
         assertThat(empty.getStatus(TODAY)).isEqualTo(WeekStatus.UPCOMING);
         assertThat(started.getStatus(TODAY)).isEqualTo(WeekStatus.UPCOMING);
@@ -110,7 +110,7 @@ class WeekSummaryTest {
     void todayInNextMonthDaysTest() {
         // Today, Oct 1, is on the same calendar row but outside the displayed month
         WeekSummary week = week(LocalDate.of(2026, 9, 27), LocalDate.of(2026, 9, 30),
-                SpentTime.ofHours(10), SpentTime.ofHours(24));
+                WorkTime.ofHours(10), WorkTime.ofHours(24));
         LocalDate today = LocalDate.of(2026, 10, 1);
 
         assertThat(week.isCurrent(today)).isFalse();
@@ -120,11 +120,11 @@ class WeekSummaryTest {
     @Test
     void firstDayAfterLastDayTest() {
         assertThatThrownBy(() -> week(LocalDate.of(2026, 9, 6), LocalDate.of(2026, 9, 5),
-                SpentTime.ZERO, SpentTime.ZERO))
+                WorkTime.ZERO, WorkTime.ZERO))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    private WeekSummary week(LocalDate firstDay, LocalDate lastDay, SpentTime fact, SpentTime plan) {
+    private WeekSummary week(LocalDate firstDay, LocalDate lastDay, WorkTime fact, WorkTime plan) {
         return new WeekSummary(firstDay, lastDay, new FactAndPlan(fact, plan));
     }
 }

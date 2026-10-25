@@ -1,8 +1,8 @@
-# Spent time
+# Work time
 
-Source: `datatype/`, `app/TimeParser.java`, the `datatype.spentTime.*` keys of the message bundles
+Source: `datatype/`, `app/TimeParser.java`, the `datatype.workTime.*` keys of the message bundles
 
-A duration in whole hours and minutes: the time spent in a [time entry](time-entry.md). It is stored as a total number of minutes.
+A duration in whole hours and minutes, such as the time spent in a [time entry](time-entry.md) or the planned time of a day in the [calendar](../views/calendar.md#totals). It is stored as a total number of minutes.
 
 ## Values
 

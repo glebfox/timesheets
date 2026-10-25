@@ -28,18 +28,18 @@ import java.text.ParseException;
 import java.util.Locale;
 
 /**
- * SpentTimeDatatype implements the {@link Datatype} interface to provide formatting and parsing
- * capabilities for the {@link SpentTime} class. This datatype is used to represent and handle
+ * WorkTimeDatatype implements the {@link Datatype} interface to provide formatting and parsing
+ * capabilities for the {@link WorkTime} class. This datatype is used to represent and handle
  * time durations expressed in hours and minutes.
  */
 @DatatypeDef(
-        id = "spentTime",
-        javaClass = SpentTime.class,
+        id = "workTime",
+        javaClass = WorkTime.class,
         defaultForClass = true,
-        value = "ts_SpentTimeDatatype"
+        value = "ts_WorkTimeDatatype"
 )
 @Ddl("BIGINT")
-public class SpentTimeDatatype implements Datatype<SpentTime> {
+public class WorkTimeDatatype implements Datatype<WorkTime> {
 
     @Autowired
     private TimeParser timeParser;
@@ -48,8 +48,8 @@ public class SpentTimeDatatype implements Datatype<SpentTime> {
 
     @Override
     public String format(@Nullable Object value) {
-        return value instanceof SpentTime spentTime
-                ? messages.formatMessage("", "datatype.spentTime.format", spentTime.getHours(), spentTime.getMinutes())
+        return value instanceof WorkTime workTime
+                ? messages.formatMessage("", "datatype.workTime.format", workTime.getHours(), workTime.getMinutes())
                 : "";
     }
 
@@ -60,7 +60,7 @@ public class SpentTimeDatatype implements Datatype<SpentTime> {
 
     @Nullable
     @Override
-    public SpentTime parse(@Nullable String value) throws ParseException {
+    public WorkTime parse(@Nullable String value) throws ParseException {
         if (value == null) {
             return null;
         }
@@ -70,7 +70,7 @@ public class SpentTimeDatatype implements Datatype<SpentTime> {
 
     @Nullable
     @Override
-    public SpentTime parse(@Nullable String value, Locale locale) throws ParseException {
+    public WorkTime parse(@Nullable String value, Locale locale) throws ParseException {
         return parse(value);
     }
 }

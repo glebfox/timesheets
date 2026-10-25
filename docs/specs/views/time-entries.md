@@ -23,7 +23,7 @@ The time entry editor (`time-entries/:id`, a 640px dialog when opened as one) ha
 
 - **Date** — today's date for a new entry.
 - **User** and **task** — see the two modes below.
-- **Spent time** — accepts the input forms of [spent time](../data-model/spent-time.md#input); the placeholder suggests `hh:mm`.
+- **Spent time** — accepts the input forms of [work time](../data-model/work-time.md#input); the placeholder suggests `hh:mm`.
 - **Status** — hidden while the entry is being created, so a new entry is always saved as New.
 - **Description**.
 - **Rejection reason** — shown only while the status is Rejected, and then required.

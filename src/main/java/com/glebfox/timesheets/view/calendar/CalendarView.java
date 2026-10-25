@@ -21,7 +21,7 @@ import com.glebfox.timesheets.app.CalendarSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
@@ -133,7 +133,7 @@ public class CalendarView extends StandardView {
 
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
-    private Map<LocalDate, SpentTime> spentTimeByDay = Collections.emptyMap();
+    private Map<LocalDate, WorkTime> spentTimeByDay = Collections.emptyMap();
 
     private UiEntityContext entityContext;
     private InMemoryCrudEntityContext crudEntityContext;
@@ -367,7 +367,7 @@ public class CalendarView extends StandardView {
         };
     }
 
-    private String formatTotal(SpentTime time) {
+    private String formatTotal(WorkTime time) {
         return time.getMinutes() == 0
                 ? messageBundle.formatMessage("totalHours.format", time.getHours())
                 : metadataTools.format(time);
@@ -494,7 +494,7 @@ public class CalendarView extends StandardView {
     @Install(to = "calendar", subject = "dayCellBottomTextGenerator")
     private String calendarDayCellBottomTextGenerator(final DayCellBottomTextContext context) {
         // Always return a text: the calendar keeps the previous text in place of a null one
-        return spentTimeByDay.getOrDefault(context.getDate(), SpentTime.ZERO).toString();
+        return spentTimeByDay.getOrDefault(context.getDate(), WorkTime.ZERO).toString();
     }
 
     @Nullable
@@ -506,7 +506,7 @@ public class CalendarView extends StandardView {
         }
 
         FactAndPlan daySummary = new FactAndPlan(
-                spentTimeByDay.getOrDefault(date, SpentTime.ZERO),
+                spentTimeByDay.getOrDefault(date, WorkTime.ZERO),
                 calendarSupport.getPlannedTime(date));
 
         return List.of(getTimeClassName(daySummary));

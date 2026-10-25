@@ -57,7 +57,7 @@ classDiagram
     class TimeEntry {
         <<Entity>>
         LocalDate date
-        SpentTime spentTime
+        WorkTime spentTime
         TimeEntryStatus status
         String description
         String rejectionReason
@@ -92,7 +92,7 @@ classDiagram
 A filled diamond marks an owner and its parts. Every entity also has a UUID `id`, a `version` for optimistic locking, and the soft-delete attributes `deletedBy` and `deletedDate`; the diagram leaves them out.
 
 - A [project](project.md) owns its [tasks](task.md), [participants](project-participant.md), and [tag groups](tag-group.md), and a tag group owns its tags: they are edited inside their owner and deleted with it.
-- A [time entry](time-entry.md) is one user's time on one task and may carry tags; the editor offers those of the task's project. Its duration is a [spent time](spent-time.md) value.
+- A [time entry](time-entry.md) is one user's time on one task and may carry tags; the editor offers those of the task's project. Its duration is a [work time](work-time.md) value.
 - [Clients](client.md), [task types](task-type.md), [project roles](project-role.md), and [users](user.md) stand on their own: deleting one leaves whatever refers to it in place.
 
 ## Rules that hold for every entity

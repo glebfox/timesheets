@@ -18,7 +18,7 @@ package com.glebfox.timesheets.calendar;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.CalendarSupport;
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
@@ -98,7 +98,7 @@ public class CalendarUiTest {
 
         systemAuthenticator.runWithUser(USERNAME, () -> {
             CalendarView calendarView = openCalendar();
-            editSpentTime(calendarView, timeEntry, SpentTime.ofHours(2));
+            editSpentTime(calendarView, timeEntry, WorkTime.ofHours(2));
 
             /* When */
             moveTimeEntry(calendarView, timeEntry, DAY.plusDays(1));
@@ -107,7 +107,7 @@ public class CalendarUiTest {
         /* Then */
         TimeEntry saved = dataManager.load(Id.of(timeEntry)).one();
         assertThat(saved.getDate()).isEqualTo(DAY.plusDays(1));
-        assertThat(saved.getSpentTime()).isEqualTo(SpentTime.ofHours(2));
+        assertThat(saved.getSpentTime()).isEqualTo(WorkTime.ofHours(2));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class CalendarUiTest {
 
         systemAuthenticator.runWithUser(USERNAME, () -> {
             CalendarView calendarView = openCalendar();
-            editSpentTime(calendarView, timeEntry, SpentTime.ofHours(2));
+            editSpentTime(calendarView, timeEntry, WorkTime.ofHours(2));
 
             /* When */
             // The calendar's context menu calls this with the entry it holds
@@ -165,7 +165,7 @@ public class CalendarUiTest {
         return calendarView;
     }
 
-    private void editSpentTime(CalendarView calendarView, TimeEntry timeEntry, SpentTime spentTime) {
+    private void editSpentTime(CalendarView calendarView, TimeEntry timeEntry, WorkTime spentTime) {
         FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
         EntityCalendarEvent<TimeEntryCalendarWrapper> calendarEvent = findCalendarEvent(calendarView, timeEntry);
         ComponentUtil.fireEvent(calendar,
@@ -173,7 +173,7 @@ public class CalendarUiTest {
                         monthDisplayModeInfo()));
 
         TimeEntryDetailView detailView = UiTestUtils.getCurrentView();
-        TypedTextField<SpentTime> spentTimeField = UiTestUtils.getComponent(detailView, "spentTimeField");
+        TypedTextField<WorkTime> spentTimeField = UiTestUtils.getComponent(detailView, "spentTimeField");
         spentTimeField.setTypedValue(spentTime);
 
         JmixButton saveAndCloseBtn = UiTestUtils.getComponent(detailView, "saveAndCloseBtn");
@@ -243,7 +243,7 @@ public class CalendarUiTest {
         timeEntry.setDate(DAY);
         timeEntry.setUser(user);
         timeEntry.setTask(task);
-        timeEntry.setSpentTime(SpentTime.ofHours(1));
+        timeEntry.setSpentTime(WorkTime.ofHours(1));
         timeEntry.setStatus(TimeEntryStatus.NEW);
         entities.add(timeEntry);
 

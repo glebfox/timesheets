@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -28,12 +28,12 @@ import java.math.RoundingMode;
  * @param fact the time spent
  * @param plan the time planned
  */
-public record FactAndPlan(SpentTime fact, SpentTime plan) {
+public record FactAndPlan(WorkTime fact, WorkTime plan) {
 
     /**
      * No time spent and none planned.
      */
-    public static final FactAndPlan ZERO = new FactAndPlan(SpentTime.ZERO, SpentTime.ZERO);
+    public static final FactAndPlan ZERO = new FactAndPlan(WorkTime.ZERO, WorkTime.ZERO);
 
     public FactAndPlan {
         Preconditions.checkNotNull(fact);
@@ -55,8 +55,8 @@ public record FactAndPlan(SpentTime fact, SpentTime plan) {
      *
      * @return the absolute difference between the time spent and the time planned
      */
-    public SpentTime difference() {
-        return SpentTime.ofMinutes(Math.abs(fact.toMinutes() - plan.toMinutes()));
+    public WorkTime difference() {
+        return WorkTime.ofMinutes(Math.abs(fact.toMinutes() - plan.toMinutes()));
     }
 
     /**
