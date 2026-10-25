@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1" author="ts">
+        <createTable tableName="TS_HOLIDAY_CALENDAR">
+            <column name="ID" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TS_HOLIDAY_CALENDAR"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DESCRIPTION" type="CLOB"/>
+            <column name="VERSION" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DELETED_BY" type="VARCHAR(255)"/>
+            <column name="DELETED_DATE" type="${offsetDateTime.type}"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="2" author="ts">
+        <createTable tableName="TS_HOLIDAY_CALENDAR_DAY">
+            <column name="ID" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TS_HOLIDAY_CALENDAR_DAY"/>
+            </column>
+            <column name="CALENDAR_ID" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DATE_" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TYPE_" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)"/>
+            <column name="VERSION" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DELETED_BY" type="VARCHAR(255)"/>
+            <column name="DELETED_DATE" type="${offsetDateTime.type}"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="3" author="ts">
+        <createTable tableName="TS_WORK_SCHEDULE">
+            <column name="ID" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TS_WORK_SCHEDULE"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DESCRIPTION" type="CLOB"/>
+            <column name="WORKDAY_TIME" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MONDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TUESDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="WEDNESDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="THURSDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="FRIDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SATURDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SUNDAY" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="HOLIDAY_CALENDAR_ID" type="UUID"/>
+            <column name="IS_DEFAULT" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VERSION" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DELETED_BY" type="VARCHAR(255)"/>
+            <column name="DELETED_DATE" type="${offsetDateTime.type}"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="4" author="ts">
+        <createTable tableName="TS_WORK_SCHEDULE_ASSIGNMENT">
+            <column name="ID" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="PK_TS_WORK_SCHEDULE_ASSIGNMENT"/>
+            </column>
+            <column name="USER_ID" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="WORK_SCHEDULE_ID" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="START_DATE" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VERSION" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DELETED_BY" type="VARCHAR(255)"/>
+            <column name="DELETED_DATE" type="${offsetDateTime.type}"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="5" author="ts">
+        <createIndex indexName="IDX_TS_HOLIDAY_CALENDAR_DAY_CALENDAR" tableName="TS_HOLIDAY_CALENDAR_DAY">
+            <column name="CALENDAR_ID"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="CALENDAR_ID" baseTableName="TS_HOLIDAY_CALENDAR_DAY"
+                                 constraintName="FK_TS_HOLIDAY_CALENDAR_DAY_ON_CALENDAR" referencedColumnNames="ID"
+                                 referencedTableName="TS_HOLIDAY_CALENDAR"/>
+    </changeSet>
+    <changeSet id="6" author="ts">
+        <createIndex indexName="IDX_TS_WORK_SCHEDULE_HOLIDAY_CALENDAR" tableName="TS_WORK_SCHEDULE">
+            <column name="HOLIDAY_CALENDAR_ID"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="HOLIDAY_CALENDAR_ID" baseTableName="TS_WORK_SCHEDULE"
+                                 constraintName="FK_TS_WORK_SCHEDULE_ON_HOLIDAY_CALENDAR" referencedColumnNames="ID"
+                                 referencedTableName="TS_HOLIDAY_CALENDAR"/>
+    </changeSet>
+    <changeSet id="7" author="ts">
+        <createIndex indexName="IDX_TS_WORK_SCHEDULE_ASSIGNMENT_USER" tableName="TS_WORK_SCHEDULE_ASSIGNMENT">
+            <column name="USER_ID"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="USER_ID" baseTableName="TS_WORK_SCHEDULE_ASSIGNMENT"
+                                 constraintName="FK_TS_WORK_SCHEDULE_ASSIGNMENT_ON_USER" referencedColumnNames="ID"
+                                 referencedTableName="TS_USER"/>
+    </changeSet>
+    <changeSet id="8" author="ts">
+        <createIndex indexName="IDX_TS_WORK_SCHEDULE_ASSIGNMENT_WORK_SCHEDULE" tableName="TS_WORK_SCHEDULE_ASSIGNMENT">
+            <column name="WORK_SCHEDULE_ID"/>
+        </createIndex>
+
+        <addForeignKeyConstraint baseColumnNames="WORK_SCHEDULE_ID" baseTableName="TS_WORK_SCHEDULE_ASSIGNMENT"
+                                 constraintName="FK_TS_WORK_SCHEDULE_ASSIGNMENT_ON_WORK_SCHEDULE"
+                                 referencedColumnNames="ID" referencedTableName="TS_WORK_SCHEDULE"/>
+    </changeSet>
+    <changeSet id="9" author="ts" dbms="postgresql">
+        <createIndex indexName="IDX_TS_HOLIDAY_CALENDAR_UNQ" tableName="TS_HOLIDAY_CALENDAR" unique="true">
+            <column name="NAME"/>
+        </createIndex>
+
+        <modifySql>
+            <append value="where DELETED_DATE is null"/>
+        </modifySql>
+    </changeSet>
+    <changeSet id="10" author="ts" dbms="postgresql">
+        <createIndex indexName="IDX_TS_HOLIDAY_CALENDAR_DAY_UNQ" tableName="TS_HOLIDAY_CALENDAR_DAY" unique="true">
+            <column name="CALENDAR_ID"/>
+            <column name="DATE_"/>
+        </createIndex>
+
+        <modifySql>
+            <append value="where DELETED_DATE is null"/>
+        </modifySql>
+    </changeSet>
+    <changeSet id="11" author="ts" dbms="postgresql">
+        <createIndex indexName="IDX_TS_WORK_SCHEDULE_UNQ" tableName="TS_WORK_SCHEDULE" unique="true">
+            <column name="NAME"/>
+        </createIndex>
+
+        <modifySql>
+            <append value="where DELETED_DATE is null"/>
+        </modifySql>
+    </changeSet>
+    <changeSet id="12" author="ts" dbms="postgresql">
+        <createIndex indexName="IDX_TS_WORK_SCHEDULE_ASSIGNMENT_UNQ" tableName="TS_WORK_SCHEDULE_ASSIGNMENT"
+                     unique="true">
+            <column name="USER_ID"/>
+            <column name="START_DATE"/>
+        </createIndex>
+
+        <modifySql>
+            <append value="where DELETED_DATE is null"/>
+        </modifySql>
+    </changeSet>
+    <!-- The default work schedule: every context needs one, and existing users keep 8 hours, Monday to Friday -->
+    <changeSet id="13" author="ts" context="!cuba">
+        <insert tableName="TS_WORK_SCHEDULE" dbms="postgresql, mssql, hsqldb">
+            <column name="ID" value="b7e2c1a4-5d3f-4e8b-9a6c-1f2e3d4c5b6a"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Full time"/>
+            <column name="WORKDAY_TIME" valueNumeric="480"/>
+            <column name="MONDAY" valueBoolean="true"/>
+            <column name="TUESDAY" valueBoolean="true"/>
+            <column name="WEDNESDAY" valueBoolean="true"/>
+            <column name="THURSDAY" valueBoolean="true"/>
+            <column name="FRIDAY" valueBoolean="true"/>
+            <column name="SATURDAY" valueBoolean="false"/>
+            <column name="SUNDAY" valueBoolean="false"/>
+            <column name="IS_DEFAULT" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="TS_WORK_SCHEDULE" dbms="oracle, mysql, mariadb">
+            <column name="ID" value="b7e2c1a45d3f4e8b9a6c1f2e3d4c5b6a"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Full time"/>
+            <column name="WORKDAY_TIME" valueNumeric="480"/>
+            <column name="MONDAY" valueBoolean="true"/>
+            <column name="TUESDAY" valueBoolean="true"/>
+            <column name="WEDNESDAY" valueBoolean="true"/>
+            <column name="THURSDAY" valueBoolean="true"/>
+            <column name="FRIDAY" valueBoolean="true"/>
+            <column name="SATURDAY" valueBoolean="false"/>
+            <column name="SUNDAY" valueBoolean="false"/>
+            <column name="IS_DEFAULT" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
