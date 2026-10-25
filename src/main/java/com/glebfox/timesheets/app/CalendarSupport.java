@@ -18,7 +18,7 @@ package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import io.jmix.core.DataManager;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class CalendarSupport {
 
     // TODO: gg, setting
-    private static final SpentTime DAILY_WORK_TIME = SpentTime.ofHours(8);
+    private static final WorkTime DAILY_WORK_TIME = WorkTime.ofHours(8);
 
     private final TimeEntrySupport timeEntrySupport;
     private final DataManager dataManager;
@@ -110,8 +110,8 @@ public class CalendarSupport {
      * @return the time planned for the date
      * @see #isWorkday(LocalDate)
      */
-    public SpentTime getPlannedTime(LocalDate date) {
-        return isWorkday(date) ? DAILY_WORK_TIME : SpentTime.ZERO;
+    public WorkTime getPlannedTime(LocalDate date) {
+        return isWorkday(date) ? DAILY_WORK_TIME : WorkTime.ZERO;
     }
 
     /**
@@ -120,7 +120,7 @@ public class CalendarSupport {
      * @param timeEntries the time entries to sum
      * @return the time spent by day; a day without time entries has no key
      */
-    public Map<LocalDate, SpentTime> calculateSpentTimeByDay(Collection<TimeEntryCalendarWrapper> timeEntries) {
+    public Map<LocalDate, WorkTime> calculateSpentTimeByDay(Collection<TimeEntryCalendarWrapper> timeEntries) {
         Preconditions.checkNotNullArgument(timeEntries);
 
         return timeEntries.stream()
@@ -128,7 +128,7 @@ public class CalendarSupport {
                 .collect(Collectors.toMap(
                         TimeEntryCalendarWrapper::getDate,
                         TimeEntryCalendarWrapper::getSpentTime,
-                        SpentTime::plus
+                        WorkTime::plus
                 ));
     }
 
@@ -147,7 +147,7 @@ public class CalendarSupport {
      * @return the first and last day, and the time spent and planned, of each week of the month, in order
      */
     public List<WeekSummary> calculateWeeksSummary(YearMonth month, DayOfWeek firstDayOfWeek,
-                                                   Map<LocalDate, SpentTime> spentTimeByDay) {
+                                                   Map<LocalDate, WorkTime> spentTimeByDay) {
         Preconditions.checkNotNullArgument(month);
         Preconditions.checkNotNullArgument(firstDayOfWeek);
         Preconditions.checkNotNullArgument(spentTimeByDay);
@@ -166,7 +166,7 @@ public class CalendarSupport {
             FactAndPlan total = FactAndPlan.ZERO;
             for (LocalDate day = firstDay; !day.isAfter(lastDay); day = day.plusDays(1)) {
                 total = total.plus(new FactAndPlan(
-                        spentTimeByDay.getOrDefault(day, SpentTime.ZERO),
+                        spentTimeByDay.getOrDefault(day, WorkTime.ZERO),
                         getPlannedTime(day)));
             }
 

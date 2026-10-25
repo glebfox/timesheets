@@ -18,7 +18,7 @@ package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
@@ -74,13 +74,13 @@ public class CalendarSupportTest {
         for (int i = 0; i < 5; i++) {
             LocalDate workday = monday.plusDays(i);
             assertThat(calendarSupport.isWorkday(workday)).isTrue();
-            assertThat(calendarSupport.getPlannedTime(workday)).isEqualTo(SpentTime.ofHours(8));
+            assertThat(calendarSupport.getPlannedTime(workday)).isEqualTo(WorkTime.ofHours(8));
         }
 
         for (int i = 5; i < 7; i++) {
             LocalDate weekend = monday.plusDays(i);
             assertThat(calendarSupport.isWorkday(weekend)).isFalse();
-            assertThat(calendarSupport.getPlannedTime(weekend)).isEqualTo(SpentTime.ZERO);
+            assertThat(calendarSupport.getPlannedTime(weekend)).isEqualTo(WorkTime.ZERO);
         }
     }
 
@@ -91,27 +91,27 @@ public class CalendarSupportTest {
         LocalDate day2 = LocalDate.of(2024, 12, 3);
 
         List<TimeEntryCalendarWrapper> timeEntries = List.of(
-                timeEntry(day1, SpentTime.ofMinutes(20)),
-                timeEntry(day1, SpentTime.ofMinutes(20)),
-                timeEntry(day1, SpentTime.ofMinutes(20)),
-                timeEntry(day2, SpentTime.of(7, 45)),
-                timeEntry(day2, SpentTime.ofMinutes(15))
+                timeEntry(day1, WorkTime.ofMinutes(20)),
+                timeEntry(day1, WorkTime.ofMinutes(20)),
+                timeEntry(day1, WorkTime.ofMinutes(20)),
+                timeEntry(day2, WorkTime.of(7, 45)),
+                timeEntry(day2, WorkTime.ofMinutes(15))
         );
 
         /* When */
-        Map<LocalDate, SpentTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(timeEntries);
+        Map<LocalDate, WorkTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(timeEntries);
 
         /* Then */
         assertThat(spentTimeByDay).containsOnly(
-                Map.entry(day1, SpentTime.ofHours(1)),
-                Map.entry(day2, SpentTime.ofHours(8))
+                Map.entry(day1, WorkTime.ofHours(1)),
+                Map.entry(day2, WorkTime.ofHours(8))
         );
     }
 
     @Test
     void weeksSummaryStartingOnMondayTest() {
         /* Given */
-        Map<LocalDate, SpentTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
+        Map<LocalDate, WorkTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
 
         /* When */
         List<WeekSummary> weeksSummary =
@@ -121,17 +121,17 @@ public class CalendarSupportTest {
         /* Then */
         assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
                 // Nov 25 - Dec 1: only Sunday, Dec 1, is in the month
-                factAndPlan(SpentTime.ofHours(2), SpentTime.ZERO),
+                factAndPlan(WorkTime.ofHours(2), WorkTime.ZERO),
                 // Dec 2 - Dec 8
-                factAndPlan(SpentTime.ofHours(40), SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ofHours(40), WorkTime.ofHours(40)),
                 // Dec 9 - Dec 15
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 16 - Dec 22
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 23 - Dec 29
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 30 - Jan 5: only Monday and Tuesday are in the month
-                factAndPlan(SpentTime.of(1, 30), SpentTime.ofHours(16))
+                factAndPlan(WorkTime.of(1, 30), WorkTime.ofHours(16))
         );
 
         assertThat(weeksSummary.get(0).total().isExcess()).isTrue();
@@ -144,13 +144,13 @@ public class CalendarSupportTest {
         assertThat(weeksSummary.get(5).firstDay()).isEqualTo(LocalDate.of(2024, 12, 30));
         assertThat(weeksSummary.get(5).lastDay()).isEqualTo(LocalDate.of(2024, 12, 31));
 
-        assertThat(monthSummary).isEqualTo(factAndPlan(SpentTime.of(43, 30), SpentTime.ofHours(176)));
+        assertThat(monthSummary).isEqualTo(factAndPlan(WorkTime.of(43, 30), WorkTime.ofHours(176)));
     }
 
     @Test
     void weeksSummaryStartingOnSundayTest() {
         /* Given */
-        Map<LocalDate, SpentTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
+        Map<LocalDate, WorkTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
 
         /* When */
         List<WeekSummary> weeksSummary =
@@ -160,15 +160,15 @@ public class CalendarSupportTest {
         /* Then */
         assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
                 // Dec 1 - Dec 7
-                factAndPlan(SpentTime.ofHours(42), SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ofHours(42), WorkTime.ofHours(40)),
                 // Dec 8 - Dec 14
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 15 - Dec 21
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 22 - Dec 28
-                factAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
                 // Dec 29 - Jan 4: only Sunday to Tuesday are in the month
-                factAndPlan(SpentTime.of(1, 30), SpentTime.ofHours(16))
+                factAndPlan(WorkTime.of(1, 30), WorkTime.ofHours(16))
         );
 
         // Only the days of the month, not of the whole calendar row
@@ -177,7 +177,7 @@ public class CalendarSupportTest {
         assertThat(weeksSummary.get(4).firstDay()).isEqualTo(LocalDate.of(2024, 12, 29));
         assertThat(weeksSummary.get(4).lastDay()).isEqualTo(LocalDate.of(2024, 12, 31));
 
-        assertThat(monthSummary).isEqualTo(factAndPlan(SpentTime.of(43, 30), SpentTime.ofHours(176)));
+        assertThat(monthSummary).isEqualTo(factAndPlan(WorkTime.of(43, 30), WorkTime.ofHours(176)));
     }
 
     @Test
@@ -229,25 +229,25 @@ public class CalendarSupportTest {
         List<TimeEntryCalendarWrapper> timeEntries = new ArrayList<>();
 
         // Outside the month
-        timeEntries.add(timeEntry(LocalDate.of(2024, 11, 30), SpentTime.ofHours(5)));
-        timeEntries.add(timeEntry(LocalDate.of(2025, 1, 1), SpentTime.ofHours(3)));
+        timeEntries.add(timeEntry(LocalDate.of(2024, 11, 30), WorkTime.ofHours(5)));
+        timeEntries.add(timeEntry(LocalDate.of(2025, 1, 1), WorkTime.ofHours(3)));
 
         // Sunday
-        timeEntries.add(timeEntry(LocalDate.of(2024, 12, 1), SpentTime.ofHours(2)));
+        timeEntries.add(timeEntry(LocalDate.of(2024, 12, 1), WorkTime.ofHours(2)));
 
         // A full week, Monday to Friday, split into entries that do not add up as decimal hours
         for (int day = 2; day <= 6; day++) {
-            timeEntries.add(timeEntry(LocalDate.of(2024, 12, day), SpentTime.of(7, 40)));
-            timeEntries.add(timeEntry(LocalDate.of(2024, 12, day), SpentTime.ofMinutes(20)));
+            timeEntries.add(timeEntry(LocalDate.of(2024, 12, day), WorkTime.of(7, 40)));
+            timeEntries.add(timeEntry(LocalDate.of(2024, 12, day), WorkTime.ofMinutes(20)));
         }
 
         // The last day of the month
-        timeEntries.add(timeEntry(LocalDate.of(2024, 12, 31), SpentTime.of(1, 30)));
+        timeEntries.add(timeEntry(LocalDate.of(2024, 12, 31), WorkTime.of(1, 30)));
 
         return timeEntries;
     }
 
-    private TimeEntryCalendarWrapper timeEntry(LocalDate date, SpentTime spentTime) {
+    private TimeEntryCalendarWrapper timeEntry(LocalDate date, WorkTime spentTime) {
         TimeEntry timeEntry = dataManager.create(TimeEntry.class);
         timeEntry.setDate(date);
         timeEntry.setSpentTime(spentTime);
@@ -255,7 +255,7 @@ public class CalendarSupportTest {
         return calendarSupport.wrapTimeEntry(timeEntry);
     }
 
-    private FactAndPlan factAndPlan(SpentTime fact, SpentTime plan) {
+    private FactAndPlan factAndPlan(WorkTime fact, WorkTime plan) {
         return new FactAndPlan(fact, plan);
     }
 
@@ -289,7 +289,7 @@ public class CalendarSupportTest {
         timeEntry.setDate(date);
         timeEntry.setUser(user);
         timeEntry.setTask(task);
-        timeEntry.setSpentTime(SpentTime.ofHours(1));
+        timeEntry.setSpentTime(WorkTime.ofHours(1));
         timeEntry.setStatus(TimeEntryStatus.NEW);
         entities.add(timeEntry);
 

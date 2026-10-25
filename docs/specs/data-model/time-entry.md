@@ -6,7 +6,7 @@ One user's time spent on one task on one day. Any number of entries may share a 
 
 ## Attributes
 
-- **Date, user, task, spent time** — required. Spent time is a [spent time](spent-time.md) value.
+- **Date, user, task, spent time** — required. Spent time is a [work time](work-time.md) value.
 - **Description** — optional, in Markdown.
 - **Tags** — any number of [tags](tag-group.md).
 - **Status** — New, Approved, Rejected, or Closed; every new entry starts as New.

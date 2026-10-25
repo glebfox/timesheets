@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,22 +25,22 @@ class FactAndPlanTest {
 
     @Test
     void differenceTest() {
-        assertThat(new FactAndPlan(SpentTime.ofHours(36), SpentTime.ofHours(32)).difference())
-                .isEqualTo(SpentTime.ofHours(4));
-        assertThat(new FactAndPlan(SpentTime.of(35, 30), SpentTime.ofHours(40)).difference())
-                .isEqualTo(SpentTime.of(4, 30));
-        assertThat(new FactAndPlan(SpentTime.ofHours(40), SpentTime.ofHours(40)).difference())
-                .isEqualTo(SpentTime.ZERO);
+        assertThat(new FactAndPlan(WorkTime.ofHours(36), WorkTime.ofHours(32)).difference())
+                .isEqualTo(WorkTime.ofHours(4));
+        assertThat(new FactAndPlan(WorkTime.of(35, 30), WorkTime.ofHours(40)).difference())
+                .isEqualTo(WorkTime.of(4, 30));
+        assertThat(new FactAndPlan(WorkTime.ofHours(40), WorkTime.ofHours(40)).difference())
+                .isEqualTo(WorkTime.ZERO);
     }
 
     @Test
     void percentOfPlanTest() {
-        assertThat(new FactAndPlan(SpentTime.of(131, 30), SpentTime.ofHours(176)).percentOfPlan()).isEqualTo(75);
-        assertThat(new FactAndPlan(SpentTime.ofHours(185), SpentTime.ofHours(176)).percentOfPlan()).isEqualTo(105);
-        assertThat(new FactAndPlan(SpentTime.ofHours(40), SpentTime.ofHours(40)).percentOfPlan()).isEqualTo(100);
+        assertThat(new FactAndPlan(WorkTime.of(131, 30), WorkTime.ofHours(176)).percentOfPlan()).isEqualTo(75);
+        assertThat(new FactAndPlan(WorkTime.ofHours(185), WorkTime.ofHours(176)).percentOfPlan()).isEqualTo(105);
+        assertThat(new FactAndPlan(WorkTime.ofHours(40), WorkTime.ofHours(40)).percentOfPlan()).isEqualTo(100);
         // 12.5% rounds half up to 13; half even would give 12
-        assertThat(new FactAndPlan(SpentTime.ofMinutes(1), SpentTime.ofMinutes(8)).percentOfPlan()).isEqualTo(13);
-        assertThat(new FactAndPlan(SpentTime.ZERO, SpentTime.ZERO).percentOfPlan()).isZero();
-        assertThat(new FactAndPlan(SpentTime.ZERO, SpentTime.ofHours(40)).percentOfPlan()).isZero();
+        assertThat(new FactAndPlan(WorkTime.ofMinutes(1), WorkTime.ofMinutes(8)).percentOfPlan()).isEqualTo(13);
+        assertThat(new FactAndPlan(WorkTime.ZERO, WorkTime.ZERO).percentOfPlan()).isZero();
+        assertThat(new FactAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)).percentOfPlan()).isZero();
     }
 }

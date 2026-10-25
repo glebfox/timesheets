@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.entity.timeentry;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.user.User;
@@ -67,7 +67,7 @@ public class TimeEntry {
 
     @NotNull
     @Column(name = "SPENT_TIME", nullable = false)
-    private SpentTime spentTime;
+    private WorkTime spentTime;
 
     @Column(name = "STATUS", nullable = false)
     @NotNull
@@ -108,11 +108,11 @@ public class TimeEntry {
         this.tags = tags;
     }
 
-    public void setSpentTime(SpentTime spentTime) {
+    public void setSpentTime(WorkTime spentTime) {
         this.spentTime = spentTime;
     }
 
-    public SpentTime getSpentTime() {
+    public WorkTime getSpentTime() {
         return spentTime;
     }
 

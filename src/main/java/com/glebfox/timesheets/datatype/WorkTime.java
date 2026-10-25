@@ -29,19 +29,19 @@ import java.math.RoundingMode;
  * and thread-safe. It provides utility methods to create and convert time
  * representations using hours, minutes, or decimal hour values.
  */
-public class SpentTime implements Serializable, Comparable<SpentTime> {
+public class WorkTime implements Serializable, Comparable<WorkTime> {
 
     /**
      * A constant representing a time period of zero hours and zero minutes.
      */
-    public static final SpentTime ZERO = new SpentTime(0, 0);
+    public static final WorkTime ZERO = new WorkTime(0, 0);
 
     private static final BigDecimal MINUTES_IN_HOUR = BigDecimal.valueOf(60);
 
     private final int hours;
     private final int minutes;
 
-    public SpentTime(int hours, int minutes) {
+    public WorkTime(int hours, int minutes) {
         Preconditions.checkArgument(hours >= 0, "hours must be positive");
         Preconditions.checkArgument(minutes >= 0 && minutes < 60, "minutes must be between 0 and 59 inclusive");
 
@@ -50,55 +50,55 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
     }
 
     /**
-     * Creates a new instance of {@link SpentTime} with the specified hours and minutes.
+     * Creates a new instance of {@link WorkTime} with the specified hours and minutes.
      *
      * @param hours   the number of hours, must be positive
      * @param minutes the number of minutes, must be between 0 and 59 inclusive
-     * @return a new {@link SpentTime} instance representing the specified time period
+     * @return a new {@link WorkTime} instance representing the specified time period
      */
-    public static SpentTime of(int hours, int minutes) {
-        return new SpentTime(hours, minutes);
+    public static WorkTime of(int hours, int minutes) {
+        return new WorkTime(hours, minutes);
     }
 
     /**
-     * Creates a new instance of {@link SpentTime} with the specified number of hours.
+     * Creates a new instance of {@link WorkTime} with the specified number of hours.
      *
      * @param hours the number of hours, must be posititve
-     * @return a new {@link SpentTime} instance representing the specified hours and 0 minutes
+     * @return a new {@link WorkTime} instance representing the specified hours and 0 minutes
      */
-    public static SpentTime ofHours(int hours) {
-        return new SpentTime(hours, 0);
+    public static WorkTime ofHours(int hours) {
+        return new WorkTime(hours, 0);
     }
 
     /**
-     * Creates a new instance of {@link SpentTime} based on the specified number of minutes.
+     * Creates a new instance of {@link WorkTime} based on the specified number of minutes.
      * The method calculates the equivalent number of hours and remaining minutes.
      *
      * @param minutes the total number of minutes to be converted, must be positive
-     * @return a new {@link SpentTime} instance representing the calculated hours and minutes
+     * @return a new {@link WorkTime} instance representing the calculated hours and minutes
      */
-    public static SpentTime ofMinutes(long minutes) {
+    public static WorkTime ofMinutes(long minutes) {
         int hours = 0;
         if (minutes >= 60) {
             hours = (int) (minutes / 60);
             minutes = minutes % 60;
         }
-        return new SpentTime(hours, (int) minutes);
+        return new WorkTime(hours, (int) minutes);
     }
 
     /**
-     * Creates a new instance of {@link SpentTime} based on the specified number of hours.
+     * Creates a new instance of {@link WorkTime} based on the specified number of hours.
      * The hours and fractional minutes are extracted from the input and used to create the instance.
      *
      * @param hours the total number of hours, where the integer part represents
      *              full hours and the fractional part represents minutes
-     * @return a new {@link SpentTime} instance with the calculated hours and minutes
+     * @return a new {@link WorkTime} instance with the calculated hours and minutes
      */
-    public static SpentTime fromHours(BigDecimal hours) {
+    public static WorkTime fromHours(BigDecimal hours) {
         int h = hours.intValue();
         int m = hours.remainder(BigDecimal.ONE).multiply(MINUTES_IN_HOUR).intValue();
 
-        return new SpentTime(h, m);
+        return new WorkTime(h, m);
     }
 
     /**
@@ -142,9 +142,9 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
      * Returns the sum of this time and the specified one. The sum is exact to the minute.
      *
      * @param other the time to add
-     * @return a new {@link SpentTime} instance representing the sum
+     * @return a new {@link WorkTime} instance representing the sum
      */
-    public SpentTime plus(SpentTime other) {
+    public WorkTime plus(WorkTime other) {
         Preconditions.checkNotNull(other);
 
         return ofMinutes(toMinutes() + other.toMinutes());
@@ -159,8 +159,8 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SpentTime spentTime = (SpentTime) o;
-        return hours == spentTime.hours && minutes == spentTime.minutes;
+        WorkTime workTime = (WorkTime) o;
+        return hours == workTime.hours && minutes == workTime.minutes;
     }
 
     @Override
@@ -169,7 +169,7 @@ public class SpentTime implements Serializable, Comparable<SpentTime> {
     }
 
     @Override
-    public int compareTo(SpentTime o) {
+    public int compareTo(WorkTime o) {
         return Long.compare(toMinutes(), o.toMinutes());
     }
 }

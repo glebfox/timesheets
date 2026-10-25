@@ -21,14 +21,14 @@ import jakarta.persistence.Converter;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Converts between {@link SpentTime} objects and their database representation as {@link Long}.
+ * Converts between {@link WorkTime} objects and their database representation as {@link Long}.
  */
 @Converter(autoApply = true)
-public class SpentTimeConverter implements AttributeConverter<SpentTime, Long> {
+public class WorkTimeConverter implements AttributeConverter<WorkTime, Long> {
 
     @Nullable
     @Override
-    public Long convertToDatabaseColumn(@Nullable SpentTime attribute) {
+    public Long convertToDatabaseColumn(@Nullable WorkTime attribute) {
         return attribute != null
                 ? attribute.toMinutes()
                 : null;
@@ -36,9 +36,9 @@ public class SpentTimeConverter implements AttributeConverter<SpentTime, Long> {
 
     @Nullable
     @Override
-    public SpentTime convertToEntityAttribute(@Nullable Long dbData) {
+    public WorkTime convertToEntityAttribute(@Nullable Long dbData) {
         return dbData != null
-                ? SpentTime.ofMinutes(dbData)
+                ? WorkTime.ofMinutes(dbData)
                 : null;
     }
 }

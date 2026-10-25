@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.app;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
@@ -124,7 +124,7 @@ public class TimeEntrySupportTest {
         timeEntry.setDate(zonedDateTime.toLocalDate());
         timeEntry.setUser(user);
         timeEntry.setTask(task);
-        timeEntry.setSpentTime(SpentTime.ofHours(1));
+        timeEntry.setSpentTime(WorkTime.ofHours(1));
         timeEntry.setStatus(TimeEntryStatus.APPROVED);
         entities.add(timeEntry);
 
@@ -161,7 +161,7 @@ public class TimeEntrySupportTest {
         timeEntry1.setDate(zonedDateTime.toLocalDate());
         timeEntry1.setUser(user);
         timeEntry1.setTask(task);
-        timeEntry1.setSpentTime(SpentTime.ofHours(1));
+        timeEntry1.setSpentTime(WorkTime.ofHours(1));
         timeEntry1.setStatus(TimeEntryStatus.NEW);
         entities.add(timeEntry1);
 
@@ -169,7 +169,7 @@ public class TimeEntrySupportTest {
         timeEntry2.setDate(zonedDateTime.toLocalDate());
         timeEntry2.setUser(user);
         timeEntry2.setTask(task);
-        timeEntry2.setSpentTime(SpentTime.ofHours(1));
+        timeEntry2.setSpentTime(WorkTime.ofHours(1));
         timeEntry2.setStatus(TimeEntryStatus.REJECTED);
         entities.add(timeEntry2);
 
@@ -177,7 +177,7 @@ public class TimeEntrySupportTest {
         timeEntry3.setDate(zonedDateTime.toLocalDate());
         timeEntry3.setUser(user);
         timeEntry3.setTask(task);
-        timeEntry3.setSpentTime(SpentTime.ofHours(1));
+        timeEntry3.setSpentTime(WorkTime.ofHours(1));
         timeEntry3.setStatus(TimeEntryStatus.REJECTED);
         entities.add(timeEntry3);
 
@@ -185,7 +185,7 @@ public class TimeEntrySupportTest {
         timeEntry4.setDate(zonedDateTime.toLocalDate());
         timeEntry4.setUser(user);
         timeEntry4.setTask(task);
-        timeEntry4.setSpentTime(SpentTime.ofHours(1));
+        timeEntry4.setSpentTime(WorkTime.ofHours(1));
         timeEntry4.setStatus(TimeEntryStatus.APPROVED);
         entities.add(timeEntry4);
 
@@ -197,7 +197,7 @@ public class TimeEntrySupportTest {
         timeEntry5.setDate(zonedDateTime.toLocalDate());
         timeEntry5.setUser(user1);
         timeEntry5.setTask(task);
-        timeEntry5.setSpentTime(SpentTime.ofHours(1));
+        timeEntry5.setSpentTime(WorkTime.ofHours(1));
         timeEntry5.setStatus(TimeEntryStatus.REJECTED);
         entities.add(timeEntry5);
 

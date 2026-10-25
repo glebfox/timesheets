@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.entity.timeentry;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.MetadataTools;
@@ -95,7 +95,7 @@ public class TimeEntryCalendarWrapper {
     }
 
     @JmixProperty
-    public SpentTime getSpentTime() {
+    public WorkTime getSpentTime() {
         return timeEntry.getSpentTime();
     }
 
@@ -118,7 +118,7 @@ public class TimeEntryCalendarWrapper {
     public String getTitle() {
         StringBuilder sb = new StringBuilder();
 
-        SpentTime spentTime = timeEntry.getSpentTime();
+        WorkTime spentTime = timeEntry.getSpentTime();
         if (spentTime != null) {
             sb.append(spentTime);
         }

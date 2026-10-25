@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.app;
 
-import com.glebfox.timesheets.datatype.SpentTime;
+import com.glebfox.timesheets.datatype.WorkTime;
 import io.jmix.core.Messages;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A utility component for parsing time strings and converting them into {@link SpentTime} instances.
+ * A utility component for parsing time strings and converting them into {@link WorkTime} instances.
  * This class supports multiple formats of time representation, including hours and minutes, total minutes,
  * and strings with units for hours and minutes.
  */
@@ -41,21 +41,21 @@ public class TimeParser {
     }
 
     /**
-     * Parses a time string and converts it into a {@link SpentTime} instance.
+     * Parses a time string and converts it into a {@link WorkTime} instance.
      * The method supports various time formats, including:
      * - Hours and minutes separated by ":" or " " (e.g., "2:30", "2 30").
      * - Numeric values representing hours or total minutes (e.g., "5", "120").
      * - Strings containing time values with unit suffixes for hours or minutes.
      *
      * @param time the time string to be parsed
-     * @return a {@link SpentTime} instance representing the parsed time
+     * @return a {@link WorkTime} instance representing the parsed time
      * @throws ParseException if the given time string cannot be parsed
      */
-    public SpentTime parse(String time) throws ParseException {
+    public WorkTime parse(String time) throws ParseException {
         if (time.matches("\\d+[: ]\\d{1,2}")) {
             String[] parts = time.split("[: ]");
             if (parts.length == 2) {
-                return new SpentTime(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+                return new WorkTime(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
             }
 
             throw new ParseException("Cannot parse time string: " + time, 0);
@@ -65,9 +65,9 @@ public class TimeParser {
             int numericTime = Math.abs(Integer.parseInt(time));
             long hoursInDay = TimeUnit.DAYS.toHours(1);
             if (numericTime <= hoursInDay) {
-                return SpentTime.ofHours(numericTime);
+                return WorkTime.ofHours(numericTime);
             } else {
-                return SpentTime.ofMinutes(numericTime);
+                return WorkTime.ofMinutes(numericTime);
             }
         }
 
@@ -75,18 +75,18 @@ public class TimeParser {
         int minutes = findMinutes(time);
 
         if (hours >= 0 || minutes >= 0) {
-            return new SpentTime(Math.max(0, hours), Math.max(0, minutes));
+            return new WorkTime(Math.max(0, hours), Math.max(0, minutes));
         }
 
         throw new ParseException("Cannot parse time string: " + time, 0);
     }
 
     private int findHours(String time) {
-        return findTimeValue(time, messages.getMessage("datatype.spentTime.hours.units"));
+        return findTimeValue(time, messages.getMessage("datatype.workTime.hours.units"));
     }
 
     private int findMinutes(String time) {
-        return findTimeValue(time, messages.getMessage("datatype.spentTime.minutes.units"));
+        return findTimeValue(time, messages.getMessage("datatype.workTime.minutes.units"));
     }
 
     private int findTimeValue(String time, String units) {
