@@ -51,7 +51,9 @@
             <column name="TYPE_" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="NAME" type="VARCHAR(255)"/>
+            <column name="NAME" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
             <column name="VERSION" type="INT">
                 <constraints nullable="false"/>
             </column>

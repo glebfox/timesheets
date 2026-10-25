@@ -16,11 +16,14 @@
 
 package com.glebfox.timesheets.entity.schedule;
 
+import io.jmix.core.MetadataTools;
 import io.jmix.core.annotation.DeletedBy;
 import io.jmix.core.annotation.DeletedDate;
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
+import io.jmix.core.metamodel.annotation.DependsOnProperties;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
+import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
@@ -45,7 +48,6 @@ public class HolidayCalendarDay {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private HolidayCalendar calendar;
 
-    @InstanceName
     @Column(name = "DATE_", nullable = false)
     @NotNull
     private LocalDate date;
@@ -54,7 +56,8 @@ public class HolidayCalendarDay {
     @NotNull
     private String type;
 
-    @Column(name = "NAME")
+    @Column(name = "NAME", nullable = false)
+    @NotNull
     private String name;
 
     @Column(name = "VERSION", nullable = false)
@@ -131,5 +134,15 @@ public class HolidayCalendarDay {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    @InstanceName
+    @DependsOnProperties({"date", "name", "type"})
+    public String getInstanceName(MetadataTools metadataTools,
+                                  DatatypeFormatter datatypeFormatter) {
+        return String.format("%s %s (%s)",
+                datatypeFormatter.formatLocalDate(date),
+                name,
+                metadataTools.format(getType()));
     }
 }

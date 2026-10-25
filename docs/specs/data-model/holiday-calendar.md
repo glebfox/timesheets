@@ -16,7 +16,8 @@ Each day has:
 
 - **Date** — required; at most once among the calendar's non-deleted days.
 - **Type** — required: Day off (a public holiday, or a day off moved from elsewhere) or Workday (a weekend day moved to a workday).
-- **Name** — optional, such as "New Year" or "Working Saturday".
+- **Name** — required, such as "New Year" or "Working Saturday".
+- Shown as `<date> <name> (<type>)`.
 
 A day of the calendar decides the plan of that date for every schedule that uses the calendar: a day off plans nothing and a workday plans the schedule's workday hours, whatever the day of the week. There are no recurring days and no shortened days.
 

@@ -28,7 +28,9 @@ import com.google.common.collect.Lists;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
+import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
+import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.data.PersistenceHints;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ExtendWith(AuthenticatedAsAdmin.class)
@@ -49,6 +52,10 @@ public class WorkScheduleModelTest {
 
     @Autowired
     DataManager dataManager;
+    @Autowired
+    MetadataTools metadataTools;
+    @Autowired
+    DatatypeFormatter datatypeFormatter;
 
     List<Id<?>> createdIds = new ArrayList<>();
 
@@ -151,6 +158,31 @@ public class WorkScheduleModelTest {
         assertThat(loadedAssignment.getUser()).isEqualTo(user);
         assertThat(loadedAssignment.getWorkSchedule()).isEqualTo(schedule);
         assertThat(loadedAssignment.getStartDate()).isEqualTo(LocalDate.of(2026, 11, 9));
+    }
+
+    @Test
+    void holidayCalendarDayNameIsRequired() {
+        HolidayCalendar calendar = dataManager.create(HolidayCalendar.class);
+        calendar.setName("Name required test calendar");
+        HolidayCalendarDay day = dataManager.create(HolidayCalendarDay.class);
+        day.setCalendar(calendar);
+        day.setDate(LocalDate.of(2026, 11, 4));
+        day.setType(HolidayCalendarDayType.DAY_OFF);
+        dataManager.saveWithoutReload(calendar);
+        track(calendar, day);
+
+        assertThatThrownBy(() -> dataManager.save(day)).isNotNull();
+    }
+
+    @Test
+    void holidayCalendarDayIsShownByDateNameAndType() {
+        HolidayCalendarDay day = dataManager.create(HolidayCalendarDay.class);
+        day.setDate(LocalDate.of(2026, 11, 4));
+        day.setName("Unity Day");
+        day.setType(HolidayCalendarDayType.DAY_OFF);
+
+        assertThat(metadataTools.getInstanceName(day))
+                .isEqualTo(datatypeFormatter.formatLocalDate(LocalDate.of(2026, 11, 4)) + " Unity Day (Day off)");
     }
 
     @AfterEach
