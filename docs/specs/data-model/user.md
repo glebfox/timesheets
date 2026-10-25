@@ -16,9 +16,13 @@ A person who signs in to the application and logs time.
 
 Roles are not stored on the user: they are Jmix role assignments, managed in the security screens ([security roles](../roles/README.md)). A user cannot sign in without a role that grants UI login, so a new user with no roles cannot sign in. The `admin` user, created by the schema changelogs in every environment, has [full access](../roles/system-full-access.md).
 
+## Work schedule
+
+A user's planned time comes from their [work schedule assignments](work-schedule-assignment.md), or from the default [work schedule](work-schedule.md#the-default-schedule) on the days none covers. The user entity itself has no schedule attribute.
+
 ## Deletion
 
-Deleting a user leaves their time entries and project participations in place.
+Deleting a user leaves their time entries, project participations, and work schedule assignments in place.
 
 ## Not covered
 

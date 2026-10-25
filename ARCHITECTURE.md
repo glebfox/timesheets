@@ -8,12 +8,12 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 
 - `entity/<area>/` — entities and their enums, one subpackage per domain area, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
 - `datatype/` — custom value types with their Jmix datatypes and JPA converters.
-- `app/` — beans with the domain queries and helpers that views call (`*Support`); `app/util/` holds the value types they return and the builders of UI pieces that several views share.
+- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return and the builders of UI pieces that several views share.
 - `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions.
 - `data/renderer/` — reusable grid renderers.
 - `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; Jmix Studio learns of a component from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
-- `listener/`, `event/` — entity event listeners and the UI events they publish to open sessions.
+- `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
 - `router/error/` — custom error pages; their HTML templates are in `META-INF/resources/errorpages/`.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`) and demo data in `init-data/`. See `docs/guidelines/database.md`.
@@ -24,7 +24,7 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 
 ## Profiles
 
-- Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase context `prod`, which creates the schema and the `admin` user only.
+- Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase context `prod`, which creates the schema, the `admin` user, and the default work schedule, with no demo data.
 - `dev`: Liquibase context `dev`, which also loads the demo data; the login form is pre-filled with `admin`/`admin`.
 - `test`: in-memory HSQLDB.
 

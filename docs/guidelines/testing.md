@@ -4,8 +4,8 @@ Project-specific mechanics of the test harness. How to write Jmix tests in gener
 
 ## Harness
 
-- The `test` profile runs on in-memory HSQLDB. Liquibase applies the schema and the `admin` user only (context `prod`), with no demo data, so each test creates the data it needs.
-- The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, as the existing tests do, so no rows are left for the next test.
+- The `test` profile runs on in-memory HSQLDB. Liquibase applies the schema, the `admin` user, and the default work schedule "Full time" (context `prod`), with no demo data, so each test creates the rest of the data it needs.
+- The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, so no rows are left for the next test; a row that a listener or a soft delete changed after the test saved it is reloaded by id, with soft deletion off, right before removal. A test that may change or soft-delete a seeded row, such as the default work schedule, puts it back the same way, so one failure does not cascade through the run. See `DefaultWorkScheduleTest`.
 - Non-UI tests authenticate through the `test_support/AuthenticatedAsAdmin` extension.
 - UI tests boot with `TabbedModeTestAssistConfiguration` in place of the skill's `FlowuiTestAssistConfiguration`, because the main view is a tabbed-mode main view. See `UserUiTest`.
 - The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled` and `jmix.ui.component.notifications-opened-change-events-enabled`. Without them, option and message dialogs and notifications publish no opened event, so `UiTestUtils.getLastOpenedDialog()` and `UiTestUtils.getLastOpenedNotification()` return null even while one is shown. See `CalendarUiTest` and `AvatarUploadUiTest`.

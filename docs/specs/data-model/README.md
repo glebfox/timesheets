@@ -62,6 +62,29 @@ classDiagram
         String description
         String rejectionReason
     }
+    class WorkSchedule {
+        <<Entity>>
+        String name
+        String description
+        WorkTime workdayTime
+        Boolean monday … sunday
+        Boolean isDefault
+    }
+    class WorkScheduleAssignment {
+        <<Entity>>
+        LocalDate startDate
+    }
+    class HolidayCalendar {
+        <<Entity>>
+        String name
+        String description
+    }
+    class HolidayCalendarDay {
+        <<Entity>>
+        LocalDate date
+        HolidayCalendarDayType type
+        String name
+    }
     class User {
         <<Entity>>
         String username
@@ -87,15 +110,21 @@ classDiagram
     TimeEntry "*" --> "1" Task : task
     TimeEntry "*" --> "1" User : user
     TimeEntry "*" --> "*" Tag : tags
+    WorkScheduleAssignment "*" --> "1" User : user
+    WorkScheduleAssignment "*" --> "1" WorkSchedule : workSchedule
+    WorkSchedule "*" --> "0..1" HolidayCalendar : holidayCalendar
+    HolidayCalendar "1" *-- "*" HolidayCalendarDay : days
 ```
 
 A filled diamond marks an owner and its parts. Every entity also has a UUID `id`, a `version` for optimistic locking, and the soft-delete attributes `deletedBy` and `deletedDate`; the diagram leaves them out.
 
 - A [project](project.md) owns its [tasks](task.md), [participants](project-participant.md), and [tag groups](tag-group.md), and a tag group owns its tags: they are edited inside their owner and deleted with it.
 - A [time entry](time-entry.md) is one user's time on one task and may carry tags; the editor offers those of the task's project. Its duration is a [work time](work-time.md) value.
-- [Clients](client.md), [task types](task-type.md), [project roles](project-role.md), and [users](user.md) stand on their own: deleting one leaves whatever refers to it in place.
+- A [work schedule](work-schedule.md) plans how long each workday is and which days of the week are workdays; a [holiday calendar](holiday-calendar.md) it uses overrides the week on dated days. [Assignments](work-schedule-assignment.md) tie a user to a schedule from a date; exactly one schedule is the default, for the days no assignment covers. A user's plan for a day comes from them.
+- A holiday calendar owns its days and edits them inside itself, but a deleted calendar keeps them, so the schedules that still use it plan as before.
+- [Clients](client.md), [task types](task-type.md), [project roles](project-role.md), [users](user.md), work schedules, and holiday calendars stand on their own: deleting one leaves whatever refers to it in place.
 
 ## Rules that hold for every entity
 
 - Every entity is soft-deleted: deleting marks a row instead of removing it, and name uniqueness holds among non-deleted rows only (`docs/guidelines/database.md`).
-- An entity enforces only its required attributes, its value ranges, and database uniqueness. The other rules in these specs, such as which tasks are bookable or when a rejection reason is required, are applied by the editors; a save through `DataManager` bypasses them. Each spec says which of its rules are applied this way.
+- An entity enforces its required attributes, its value ranges, and database uniqueness on every save. Each spec says which of its other rules also hold on every save, such as the one default work schedule, and which are applied only by the editors, such as which tasks are bookable or when a rejection reason is required; a save through `DataManager` bypasses the latter.
