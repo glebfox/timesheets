@@ -16,4 +16,4 @@ Demo data may be edited in place. That changes the changeset's checksum, so a `d
 
 ## Soft delete and uniqueness
 
-Every entity is soft-deleted, so a unique index covers non-deleted rows only: it is created with `where DELETED_DATE is null` appended, and only for PostgreSQL (`dbms="postgresql"`). A deleted record's name can therefore be reused. Other databases, including the HSQLDB of the tests, get no unique index at all. A new unique constraint follows the same pattern.
+On a soft-deleted entity, which every entity is so far (`docs/conventions.md`), a unique index covers non-deleted rows only: it is created with `where DELETED_DATE is null` appended, and only for PostgreSQL (`dbms="postgresql"`). A deleted record's name can therefore be reused. Other databases, including the HSQLDB of the tests, get no unique index at all. A new unique constraint on a soft-deleted entity follows the same pattern; a hard-deleted entity has no deleted rows to leave out, so its unique index is an ordinary one on every database.

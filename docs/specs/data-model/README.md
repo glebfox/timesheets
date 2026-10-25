@@ -116,7 +116,7 @@ classDiagram
     HolidayCalendar "1" *-- "*" HolidayCalendarDay : days
 ```
 
-A filled diamond marks an owner and its parts. Every entity also has a UUID `id`, a `version` for optimistic locking, and the soft-delete attributes `deletedBy` and `deletedDate`; the diagram leaves them out.
+A filled diamond marks an owner and its parts. Every entity also has a UUID `id` and a `version` for optimistic locking, and every entity so far has the soft-delete attributes `deletedBy` and `deletedDate`; the diagram leaves them out.
 
 - A [project](project.md) owns its [tasks](task.md), [participants](project-participant.md), and [tag groups](tag-group.md), and a tag group owns its tags: they are edited inside their owner and deleted with it.
 - A [time entry](time-entry.md) is one user's time on one task and may carry tags; the editor offers those of the task's project. Its duration is a [work time](work-time.md) value.
@@ -126,5 +126,5 @@ A filled diamond marks an owner and its parts. Every entity also has a UUID `id`
 
 ## Rules that hold for every entity
 
-- Every entity is soft-deleted: deleting marks a row instead of removing it, and name uniqueness holds among non-deleted rows only (`docs/guidelines/database.md`).
+- Every entity so far is soft-deleted: deleting marks a row instead of removing it, and uniqueness holds among non-deleted rows only (`docs/guidelines/database.md`). Soft deletion is chosen per entity, not required of every one (`docs/conventions.md`).
 - An entity enforces its required attributes, its value ranges, and database uniqueness on every save. Each spec says which of its other rules also hold on every save, such as the one default work schedule, and which are applied only by the editors, such as which tasks are bookable or when a rejection reason is required; a save through `DataManager` bypasses the latter.
