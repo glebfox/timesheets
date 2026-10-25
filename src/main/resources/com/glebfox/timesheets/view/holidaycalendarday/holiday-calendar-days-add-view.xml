@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://holidayCalendarDaysAddView.title"
+      focusComponent="form">
+    <actions>
+        <action id="okAction"
+                text="msg:///actions.Ok"
+                icon="DETAIL_SAVE_CLOSE_ACTION"
+                actionVariant="PRIMARY"
+                shortcutCombination="${SAVE_SHORTCUT}"/>
+        <action id="closeAction" type="view_close"/>
+    </actions>
+    <layout padding="false" expand="form" alignItems="STRETCH"
+            classNames="holiday-calendar-days-add-view">
+        <formLayout id="form" classNames="margin-inline-m">
+            <responsiveSteps>
+                <responsiveStep minWidth="0" columns="1"/>
+            </responsiveSteps>
+
+            <textField id="nameField"
+                       label="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendarDay.name"
+                       required="true"
+                       maxLength="255">
+                <prefix>
+                    <icon icon="fontawesome-regular:address-card"/>
+                </prefix>
+            </textField>
+            <!-- Two date pickers joined by a dash read as one field, with the range summary as its helper -->
+            <vbox id="datesBox" padding="false" spacing="false">
+                <hbox id="datesRangeBox" width="100%" alignItems="BASELINE">
+                    <datePicker id="fromField"
+                                datatype="localDate"
+                                label="msg://fromField.label"
+                                required="true"
+                                width="100%" minWidth="0"/>
+                    <span id="datesSeparator" text="msg://datesSeparator.text"/>
+                    <datePicker id="toField"
+                                datatype="localDate"
+                                ariaLabel="msg://toField.ariaLabel"
+                                width="100%" minWidth="0"/>
+                </hbox>
+                <span id="rangeSummary" classNames="range-summary"/>
+            </vbox>
+            <radioButtonGroup id="typeField"
+                              label="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendarDay.type"
+                              itemsEnum="com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType"
+                              required="true"
+                              classNames="segmented-group"/>
+        </formLayout>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="okBtn" action="okAction"/>
+            <button id="cancelBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

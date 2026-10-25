@@ -24,6 +24,7 @@ import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarDetailView;
 import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarListView;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDayDetailView;
+import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.data.renderer.TextRenderer;
@@ -293,7 +294,7 @@ public class HolidayCalendarViewsUiTest {
     }
 
     /**
-     * Adds the day off "New Year" on 2027-01-01 through the days' create action and the day editor.
+     * Adds the day off "New Year" on 2027-01-01 through the days' create action and the days dialog.
      */
     private static void addNewYear(HolidayCalendarDetailView view) {
         DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
@@ -302,12 +303,13 @@ public class HolidayCalendarViewsUiTest {
         assertThat(create.isEnabled()).isTrue();
         create.actionPerform(grid);
 
-        HolidayCalendarDayDetailView dayEditor = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(),
-                "the day editor");
-        nameField(dayEditor).setTypedValue("New Year");
-        dateField(dayEditor).setTypedValue(JAN_1_2027);
-        typeField(dayEditor).setValue(HolidayCalendarDayType.DAY_OFF);
-        clickOk(dayEditor);
+        HolidayCalendarDaysAddView daysDialog = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(),
+                "the days dialog");
+        UiTestUtils.<TypedTextField<String>>getComponent(daysDialog, "nameField").setTypedValue("New Year");
+        UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(daysDialog, "fromField").setTypedValue(JAN_1_2027);
+        UiTestUtils.<JmixRadioButtonGroup<HolidayCalendarDayType>>getComponent(daysDialog, "typeField")
+                .setValue(HolidayCalendarDayType.DAY_OFF);
+        UiTestUtils.<JmixButton>getComponent(daysDialog, "okBtn").click();
     }
 
     private static void clickOk(HolidayCalendarDayDetailView dayEditor) {
@@ -324,10 +326,6 @@ public class HolidayCalendarViewsUiTest {
 
     private static TypedDatePicker<LocalDate> dateField(HolidayCalendarDayDetailView dayEditor) {
         return UiTestUtils.getComponent(dayEditor, "dateField");
-    }
-
-    private static JmixRadioButtonGroup<HolidayCalendarDayType> typeField(HolidayCalendarDayDetailView dayEditor) {
-        return UiTestUtils.getComponent(dayEditor, "typeField");
     }
 
     private static List<LocalDate> dates(DataGrid<HolidayCalendarDay> grid) {

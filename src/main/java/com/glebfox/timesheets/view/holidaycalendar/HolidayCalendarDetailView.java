@@ -89,11 +89,6 @@ public class HolidayCalendarDetailView extends StandardDetailView<HolidayCalenda
         }
     }
 
-    @Install(to = "daysDataGrid.create", subject = "viewConfigurer")
-    private void daysDataGridCreateViewConfigurer(final HolidayCalendarDayDetailView view) {
-        view.setCalendarDays(daysDc::getItems);
-    }
-
     @Install(to = "daysDataGrid.edit", subject = "viewConfigurer")
     private void daysDataGridEditViewConfigurer(final HolidayCalendarDayDetailView view) {
         view.setCalendarDays(daysDc::getItems);

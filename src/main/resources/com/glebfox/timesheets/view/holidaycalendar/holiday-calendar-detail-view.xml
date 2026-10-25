@@ -60,11 +60,7 @@
                       selectionMode="MULTI"
                       width="100%" minHeight="20em">
                 <actions>
-                    <action id="create" type="list_create">
-                        <properties>
-                            <property name="openMode" value="DIALOG"/>
-                        </properties>
-                    </action>
+                    <action id="create" type="list_holidayCalendarDays_add"/>
                     <action id="edit" type="list_edit">
                         <properties>
                             <property name="openMode" value="DIALOG"/>
