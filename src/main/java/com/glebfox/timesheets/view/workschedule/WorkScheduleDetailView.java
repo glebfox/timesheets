@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.workschedule;
 
+import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
@@ -33,17 +34,12 @@ import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.exception.ValidationException;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.DayOfWeek;
-import java.time.format.TextStyle;
-import java.time.temporal.WeekFields;
 import java.util.EnumSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 @Route(value = "work-schedules/:id", layout = MainView.class)
 @ViewController("ts_WorkSchedule.detail")
@@ -64,6 +60,8 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     private CurrentAuthentication currentAuthentication;
     @Autowired
     private MetadataTools metadataTools;
+    @Autowired
+    private ComponentSupport componentSupport;
 
     private final Span workdaysSummary = new Span();
 
@@ -76,13 +74,8 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     }
 
     private void initWorkdaysField() {
-        Locale locale = currentAuthentication.getLocale();
-        DayOfWeek firstDayOfWeek = WeekFields.of(locale).getFirstDayOfWeek();
-        workdaysField.setItems(IntStream.range(0, 7)
-                .mapToObj(firstDayOfWeek::plus)
-                .toList());
-        workdaysField.setItemLabelGenerator(day ->
-                StringUtils.capitalize(day.getDisplayName(TextStyle.SHORT_STANDALONE, locale)));
+        workdaysField.setItems(componentSupport.getDaysOfWeek());
+        workdaysField.setItemLabelGenerator(componentSupport::formatDayOfWeekShort);
 
         workdaysSummary.setId("workdaysSummary");
         workdaysField.setHelperComponent(workdaysSummary);
@@ -177,7 +170,10 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
                 : metadataTools.format(time);
     }
 
-    private static Set<DayOfWeek> getWorkdays(WorkSchedule schedule) {
+    /**
+     * Returns the days of the week that are on in a work schedule; a day whose flag is null is off.
+     */
+    static Set<DayOfWeek> getWorkdays(WorkSchedule schedule) {
         Set<DayOfWeek> workdays = EnumSet.noneOf(DayOfWeek.class);
         addIfOn(workdays, DayOfWeek.MONDAY, schedule.getMonday());
         addIfOn(workdays, DayOfWeek.TUESDAY, schedule.getTuesday());

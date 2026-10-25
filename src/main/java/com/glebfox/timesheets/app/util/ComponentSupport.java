@@ -32,12 +32,19 @@ import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
+import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.time.DayOfWeek;
+import java.time.format.TextStyle;
+import java.time.temporal.WeekFields;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 @Component("ts_ComponentSupport")
 public class ComponentSupport {
@@ -45,13 +52,16 @@ public class ComponentSupport {
     private final UiComponents uiComponents;
     private final Messages messages;
     private final MetadataTools metadataTools;
+    private final CurrentAuthentication currentAuthentication;
 
     public ComponentSupport(UiComponents uiComponents,
                             Messages messages,
-                            MetadataTools metadataTools) {
+                            MetadataTools metadataTools,
+                            CurrentAuthentication currentAuthentication) {
         this.uiComponents = uiComponents;
         this.messages = messages;
         this.metadataTools = metadataTools;
+        this.currentAuthentication = currentAuthentication;
     }
 
     /**
@@ -192,5 +202,29 @@ public class ComponentSupport {
                         valueProvider.apply(item).getName())
                 .withProperty("project", item ->
                         metadataTools.format(valueProvider.apply(item).getProject()));
+    }
+
+    /**
+     * Returns the seven days of the week in the current user's week order: from the first day of the week
+     * of the user's locale, such as Sunday in English and Monday in Russian.
+     *
+     * @return the days of the week, starting from the locale's first day of the week
+     */
+    public List<DayOfWeek> getDaysOfWeek() {
+        DayOfWeek firstDayOfWeek = WeekFields.of(currentAuthentication.getLocale()).getFirstDayOfWeek();
+        return IntStream.range(0, 7)
+                .mapToObj(firstDayOfWeek::plus)
+                .toList();
+    }
+
+    /**
+     * Formats a day of the week as a short label in the current user's locale, such as "Mon" or "Пн".
+     * Short names that a locale writes in lowercase are capitalized.
+     *
+     * @param day the day of the week to format
+     * @return the short label of the day
+     */
+    public String formatDayOfWeekShort(DayOfWeek day) {
+        return StringUtils.capitalize(day.getDisplayName(TextStyle.SHORT_STANDALONE, currentAuthentication.getLocale()));
     }
 }
