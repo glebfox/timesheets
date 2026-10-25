@@ -1,4 +1,7 @@
 {
+  "enabledPlugins": {
+    "jmix-skill-feedback@internal-agent-plugins": true
+  },
   "hooks": {
     "PreToolUse": [
       {

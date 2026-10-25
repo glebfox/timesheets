@@ -40,3 +40,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 - Living docs describe what is built, never what is planned. A planned change lives in its issue until it lands.
 - Rationale lives in `docs/decisions/`, and living docs link to it. A decision is superseded, never edited, and never a source for current state.
 - Rules that tooling enforces are not restated in prose.
+
+## Problems with a jmix-* skill
+
+While following a `jmix-*` skill, when an instruction is unclear, wrong, or silent on something that mattered, record it in `.jmix/skill-feedback.md` at that moment — not at the end of the task — then continue the work. Do not wait to feel that a skill failed you; watch for the action instead. You went outside the skill to settle its own subject — grepped a framework jar, a theme stylesheet, an upstream template, or the source — or a gate caught something the skill's own rules would not have prevented. Working around the gap yourself is not a reason to skip recording it: a silent workaround is the main way these gaps survive. Do NOT edit the skill files. Read `/jmix-skill-feedback:record` for the entry format, and `/jmix-skill-feedback:submit` to file findings upstream. When you dispatch a subagent that will run a `jmix-*` skill, put this instruction in its prompt and ask it to return what it recorded: its findings reach you no other way.
