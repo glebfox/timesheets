@@ -63,6 +63,7 @@
                         <icon icon="gravity-ui:calendar"/>
                     </prefix>
                     <actions>
+                        <action id="entityLookup" type="entity_lookup"/>
                         <action id="entityClear" type="entity_clear"/>
                     </actions>
                     <itemsQuery class="com.glebfox.timesheets.entity.schedule.HolidayCalendar"
