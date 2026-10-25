@@ -34,7 +34,7 @@ The schema changelog creates "Full time" in every environment: 8 hours, Monday t
 
 A day is a workday when it plans more than zero. A plan covers a date range, its end excluded, and answers only for the days in it. It does not depend on the current user's permissions: every user gets their own plan, whatever roles they hold.
 
-There are no versions of a schedule: editing its hours or days of the week changes the plan of every day it applies to, past days included. Conditions that change from some date are a new schedule, assigned from that date. Changing the default likewise changes the past plan of users who have no assignment on those days.
+There are no versions of a schedule: editing its hours or days of the week changes the plan of every day it applies to, past days included. Conditions that change from some date are a new schedule, assigned from that date. Changing the default likewise changes the past plan of users who have no assignment on those days. Why no versions: [decision 0002](../../decisions/0002-work-schedules-have-no-versions.md).
 
 ## Deletion
 
