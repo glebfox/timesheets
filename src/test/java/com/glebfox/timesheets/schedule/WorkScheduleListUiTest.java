@@ -20,6 +20,7 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
+import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleListView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
@@ -30,8 +31,12 @@ import io.jmix.core.SaveContext;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.Notifications;
+import io.jmix.flowui.component.checkbox.Switch;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.action.Action;
+import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.view.View;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -128,6 +133,45 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
+    void savingAnotherScheduleAsTheDefaultInTheEditorRefreshesTheList() {
+        WorkSchedule schedule = saveSchedule(uniqueName(), null);
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action edit = Objects.requireNonNull(grid.getAction("edit"));
+
+        grid.select(listed(grid, schedule.getId()));
+        assertThat(edit.isEnabled()).isTrue();
+        edit.actionPerform(grid);
+
+        WorkScheduleDetailView editor = UiTestUtils.getCurrentView();
+        UiTestUtils.<Switch>getComponent(editor, "isDefaultField").setValue(true);
+        UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
+
+        assertOnlyDefaultListed(schedule.getId());
+    }
+
+    @Test
+    void creatingTheDefaultInTheEditorRefreshesTheList() {
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action create = Objects.requireNonNull(grid.getAction("create"));
+
+        assertThat(create.isEnabled()).isTrue();
+        create.actionPerform(grid);
+
+        WorkScheduleDetailView editor = UiTestUtils.getCurrentView();
+        String name = uniqueName();
+        UiTestUtils.<TypedTextField<String>>getComponent(editor, "nameField").setValue(name);
+        UiTestUtils.<TypedTextField<WorkTime>>getComponent(editor, "workdayTimeField").setTypedValue(WorkTime.ofHours(8));
+        UiTestUtils.<Switch>getComponent(editor, "isDefaultField").setValue(true);
+        UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
+
+        WorkSchedule created = dataManager.load(WorkSchedule.class)
+                .query("e.name = ?1", name)
+                .one();
+        scheduleIds.add(Id.of(created));
+        assertOnlyDefaultListed(created.getId());
+    }
+
+    @Test
     void workdaysColumnFollowsTheLocaleWeek() {
         // A new schedule works Monday to Friday
         WorkSchedule schedule = saveSchedule(uniqueName(), null);
@@ -206,6 +250,25 @@ public class WorkScheduleListUiTest {
         viewBuilders.view(UiTestUtils.getCurrentView(), WorkScheduleListView.class).open();
         WorkScheduleListView view = UiTestUtils.getCurrentView();
         return UiTestUtils.getComponent(view, "workSchedulesDataGrid");
+    }
+
+    /**
+     * Checks the list shown after an editor closed, whether the list came back as the same view or as a new one:
+     * the given schedule is the only default in it, and the only row with the Default badge.
+     */
+    private static void assertOnlyDefaultListed(UUID id) {
+        View<?> currentView = UiTestUtils.getCurrentView();
+        assertThat(currentView).isInstanceOf(WorkScheduleListView.class);
+        DataGrid<WorkSchedule> grid = UiTestUtils.getComponent(currentView, "workSchedulesDataGrid");
+        List<WorkSchedule> items = Objects.requireNonNull(grid.getItems()).getItems().stream().toList();
+
+        assertThat(items).filteredOn(schedule -> Boolean.TRUE.equals(schedule.getIsDefault()))
+                .extracting(WorkSchedule::getId)
+                .containsExactly(id);
+        assertThat(items).filteredOn(schedule -> renderCell(grid, "name", schedule).getChildren()
+                        .anyMatch(Badge.class::isInstance))
+                .extracting(WorkSchedule::getId)
+                .containsExactly(id);
     }
 
     private static WorkSchedule listed(DataGrid<WorkSchedule> grid, UUID id) {
