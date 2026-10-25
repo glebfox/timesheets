@@ -73,7 +73,7 @@
                 <actions>
                     <action id="create" type="list_create"/>
                     <action id="edit" type="list_edit"/>
-                    <action id="remove" type="list_remove"/>
+                    <action id="remove" type="list_workSchedule_remove"/>
                     <action id="makeDefault" type="list_workSchedule_makeDefault"/>
                 </actions>
                 <columns resizable="true">
