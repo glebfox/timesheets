@@ -55,6 +55,18 @@ public class WorkScheduleSupport {
     }
 
     /**
+     * Unmarks the given work schedule as the default, in the caller's transaction.
+     *
+     * @param scheduleId the schedule that stops being the default
+     */
+    @Transactional
+    public void unmarkDefault(Id<WorkSchedule> scheduleId) {
+        WorkSchedule schedule = dataManager.load(scheduleId).one();
+        schedule.setIsDefault(false);
+        dataManager.saveWithoutReload(schedule);
+    }
+
+    /**
      * Checks whether a non-deleted work schedule other than the given one is the default.
      *
      * @param scheduleId the schedule to leave out

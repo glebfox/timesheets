@@ -36,11 +36,11 @@ There are no versions of a schedule: editing its hours or days of the week chang
 
 ## Deletion
 
-Deleting a schedule removes it from the lists, but the assignments that refer to it keep it, so the plans of their days stay as they were, past, current, and future. Deleting the default is refused unless another schedule is the default; see above.
+Deleting a schedule removes it from the lists, but the assignments that refer to it keep it, so the plans of their days stay as they were, past, current, and future. Deleting the default is refused unless another schedule is the default; see above. A schedule that was deleted as the default, in the same save that marked another, comes back as not the default when it is restored while another schedule is the default.
 
 ## Not covered
 
 - Nothing refuses a schedule whose workday hours are zero, which plans nothing on any day, or whose days of the week are all off, which plans time only on the Workday days of its holiday calendar. The tests cover only a schedule with every day off and no calendar.
-- Marking an existing schedule as the default, and unmarking or deleting the default in the same save that marks another: the tests mark only newly created schedules.
+- Unmarking the default in the same save that marks another: no test.
 - The default rule for a saving user who cannot read every schedule: the tests save as `admin`.
 - Name uniqueness: the tests run on HSQLDB, which has no unique indexes (`docs/guidelines/testing.md`).

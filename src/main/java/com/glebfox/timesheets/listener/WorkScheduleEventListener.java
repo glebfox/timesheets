@@ -21,6 +21,7 @@ import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
 import io.jmix.core.UnconstrainedDataManager;
+import io.jmix.core.event.AttributeChanges;
 import io.jmix.core.event.EntityChangedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -56,12 +57,19 @@ public class WorkScheduleEventListener {
                 }
             }
             case UPDATED -> {
-                if (event.getChanges().isChanged("isDefault")) {
+                AttributeChanges changes = event.getChanges();
+                if (changes.isChanged("isDefault")) {
                     if (isDefault(scheduleId)) {
                         workScheduleSupport.unmarkDefaultsExcept(scheduleId);
                     } else if (!workScheduleSupport.hasDefaultExcept(scheduleId)) {
                         refuse();
                     }
+                } else if (changes.isChanged("deletedDate")
+                        && isDefault(scheduleId)
+                        && workScheduleSupport.hasDefaultExcept(scheduleId)) {
+                    // A schedule deleted as the default in the same save that marked another
+                    // keeps its flag; restored, it comes back as not the default
+                    workScheduleSupport.unmarkDefault(scheduleId);
                 }
             }
             case DELETED -> {

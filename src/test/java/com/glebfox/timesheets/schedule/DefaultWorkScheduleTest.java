@@ -25,6 +25,7 @@ import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.data.PersistenceHints;
+import io.jmix.datatools.EntityRestore;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +51,8 @@ public class DefaultWorkScheduleTest {
 
     @Autowired
     DataManager dataManager;
+    @Autowired
+    EntityRestore entityRestore;
 
     UUID seedDefaultId;
     List<Id<WorkSchedule>> createdIds = new ArrayList<>();
@@ -66,6 +69,35 @@ public class DefaultWorkScheduleTest {
         assertThat(reload(seedDefaultId).getIsDefault()).isFalse();
         assertThat(reload(schedule.getId()).getIsDefault()).isTrue();
         assertThat(nonDeletedDefaults()).hasSize(1);
+    }
+
+    @Test
+    void markingAnExistingScheduleDefaultUnmarksThePrevious() {
+        WorkSchedule schedule = saveSchedule("Default test E", false);
+        WorkSchedule reloaded = reload(schedule.getId());
+        reloaded.setIsDefault(true);
+
+        dataManager.saveWithoutReload(reloaded);
+
+        assertThat(reload(seedDefaultId).getIsDefault()).isFalse();
+        assertThat(nonDeletedDefaults()).extracting(WorkSchedule::getId).containsExactly(schedule.getId());
+    }
+
+    @Test
+    void restoringAScheduleDeletedAsTheDefaultKeepsTheCurrentDefault() {
+        // One save marks a new default and deletes the old one, which keeps its flag while deleted
+        WorkSchedule next = dataManager.create(WorkSchedule.class);
+        next.setName("Default test F");
+        next.setWorkdayTime(WorkTime.ofHours(8));
+        next.setIsDefault(true);
+        dataManager.save(new SaveContext().saving(next).removing(reload(seedDefaultId)));
+        createdIds.add(Id.of(next));
+
+        // Restored as Data Tools' entity inspector does it
+        entityRestore.restoreEntities(List.of(loadSeedIncludingDeleted()));
+
+        assertThat(reload(seedDefaultId).getIsDefault()).isFalse();
+        assertThat(nonDeletedDefaults()).extracting(WorkSchedule::getId).containsExactly(next.getId());
     }
 
     @Test
@@ -103,18 +135,20 @@ public class DefaultWorkScheduleTest {
     @AfterEach
     void tearDown() {
         // Leave the seeded schedule as the test found it: not deleted, and the default.
-        // Making it the default again unmarks any test schedule, so each can be removed.
-        WorkSchedule seed = dataManager.load(WorkSchedule.class)
-                .id(seedDefaultId)
-                .hint(PersistenceHints.SOFT_DELETION, false)
-                .one();
-        if (seed.getDeletedDate() != null || !Boolean.TRUE.equals(seed.getIsDefault())) {
+        // Restoring it may unmark it while a test schedule is the default, so it is marked in a second save,
+        // which unmarks any test schedule, so each can be removed.
+        WorkSchedule seed = loadSeedIncludingDeleted();
+        if (seed.getDeletedDate() != null) {
             seed.setDeletedDate(null);
             seed.setDeletedBy(null);
-            seed.setIsDefault(true);
             dataManager.save(new SaveContext()
                     .saving(seed)
                     .setHint(PersistenceHints.SOFT_DELETION, false));
+            seed = loadSeedIncludingDeleted();
+        }
+        if (!Boolean.TRUE.equals(seed.getIsDefault())) {
+            seed.setIsDefault(true);
+            dataManager.saveWithoutReload(seed);
         }
 
         // Reload by id right before removal: the default listener changes rows after the test saved them
@@ -142,6 +176,13 @@ public class DefaultWorkScheduleTest {
 
     private WorkSchedule reload(UUID id) {
         return dataManager.load(WorkSchedule.class).id(id).one();
+    }
+
+    private WorkSchedule loadSeedIncludingDeleted() {
+        return dataManager.load(WorkSchedule.class)
+                .id(seedDefaultId)
+                .hint(PersistenceHints.SOFT_DELETION, false)
+                .one();
     }
 
     private List<WorkSchedule> nonDeletedDefaults() {
