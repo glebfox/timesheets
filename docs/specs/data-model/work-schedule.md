@@ -10,8 +10,8 @@ Schedules are set up in Data Tools: no screen of the application manages them or
 
 - **Name** — required; unique among non-deleted schedules (`docs/guidelines/database.md`).
 - **Description** — optional.
-- **Workday hours** — required; the planned time of each workday, a [work time](work-time.md) value such as 8h or 6h 30m.
-- **Monday** to **Sunday** — one flag per day of the week; a new schedule has Monday to Friday on and Saturday and Sunday off.
+- **Workday hours** — required; the planned time of each workday, a [work time](work-time.md) value such as 8h or 6h 30m. Zero is accepted; such a schedule plans nothing on any day.
+- **Monday** to **Sunday** — one flag per day of the week; a new schedule has Monday to Friday on and Saturday and Sunday off. All seven may be off; such a schedule plans time only on the Workday days of its holiday calendar, and none without one.
 - **Holiday calendar** — optional; without one, the schedule knows no holidays. Several schedules may share one calendar.
 - **Default** — off for a new schedule. See below.
 
@@ -42,7 +42,7 @@ Deleting a schedule removes it from the lists, but the assignments that refer to
 
 ## Not covered
 
-- Nothing refuses a schedule whose workday hours are zero, which plans nothing on any day, or whose days of the week are all off, which plans time only on the Workday days of its holiday calendar. The tests cover only a schedule with every day off and no calendar.
+- A schedule with zero workday hours, and one with every day of the week off that has a holiday calendar: the tests cover only a schedule with every day off and no calendar.
 - Unmarking the default in the same save that marks another: no test.
 - The default rule for a saving user who cannot read every schedule: the tests save as `admin`.
 - Name uniqueness: the tests run on HSQLDB, which has no unique indexes (`docs/guidelines/testing.md`).
