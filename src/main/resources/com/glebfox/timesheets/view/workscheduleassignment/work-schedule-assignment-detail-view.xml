@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://workScheduleAssignmentDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="workScheduleAssignmentDc"
+                  class="com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment">
+            <fetchPlan extends="_base">
+                <property name="user" fetchPlan="_instance_name"/>
+                <property name="workSchedule" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <loader/>
+        </instance>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout padding="false" expand="form" alignItems="STRETCH">
+        <formLayout id="form"
+                    dataContainer="workScheduleAssignmentDc"
+                    classNames="margin-inline-m">
+            <responsiveSteps>
+                <responsiveStep minWidth="0" columns="1"/>
+            </responsiveSteps>
+
+            <entityPicker id="userField" property="user" readOnly="true"/>
+            <datePicker id="startDateField" property="startDate"/>
+            <entityComboBox id="workScheduleField" property="workSchedule">
+                <itemsQuery class="com.glebfox.timesheets.entity.schedule.WorkSchedule"
+                            searchStringFormat="(?i)%${inputString}%"
+                            escapeValueForLike="true">
+                    <!-- deletedDate is read for the helper when an unsaved assignment is opened again -->
+                    <fetchPlan extends="_instance_name">
+                        <property name="deletedDate"/>
+                    </fetchPlan>
+                    <query>
+                        <![CDATA[select e from ts_WorkSchedule e
+                                    where e.name like :searchString escape '\'
+                                    order by e.name]]>
+                    </query>
+                </itemsQuery>
+            </entityComboBox>
+        </formLayout>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>
