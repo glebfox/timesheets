@@ -73,31 +73,15 @@
             <column name="WORKDAY_TIME" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="MONDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="TUESDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="WEDNESDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="THURSDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="FRIDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="SATURDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
-            <column name="SUNDAY" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
+            <column name="MONDAY" type="BOOLEAN"/>
+            <column name="TUESDAY" type="BOOLEAN"/>
+            <column name="WEDNESDAY" type="BOOLEAN"/>
+            <column name="THURSDAY" type="BOOLEAN"/>
+            <column name="FRIDAY" type="BOOLEAN"/>
+            <column name="SATURDAY" type="BOOLEAN"/>
+            <column name="SUNDAY" type="BOOLEAN"/>
             <column name="HOLIDAY_CALENDAR_ID" type="UUID"/>
-            <column name="IS_DEFAULT" type="BOOLEAN">
-                <constraints nullable="false"/>
-            </column>
+            <column name="IS_DEFAULT" type="BOOLEAN"/>
             <column name="VERSION" type="INT">
                 <constraints nullable="false"/>
             </column>

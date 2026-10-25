@@ -53,32 +53,27 @@ public class WorkSchedule {
     @Column(name = "WORKDAY_TIME", nullable = false)
     private WorkTime workdayTime;
 
-    @NotNull
-    @Column(name = "MONDAY", nullable = false)
+    // The flags are not mandatory: a mandatory Boolean is shown as a checkbox that must be checked.
+    // The initializers give a new schedule its values; a null flag counts as off.
+    @Column(name = "MONDAY")
     private Boolean monday = true;
 
-    @NotNull
-    @Column(name = "TUESDAY", nullable = false)
+    @Column(name = "TUESDAY")
     private Boolean tuesday = true;
 
-    @NotNull
-    @Column(name = "WEDNESDAY", nullable = false)
+    @Column(name = "WEDNESDAY")
     private Boolean wednesday = true;
 
-    @NotNull
-    @Column(name = "THURSDAY", nullable = false)
+    @Column(name = "THURSDAY")
     private Boolean thursday = true;
 
-    @NotNull
-    @Column(name = "FRIDAY", nullable = false)
+    @Column(name = "FRIDAY")
     private Boolean friday = true;
 
-    @NotNull
-    @Column(name = "SATURDAY", nullable = false)
+    @Column(name = "SATURDAY")
     private Boolean saturday = false;
 
-    @NotNull
-    @Column(name = "SUNDAY", nullable = false)
+    @Column(name = "SUNDAY")
     private Boolean sunday = false;
 
     @JoinColumn(name = "HOLIDAY_CALENDAR_ID")
@@ -87,8 +82,7 @@ public class WorkSchedule {
 
     // Exactly one non-deleted schedule is the default, kept so by WorkScheduleEventListener;
     // no unique index (docs/decisions/0001)
-    @NotNull
-    @Column(name = "IS_DEFAULT", nullable = false)
+    @Column(name = "IS_DEFAULT")
     private Boolean isDefault = false;
 
     @Column(name = "VERSION", nullable = false)

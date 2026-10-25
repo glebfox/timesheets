@@ -28,9 +28,11 @@ import com.google.common.collect.Lists;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
+import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
+import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.data.PersistenceHints;
 import io.jmix.datatools.EntityRestore;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +45,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,6 +56,8 @@ public class WorkScheduleModelTest {
 
     @Autowired
     DataManager dataManager;
+    @Autowired
+    Metadata metadata;
     @Autowired
     MetadataTools metadataTools;
     @Autowired
@@ -87,6 +92,18 @@ public class WorkScheduleModelTest {
                 schedule.getThursday(), schedule.getFriday())).containsOnly(true);
         assertThat(List.of(schedule.getSaturday(), schedule.getSunday())).containsOnly(false);
         assertThat(schedule.getIsDefault()).isFalse();
+    }
+
+    @Test
+    void scheduleFlagsAreNotMandatory() {
+        // A mandatory Boolean is shown as a checkbox that must be checked, so false could not be saved
+        MetaClass metaClass = metadata.getClass(WorkSchedule.class);
+
+        assertThat(Stream.of("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+                "isDefault"))
+                .allSatisfy(property -> assertThat(metaClass.getProperty(property).isMandatory())
+                        .as(property)
+                        .isFalse());
     }
 
     @Test
