@@ -14,6 +14,10 @@ Every user-visible text is a message key, defined in both `messages_en.propertie
 
 A screen that shows the current user's own data, like My time entries or My tasks, narrows it with a query on the current user, not with a row-level role.
 
+## Soft deletion
+
+Soft deletion is chosen per entity where it fits; it is not a rule for every entity. An entity is soft-deleted when a deleted record must keep working for the records that refer to it, as a deleted work schedule keeps the plans of its assignments; when it must come back with a soft-deleted record whose deletion cascades to it, as work schedule assignments come back with their user; or when restoring a deleted record is a real need. Otherwise it may be deleted for good. Every entity so far is soft-deleted, so the code alone suggests a project-wide rule that does not exist.
+
 ## Shared UI pieces
 
 A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.

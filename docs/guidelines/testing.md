@@ -4,13 +4,13 @@ Project-specific mechanics of the test harness. How to write Jmix tests in gener
 
 ## Harness
 
-- The `test` profile runs on in-memory HSQLDB. Liquibase applies the schema and the `admin` user only (context `prod`), with no demo data, so each test creates the data it needs.
-- The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, as the existing tests do, so no rows are left for the next test.
+- The `test` profile runs on in-memory HSQLDB. Liquibase applies the schema, the `admin` user, and the default work schedule "Full time" (context `prod`), with no demo data, so each test creates the rest of the data it needs.
+- The in-memory database is shared by every test in a run. Tests remove what they created in `@AfterEach` with soft deletion turned off, so no rows are left for the next test; a row that a listener or a soft delete changed after the test saved it is reloaded by id, with soft deletion off, right before removal. A test that may change or soft-delete a seeded row, such as the default work schedule, puts it back the same way, so one failure does not cascade through the run. See `DefaultWorkScheduleTest`.
 - Non-UI tests authenticate through the `test_support/AuthenticatedAsAdmin` extension.
 - UI tests boot with `TabbedModeTestAssistConfiguration` in place of the skill's `FlowuiTestAssistConfiguration`, because the main view is a tabbed-mode main view. See `UserUiTest`.
 - The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled` and `jmix.ui.component.notifications-opened-change-events-enabled`. Without them, option and message dialogs and notifications publish no opened event, so `UiTestUtils.getLastOpenedDialog()` and `UiTestUtils.getLastOpenedNotification()` return null even while one is shown. See `CalendarUiTest` and `AvatarUploadUiTest`.
 - A view that exists only for tests, such as one that loads a component with every XML attribute set, lives in `src/test` under the base package, with its descriptor in `src/test/resources`: Jmix finds views on the test classpath too. See `AvatarUploadTestView`.
-- HSQLDB has none of the unique indexes (`docs/guidelines/database.md`), so no test can check name uniqueness.
+- HSQLDB gets none of the partial unique indexes of soft-deleted entities, which are created for PostgreSQL only (`docs/guidelines/database.md`), so no test can check uniqueness among non-deleted rows, such as a unique name, a holiday calendar's dates, or one assignment per user and start date.
 - The `clean test` gate of the `jmix-verify-bootrun` skill runs through local CI (`ARCHITECTURE.md`), never as `./gradlew clean` in this checkout: `bootRun` and the IDE run the app from this checkout's `build/`, and `clean` deletes the classes under it. A plain `SPRING_PROFILES_ACTIVE=test ./gradlew test` here is fine.
 
 ## Local overrides in `.jmix/conf`
