@@ -32,6 +32,7 @@ import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.data.PersistenceHints;
+import io.jmix.datatools.EntityRestore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,8 @@ public class WorkScheduleModelTest {
     MetadataTools metadataTools;
     @Autowired
     DatatypeFormatter datatypeFormatter;
+    @Autowired
+    EntityRestore entityRestore;
 
     List<Id<?>> createdIds = new ArrayList<>();
 
@@ -161,6 +164,30 @@ public class WorkScheduleModelTest {
     }
 
     @Test
+    void deletingAUserDeletesTheirAssignments() {
+        WorkScheduleAssignment assignment = saveAssignmentOfNewUser();
+
+        dataManager.remove(dataManager.load(Id.of(assignment.getUser())).one());
+
+        assertThat(dataManager.load(Id.of(assignment)).optional()).isEmpty();
+        assertThat(loadIncludingDeleted(assignment).getDeletedDate()).isNotNull();
+    }
+
+    @Test
+    void restoringAUserRestoresTheirAssignments() {
+        WorkScheduleAssignment assignment = saveAssignmentOfNewUser();
+        dataManager.remove(dataManager.load(Id.of(assignment.getUser())).one());
+        assertThat(dataManager.load(Id.of(assignment)).optional()).isEmpty();
+
+        // Restored as Data Tools' entity inspector does it
+        entityRestore.restoreEntities(List.of(dataManager.load(Id.of(assignment.getUser()))
+                .hint(PersistenceHints.SOFT_DELETION, false)
+                .one()));
+
+        assertThat(dataManager.load(Id.of(assignment)).optional()).isPresent();
+    }
+
+    @Test
     void holidayCalendarDayNameIsRequired() {
         HolidayCalendar calendar = dataManager.create(HolidayCalendar.class);
         calendar.setName("Name required test calendar");
@@ -197,6 +224,30 @@ public class WorkScheduleModelTest {
                             .setHint(PersistenceHints.SOFT_DELETION, false)));
         }
         createdIds.clear();
+    }
+
+    private WorkScheduleAssignment saveAssignmentOfNewUser() {
+        User user = dataManager.create(User.class);
+        user.setUsername("work-schedule-model-test-" + System.nanoTime());
+
+        WorkSchedule schedule = dataManager.create(WorkSchedule.class);
+        schedule.setName("Model test schedule");
+        schedule.setWorkdayTime(WorkTime.ofHours(4));
+
+        WorkScheduleAssignment assignment = dataManager.create(WorkScheduleAssignment.class);
+        assignment.setUser(user);
+        assignment.setWorkSchedule(schedule);
+        assignment.setStartDate(LocalDate.of(2026, 11, 9));
+
+        dataManager.save(new SaveContext().saving(user, schedule, assignment));
+        track(user, schedule, assignment);
+        return assignment;
+    }
+
+    private WorkScheduleAssignment loadIncludingDeleted(WorkScheduleAssignment assignment) {
+        return dataManager.load(Id.of(assignment))
+                .hint(PersistenceHints.SOFT_DELETION, false)
+                .one();
     }
 
     private void track(Object... entities) {

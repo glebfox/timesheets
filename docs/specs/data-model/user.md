@@ -22,7 +22,7 @@ A user's planned time comes from their [work schedule assignments](work-schedule
 
 ## Deletion
 
-Deleting a user leaves their time entries, project participations, and work schedule assignments in place.
+Deleting a user leaves their time entries and project participations in place and deletes their work schedule assignments with them; restoring the user in Data Tools restores those assignments.
 
 ## Not covered
 

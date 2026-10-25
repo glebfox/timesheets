@@ -122,7 +122,7 @@ A filled diamond marks an owner and its parts. Every entity also has a UUID `id`
 - A [time entry](time-entry.md) is one user's time on one task and may carry tags; the editor offers those of the task's project. Its duration is a [work time](work-time.md) value.
 - A [work schedule](work-schedule.md) plans how long each workday is and which days of the week are workdays; a [holiday calendar](holiday-calendar.md) it uses overrides the week on dated days. [Assignments](work-schedule-assignment.md) tie a user to a schedule from a date; exactly one schedule is the default, for the days no assignment covers. A user's plan for a day comes from them.
 - A holiday calendar owns its days and edits them inside itself, but a deleted calendar keeps them, so the schedules that still use it plan as before.
-- [Clients](client.md), [task types](task-type.md), [project roles](project-role.md), [users](user.md), work schedules, and holiday calendars stand on their own: deleting one leaves whatever refers to it in place.
+- [Clients](client.md), [task types](task-type.md), [project roles](project-role.md), [users](user.md), work schedules, and holiday calendars stand on their own: deleting one leaves whatever refers to it in place, except that a user's work schedule assignments are deleted with the user.
 
 ## Rules that hold for every entity
 

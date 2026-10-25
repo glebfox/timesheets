@@ -14,9 +14,8 @@ Assignments are set up in Data Tools: no screen of the application manages them.
 
 ## Deletion
 
-A deleted assignment stops counting: its days fall to the user's previous assignment, or to the default schedule. Deleting the user or the schedule leaves the assignment in place, and the plan it gives stays as it was.
+A deleted assignment stops counting: its days fall to the user's previous assignment, or to the default schedule. Deleting a user deletes their assignments with them, and restoring the user in Data Tools restores them. Deleting the schedule leaves its assignments in place, and the plan they give stays as it was.
 
 ## Not covered
 
-- The plan given by the assignments of a deleted user: no test; the tests delete schedules, calendars, assignments, and calendar days, but not users.
 - One assignment per user and start date: the tests run on HSQLDB, which has no unique indexes (`docs/guidelines/testing.md`).
