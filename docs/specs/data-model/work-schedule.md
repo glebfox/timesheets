@@ -22,6 +22,8 @@ Exactly one non-deleted schedule is the default. A user's days before their firs
 - Marking a schedule as the default unmarks the previous default in the same save.
 - Unmarking the default, or deleting it, is refused while no other schedule is the default, with the message "There must be one default work schedule. Make another schedule the default first." To change the default, mark another schedule.
 
+Why a listener and no unique index: [decision 0001](../../decisions/0001-one-default-work-schedule-enforced-by-a-listener.md).
+
 The schema changelog creates "Full time" in every environment: 8 hours, Monday to Friday, no holiday calendar, the default. A user with no assignments is therefore planned 8 hours, Monday to Friday, with no holidays. In the `dev` demo data it has the Russia holiday calendar.
 
 ## A user's plan for a day

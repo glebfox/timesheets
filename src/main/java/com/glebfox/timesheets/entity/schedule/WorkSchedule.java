@@ -85,8 +85,8 @@ public class WorkSchedule {
     @ManyToOne(fetch = FetchType.LAZY)
     private HolidayCalendar holidayCalendar;
 
-    // Exactly one non-deleted schedule is the default, kept so by WorkScheduleEventListener. No unique index:
-    // the listener unmarks the previous default only after the new one is flushed, so it would reject every change
+    // Exactly one non-deleted schedule is the default, kept so by WorkScheduleEventListener;
+    // no unique index (docs/decisions/0001)
     @NotNull
     @Column(name = "IS_DEFAULT", nullable = false)
     private Boolean isDefault = false;
