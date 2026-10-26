@@ -313,7 +313,8 @@ public class CalendarView extends StandardView {
         Span fact = new Span(componentSupport.formatWorkTimeTotal(total.fact()));
         fact.setClassName("calendar-view-week-summary-fact");
 
-        Span plan = new Span(messageBundle.formatMessage("weekSummary.plan.text", componentSupport.formatWorkTimeTotal(total.plan())));
+        Span plan = new Span(messageBundle.formatMessage("weekSummary.plan.text",
+                componentSupport.formatWorkTimeTotal(total.plan())));
         plan.setClassName("calendar-view-week-summary-plan");
 
         Div totals = new Div(fact, plan);

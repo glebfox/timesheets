@@ -291,7 +291,8 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
         }
 
         WorkTime weekTotal = WorkTime.ofMinutes(workdayTime.toMinutes() * workdays);
-        workdaysSummary.setText(messageBundle.formatMessage("workdaysSummary.text", workdaysText, componentSupport.formatWorkTimeTotal(weekTotal)));
+        workdaysSummary.setText(messageBundle.formatMessage("workdaysSummary.text", workdaysText,
+                componentSupport.formatWorkTimeTotal(weekTotal)));
     }
 
     /**
