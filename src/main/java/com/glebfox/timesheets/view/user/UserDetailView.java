@@ -43,12 +43,14 @@ import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
 
 @Route(value = "users/:id", layout = MainView.class)
@@ -88,6 +90,10 @@ public class UserDetailView extends StandardDetailView<User> {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private WorkScheduleAssignmentSupport workScheduleAssignmentSupport;
+
+    // The assignments in force today, found when the table is drawn and dropped whenever its assignments change
+    @Nullable
+    private Set<WorkScheduleAssignment> currentAssignments;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -143,6 +149,8 @@ public class UserDetailView extends StandardDetailView<User> {
     @Subscribe(id = "assignmentsDc", target = Target.DATA_CONTAINER)
     public void onAssignmentsDcCollectionChange(
             final CollectionContainer.CollectionChangeEvent<WorkScheduleAssignment> event) {
+        currentAssignments = null;
+
         // A created assignment is added first and an edited one stays in place, whatever its date, while the grid
         // sorts its rows only when its sort order changes. Sorting again also redraws every row, so the Current
         // badge moves when an edit changes which assignment is in force today
@@ -179,7 +187,7 @@ public class UserDetailView extends StandardDetailView<User> {
             Span cell = new Span(metadataTools.format(schedule));
             cell.addClassName("text-with-badges");
 
-            if (isCurrent(assignment)) {
+            if (getCurrentAssignments().contains(assignment)) {
                 cell.add(componentSupport.createBadge(
                         messageBundle.getMessage("currentBadge.text"), BadgeStyle.SUCCESS));
             }
@@ -192,9 +200,10 @@ public class UserDetailView extends StandardDetailView<User> {
         });
     }
 
-    private boolean isCurrent(WorkScheduleAssignment assignment) {
-        // Found anew for each row, since creating, editing, and removing assignments can change it
-        return workScheduleAssignmentSupport.findCurrent(assignmentsDc.getItems(), LocalDate.now())
-                .contains(assignment);
+    private Set<WorkScheduleAssignment> getCurrentAssignments() {
+        if (currentAssignments == null) {
+            currentAssignments = workScheduleAssignmentSupport.findCurrent(assignmentsDc.getItems(), LocalDate.now());
+        }
+        return currentAssignments;
     }
 }

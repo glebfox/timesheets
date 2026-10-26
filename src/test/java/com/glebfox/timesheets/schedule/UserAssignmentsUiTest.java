@@ -279,6 +279,36 @@ public class UserAssignmentsUiTest {
     }
 
     @Test
+    void currentBadgeFollowsChangesInTheEditor() {
+        LocalDate today = LocalDate.now();
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, today.minusMonths(2));
+        saveAssignment(user, schedule, today.minusMonths(1));
+        UserDetailView editor = openUser(user);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+
+        assertThat(currentDates(grid)).containsExactly(today.minusMonths(1));
+
+        // A created assignment counts
+        WorkScheduleAssignmentDetailView createDialog = create(editor);
+        startDateField(createDialog).setTypedValue(today);
+        workScheduleField(createDialog).setValue(schedule);
+        clickOk(createDialog);
+        assertThat(currentDates(grid)).containsExactly(today);
+
+        // An assignment as edited here counts, not as saved
+        WorkScheduleAssignmentDetailView editDialog = edit(editor, today);
+        startDateField(editDialog).setTypedValue(today.plusMonths(1));
+        clickOk(editDialog);
+        assertThat(currentDates(grid)).containsExactly(today.minusMonths(1));
+
+        // A removed assignment no longer counts, though its row is still saved
+        remove(editor, today.minusMonths(1));
+        assertThat(currentDates(grid)).containsExactly(today.minusMonths(2));
+    }
+
+    @Test
     void removeTakesEverySelectedAssignmentOnOk() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
@@ -457,6 +487,14 @@ public class UserAssignmentsUiTest {
 
     private static List<LocalDate> dates(DataGrid<WorkScheduleAssignment> grid) {
         return listed(grid).stream()
+                .map(WorkScheduleAssignment::getStartDate)
+                .toList();
+    }
+
+    private static List<LocalDate> currentDates(DataGrid<WorkScheduleAssignment> grid) {
+        return listed(grid).stream()
+                .filter(assignment -> badges(grid, assignment).stream()
+                        .anyMatch(badge -> "Current".equals(badge.getText())))
                 .map(WorkScheduleAssignment::getStartDate)
                 .toList();
     }
