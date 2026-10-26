@@ -40,6 +40,7 @@ import io.jmix.core.Id;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -50,6 +51,7 @@ import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewControllerUtils;
+import io.jmix.flowui.view.builder.WindowBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -68,6 +70,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 @UiTest
@@ -87,6 +90,8 @@ public class ScheduleUsersUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     MetadataTools metadataTools;
+    @Autowired
+    DialogWindows dialogWindows;
 
     List<Id<User>> userIds = new ArrayList<>();
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
@@ -207,6 +212,16 @@ public class ScheduleUsersUiTest {
         assertThat(usersField(dialog).getTypedValue())
                 .extracting(User::getId)
                 .containsExactlyInAnyOrder(a.getId(), b.getId());
+    }
+
+    @Test
+    void addUsersDialogNeedsTheEditorAssignments() {
+        WindowBuilder<WorkScheduleUsersAddView> builder =
+                dialogWindows.view(UiTestUtils.getCurrentView(), WorkScheduleUsersAddView.class);
+
+        assertThatThrownBy(builder::open)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("setEditorAssignments() must be called before the view opens");
     }
 
     @Test

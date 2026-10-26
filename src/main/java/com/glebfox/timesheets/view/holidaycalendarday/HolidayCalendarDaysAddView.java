@@ -19,6 +19,7 @@ package com.glebfox.timesheets.view.holidaycalendarday;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
+import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.core.Messages;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
@@ -30,6 +31,7 @@ import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.view.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
@@ -80,12 +82,13 @@ public class HolidayCalendarDaysAddView extends StandardView {
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
-    private Supplier<Collection<HolidayCalendarDay>> calendarDays = List::of;
+    @Nullable
+    private Supplier<Collection<HolidayCalendarDay>> calendarDays;
     private boolean datesRefused;
 
     /**
      * Sets the days of the calendar to check the range against: the days of the calendar editor,
-     * saved or added there and not removed.
+     * saved or added there and not removed. Required: the view does not open without them.
      *
      * @param calendarDays supplies the calendar's days when the range is checked
      */
@@ -129,6 +132,12 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     private String formatRequiredMessage(String label) {
         return messages.formatMessage("", "validation.required.defaultMsg", label);
+    }
+
+    @Subscribe
+    public void onBeforeShow(final BeforeShowEvent event) {
+        // Without the editor's days the check would miss the ones added or removed there
+        Preconditions.checkState(calendarDays != null, "setCalendarDays() must be called before the view opens");
     }
 
     @Subscribe("fromField")
@@ -191,7 +200,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
     }
 
     private List<LocalDate> findTakenDates(LocalDate from, LocalDate to) {
-        return calendarDays.get().stream()
+        return Objects.requireNonNull(calendarDays).get().stream()
                 .map(HolidayCalendarDay::getDate)
                 .filter(date -> date != null && !date.isBefore(from) && !date.isAfter(to))
                 .distinct()

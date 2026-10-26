@@ -33,6 +33,7 @@ import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -41,6 +42,7 @@ import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
+import io.jmix.flowui.view.builder.DetailWindowClassBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -60,6 +62,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -80,6 +83,8 @@ public class HolidayCalendarViewsUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     DatatypeFormatter datatypeFormatter;
+    @Autowired
+    DialogWindows dialogWindows;
 
     List<Id<HolidayCalendar>> calendarIds = new ArrayList<>();
 
@@ -136,6 +141,18 @@ public class HolidayCalendarViewsUiTest {
         assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dayEditor);
         assertThat(listed(daysDataGrid(view), day -> JAN_1_2026.equals(day.getDate())).getName())
                 .isEqualTo("Renamed");
+    }
+
+    @Test
+    void dayEditorNeedsTheCalendarDays() {
+        DetailWindowClassBuilder<HolidayCalendarDay, HolidayCalendarDayDetailView> builder =
+                dialogWindows.detail(UiTestUtils.getCurrentView(), HolidayCalendarDay.class)
+                        .withViewClass(HolidayCalendarDayDetailView.class)
+                        .newEntity();
+
+        assertThatThrownBy(builder::open)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("setCalendarDays() must be called before the view opens");
     }
 
     @Test

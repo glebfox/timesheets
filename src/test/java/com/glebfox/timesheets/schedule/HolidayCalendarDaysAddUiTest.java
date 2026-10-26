@@ -33,6 +33,7 @@ import io.jmix.core.security.ClientDetails;
 import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
@@ -42,6 +43,7 @@ import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewControllerUtils;
+import io.jmix.flowui.view.builder.WindowBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -63,6 +65,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -90,6 +93,8 @@ public class HolidayCalendarDaysAddUiTest {
     DatatypeFormatter datatypeFormatter;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    DialogWindows dialogWindows;
 
     List<Id<HolidayCalendar>> calendarIds = new ArrayList<>();
 
@@ -299,6 +304,16 @@ public class HolidayCalendarDaysAddUiTest {
         // A range that ends before it starts names no days
         toField(dialog).setTypedValue(DEC_31_2026);
         assertThat(rangeSummary(dialog).getText()).isEmpty();
+    }
+
+    @Test
+    void dialogNeedsTheCalendarDays() {
+        WindowBuilder<HolidayCalendarDaysAddView> builder =
+                dialogWindows.view(UiTestUtils.getCurrentView(), HolidayCalendarDaysAddView.class);
+
+        assertThatThrownBy(builder::open)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("setCalendarDays() must be called before the view opens");
     }
 
     @Test

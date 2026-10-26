@@ -17,13 +17,14 @@
 package com.glebfox.timesheets.view.holidaycalendarday;
 
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
+import com.google.common.base.Preconditions;
 import io.jmix.flowui.exception.ValidationException;
 import io.jmix.flowui.view.*;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -40,16 +41,24 @@ public class HolidayCalendarDayDetailView extends StandardDetailView<HolidayCale
     @ViewComponent
     private MessageBundle messageBundle;
 
-    private Supplier<Collection<HolidayCalendarDay>> calendarDays = List::of;
+    @Nullable
+    private Supplier<Collection<HolidayCalendarDay>> calendarDays;
 
     /**
      * Sets the days of the calendar to check the edited day's date against: the days of the calendar editor,
-     * saved or added there and not removed. The edited day itself may be among them.
+     * saved or added there and not removed. The edited day itself may be among them. Required: the view
+     * does not open without them.
      *
      * @param calendarDays supplies the calendar's days when the date is checked
      */
     public void setCalendarDays(Supplier<Collection<HolidayCalendarDay>> calendarDays) {
         this.calendarDays = calendarDays;
+    }
+
+    @Subscribe
+    public void onBeforeShow(final BeforeShowEvent event) {
+        // Without the editor's days the check would miss the dates added or changed there
+        Preconditions.checkState(calendarDays != null, "setCalendarDays() must be called before the view opens");
     }
 
     @Install(to = "dateField", subject = "validator")
@@ -59,7 +68,7 @@ public class HolidayCalendarDayDetailView extends StandardDetailView<HolidayCale
         }
 
         UUID editedId = getEditedEntity().getId();
-        boolean taken = calendarDays.get().stream()
+        boolean taken = Objects.requireNonNull(calendarDays).get().stream()
                 .anyMatch(day -> !day.getId().equals(editedId) && value.equals(day.getDate()));
         if (taken) {
             throw new ValidationException(messageBundle.getMessage("dateField.duplicateError"));

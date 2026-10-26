@@ -208,7 +208,9 @@ public class WorkScheduleAssignmentEditorUiTest {
                         .withInitializer(assignment -> assignment.setUser(user))
                         .withParentDataContext(newParentContext());
 
-        assertThatThrownBy(builder::open).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(builder::open)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("setSiblingAssignments() must be called before the view opens");
     }
 
     @AfterEach
