@@ -19,7 +19,6 @@ package com.glebfox.timesheets.action;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView;
-import com.vaadin.flow.component.Component;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
 import io.jmix.flowui.DialogWindows;
@@ -28,8 +27,6 @@ import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
 import io.jmix.flowui.action.AdjustWhenViewReadOnly;
 import io.jmix.flowui.action.list.ListDataComponentAction;
-import io.jmix.flowui.component.UiComponentUtils;
-import io.jmix.flowui.data.ContainerDataUnit;
 import io.jmix.flowui.data.EntityDataUnit;
 import io.jmix.flowui.icon.Icons;
 import io.jmix.flowui.kit.action.ActionVariant;
@@ -38,8 +35,6 @@ import io.jmix.flowui.kit.icon.JmixFontIcon;
 import io.jmix.flowui.model.CollectionPropertyContainer;
 import io.jmix.flowui.model.DataContext;
 import io.jmix.flowui.view.StandardOutcome;
-import io.jmix.flowui.view.View;
-import io.jmix.flowui.view.ViewControllerUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
@@ -120,12 +115,12 @@ public class HolidayCalendarDaysAddAction
     @Override
     public void execute() {
         checkTarget();
-        CollectionPropertyContainer<HolidayCalendarDay> daysContainer = getDaysContainer();
-        View<?> origin = UiComponentUtils.getView((Component) target);
+        CollectionPropertyContainer<HolidayCalendarDay> daysContainer =
+                ListActionTargets.getPropertyContainer(target, getClass());
         // The editor's data context, so the days are saved with the calendar and discarded with it
-        DataContext dataContext = ViewControllerUtils.getViewData(origin).getDataContext();
+        DataContext dataContext = ListActionTargets.getDataContext(target);
 
-        dialogWindows.view(origin, HolidayCalendarDaysAddView.class)
+        dialogWindows.view(ListActionTargets.getView(target), HolidayCalendarDaysAddView.class)
                 .withViewConfigurer(view -> view.setCalendarDays(daysContainer::getItems))
                 .withAfterCloseListener(closeEvent -> {
                     if (closeEvent.closedWith(StandardOutcome.SAVE)) {
@@ -133,16 +128,6 @@ public class HolidayCalendarDaysAddAction
                     }
                 })
                 .open();
-    }
-
-    @SuppressWarnings("unchecked")
-    private CollectionPropertyContainer<HolidayCalendarDay> getDaysContainer() {
-        if (!(target.getItems() instanceof ContainerDataUnit<?> items)
-                || !(items.getContainer() instanceof CollectionPropertyContainer<?> container)) {
-            throw new IllegalStateException(String.format("%s target is not bound to the days of a calendar",
-                    getClass().getSimpleName()));
-        }
-        return (CollectionPropertyContainer<HolidayCalendarDay>) container;
     }
 
     private static void addDays(HolidayCalendarDaysAddView view,

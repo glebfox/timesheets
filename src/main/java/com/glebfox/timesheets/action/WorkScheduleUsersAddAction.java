@@ -19,7 +19,6 @@ package com.glebfox.timesheets.action;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleUsersAddView;
-import com.vaadin.flow.component.Component;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
 import io.jmix.flowui.DialogWindows;
@@ -27,7 +26,6 @@ import io.jmix.flowui.UiComponentProperties;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
 import io.jmix.flowui.action.list.ListDataComponentAction;
-import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.data.EntityDataUnit;
 import io.jmix.flowui.icon.Icons;
 import io.jmix.flowui.kit.action.ActionVariant;
@@ -142,7 +140,7 @@ public class WorkScheduleUsersAddAction
         // The editor's data context, so the assignments are saved with the editor and discarded with it
         DataContext dataContext = ListActionTargets.getDataContext(target);
 
-        dialogWindows.view(UiComponentUtils.getView((Component) target), WorkScheduleUsersAddView.class)
+        dialogWindows.view(ListActionTargets.getView(target), WorkScheduleUsersAddView.class)
                 .withViewConfigurer(view -> {
                     view.setEditorAssignments(container::getItems, dataContext::isRemoved);
                     if (viewConfigurer != null) {

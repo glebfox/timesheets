@@ -27,9 +27,7 @@ import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
 import io.jmix.flowui.action.AdjustWhenViewReadOnly;
 import io.jmix.flowui.action.list.SecuredListDataComponentAction;
-import io.jmix.flowui.data.ContainerDataUnit;
 import io.jmix.flowui.model.DataLoader;
-import io.jmix.flowui.model.HasLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -107,7 +105,7 @@ public class WorkScheduleMakeDefaultAction
                     getClass().getSimpleName()));
         }
         // Found before the save, so nothing is saved for a list that cannot show the result
-        DataLoader loader = getTargetLoader();
+        DataLoader loader = ListActionTargets.getLoader(target, getClass());
 
         // A fresh instance, so the listed one stays as it was if the save fails
         WorkSchedule schedule = dataManager.load(Id.of(selectedItem)).one();
@@ -121,17 +119,5 @@ public class WorkScheduleMakeDefaultAction
                         "workScheduleMakeDefault.notification", schedule.getName()))
                 .withType(Notifications.Type.SUCCESS)
                 .show();
-    }
-
-    private DataLoader getTargetLoader() {
-        DataLoader loader = target.getItems() instanceof ContainerDataUnit<?> items
-                && items.getContainer() instanceof HasLoader hasLoader
-                ? hasLoader.getLoader()
-                : null;
-        if (loader == null) {
-            throw new IllegalStateException(String.format("%s target is not bound to a container with a loader",
-                    getClass().getSimpleName()));
-        }
-        return loader;
     }
 }

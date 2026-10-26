@@ -24,16 +24,20 @@ import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.data.ContainerDataUnit;
 import io.jmix.flowui.data.EntityDataUnit;
 import io.jmix.flowui.model.CollectionContainer;
+import io.jmix.flowui.model.CollectionPropertyContainer;
 import io.jmix.flowui.model.DataContext;
+import io.jmix.flowui.model.DataLoader;
+import io.jmix.flowui.model.HasLoader;
+import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewControllerUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 /**
- * Finds what a custom list action works on through its target: the container the list component shows,
- * the data context of the view that holds the component, and whether the current user may perform the action's
- * operation on the entity the component shows.
+ * Finds what a custom list action works on through its target: the container the list component shows and its
+ * loader, the view that holds the component and its data context, and whether the current user may perform
+ * the action's operation on the entity the component shows.
  */
 final class ListActionTargets {
 
@@ -58,6 +62,54 @@ final class ListActionTargets {
     }
 
     /**
+     * Returns the property container that a list component shows, such as the days of a calendar.
+     *
+     * @param target      the action's list component
+     * @param actionClass the action, named in the exception
+     * @return the container of the component's items
+     * @throws IllegalStateException if the component's items are not bound to a property container
+     */
+    @SuppressWarnings("unchecked")
+    static <E> CollectionPropertyContainer<E> getPropertyContainer(ListDataComponent<E> target,
+                                                                   Class<?> actionClass) {
+        if (!(getContainer(target, actionClass) instanceof CollectionPropertyContainer<?> container)) {
+            throw new IllegalStateException(String.format("%s target is not bound to a property container",
+                    actionClass.getSimpleName()));
+        }
+        return (CollectionPropertyContainer<E>) container;
+    }
+
+    /**
+     * Returns the loader of the container that a list component shows.
+     *
+     * @param target      the action's list component
+     * @param actionClass the action, named in the exception
+     * @return the loader of the component's container
+     * @throws IllegalStateException if the component's items are not bound to a container with a loader
+     */
+    static DataLoader getLoader(ListDataComponent<?> target, Class<?> actionClass) {
+        DataLoader loader = getContainer(target, actionClass) instanceof HasLoader hasLoader
+                ? hasLoader.getLoader()
+                : null;
+        if (loader == null) {
+            throw new IllegalStateException(String.format("%s target is not bound to a container with a loader",
+                    actionClass.getSimpleName()));
+        }
+        return loader;
+    }
+
+    /**
+     * Returns the view that holds a list component.
+     *
+     * @param target the action's list component
+     * @return the view
+     * @throws IllegalStateException if the component is not attached to a view
+     */
+    static View<?> getView(ListDataComponent<?> target) {
+        return UiComponentUtils.getView((Component) target);
+    }
+
+    /**
      * Returns the data context of the view that holds a list component.
      *
      * @param target the action's list component
@@ -65,7 +117,7 @@ final class ListActionTargets {
      * @throws IllegalStateException if the component is not attached to a view, or the view has no data context
      */
     static DataContext getDataContext(ListDataComponent<?> target) {
-        return ViewControllerUtils.getViewData(UiComponentUtils.getView((Component) target)).getDataContext();
+        return ViewControllerUtils.getViewData(getView(target)).getDataContext();
     }
 
     /**
