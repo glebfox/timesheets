@@ -181,6 +181,25 @@ public class WorkScheduleEditorUiTest {
     }
 
     @Test
+    void defaultSwitchFollowsTheViewReadOnlyModeAndStaysLockedOnTheDefault() {
+        WorkSchedule defaultSchedule = dataManager.load(WorkSchedule.class)
+                .query("e.isDefault = true")
+                .one();
+        WorkScheduleDetailView defaultView = openSchedule(defaultSchedule);
+
+        defaultView.setReadOnly(true);
+        defaultView.setReadOnly(false);
+        assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
+
+        WorkScheduleDetailView otherView = openSchedule(saveSchedule(uniqueName(), null));
+
+        otherView.setReadOnly(true);
+        assertThat(isDefaultField(otherView).isReadOnly()).isTrue();
+        otherView.setReadOnly(false);
+        assertThat(isDefaultField(otherView).isReadOnly()).isFalse();
+    }
+
+    @Test
     void scheduleOfADeletedCalendarSaves() {
         HolidayCalendar calendar = saveCalendar(uniqueName());
         WorkSchedule schedule = saveSchedule(uniqueName(), calendar);

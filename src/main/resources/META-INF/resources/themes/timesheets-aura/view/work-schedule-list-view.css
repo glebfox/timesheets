@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/* The name of a work schedule, followed by the Default badge on the default schedule */
-.work-schedule-list-view .work-schedule-name {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--vaadin-gap-s);
-}
-
 /* The seven day chips of a work schedule, all of one width, so the days line up from row to row */
 .work-schedule-list-view .workday-chips {
     display: inline-grid;

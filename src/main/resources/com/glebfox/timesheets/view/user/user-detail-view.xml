@@ -55,8 +55,7 @@
     </facets>
     <layout alignItems="STRETCH"
             padding="false" spacing="false"
-            expand="contentBox"
-            classNames="user-detail-view">
+            expand="contentBox">
         <vbox id="contentBox" classNames="overflow-auto">
             <app:avatarUpload id="avatarUpload"
                               dataContainer="userDc" property="avatar"

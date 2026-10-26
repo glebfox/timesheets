@@ -24,23 +24,19 @@ import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDayDetailView;
 import com.glebfox.timesheets.view.main.MainView;
 import com.vaadin.flow.component.grid.GridSortOrder;
-import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.MetadataTools;
-import io.jmix.core.Sort;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionPropertyContainer;
-import io.jmix.flowui.model.Sorter;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Route(value = "holiday-calendars/:id", layout = MainView.class)
 @ViewController("ts_HolidayCalendar.detail")
@@ -73,19 +69,7 @@ public class HolidayCalendarDetailView extends StandardDetailView<HolidayCalenda
         // while the grid sorts the days only when its sort order changes
         if (event.getChangeType() == CollectionChangeType.ADD_ITEMS
                 || event.getChangeType() == CollectionChangeType.SET_ITEM) {
-            sortDaysAsShown();
-        }
-    }
-
-    private void sortDaysAsShown() {
-        Sorter sorter = daysDc.getSorter();
-        List<Sort.Order> orders = daysDataGrid.getSortOrder().stream()
-                .map(sortOrder -> sortOrder.getDirection() == SortDirection.ASCENDING
-                        ? Sort.Order.asc(sortOrder.getSorted().getKey())
-                        : Sort.Order.desc(sortOrder.getSorted().getKey()))
-                .toList();
-        if (sorter != null && !orders.isEmpty()) {
-            sorter.sort(Sort.by(orders));
+            componentSupport.sortAsShown(daysDataGrid, daysDc, null);
         }
     }
 

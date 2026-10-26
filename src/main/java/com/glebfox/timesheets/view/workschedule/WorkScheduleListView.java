@@ -70,10 +70,11 @@ public class WorkScheduleListView extends StandardListView<WorkSchedule> {
     private Renderer<WorkSchedule> workSchedulesDataGridNameRenderer() {
         return new ComponentRenderer<>(schedule -> {
             Span cell = new Span(schedule.getName());
-            cell.addClassName("work-schedule-name");
+            cell.addClassName("text-with-badges");
 
             if (Boolean.TRUE.equals(schedule.getIsDefault())) {
-                cell.add(createBadge(messageBundle.getMessage("defaultBadge.text"), BadgeStyle.DEFAULT));
+                cell.add(componentSupport.createBadge(
+                        messageBundle.getMessage("defaultBadge.text"), BadgeStyle.DEFAULT));
             }
             return cell;
         });
@@ -89,20 +90,14 @@ public class WorkScheduleListView extends StandardListView<WorkSchedule> {
             for (DayOfWeek day : componentSupport.getDaysOfWeek()) {
                 String label = componentSupport.formatDayOfWeekShort(day);
                 if (workdays.contains(day)) {
-                    cell.add(createBadge(label, BadgeStyle.DEFAULT));
+                    cell.add(componentSupport.createBadge(label, BadgeStyle.DEFAULT));
                 } else {
-                    Badge dayOff = createBadge(label, BadgeStyle.NEUTRAL);
+                    Badge dayOff = componentSupport.createBadge(label, BadgeStyle.NEUTRAL);
                     dayOff.addClassName("day-off");
                     cell.add(dayOff);
                 }
             }
             return cell;
         });
-    }
-
-    private static Badge createBadge(String text, BadgeStyle style) {
-        Badge badge = new Badge(text);
-        style.applyTo(badge);
-        return badge;
     }
 }

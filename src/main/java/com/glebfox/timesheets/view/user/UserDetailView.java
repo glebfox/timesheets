@@ -17,19 +17,18 @@
 package com.glebfox.timesheets.view.user;
 
 import com.glebfox.timesheets.app.WorkScheduleAssignmentSupport;
+import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleAssignmentDetailView;
-import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
@@ -43,7 +42,6 @@ import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
-import io.jmix.flowui.model.Sorter;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -74,6 +72,8 @@ public class UserDetailView extends StandardDetailView<User> {
     private CollectionContainer<WorkScheduleAssignment> assignmentsDc;
     @ViewComponent
     private CollectionLoader<WorkScheduleAssignment> assignmentsDl;
+    @Autowired
+    private ComponentSupport componentSupport;
     @Autowired
     private EntityStates entityStates;
     @ViewComponent
@@ -148,28 +148,13 @@ public class UserDetailView extends StandardDetailView<User> {
         // badge moves when an edit changes which assignment is in force today
         if (event.getChangeType() == CollectionChangeType.ADD_ITEMS
                 || event.getChangeType() == CollectionChangeType.SET_ITEM) {
-            sortAssignmentsAsShown();
+            // Unsorted, the table keeps the order the assignments are loaded in: newest first
+            componentSupport.sortAsShown(assignmentsDataGrid, assignmentsDc, Sort.by(Sort.Direction.DESC, "startDate"));
         }
     }
 
     private List<GridSortOrder<WorkScheduleAssignment>> newestAssignmentsFirst() {
         return GridSortOrder.desc(assignmentsDataGrid.getColumnByKey("startDate")).build();
-    }
-
-    private void sortAssignmentsAsShown() {
-        // The container's sorter, since the grid ignores a sort order equal to its own
-        Sorter sorter = assignmentsDc.getSorter();
-        if (sorter == null) {
-            return;
-        }
-
-        List<Sort.Order> orders = assignmentsDataGrid.getSortOrder().stream()
-                .map(sortOrder -> sortOrder.getDirection() == SortDirection.ASCENDING
-                        ? Sort.Order.asc(sortOrder.getSorted().getKey())
-                        : Sort.Order.desc(sortOrder.getSorted().getKey()))
-                .toList();
-        // Unsorted, the table keeps the order the assignments are loaded in: newest first
-        sorter.sort(orders.isEmpty() ? Sort.by(Sort.Direction.DESC, "startDate") : Sort.by(orders));
     }
 
     @Install(to = "assignmentsDataGrid.create", subject = "initializer")
@@ -192,14 +177,16 @@ public class UserDetailView extends StandardDetailView<User> {
         return new ComponentRenderer<>(assignment -> {
             WorkSchedule schedule = assignment.getWorkSchedule();
             Span cell = new Span(metadataTools.format(schedule));
-            cell.addClassName("assignment-schedule");
+            cell.addClassName("text-with-badges");
 
             if (isCurrent(assignment)) {
-                cell.add(createBadge(messageBundle.getMessage("currentBadge.text"), BadgeStyle.SUCCESS));
+                cell.add(componentSupport.createBadge(
+                        messageBundle.getMessage("currentBadge.text"), BadgeStyle.SUCCESS));
             }
             // An assignment keeps its schedule after the schedule is deleted, and its plan stays as it was
             if (schedule.getDeletedDate() != null) {
-                cell.add(createBadge(messageBundle.getMessage("deletedBadge.text"), BadgeStyle.NEUTRAL));
+                cell.add(componentSupport.createBadge(
+                        messageBundle.getMessage("deletedBadge.text"), BadgeStyle.NEUTRAL));
             }
             return cell;
         });
@@ -209,11 +196,5 @@ public class UserDetailView extends StandardDetailView<User> {
         // Found anew for each row, since creating, editing, and removing assignments can change it
         return workScheduleAssignmentSupport.findCurrent(assignmentsDc.getItems(), LocalDate.now())
                 .contains(assignment);
-    }
-
-    private static Badge createBadge(String text, BadgeStyle style) {
-        Badge badge = new Badge(text);
-        style.applyTo(badge);
-        return badge;
     }
 }

@@ -28,6 +28,29 @@
             </fetchPlan>
             <loader/>
         </instance>
+        <collection id="assignmentsDc"
+                    class="com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment">
+            <!-- The user cell shows the avatar and the active flag; the assignment editor checks start dates
+                 by user; deletedDate marks a deleted schedule there -->
+            <fetchPlan extends="_local">
+                <property name="user" fetchPlan="_instance_name">
+                    <property name="avatar"/>
+                    <property name="active"/>
+                </property>
+                <property name="workSchedule" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <!-- Loaded by the controller for a saved schedule. Only explicit assignments are listed:
+                 the default schedule's users without assignments are not -->
+            <loader id="assignmentsDl">
+                <query>
+                    <![CDATA[select e from ts_WorkScheduleAssignment e
+                                where e.workSchedule = :workSchedule
+                                order by e.startDate desc]]>
+                </query>
+            </loader>
+        </collection>
     </data>
     <facets>
         <dataLoadCoordinator auto="true"/>
@@ -39,7 +62,7 @@
     <layout alignItems="STRETCH"
             padding="false" spacing="false"
             expand="contentBox">
-        <vbox id="contentBox" classNames="overflow-auto">
+        <vbox id="contentBox" classNames="overflow-auto" expand="usersBox">
             <formLayout id="form" dataContainer="workScheduleDc">
                 <textField id="nameField" property="name">
                     <prefix>
@@ -81,7 +104,28 @@
                 <textArea id="descriptionField" property="description"
                           minHeight="10rem" colspan="2"/>
             </formLayout>
-            <vbox id="usersBox" padding="false"/>
+            <vbox id="usersBox" padding="false" expand="assignmentsDataGrid">
+                <h4 id="usersTitle" text="msg://usersTitle.text"/>
+                <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
+                    <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
+                    <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
+                    <button id="assignmentRemoveBtn" action="assignmentsDataGrid.remove"/>
+                </hbox>
+                <dataGrid id="assignmentsDataGrid"
+                          dataContainer="assignmentsDc"
+                          selectionMode="MULTI"
+                          width="100%" minHeight="20em">
+                    <actions>
+                        <action id="add" type="list_workScheduleUsers_add"/>
+                        <action id="edit" type="list_workScheduleAssignment_edit"/>
+                        <action id="remove" type="list_workScheduleAssignment_remove"/>
+                    </actions>
+                    <columns resizable="true">
+                        <column property="user"/>
+                        <column property="startDate" autoWidth="true" flexGrow="0"/>
+                    </columns>
+                </dataGrid>
+            </vbox>
         </vbox>
         <hbox id="detailActions"
               classNames="footer-panel">

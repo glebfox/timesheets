@@ -25,6 +25,9 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.server.streams.DownloadHandler;
@@ -32,8 +35,11 @@ import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
+import io.jmix.core.Sort;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
+import io.jmix.flowui.model.CollectionContainer;
+import io.jmix.flowui.model.Sorter;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -128,6 +134,19 @@ public class ComponentSupport {
                 messages.getMessage(UserRenderer.class, Boolean.TRUE.equals(user.getActive())
                         ? "UserRenderer.userActive"
                         : "UserRenderer.userInactive"));
+    }
+
+    /**
+     * Creates a {@link Badge} with a text and a look, such as a status shown next to a name in a grid cell.
+     *
+     * @param text  the text of the badge
+     * @param style the look of the badge
+     * @return a new badge
+     */
+    public Badge createBadge(String text, BadgeStyle style) {
+        Badge badge = new Badge(text);
+        style.applyTo(badge);
+        return badge;
     }
 
     /**
@@ -226,5 +245,35 @@ public class ComponentSupport {
      */
     public String formatDayOfWeekShort(DayOfWeek day) {
         return StringUtils.capitalize(day.getDisplayName(TextStyle.SHORT_STANDALONE, currentAuthentication.getLocale()));
+    }
+
+    /**
+     * Sorts the items of a grid's container again in the order the grid shows. A grid sorts its rows only when
+     * its sort order changes, so an item added to the container or replaced there stays where it was put until
+     * the items are sorted again. Sorting them also redraws every row.
+     * <p>
+     * The container's sorter does it, since the grid ignores a sort order equal to its own.
+     *
+     * @param grid          the grid whose sort order to follow
+     * @param container     the container of the grid's items
+     * @param unsortedOrder the order to sort in while the grid is unsorted, or {@code null} to leave the items
+     *                      as they are then
+     */
+    public <E> void sortAsShown(Grid<E> grid, CollectionContainer<E> container, @Nullable Sort unsortedOrder) {
+        Sorter sorter = container.getSorter();
+        if (sorter == null) {
+            return;
+        }
+
+        List<Sort.Order> orders = grid.getSortOrder().stream()
+                .map(sortOrder -> sortOrder.getDirection() == SortDirection.ASCENDING
+                        ? Sort.Order.asc(sortOrder.getSorted().getKey())
+                        : Sort.Order.desc(sortOrder.getSorted().getKey()))
+                .toList();
+        if (!orders.isEmpty()) {
+            sorter.sort(Sort.by(orders));
+        } else if (unsortedOrder != null) {
+            sorter.sort(unsortedOrder);
+        }
     }
 }
