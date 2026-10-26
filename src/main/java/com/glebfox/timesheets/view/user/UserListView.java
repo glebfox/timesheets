@@ -41,6 +41,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 @DialogMode(width = "1024px", closeOnEsc = true)
 public class UserListView extends StandardListView<User> {
 
+    // The views of the security actions, as the view policies of roles name them
+    public static final String ROLE_ASSIGNMENT_VIEW_ID = "roleAssignmentView";
+    public static final String USER_SUBSTITUTION_VIEW_ID = "sec_UserSubstitution.view";
+    public static final String CHANGE_PASSWORD_VIEW_ID = "changePasswordView";
+    public static final String RESET_PASSWORD_VIEW_ID = "resetPasswordView";
+
     @ViewComponent("usersDataGrid.showRoleAssignments")
     private ShowRoleAssignmentsAction<User> showRoleAssignmentsAction;
     @ViewComponent("usersDataGrid.changePassword")
@@ -72,14 +78,14 @@ public class UserListView extends StandardListView<User> {
     private void hideForbiddenSecurityActions() {
         // The actions do not check whether the current user may open their views, so an action whose view is denied
         // would stay available and end on an access-denied page
-        showRoleAssignmentsAction.setVisible(isViewPermitted("roleAssignmentView"));
-        showUserSubstitutionsAction.setVisible(isViewPermitted("sec_UserSubstitution.view"));
+        showRoleAssignmentsAction.setVisible(isViewPermitted(ROLE_ASSIGNMENT_VIEW_ID));
+        showUserSubstitutionsAction.setVisible(isViewPermitted(USER_SUBSTITUTION_VIEW_ID));
 
         // Everyone may open the change password view, for their own password, so the password actions also need
         // permission to edit users
         boolean userEditPermitted = isUserEditPermitted();
-        changePasswordAction.setVisible(userEditPermitted && isViewPermitted("changePasswordView"));
-        resetPasswordAction.setVisible(userEditPermitted && isViewPermitted("resetPasswordView"));
+        changePasswordAction.setVisible(userEditPermitted && isViewPermitted(CHANGE_PASSWORD_VIEW_ID));
+        resetPasswordAction.setVisible(userEditPermitted && isViewPermitted(RESET_PASSWORD_VIEW_ID));
 
         // Not left as an empty menu when all its items are hidden
         additionalBtn.setVisible(additionalBtn.getItems().stream().anyMatch(DropdownButtonItem::isVisible));

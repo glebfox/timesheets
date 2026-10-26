@@ -52,6 +52,7 @@ import io.jmix.flowui.kit.component.dropdownbutton.DropdownButton;
 import io.jmix.flowui.view.StandardDetailView;
 import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.View;
+import io.jmix.flowui.view.ViewRegistry;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -97,6 +98,8 @@ public class WorkScheduleManagementRoleUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    ViewRegistry viewRegistry;
 
     String holder;
     List<Id<RoleAssignmentEntity>> roleAssignmentIds = new ArrayList<>();
@@ -176,6 +179,15 @@ public class WorkScheduleManagementRoleUiTest {
     @Test
     void adminStillSeesTheSecurityActions() {
         systemAuthenticator.runWithUser("admin", () -> assertSecurityActionsVisible(openUserList(), true));
+    }
+
+    @Test
+    void securityActionsCheckRegisteredViews() {
+        // Full access permits any view id, so the admin's test above cannot catch a mistyped one
+        for (String viewId : List.of(UserListView.ROLE_ASSIGNMENT_VIEW_ID, UserListView.USER_SUBSTITUTION_VIEW_ID,
+                UserListView.CHANGE_PASSWORD_VIEW_ID, UserListView.RESET_PASSWORD_VIEW_ID)) {
+            assertThat(viewRegistry.hasView(viewId)).as("view %s", viewId).isTrue();
+        }
     }
 
     @Test
