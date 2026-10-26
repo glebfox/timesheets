@@ -18,7 +18,7 @@ Roles are not stored on the user: they are Jmix role assignments, managed in the
 
 ## Work schedule
 
-A user's planned time comes from their [work schedule assignments](work-schedule-assignment.md), or from the default [work schedule](work-schedule.md#the-default-schedule) on the days none covers. The user entity itself has no schedule attribute.
+A user's planned time comes from their [work schedule assignments](work-schedule-assignment.md), or from the default [work schedule](work-schedule.md#the-default-schedule) on the days none covers. The user entity itself has no schedule attribute; the user editor shows and edits the assignments ([users](../views/users.md#work-schedule)).
 
 ## Deletion
 

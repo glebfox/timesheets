@@ -4,12 +4,12 @@ Source: `entity/schedule/WorkScheduleAssignment.java`, `app/WorkPlanSupport.java
 
 A [user](user.md) working to a [work schedule](work-schedule.md) from a date on. A user's assignments form a history: each day takes the schedule of the latest assignment that starts on or before it, so an assignment has no end date and the next one ends it. Days before the first assignment, and every day of a user with no assignments, take the default schedule. An assignment from a date changes only the days from that date on; reassigning a user leaves their past months as they were. Why assignments carry the history and schedules have no versions: [decision 0002](../../decisions/0002-work-schedules-have-no-versions.md).
 
-Assignments are set up in Data Tools: no screen of the application manages them.
+Assignments are managed in the [user editor](../views/users.md#work-schedule) and the [work schedule editor](../views/settings.md#users).
 
 ## Attributes
 
 - **User**, **work schedule**, **start date** — required. A start date in the future is allowed: a planned change.
-- A user has at most one assignment per start date among non-deleted assignments (`docs/guidelines/database.md`).
+- A user has at most one assignment per start date among non-deleted assignments (`docs/guidelines/database.md`). The assignment editor and the add users dialog refuse a start date the user already has before the save; the database's unique index stays the last line.
 - Shown as `<start date> <schedule>`.
 
 ## Deletion

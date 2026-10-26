@@ -66,6 +66,8 @@ Reach these colors through the theme names and classes rather than through the `
 
 **Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these.
 
+**Toggle buttons** are a checkbox group or a radio button group with the `segmented-group` class (`component/segmented-group.css`), as the work schedule editor's workdays and a holiday calendar day's type are: each item reads as a button, a checked one filled with the accent color, while the keyboard works as for the group's checkboxes or radio buttons.
+
 ---
 
 ## 3. Typography

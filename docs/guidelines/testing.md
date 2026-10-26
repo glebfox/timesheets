@@ -9,9 +9,16 @@ Project-specific mechanics of the test harness. How to write Jmix tests in gener
 - Non-UI tests authenticate through the `test_support/AuthenticatedAsAdmin` extension.
 - UI tests boot with `TabbedModeTestAssistConfiguration` in place of the skill's `FlowuiTestAssistConfiguration`, because the main view is a tabbed-mode main view. See `UserUiTest`.
 - The `test` profile sets `jmix.ui.component.dialogs-opened-change-events-enabled` and `jmix.ui.component.notifications-opened-change-events-enabled`. Without them, option and message dialogs and notifications publish no opened event, so `UiTestUtils.getLastOpenedDialog()` and `UiTestUtils.getLastOpenedNotification()` return null even while one is shown. See `CalendarUiTest` and `AvatarUploadUiTest`.
+- `UiTestUtils.getLastOpenedDialog()` returns only component dialogs, such as option and message dialogs. A view opened as a dialog, such as a detail view in dialog mode or a view opened with `DialogWindows`, is reached with `UiTestUtils.getLastOpenedViewDialog()`, or as the topmost view with `UiTestUtils.getCurrentView()`. See `WorkScheduleDeletionUiTest`.
+- An action's `actionPerform(...)` runs it whether it is enabled or not. A UI test asserts `isEnabled()` before it performs an action, or it passes for an action the user could never click.
+- Data compared with today, such as which assignment is in force, is dated relative to `LocalDate.now()`. A fixed date that is still in the future when the test is written is in the past some day later, and the test starts failing then.
 - A view that exists only for tests, such as one that loads a component with every XML attribute set, lives in `src/test` under the base package, with its descriptor in `src/test/resources`: Jmix finds views on the test classpath too. See `AvatarUploadTestView`.
 - HSQLDB gets none of the partial unique indexes of soft-deleted entities, which are created for PostgreSQL only (`docs/guidelines/database.md`), so no test can check uniqueness among non-deleted rows, such as a unique name, a holiday calendar's dates, or one assignment per user and start date.
 - The `clean test` gate of the `jmix-verify-bootrun` skill runs through local CI (`ARCHITECTURE.md`), never as `./gradlew clean` in this checkout: `bootRun` and the IDE run the app from this checkout's `build/`, and `clean` deletes the classes under it. A plain `SPRING_PROFILES_ACTIVE=test ./gradlew test` here is fine.
+
+## Static checks
+
+The IDE's Jmix inspection does not resolve the actions of the project's own `@ActionType`s. On an `@Install` to such an action, such as `assignmentsDataGrid.create` in the user editor, it reports "Unable to find installation point for delegate" and "Unable to find specified ui component" as errors, and the method as never used. These are false: the delegate binds at runtime, and a UI test that opens the view and relies on the delegate proves it.
 
 ## Local overrides in `.jmix/conf`
 

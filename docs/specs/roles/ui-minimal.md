@@ -10,7 +10,7 @@ Resource role `ui-minimal`, named "UI: minimal access", with UI scope.
 - The login and main views.
 - The framework's system dialogs, such as changing one's own password and substituting a user.
 
-It grants no entity access and no other view, so on its own a user can sign in and see an empty main view. It is meant to be combined with roles created at runtime that grant the data and screens a user needs.
+It grants no entity access and no other view, so on its own a user can sign in and see an empty main view. It is meant to be combined with roles that grant the data and screens a user needs, such as [Work schedule management](work-schedule-management.md) or roles created at runtime.
 
 ## Holders
 
