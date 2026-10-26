@@ -34,9 +34,9 @@ import io.jmix.securityflowui.role.annotation.ViewPolicy;
 /**
  * Managing work schedules, holiday calendars with their days, and who works to which schedule from which date.
  * <p>
- * Users are only read. Permission to update users would let the holder change or reset any user's password from the
- * user list, since those actions check nothing else. So the user editor opens read-only for the holder, and its
- * assignment actions still work in it.
+ * Users are only read. Permission to update users would let the holder change any user's password from the user list,
+ * since that action checks nothing else. So the user editor opens read-only for the holder, and its assignment actions
+ * still work in it.
  */
 @ResourceRole(name = "Work schedule management", code = WorkScheduleManagementRole.CODE)
 public interface WorkScheduleManagementRole extends UserReadOnlyRole {
