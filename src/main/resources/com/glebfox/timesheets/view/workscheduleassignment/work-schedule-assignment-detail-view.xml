@@ -21,7 +21,7 @@
     <data>
         <instance id="workScheduleAssignmentDc"
                   class="com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment">
-            <fetchPlan extends="_base">
+            <fetchPlan extends="_local">
                 <property name="user" fetchPlan="_instance_name"/>
                 <property name="workSchedule" fetchPlan="_instance_name">
                     <property name="deletedDate"/>
