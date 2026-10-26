@@ -54,6 +54,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -227,6 +228,11 @@ public class WorkScheduleDeletionUiTest {
         String warning = messages.getMessage(WorkScheduleRemoveAction.class, "workScheduleRemove.onlyScheduleWarning");
         assertThat(warning).isNotEqualTo("workScheduleRemove.onlyScheduleWarning");
         assertThat(notification.getText()).isEqualTo(warning);
+        // The Russian text echoes the label of the Make default action
+        assertThat(messages.getMessage(WorkScheduleRemoveAction.class, "workScheduleRemove.onlyScheduleWarning",
+                Locale.of("ru", "RU")))
+                .isEqualTo("Единственный график работы нельзя удалить. "
+                        + "Сначала создайте другой график и сделайте его по умолчанию.");
         assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
         assertThat(UiTestUtils.<View<?>>getCurrentView()).isInstanceOf(WorkScheduleListView.class);
 
