@@ -35,7 +35,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.EntityStates;
-import io.jmix.core.MetadataTools;
 import io.jmix.core.Sort;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
@@ -89,8 +88,6 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     private DatatypeFormatter datatypeFormatter;
     @Autowired
     private EntityStates entityStates;
-    @Autowired
-    private MetadataTools metadataTools;
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
@@ -294,14 +291,7 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
         }
 
         WorkTime weekTotal = WorkTime.ofMinutes(workdayTime.toMinutes() * workdays);
-        workdaysSummary.setText(messageBundle.formatMessage("workdaysSummary.text", workdaysText, formatTotal(weekTotal)));
-    }
-
-    // As the calendar view formats its totals
-    private String formatTotal(WorkTime time) {
-        return time.getMinutes() == 0
-                ? messageBundle.formatMessage("totalHours.format", time.getHours())
-                : metadataTools.format(time);
+        workdaysSummary.setText(messageBundle.formatMessage("workdaysSummary.text", workdaysText, componentSupport.formatWorkTimeTotal(weekTotal)));
     }
 
     /**

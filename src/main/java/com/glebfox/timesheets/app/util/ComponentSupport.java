@@ -19,6 +19,7 @@ package com.glebfox.timesheets.app.util;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -245,6 +246,19 @@ public class ComponentSupport {
      */
     public String formatDayOfWeekShort(DayOfWeek day) {
         return StringUtils.capitalize(day.getDisplayName(TextStyle.SHORT_STANDALONE, currentAuthentication.getLocale()));
+    }
+
+    /**
+     * Formats a total of work time, such as a week's or a month's: whole hours without minutes, such as "40h",
+     * and any other time as the work time datatype formats it, such as "37h 30m".
+     *
+     * @param time the total to format
+     * @return the formatted total
+     */
+    public String formatWorkTimeTotal(WorkTime time) {
+        return time.getMinutes() == 0
+                ? messages.formatMessage(ComponentSupport.class, "totalHours.format", time.getHours())
+                : metadataTools.format(time);
     }
 
     /**
