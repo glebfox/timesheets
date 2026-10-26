@@ -1,6 +1,6 @@
 # Settings screens
 
-Source: `view/tasktype/`, `view/projectrole/`, `view/workschedule/`, `view/holidaycalendar/`, `view/holidaycalendarday/`, `view/workscheduleassignment/`, `action/WorkScheduleMakeDefaultAction.java`, `action/WorkScheduleRemoveAction.java`, `action/WorkScheduleUsersAddAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `action/HolidayCalendarDaysAddAction.java`, `app/WorkScheduleAssignmentSupport.java`
+Source: `view/tasktype/`, `view/projectrole/`, `view/workschedule/`, `view/holidaycalendar/`, `view/holidaycalendarday/`, `view/workscheduleassignment/`, `action/WorkScheduleMakeDefaultAction.java`, `action/WorkScheduleRemoveAction.java`, `action/WorkScheduleUsersAddAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `action/HolidayCalendarDaysAddAction.java`, `app/WorkScheduleAssignmentSupport.java`, `app/util/ComponentSupport.java`, `app/util/PluralForms.java`
 
 The catalogs under the Settings menu: task types, project roles, work schedules, and holiday calendars.
 
@@ -103,3 +103,4 @@ A 480px dialog, titled "Holiday calendar day", that edits one day: **Name**, **D
 - Saves on PostgreSQL that remove a saved day or assignment and add another with the same date in one editor session: they pass live, but no test can see them, since HSQLDB has no partial unique indexes (`docs/guidelines/testing.md`).
 - An assignment moved to another schedule and given another date in one session of the work schedule editor is checked at its saved date: in that session the add users dialog and the assignment editor still refuse its old date for that user, and accept its new date, which the database then refuses on PostgreSQL with "The user already has a work schedule from this date". No test covers it.
 - The name filters and pagination of both lists, Remove of a schedule that assignments refer to, Remove of a calendar, and a failed Delete in the default deletion dialog: no test.
+- Searching the drop-downs by typed text: the users of the add users dialog by username, first name, or last name, case-insensitively, with inactive users offered too, and the calendars and schedules by name. The tests fetch only the options of an empty search.

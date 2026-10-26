@@ -1,6 +1,6 @@
 # Database
 
-Project-specific mechanics of the schema and its changelogs. How to write a changelog that matches an entity change is the `jmix-create-liquibase-changelog` skill.
+Project-specific mechanics of the schema, its changelogs, and soft deletion. How to write a changelog that matches an entity change is the `jmix-create-liquibase-changelog` skill.
 
 ## Changelog order
 

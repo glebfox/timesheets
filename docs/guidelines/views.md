@@ -1,6 +1,6 @@
 # Views and actions
 
-Mechanics of the framework's detail views and list actions that the project's own actions and roles are built on. How to write a view or an action in general is the `jmix-create-*` skills; the rule for custom list actions is in `docs/conventions.md`.
+Mechanics of the framework's detail views and list actions that the project's own actions and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
 
 ## Read-only detail views
 
@@ -16,7 +16,7 @@ OK is not such an action, and saving has no read-only check, so OK still saves t
 In a detail view, a table loaded by its own query, rather than a property container of a composition attribute, does not share the editor's data context with the standard list actions:
 
 - `list_remove` deletes the selected rows from the database at once, before the editor's OK.
-- `list_create` and `list_edit` give their dialog the editor's data context as its parent only for a composition, so for such a table the dialog's OK saves to the database at once, and the editor's Cancel does not undo it.
+- `list_create` and `list_edit` save their dialog to the database at once, and the editor's Cancel does not undo it (the `jmix-add-dialog-detail-flow` skill, "Whose data context does the dialog use").
 
 Such a table uses custom actions instead, as the assignment tables of the user editor and the work schedule editor do. Create and edit open their dialog with the editor's data context as its parent (`withParentDataContext`), and remove takes the items out of the container and removes them in the data context, so the editor's OK saves every change and its Cancel discards it. A table of a composition, such as a holiday calendar's days, works with the standard actions, whose changes wait for the editor's OK.
 

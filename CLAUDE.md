@@ -7,10 +7,11 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 - **README.md** — the public face of the repository: features, screenshots (`docs/images/`), and getting started.
 - **ARCHITECTURE.md** — what is built: where things live, profiles, non-obvious commands. Written from the code.
 - **docs/conventions.md** — rules for writing and committing code that tooling does not enforce and the code does not consistently show.
-- **docs/guidelines/** — non-obvious mechanics of this project's platform and test harness. Read when implementing. Jmix framework mechanics live in the project skills (start with the `jmix` skill), not here.
-  - `testing.md` — how the tests run, the harness specifics, and what only a live check can verify.
-  - `database.md` — changelog layout, demo data, and how soft delete shapes uniqueness.
+- **docs/guidelines/** — non-obvious mechanics of this project's platform and test harness. Read when implementing. How to build with Jmix in general is in the project skills (start with the `jmix` skill); a guideline holds a framework mechanic only when this project's code relies on it and the skills do not state it.
+  - `testing.md` — how the tests run, the harness specifics, the false reports of the IDE's static checks, and what only a live check can verify.
+  - `database.md` — changelog layout, demo data, and how soft delete shapes uniqueness, saves, and queries.
   - `design-system.md` — the Aura theme, color, typography, and spacing tokens, and the project's own colors. Read when building or reviewing UI.
+  - `views.md` — the framework mechanics that the project's own list actions and roles are built on: read-only detail views, list actions in an editor, the base classes of custom list actions, and lists after an editor save. Read when building a view or a list action.
 - **docs/decisions/** — append-only log of significant decisions and the alternatives they beat; only choices that are hard to reverse, counterintuitive, or keep getting re-litigated get a file. The filenames are the index.
 - **docs/reference/** — dated external research; frozen. Never a source for what the product does. Not created yet: created at first need.
 - **docs/specs/data-model/*.md** — what each entity and value type is: its meaning, rules, and lifecycle, and what no test covers. `README.md` gives the overview and the rules that hold for every entity.

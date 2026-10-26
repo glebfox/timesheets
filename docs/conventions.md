@@ -22,7 +22,7 @@ Soft deletion is chosen per entity where it fits; it is not a rule for every ent
 
 ## Security roles
 
-Security roles are granular: each grants one piece of access and is named by what it grants, such as "User: read only" or "Work schedule management". A larger role is composed of them rather than repeating their policies: a role in code extends the interfaces of the roles it includes, as Work schedule management extends User: read only.
+Security roles are granular: each grants one piece of access and is named by what it grants, such as "User: read only" or "Work schedule management". Full access, which grants everything, is the one exception. A larger role is composed of them rather than repeating their policies: a role in code extends the interfaces of the roles it includes, as Work schedule management extends User: read only.
 
 ## Custom list actions
 
