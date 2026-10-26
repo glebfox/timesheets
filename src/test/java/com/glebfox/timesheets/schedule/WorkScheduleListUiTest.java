@@ -249,6 +249,7 @@ public class WorkScheduleListUiTest {
         browserCalls(grid);
 
         grid.select(listed(grid, schedule.getId()));
+        assertThat(makeDefault.isEnabled()).isTrue();
         makeDefault.actionPerform(grid);
 
         // The Default badge moved to another row after the table was sized, so the browser sizes the name column
