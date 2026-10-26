@@ -22,7 +22,6 @@ import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView
 import com.vaadin.flow.component.Component;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
-import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponentProperties;
 import io.jmix.flowui.accesscontext.UiEntityContext;
@@ -113,19 +112,9 @@ public class HolidayCalendarDaysAddAction
 
     @Override
     protected boolean isPermitted() {
-        if (target == null || !(target.getItems() instanceof EntityDataUnit entityDataUnit)) {
-            return false;
-        }
-
-        MetaClass metaClass = entityDataUnit.getEntityMetaClass();
-        UiEntityContext entityContext = new UiEntityContext(metaClass);
-        accessManager.applyRegisteredConstraints(entityContext);
-
-        if (!entityContext.isCreatePermitted()) {
-            return false;
-        }
-
-        return super.isPermitted();
+        // The entity-level check of the standard create action
+        return ListActionTargets.isEntityPermitted(target, accessManager, UiEntityContext::isCreatePermitted)
+                && super.isPermitted();
     }
 
     @Override

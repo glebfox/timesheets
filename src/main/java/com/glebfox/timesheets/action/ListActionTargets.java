@@ -17,16 +17,23 @@
 package com.glebfox.timesheets.action;
 
 import com.vaadin.flow.component.Component;
+import io.jmix.core.AccessManager;
+import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.component.ListDataComponent;
 import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.data.ContainerDataUnit;
+import io.jmix.flowui.data.EntityDataUnit;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.DataContext;
 import io.jmix.flowui.view.ViewControllerUtils;
+import org.jspecify.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
- * Finds what a custom list action works on through its target: the container the list component shows
- * and the data context of the view that holds the component.
+ * Finds what a custom list action works on through its target: the container the list component shows,
+ * the data context of the view that holds the component, and whether the current user may perform the action's
+ * operation on the entity the component shows.
  */
 final class ListActionTargets {
 
@@ -59,5 +66,26 @@ final class ListActionTargets {
      */
     static DataContext getDataContext(ListDataComponent<?> target) {
         return ViewControllerUtils.getViewData(UiComponentUtils.getView((Component) target)).getDataContext();
+    }
+
+    /**
+     * Checks an entity-level permission on the entity that a list component shows, as the standard list actions
+     * check it before the row-level constraints.
+     *
+     * @param target        the action's list component
+     * @param accessManager applies the registered constraints
+     * @param check         the operation to check, such as {@code UiEntityContext::isCreatePermitted}
+     * @return {@code false} without a target or when its items are not entities, otherwise the check's result
+     */
+    static boolean isEntityPermitted(@Nullable ListDataComponent<?> target,
+                                     AccessManager accessManager,
+                                     Predicate<UiEntityContext> check) {
+        if (target == null || !(target.getItems() instanceof EntityDataUnit entityDataUnit)) {
+            return false;
+        }
+
+        UiEntityContext entityContext = new UiEntityContext(entityDataUnit.getEntityMetaClass());
+        accessManager.applyRegisteredConstraints(entityContext);
+        return check.test(entityContext);
     }
 }

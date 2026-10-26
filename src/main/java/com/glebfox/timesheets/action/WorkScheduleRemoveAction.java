@@ -31,7 +31,6 @@ import io.jmix.flowui.action.AdjustWhenViewReadOnly;
 import io.jmix.flowui.action.list.SecuredListDataComponentAction;
 import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.data.ContainerDataUnit;
-import io.jmix.flowui.data.EntityDataUnit;
 import io.jmix.flowui.icon.Icons;
 import io.jmix.flowui.kit.action.ActionVariant;
 import io.jmix.flowui.kit.component.KeyCombination;
@@ -122,20 +121,9 @@ public class WorkScheduleRemoveAction
 
     @Override
     protected boolean isPermitted() {
-        if (target == null
-                || target.getSingleSelectedItem() == null
-                || !(target.getItems() instanceof EntityDataUnit entityDataUnit)) {
-            return false;
-        }
-
-        UiEntityContext entityContext = new UiEntityContext(entityDataUnit.getEntityMetaClass());
-        accessManager.applyRegisteredConstraints(entityContext);
-
-        if (!entityContext.isDeletePermitted()) {
-            return false;
-        }
-
-        return super.isPermitted();
+        // The entity-level check of the standard remove action, then the row-level one
+        return ListActionTargets.isEntityPermitted(target, accessManager, UiEntityContext::isDeletePermitted)
+                && super.isPermitted();
     }
 
     @Override
