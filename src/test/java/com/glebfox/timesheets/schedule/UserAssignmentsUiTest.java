@@ -437,7 +437,11 @@ public class UserAssignmentsUiTest {
         assertThat(edit.isEnabled()).isTrue();
         edit.actionPerform(grid);
 
-        return Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the assignment editor");
+        WorkScheduleAssignmentDetailView dialog =
+                Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the assignment editor");
+        // The user is the edited user, so the dialog does not show it
+        assertThat(UiTestUtils.<EntityPicker<User>>getComponent(dialog, "userField").isVisible()).isFalse();
+        return dialog;
     }
 
     private static void remove(UserDetailView editor, LocalDate startDate) {

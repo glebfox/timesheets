@@ -43,6 +43,7 @@ import io.jmix.flowui.menu.MenuConfig;
 import io.jmix.flowui.menu.MenuItem;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
+import io.jmix.securitydata.entity.UserSubstitutionEntity;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,6 +116,18 @@ public class WorkScheduleManagementRoleTest {
         User reloaded = dataManager.load(Id.of(other)).one();
         assertThat(reloaded.getFirstName()).isNull();
         assertThat(reloaded.getVersion()).isEqualTo(other.getVersion());
+    }
+
+    @Test
+    void holderMayNotChangeRolesOrSubstitutions() {
+        systemAuthenticator.runWithUser(holder, () -> {
+            for (Class<?> entityClass : List.of(RoleAssignmentEntity.class, UserSubstitutionEntity.class)) {
+                UiEntityContext context = entityContext(entityClass);
+                assertThat(context.isCreatePermitted()).as("create %s", entityClass.getSimpleName()).isFalse();
+                assertThat(context.isEditPermitted()).as("update %s", entityClass.getSimpleName()).isFalse();
+                assertThat(context.isDeletePermitted()).as("delete %s", entityClass.getSimpleName()).isFalse();
+            }
+        });
     }
 
     @Test

@@ -197,6 +197,7 @@ public class ScheduleUsersUiTest {
         WorkScheduleUsersAddView dialog = add(editor);
 
         Action lookup = Objects.requireNonNull(usersField(dialog).getAction("entityLookup"), "the lookup action");
+        assertThat(lookup.isEnabled()).isTrue();
         lookup.actionPerform(usersField(dialog));
 
         UserListView userList = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the user list");

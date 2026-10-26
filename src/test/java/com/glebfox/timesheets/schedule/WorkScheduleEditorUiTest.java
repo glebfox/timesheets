@@ -28,7 +28,10 @@ import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.ClientDetails;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.core.security.SecurityContextHelper;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.checkbox.Switch;
 import io.jmix.flowui.component.checkboxgroup.JmixCheckboxGroup;
@@ -44,12 +47,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.time.DayOfWeek;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 import static java.time.DayOfWeek.FRIDAY;
@@ -62,6 +68,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WorkScheduleEditorUiTest {
 
     static final String NAME_PREFIX = "Editor test ";
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     @Autowired
     DataManager dataManager;
@@ -69,6 +76,8 @@ public class WorkScheduleEditorUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     CurrentAuthentication currentAuthentication;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
 
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
     List<Id<HolidayCalendar>> calendarIds = new ArrayList<>();
@@ -136,6 +145,21 @@ public class WorkScheduleEditorUiTest {
     }
 
     @Test
+    void workdaysAreLabeledWithShortDayNamesOfTheUserLocale() {
+        WorkScheduleDetailView view = openNewSchedule();
+        assertThat(workdayLabels(view)).containsExactlyInAnyOrder("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun");
+
+        systemAuthenticator.runWithUser("admin", () -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            WorkScheduleDetailView russianView = openNewSchedule();
+
+            // Russian writes short day names in lowercase, and its week starts on Monday
+            assertThat(workdayLabels(russianView)).containsExactly("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс");
+        });
+    }
+
+    @Test
     void workdaysFollowTheViewReadOnlyMode() {
         WorkScheduleDetailView view = openNewSchedule();
 
@@ -172,12 +196,14 @@ public class WorkScheduleEditorUiTest {
 
         assertThat(isDefaultField(defaultView).getValue()).isTrue();
         assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
-        assertThat(isDefaultField(defaultView).getHelperText()).isNotBlank();
+        assertThat(isDefaultField(defaultView).getHelperText())
+                .isEqualTo("To change it, make another schedule the default");
 
         WorkScheduleDetailView otherView = openSchedule(saveSchedule(uniqueName(), null));
 
         assertThat(isDefaultField(otherView).getValue()).isFalse();
         assertThat(isDefaultField(otherView).isReadOnly()).isFalse();
+        assertThat(isDefaultField(otherView).getHelperText()).isNull();
     }
 
     @Test
@@ -188,6 +214,7 @@ public class WorkScheduleEditorUiTest {
         WorkScheduleDetailView defaultView = openSchedule(defaultSchedule);
 
         defaultView.setReadOnly(true);
+        assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
         defaultView.setReadOnly(false);
         assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
 
@@ -282,6 +309,13 @@ public class WorkScheduleEditorUiTest {
 
     private static JmixCheckboxGroup<DayOfWeek> workdaysField(WorkScheduleDetailView view) {
         return UiTestUtils.getComponent(view, "workdaysField");
+    }
+
+    private static List<String> workdayLabels(WorkScheduleDetailView view) {
+        JmixCheckboxGroup<DayOfWeek> workdaysField = workdaysField(view);
+        return workdaysField.getListDataView().getItems()
+                .map(workdaysField.getItemLabelGenerator())
+                .toList();
     }
 
     private static EntityComboBox<HolidayCalendar> holidayCalendarField(WorkScheduleDetailView view) {

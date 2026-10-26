@@ -202,7 +202,7 @@ public class HolidayCalendarDaysAddUiTest {
         clickOk(dialog);
 
         assertThat(toField(dialog).isInvalid()).isTrue();
-        assertThat(toField(dialog).getErrorMessage()).isNotBlank();
+        assertThat(toField(dialog).getErrorMessage()).isEqualTo("Must not be before the first day");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
     }

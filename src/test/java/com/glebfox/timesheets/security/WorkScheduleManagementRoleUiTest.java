@@ -73,6 +73,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -114,6 +115,7 @@ public class WorkScheduleManagementRoleUiTest {
     void holderEditsAssignmentsInAReadOnlyUserEditor() {
         User other = saveUser("Other");
         WorkSchedule schedule = saveSchedule();
+        saveAssignment(other, schedule, JAN_1);
 
         systemAuthenticator.runWithUser(holder, () -> {
             UserDetailView editor = openUserEditor(other);
@@ -123,6 +125,11 @@ public class WorkScheduleManagementRoleUiTest {
                     .isTrue();
 
             DataGrid<WorkScheduleAssignment> grid = UiTestUtils.getComponent(editor, "assignmentsDataGrid");
+            grid.select(listed(grid, assignment -> JAN_1.equals(assignment.getStartDate())));
+            assertThat(action(grid, "edit").isEnabled()).isTrue();
+            assertThat(action(grid, "remove").isEnabled()).isTrue();
+            grid.deselectAll();
+
             Action create = action(grid, "create");
             assertThat(grid.getSelectedItems()).isEmpty();
             assertThat(create.isEnabled()).isTrue();
@@ -146,10 +153,11 @@ public class WorkScheduleManagementRoleUiTest {
                 .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
                         .add("workSchedule", FetchPlan.INSTANCE_NAME))
                 .list();
-        assertThat(assignments).singleElement().satisfies(assignment -> {
-            assertThat(assignment.getStartDate()).isEqualTo(NOV_1);
-            assertThat(assignment.getWorkSchedule().getId()).isEqualTo(schedule.getId());
-        });
+        assertThat(assignments)
+                .extracting(WorkScheduleAssignment::getStartDate, assignment -> assignment.getWorkSchedule().getId())
+                .containsExactlyInAnyOrder(
+                        tuple(JAN_1, schedule.getId()),
+                        tuple(NOV_1, schedule.getId()));
 
         // OK saved the assignment only: no update of the user reached the database
         User reloaded = dataManager.load(Id.of(other)).one();
@@ -174,7 +182,7 @@ public class WorkScheduleManagementRoleUiTest {
     void holderOpensTheSettingsScreens() {
         User user = saveUser("Assigned");
         WorkSchedule schedule = saveSchedule();
-        saveAssignment(user, schedule);
+        saveAssignment(user, schedule, NOV_1);
         HolidayCalendar calendar = saveCalendarWithJan1();
         // Opening the default deletion dialog needs the seeded default
         WorkSchedule seedDefault = dataManager.load(WorkSchedule.class)
@@ -247,6 +255,7 @@ public class WorkScheduleManagementRoleUiTest {
         WorkScheduleUsersAddView addDialog = performForDialog(assignmentsGrid, "add");
         JmixMultiSelectComboBoxPicker<User> usersField = UiTestUtils.getComponent(addDialog, "usersField");
         Action lookup = Objects.requireNonNull(usersField.getAction("entityLookup"), "the users lookup");
+        assertThat(lookup.isEnabled()).isTrue();
         lookup.actionPerform(usersField);
         UserListView usersLookup = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the user list");
         usersLookup.close(StandardOutcome.CLOSE);
@@ -383,11 +392,11 @@ public class WorkScheduleManagementRoleUiTest {
         return saved;
     }
 
-    private void saveAssignment(User user, WorkSchedule schedule) {
+    private void saveAssignment(User user, WorkSchedule schedule, LocalDate startDate) {
         WorkScheduleAssignment assignment = dataManager.create(WorkScheduleAssignment.class);
         assignment.setUser(user);
         assignment.setWorkSchedule(schedule);
-        assignment.setStartDate(NOV_1);
+        assignment.setStartDate(startDate);
         dataManager.saveWithoutReload(assignment);
     }
 
