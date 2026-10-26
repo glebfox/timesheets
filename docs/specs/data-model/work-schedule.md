@@ -4,7 +4,7 @@ Source: `entity/schedule/WorkSchedule.java`, `app/WorkScheduleSupport.java`, `li
 
 A named weekly pattern of planned work, such as "Full time" or "0.5 rate": how long a workday is, which days of the week are workdays, and optionally a [holiday calendar](holiday-calendar.md) whose days override the week. Users are tied to schedules by [assignments](work-schedule-assignment.md); a user's plan for a day comes from them.
 
-Schedules are managed in the [work schedule screens](../views/settings.md#work-schedules), and assignments in the user editor and the work schedule editor. No screen shows a plan yet: the calendar plans 8 hours Monday to Friday whatever a user's schedule ([calendar](../views/calendar.md#totals)).
+Schedules are managed in the [work schedule screens](../views/settings.md#work-schedules), and assignments in the user editor and the work schedule editor. No screen shows a plan: the calendar plans 8 hours Monday to Friday whatever a user's schedule ([calendar](../views/calendar.md#totals)).
 
 ## Attributes
 

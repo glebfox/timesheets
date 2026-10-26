@@ -9,7 +9,7 @@ A detail view of a saved entity opens read-only when the current user may not up
 - Fields bound to an entity attribute become read-only. A field the view fills itself, such as the work schedule editor's workday toggles, does not follow the mode unless the view sets it on each change of the mode.
 - Component actions that implement `AdjustWhenViewReadOnly`, and return `true` from `isDisabledWhenViewReadOnly()`, are disabled.
 
-OK is not such an action, and saving has no read-only check, so OK still saves the view's data context. An action that must keep working in a read-only editor does not implement `AdjustWhenViewReadOnly` and relies on its own permission check; OK then saves only what such actions changed. The assignment actions of the user editor and the work schedule editor work this way, so a holder of Work schedule management changes assignments in a user editor that is read-only for them (`docs/specs/roles/work-schedule-management.md`). The project's other custom actions implement `AdjustWhenViewReadOnly`.
+OK is not such an action, and saving has no read-only check, so OK still saves the view's data context. An action that must keep working in a read-only editor does not implement `AdjustWhenViewReadOnly` and relies on its own permission check; OK then saves only what such actions changed. The assignment actions of the user editor and the work schedule editor work this way, so a holder of Work schedule management changes assignments in a user editor that is read-only for them (`docs/specs/roles/work-schedule-management.md`).
 
 ## List actions in an editor
 

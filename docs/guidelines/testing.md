@@ -1,6 +1,6 @@
 # Testing
 
-Project-specific mechanics of the test harness. How to write Jmix tests in general is the `jmix-create-test` skill; the command is in `ARCHITECTURE.md`.
+Project-specific mechanics of the test harness and of the IDE's static checks. How to write Jmix tests in general is the `jmix-create-test` skill; the command is in `ARCHITECTURE.md`.
 
 ## Harness
 

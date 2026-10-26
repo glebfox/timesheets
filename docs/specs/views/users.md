@@ -8,7 +8,7 @@ The user list and the user editor, under the Administration menu. What a user is
 
 `users`. Lists users by username, with the user (avatar, full name or username, and an Active or Inactive badge), email, and time zone. It offers a filter on any attribute and pagination, both kept in the URL.
 
-Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, since [UI: minimal access](../roles/ui-minimal.md) lets its holders open the change password screen, for their own password. The gear menu is hidden when none of its items is left.
+Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, whatever screens the user may open ([decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md)). The gear menu is hidden when none of its items is left.
 
 ## User editor
 
@@ -25,7 +25,7 @@ Saving a new user shows the warning "User has no assigned roles": roles are assi
 
 ### Work schedule
 
-A section under the fields with the user's [work schedule assignments](../data-model/work-schedule-assignment.md), newest first: the start date and the schedule. A green Current badge marks the assignment in force today: the latest start on or before today, as the assignments stand in the editor. Future assignments sit above it without a badge. An assignment whose schedule is deleted stays, with the schedule's name and a neutral Deleted badge. An empty table reads "No assignments"; nothing names the default schedule that such a user works to.
+A section under the fields with the user's [work schedule assignments](../data-model/work-schedule-assignment.md), newest first: the start date and the schedule. A green Current badge marks the assignment in force today: the latest start on or before today, as the assignments stand in the editor. Future assignments sit above it without a badge. An assignment whose schedule is deleted stays, with the schedule's name and a neutral Deleted badge. An empty table reads "No assignments"; nothing names the default schedule that such a user works to. For a user who may not read assignments, the table stays empty and reads "No assignments", whatever assignments the user has.
 
 Multiple selection, with Create, Edit, and Remove. Create and Edit open the [assignment editor](settings.md#assignment-editor) without the user field; Remove asks the usual confirmation and removes every selected assignment. Their changes reach the database only when the user is saved, a new user included: OK saves the user and the assignment changes together, and Cancel discards both.
 

@@ -19,7 +19,7 @@ The role grants nothing on users beyond reading them, so a holder cannot create 
 - The [user editor](../views/users.md#user-editor) opens read-only for a holder, but its Work schedule section stays editable, and OK saves only the assignment changes.
 - The [user list](../views/users.md#users) hides Role assignments, Change password, Reset password, and User substitutions from a holder, and the gear menu with them.
 
-The role has no update permission on users because of Change password. The user list's Change password checks only the permission to edit users, and UI: minimal access lets its holders open the change password screen, for their own password. With update permission on users, a holder could change any user's password, and roles add up, so no other role could take that back. For the same reason the user list hides Change password and Reset password from a user who may not edit users, whatever screens the user may open.
+Why the role has no update permission on users: [decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md).
 
 ## Holders
 
@@ -29,4 +29,4 @@ None in code or seed data.
 
 - Saving as a holder: the UI tests save assignments in a read-only user editor and only open the other screens and dialogs. Saving a schedule with added users, saving a calendar, and Make default were checked live; Delete in the default deletion dialog was not.
 - A holder opening a new user's editor by its URL, `users/new`: the editor opens, and OK is refused with "Access denied", creating nothing. Checked live only.
-- The menu items a holder sees, and Edit in the user list reading as Read: checked live only.
+- The menu as a holder sees it, and Edit in the user list reading as Read: checked live only. The tests check only that the Users, Work schedules, and Holiday calendars items are permitted to a holder.
