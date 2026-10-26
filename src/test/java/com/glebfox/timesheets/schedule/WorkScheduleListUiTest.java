@@ -115,6 +115,31 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
+    void makeDefaultOfAScheduleDeletedMeanwhileWarnsAndRefreshesTheList() {
+        WorkSchedule schedule = saveSchedule(uniqueName(), null);
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action makeDefault = Objects.requireNonNull(grid.getAction("makeDefault"));
+        grid.select(listed(grid, schedule.getId()));
+
+        // Deleted in another session after the list was loaded
+        dataManager.remove(reload(schedule.getId()));
+
+        assertThat(makeDefault.isEnabled()).isTrue();
+        makeDefault.actionPerform(grid);
+
+        assertThat(reload(seedDefaultId).getIsDefault()).isTrue();
+        assertThat(Objects.requireNonNull(grid.getItems()).getItems())
+                .extracting(WorkSchedule::getId)
+                .contains(seedDefaultId)
+                .doesNotContain(schedule.getId());
+
+        NotificationInfo notification = UiTestUtils.getLastOpenedNotification();
+        assertThat(notification).isNotNull();
+        assertThat(notification.getType()).isEqualTo(Notifications.Type.WARNING);
+        assertThat(notification.getText()).isEqualTo("The schedule «" + schedule.getName() + "» is already deleted");
+    }
+
+    @Test
     void makeDefaultIsDisabledForTheDefaultOrNoSelection() {
         WorkSchedule schedule = saveSchedule(uniqueName(), null);
         DataGrid<WorkSchedule> grid = openListGrid();

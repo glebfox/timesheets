@@ -33,7 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * Makes the {@link WorkSchedule} selected in a list component the default one and saves it at once.
  * The previous default is unmarked in the same save by the rule that keeps one default schedule,
- * so the action reloads the list afterwards.
+ * so the action reloads the list afterwards. A schedule deleted since the list was loaded is not saved:
+ * the list is reloaded and a warning is shown.
  */
 @ActionType(WorkScheduleMakeDefaultAction.ID)
 public class WorkScheduleMakeDefaultAction
@@ -108,7 +109,17 @@ public class WorkScheduleMakeDefaultAction
         DataLoader loader = ListActionTargets.getLoader(target, getClass());
 
         // A fresh instance, so the listed one stays as it was if the save fails
-        WorkSchedule schedule = dataManager.load(Id.of(selectedItem)).one();
+        WorkSchedule schedule = dataManager.load(Id.of(selectedItem)).optional().orElse(null);
+        if (schedule == null) {
+            // Deleted in another session after the list was loaded
+            loader.load();
+            notifications.create(messages.formatMessage(WorkScheduleMakeDefaultAction.class,
+                            "workScheduleMakeDefault.deletedWarning", selectedItem.getName()))
+                    .withType(Notifications.Type.WARNING)
+                    .show();
+            return;
+        }
+
         schedule.setIsDefault(true);
         dataManager.saveWithoutReload(schedule);
 
