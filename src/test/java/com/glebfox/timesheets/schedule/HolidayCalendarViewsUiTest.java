@@ -27,6 +27,7 @@ import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDayDetailVi
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -118,6 +119,21 @@ public class HolidayCalendarViewsUiTest {
         String cell = renderText(grid, "date", listed(grid, day -> JAN_1_2027.equals(day.getDate())));
 
         assertThat(cell).isEqualTo("Fri, " + datatypeFormatter.formatLocalDate(JAN_1_2027));
+    }
+
+    @Test
+    void dateAndTypeColumnsHaveFixedWidths() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+        DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
+
+        // Days added or edited after the table is sized can have a wider date or the longer type,
+        // so neither column's width comes from the rows it first shows
+        for (String key : List.of("date", "type")) {
+            Grid.Column<HolidayCalendarDay> column = Objects.requireNonNull(grid.getColumnByKey(key));
+            assertThat(column.isAutoWidth()).as(key).isFalse();
+            assertThat(column.getFlexGrow()).as(key).isZero();
+            assertThat(column.getWidth()).as(key).endsWith("rem");
+        }
     }
 
     @Test

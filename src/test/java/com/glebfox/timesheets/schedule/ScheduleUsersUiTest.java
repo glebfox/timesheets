@@ -32,6 +32,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
@@ -476,6 +477,19 @@ public class ScheduleUsersUiTest {
                 .setTypedValue(today.plusMonths(1));
         clickOk(dialog);
         assertThat(badges(grid, listed(grid, b))).isEmpty();
+    }
+
+    @Test
+    void startDateColumnHasAFixedWidth() {
+        WorkScheduleDetailView editor = openNewSchedule();
+        Grid.Column<WorkScheduleAssignment> column = Objects.requireNonNull(
+                assignmentsDataGrid(editor).getColumnByKey("startDate"));
+
+        // The Current badge can appear after the table is sized, on an assignment added or edited here, so the
+        // column's width does not come from the rows it first shows
+        assertThat(column.isAutoWidth()).isFalse();
+        assertThat(column.getFlexGrow()).isZero();
+        assertThat(column.getWidth()).endsWith("rem");
     }
 
     @AfterEach

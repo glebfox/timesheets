@@ -23,7 +23,9 @@ import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleListView;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -239,6 +241,22 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
+    void columnsAreMeasuredAgainWhenTheDefaultMoves() {
+        WorkSchedule schedule = saveSchedule(uniqueName(), null);
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action makeDefault = Objects.requireNonNull(grid.getAction("makeDefault"));
+        // Drops what opening the list queued for the browser
+        browserCalls(grid);
+
+        grid.select(listed(grid, schedule.getId()));
+        makeDefault.actionPerform(grid);
+
+        // The Default badge moved to another row after the table was sized, so the browser sizes the name column
+        // to the rows again
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+    }
+
+    @Test
     void scheduleOfADeletedCalendarIsListedWithTheCalendar() {
         HolidayCalendar calendar = saveCalendar(uniqueName());
         WorkSchedule schedule = saveSchedule(uniqueName(), calendar);
@@ -302,6 +320,18 @@ public class WorkScheduleListUiTest {
                 .findFirst();
         assertThat(listed).as("schedule %s in the list", id).isPresent();
         return listed.get();
+    }
+
+    /**
+     * Returns the calls to the grid's browser side queued since the last check, as a response would send them.
+     */
+    private static List<String> browserCalls(DataGrid<WorkSchedule> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     private static Component renderCell(DataGrid<WorkSchedule> grid, String columnKey, WorkSchedule schedule) {

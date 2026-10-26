@@ -69,8 +69,11 @@
                     <action id="remove" type="list_remove"/>
                 </actions>
                 <columns resizable="true">
-                    <column property="date" autoWidth="true" flexGrow="0"/>
-                    <column property="type" autoWidth="true" flexGrow="0"/>
+                    <!-- Fixed widths, not autoWidth: a day added or edited after the table is sized can have
+                         a wider date, since weekday names and digits differ in width, or the longer type.
+                         They fit the widest date and type in English and Russian -->
+                    <column property="date" width="9rem" flexGrow="0"/>
+                    <column property="type" width="8rem" flexGrow="0"/>
                     <column property="name"/>
                 </columns>
             </dataGrid>
