@@ -197,24 +197,27 @@ public class UserAssignmentsUiTest {
 
     @Test
     void assignmentOfADeletedScheduleShowsAndSaves() {
+        // Dated from today, since whether the assignment is in force decides its Current badge
+        LocalDate lastMonth = LocalDate.now().minusMonths(1);
+        LocalDate twoMonthsAgo = lastMonth.minusMonths(1);
         User user = saveUser();
         WorkSchedule deletedSchedule = saveSchedule();
-        WorkScheduleAssignment saved = saveAssignment(user, deletedSchedule, NOV_1);
+        WorkScheduleAssignment saved = saveAssignment(user, deletedSchedule, lastMonth);
         dataManager.remove(dataManager.load(Id.of(deletedSchedule)).one());
 
         UserDetailView editor = openUser(user);
         DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
 
-        WorkScheduleAssignment listedAssignment = listed(grid, NOV_1);
+        WorkScheduleAssignment listedAssignment = listed(grid, lastMonth);
         assertThat(listedAssignment.getWorkSchedule()).isNotNull()
                 .extracting(WorkSchedule::getName).isEqualTo(deletedSchedule.getName());
-        assertThat(badges(grid, listedAssignment)).singleElement().satisfies(badge -> {
-            assertThat(badge.getText()).isEqualTo("Deleted");
-            assertThat(isNeutral(badge)).isTrue();
-        });
+        // An assignment of a deleted schedule still counts, so it can be the current one too
+        List<Badge> badges = badges(grid, listedAssignment);
+        assertThat(badges).extracting(Badge::getText).containsExactly("Current", "Deleted");
+        assertThat(isNeutral(badges.get(1))).isTrue();
 
-        WorkScheduleAssignmentDetailView dialog = edit(editor, NOV_1);
-        startDateField(dialog).setTypedValue(DEC_1);
+        WorkScheduleAssignmentDetailView dialog = edit(editor, lastMonth);
+        startDateField(dialog).setTypedValue(twoMonthsAgo);
         clickOk(dialog);
         clickOk(editor);
 
@@ -223,7 +226,7 @@ public class UserAssignmentsUiTest {
                 .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
                         .add("workSchedule", FetchPlan.INSTANCE_NAME))
                 .one();
-        assertThat(reloaded.getStartDate()).isEqualTo(DEC_1);
+        assertThat(reloaded.getStartDate()).isEqualTo(twoMonthsAgo);
         assertThat(reloaded.getWorkSchedule().getId()).isEqualTo(deletedSchedule.getId());
     }
 
