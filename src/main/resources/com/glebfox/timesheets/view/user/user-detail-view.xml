@@ -125,7 +125,7 @@
                 </actions>
                 <columns resizable="true">
                     <column property="startDate" autoWidth="true" flexGrow="0"/>
-                    <column property="workSchedule"/>
+                    <column property="workSchedule" autoWidth="true"/>
                 </columns>
             </dataGrid>
         </vbox>

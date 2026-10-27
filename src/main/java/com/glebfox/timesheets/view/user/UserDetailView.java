@@ -25,7 +25,6 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleAssignmentDetailView;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -35,10 +34,10 @@ import com.vaadin.flow.router.Route;
 import io.jmix.core.EntityStates;
 import io.jmix.core.MessageTools;
 import io.jmix.core.MetadataTools;
-import io.jmix.core.Sort;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.textfield.TypedTextField;
+import io.jmix.flowui.data.grid.ContainerDataGridItems;
 import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.model.CollectionLoader;
@@ -98,6 +97,11 @@ public class UserDetailView extends StandardDetailView<User> {
     @Subscribe
     public void onInit(final InitEvent event) {
         timeZoneField.setItems(List.of(TimeZone.getAvailableIDs()));
+
+        // An edited assignment can take the Current badge from another row or give it to one, so an edit redraws
+        // every row, not only the edited one
+        ((ContainerDataGridItems<?>) Objects.requireNonNull(assignmentsDataGrid.getItems()))
+                .setRefreshAllOnItemReplace(true);
     }
 
     @Subscribe
@@ -121,8 +125,6 @@ public class UserDetailView extends StandardDetailView<User> {
         if (entityStates.isNew(getEditedEntity())) {
             usernameField.focus();
         }
-
-        assignmentsDataGrid.sort(newestAssignmentsFirst());
     }
 
     @Subscribe
@@ -151,18 +153,12 @@ public class UserDetailView extends StandardDetailView<User> {
             final CollectionContainer.CollectionChangeEvent<WorkScheduleAssignment> event) {
         currentAssignments = null;
 
-        // A created assignment is added first and an edited one stays in place, whatever its date, while the grid
-        // sorts its rows only when its sort order changes. Sorting again also redraws every row, so the Current
-        // badge moves when an edit changes which assignment is in force today
+        // The browser sizes the auto-width columns to the rows it shows first, while an added assignment or an edited
+        // one can have a longer schedule name or a badge those rows lack
         if (event.getChangeType() == CollectionChangeType.ADD_ITEMS
                 || event.getChangeType() == CollectionChangeType.SET_ITEM) {
-            // Unsorted, the table keeps the order the assignments are loaded in: newest first
-            componentSupport.sortAsShown(assignmentsDataGrid, assignmentsDc, Sort.by(Sort.Direction.DESC, "startDate"));
+            assignmentsDataGrid.recalculateColumnWidths();
         }
-    }
-
-    private List<GridSortOrder<WorkScheduleAssignment>> newestAssignmentsFirst() {
-        return GridSortOrder.desc(assignmentsDataGrid.getColumnByKey("startDate")).build();
     }
 
     @Install(to = "assignmentsDataGrid.create", subject = "initializer")

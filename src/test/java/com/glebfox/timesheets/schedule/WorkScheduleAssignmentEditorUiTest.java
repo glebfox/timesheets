@@ -36,7 +36,6 @@ import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.DataComponents;
 import io.jmix.flowui.model.DataContext;
 import io.jmix.flowui.view.View;
-import io.jmix.flowui.view.builder.DetailWindowClassBuilder;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import io.jmix.tabbedmode.testassist.UiTestUtils;
@@ -87,7 +86,7 @@ public class WorkScheduleAssignmentEditorUiTest {
     }
 
     @Test
-    void startDateAmongSuppliedItemsIsRefused() {
+    void startDateAmongSiblingsIsRefused() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         // Added in the editor and not saved yet
@@ -101,7 +100,7 @@ public class WorkScheduleAssignmentEditorUiTest {
     }
 
     @Test
-    void suppliedItemsOfOtherUsersDoNotCount() {
+    void siblingsOfOtherUsersDoNotCount() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         WorkScheduleAssignment otherUsers = newAssignment(saveUser(), schedule, DEC_1);
@@ -115,7 +114,7 @@ public class WorkScheduleAssignmentEditorUiTest {
     }
 
     @Test
-    void suppliedItemWinsOverItsDatabaseRow() {
+    void siblingWinsOverItsDatabaseRow() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         WorkScheduleAssignment saved = saveAssignment(user, schedule, NOV_1);
@@ -132,11 +131,28 @@ public class WorkScheduleAssignmentEditorUiTest {
     }
 
     @Test
-    void assignmentRemovedInTheParentContextIsNotADuplicate() {
+    void assignmentRemovedInTheEditorIsNotADuplicate() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         WorkScheduleAssignment saved = saveAssignment(user, schedule, NOV_1);
-        // Removed in the editor: gone from its container, so not supplied, and not deleted until the editor's OK
+        DataContext parentContext = newParentContext();
+
+        // Removed in the editor: gone from its container, so not among the siblings, and not deleted until
+        // the editor's OK
+        WorkScheduleAssignmentDetailView editor =
+                openNew(user, schedule, parentContext, List.of(), List.of(saved.getId()));
+        startDateField(editor).setTypedValue(NOV_1);
+        clickOk(editor);
+
+        assertAccepted(editor, parentContext, NOV_1);
+    }
+
+    @Test
+    void removalIsKnownOnlyFromTheGivenIds() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        WorkScheduleAssignment saved = saveAssignment(user, schedule, NOV_1);
+        // Removed in the parent data context, but its id is not handed to the editor
         DataContext parentContext = newParentContext();
         parentContext.remove(parentContext.merge(saved));
 
@@ -144,7 +160,7 @@ public class WorkScheduleAssignmentEditorUiTest {
         startDateField(editor).setTypedValue(NOV_1);
         clickOk(editor);
 
-        assertAccepted(editor, parentContext, NOV_1);
+        assertRefused(editor);
     }
 
     @Test
@@ -198,19 +214,51 @@ public class WorkScheduleAssignmentEditorUiTest {
     }
 
     @Test
-    void editorNeedsItsSiblingAssignments() {
+    void editorKeepsTheSiblingsItWasGiven() {
         User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        List<WorkScheduleAssignment> siblings = new ArrayList<>(List.of(newAssignment(user, schedule, DEC_1)));
 
-        DetailWindowClassBuilder<WorkScheduleAssignment, WorkScheduleAssignmentDetailView> builder =
+        WorkScheduleAssignmentDetailView editor = openNew(user, schedule, newParentContext(), siblings);
+        // A change of the given collection after the editor opens does not reach it
+        siblings.clear();
+        startDateField(editor).setTypedValue(DEC_1);
+        clickOk(editor);
+
+        assertRefused(editor);
+    }
+
+    @Test
+    void editorKeepsTheRemovedIdsItWasGiven() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        WorkScheduleAssignment saved = saveAssignment(user, schedule, NOV_1);
+        List<UUID> removedIds = new ArrayList<>(List.of(saved.getId()));
+        DataContext parentContext = newParentContext();
+
+        WorkScheduleAssignmentDetailView editor = openNew(user, schedule, parentContext, List.of(), removedIds);
+        // A change of the given collection after the editor opens does not reach it
+        removedIds.clear();
+        startDateField(editor).setTypedValue(NOV_1);
+        clickOk(editor);
+
+        assertAccepted(editor, parentContext, NOV_1);
+    }
+
+    @Test
+    void editorRefusesNoSiblingsOrRemovedIds() {
+        WorkScheduleAssignmentDetailView editor =
                 dialogWindows.detail(UiTestUtils.getCurrentView(), WorkScheduleAssignment.class)
                         .withViewClass(WorkScheduleAssignmentDetailView.class)
                         .newEntity()
-                        .withInitializer(assignment -> assignment.setUser(user))
-                        .withParentDataContext(newParentContext());
+                        .withParentDataContext(newParentContext())
+                        .build()
+                        .getView();
 
-        assertThatThrownBy(builder::open)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("setSiblingAssignments() must be called before the view opens");
+        assertThatThrownBy(() -> editor.setSiblingAssignments(null, List.of()))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> editor.setSiblingAssignments(List.of(), null))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @AfterEach
@@ -230,12 +278,24 @@ public class WorkScheduleAssignmentEditorUiTest {
 
     /**
      * Opens the editor for a new assignment as the user and schedule editors do: as a dialog whose OK merges
-     * into the editor's data context, with the editor's assignments supplied.
+     * into the editor's data context, with the editor's assignments handed to it and none removed there.
      */
     private WorkScheduleAssignmentDetailView openNew(User user,
                                                      @Nullable WorkSchedule schedule,
                                                      DataContext parentContext,
                                                      Collection<WorkScheduleAssignment> siblings) {
+        return openNew(user, schedule, parentContext, siblings, List.of());
+    }
+
+    /**
+     * Opens the editor for a new assignment as the user and schedule editors do, with the editor's assignments
+     * and the ids of those removed there handed to it.
+     */
+    private WorkScheduleAssignmentDetailView openNew(User user,
+                                                     @Nullable WorkSchedule schedule,
+                                                     DataContext parentContext,
+                                                     Collection<WorkScheduleAssignment> siblings,
+                                                     Collection<UUID> removedIds) {
         dialogWindows.detail(UiTestUtils.getCurrentView(), WorkScheduleAssignment.class)
                 .withViewClass(WorkScheduleAssignmentDetailView.class)
                 .newEntity()
@@ -244,7 +304,7 @@ public class WorkScheduleAssignmentEditorUiTest {
                     assignment.setWorkSchedule(schedule);
                 })
                 .withParentDataContext(parentContext)
-                .withViewConfigurer(view -> view.setSiblingAssignments(() -> siblings))
+                .withViewConfigurer(view -> view.setSiblingAssignments(siblings, removedIds))
                 .open();
         return Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the assignment editor");
     }
@@ -256,7 +316,7 @@ public class WorkScheduleAssignmentEditorUiTest {
                 .withViewClass(WorkScheduleAssignmentDetailView.class)
                 .editEntity(assignment)
                 .withParentDataContext(parentContext)
-                .withViewConfigurer(view -> view.setSiblingAssignments(() -> siblings))
+                .withViewConfigurer(view -> view.setSiblingAssignments(siblings, List.of()))
                 .open();
         return Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the assignment editor");
     }

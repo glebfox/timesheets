@@ -20,11 +20,9 @@ import com.glebfox.timesheets.app.WorkScheduleAssignmentSupport;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
-import com.google.common.base.Preconditions;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.valuepicker.EntityPicker;
 import io.jmix.flowui.exception.ValidationException;
-import io.jmix.flowui.model.DataContext;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
 import org.jspecify.annotations.Nullable;
@@ -37,13 +35,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * Edits one work schedule assignment. Opened as a dialog from the user editor and the schedule editor
  * with the editor's data context as the parent, so its OK only merges the assignment into the editor.
- * The opener hands it the editor's assignments, so a start date the user already has is refused.
+ * The opener hands it the editor's assignments and the ids of those removed there, so a start date the user
+ * already has is refused, and the date of a removed one is not.
  */
 @ViewController("ts_WorkScheduleAssignment.detail")
 @ViewDescriptor("work-schedule-assignment-detail-view.xml")
@@ -61,8 +59,8 @@ public class WorkScheduleAssignmentDetailView extends StandardDetailView<WorkSch
     @Autowired
     private WorkScheduleAssignmentSupport workScheduleAssignmentSupport;
 
-    @Nullable
-    private Supplier<Collection<WorkScheduleAssignment>> siblingAssignments;
+    private Collection<WorkScheduleAssignment> siblingAssignments = List.of();
+    private Set<UUID> removedIds = Set.of();
 
     /**
      * Shows or hides the user field, which is read-only either way.
@@ -72,21 +70,18 @@ public class WorkScheduleAssignmentDetailView extends StandardDetailView<WorkSch
     }
 
     /**
-     * Sets the assignments to check the edited assignment's start date against: the assignments of the
-     * opening editor, saved or added there and not removed. They may belong to several users, and the edited
-     * assignment itself may be among them. Required: the view does not open without it.
+     * Sets what the edited assignment's start date is checked against: the assignments of the opening editor
+     * as they stand when the view opens, saved or added there and not removed, and the ids of the saved
+     * assignments removed there, whose dates are free again. The assignments may belong to several users,
+     * and the edited assignment itself may be among them. The view keeps copies, so a later change of the given
+     * collections does not reach it.
      *
-     * @param siblingAssignments supplies the editor's assignments when the start date is checked
+     * @param siblings   the editor's assignments, possibly none
+     * @param removedIds the ids of the assignments removed in the editor, possibly none
      */
-    public void setSiblingAssignments(Supplier<Collection<WorkScheduleAssignment>> siblingAssignments) {
-        this.siblingAssignments = siblingAssignments;
-    }
-
-    @Subscribe
-    public void onBeforeShow(final BeforeShowEvent event) {
-        // Without the editor's assignments the check would miss the dates added or changed there
-        Preconditions.checkState(siblingAssignments != null,
-                "setSiblingAssignments() must be called before the view opens");
+    public void setSiblingAssignments(Collection<WorkScheduleAssignment> siblings, Collection<UUID> removedIds) {
+        this.siblingAssignments = List.copyOf(Objects.requireNonNull(siblings));
+        this.removedIds = Set.copyOf(Objects.requireNonNull(removedIds));
     }
 
     @Subscribe
@@ -120,8 +115,7 @@ public class WorkScheduleAssignmentDetailView extends StandardDetailView<WorkSch
             return false;
         }
 
-        Collection<WorkScheduleAssignment> siblings = Objects.requireNonNull(siblingAssignments).get();
-        boolean takenBySibling = siblings.stream()
+        boolean takenBySibling = siblingAssignments.stream()
                 .anyMatch(sibling -> !sibling.getId().equals(edited.getId())
                         && sibling.getUser() != null
                         && user.getId().equals(sibling.getUser().getId())
@@ -130,26 +124,14 @@ public class WorkScheduleAssignmentDetailView extends StandardDetailView<WorkSch
             return true;
         }
 
-        // A saved row counts only when the editor does not hold it: a supplied item stands for its row
-        // as edited there, a removed one is gone, and the edited assignment is not a duplicate of itself
-        Set<UUID> heldIds = siblings.stream()
+        // A saved row counts only when the editor does not hold it: a sibling stands for its row as edited there,
+        // a removed one is gone, and the edited assignment is not a duplicate of itself
+        Set<UUID> heldIds = siblingAssignments.stream()
                 .map(WorkScheduleAssignment::getId)
                 .collect(Collectors.toCollection(HashSet::new));
-        heldIds.addAll(getIdsRemovedInParentContext());
+        heldIds.addAll(removedIds);
         heldIds.add(edited.getId());
         return workScheduleAssignmentSupport.loadAssignmentsFrom(List.of(user), startDate).stream()
                 .anyMatch(saved -> !heldIds.contains(saved.getId()));
-    }
-
-    private Set<UUID> getIdsRemovedInParentContext() {
-        DataContext parentContext = getViewData().getDataContext().getParent();
-        if (parentContext == null) {
-            return Set.of();
-        }
-
-        return parentContext.getRemoved().stream()
-                .filter(WorkScheduleAssignment.class::isInstance)
-                .map(removed -> ((WorkScheduleAssignment) removed).getId())
-                .collect(Collectors.toSet());
     }
 }

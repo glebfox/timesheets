@@ -34,13 +34,15 @@ import io.jmix.flowui.view.StandardOutcome;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
  * Edits the {@link WorkScheduleAssignment} selected in the list component of an editor, such as the user editor's
  * assignments, whose container is loaded by query. Opens {@link WorkScheduleAssignmentDetailView} as a dialog
- * with the editor's data context as its parent, so the dialog's OK changes the assignment in the list and in that
- * data context: the editor's OK saves the change, and its Cancel discards it.
+ * with the editor's data context as its parent, so the dialog's OK changes the assignment in the list, where it keeps
+ * its place, and in that data context: the editor's OK saves the change, and its Cancel discards it.
  * <p>
  * Needs one selected assignment, and checks the permissions the standard edit action checks to edit it.
  * It does not follow the view's read-only mode: an editor opened read-only for lack of permission on its own
@@ -95,7 +97,7 @@ public class WorkScheduleAssignmentEditAction
 
     /**
      * Sets the function that sets up the dialog before it opens. The action itself hands the dialog
-     * the list's assignments to check the start date against.
+     * the list's assignments and the ids of those removed in the editor, to check the start date against.
      */
     public void setDetailViewConfigurer(@Nullable Consumer<WorkScheduleAssignmentDetailView> detailViewConfigurer) {
         this.detailViewConfigurer = detailViewConfigurer;
@@ -137,7 +139,7 @@ public class WorkScheduleAssignmentEditAction
                 // The editor's data context, so the change is saved with the editor and discarded with it
                 .withParentDataContext(ListActionTargets.getDataContext(target))
                 .withViewConfigurer(view -> {
-                    view.setSiblingAssignments(container::getItems);
+                    view.setSiblingAssignments(container.getItems(), getRemovedIds());
                     if (detailViewConfigurer != null) {
                         detailViewConfigurer.accept(view);
                     }
@@ -154,5 +156,11 @@ public class WorkScheduleAssignmentEditAction
         }
 
         dialogWindow.open();
+    }
+
+    private List<UUID> getRemovedIds() {
+        return ListActionTargets.getRemoved(target, WorkScheduleAssignment.class).stream()
+                .map(WorkScheduleAssignment::getId)
+                .toList();
     }
 }

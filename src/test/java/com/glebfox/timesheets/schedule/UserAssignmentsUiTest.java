@@ -27,9 +27,12 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.user.UserDetailView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleAssignmentDetailView;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
@@ -43,6 +46,7 @@ import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.textfield.JmixPasswordField;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.valuepicker.EntityPicker;
+import io.jmix.flowui.data.grid.DataGridItems;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
@@ -231,7 +235,7 @@ public class UserAssignmentsUiTest {
     }
 
     @Test
-    void assignmentsAreSortedNewestFirst() {
+    void assignmentsLoadNewestFirstFromTheQuery() {
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         saveAssignment(user, schedule, NOV_1);
@@ -241,21 +245,78 @@ public class UserAssignmentsUiTest {
         UserDetailView editor = openUser(user);
         DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
 
+        // The order is the query's own, not a sort of the table
+        assertThat(grid.getSortOrder()).isEmpty();
         assertThat(dates(grid)).containsExactly(JAN_1, DEC_1, NOV_1);
+    }
 
-        // A created assignment takes its place by date, as does an edited one
+    @Test
+    void createdAssignmentIsAddedAtTheTop() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, NOV_1);
+        saveAssignment(user, schedule, DEC_1);
+        UserDetailView editor = openUser(user);
+
+        // Older than every assignment listed, and still first
+        WorkScheduleAssignmentDetailView dialog = create(editor);
+        startDateField(dialog).setTypedValue(OCT_1);
+        workScheduleField(dialog).setValue(schedule);
+        clickOk(dialog);
+
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(OCT_1, DEC_1, NOV_1);
+    }
+
+    @Test
+    void editedAssignmentStaysInPlace() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, NOV_1);
+        saveAssignment(user, schedule, DEC_1);
+        saveAssignment(user, schedule, JAN_1);
+        UserDetailView editor = openUser(user);
+
+        WorkScheduleAssignmentDetailView dialog = edit(editor, NOV_1);
+        startDateField(dialog).setTypedValue(FEB_1);
+        clickOk(dialog);
+
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(JAN_1, DEC_1, FEB_1);
+    }
+
+    @Test
+    void startDateAndWorkScheduleColumnsAreAutoWidth() {
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(openUser(saveUser()));
+
+        for (String key : List.of("startDate", "workSchedule")) {
+            Grid.Column<WorkScheduleAssignment> column = Objects.requireNonNull(grid.getColumnByKey(key));
+            assertThat(column.isAutoWidth()).as(key).isTrue();
+            assertThat(column.getWidth()).as(key).isNull();
+        }
+    }
+
+    @Test
+    void columnsAreMeasuredAgainWhenAssignmentsAreAddedOrEdited() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, NOV_1);
+        UserDetailView editor = openUser(user);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+        // Drops what opening the editor queued for the browser
+        browserCalls(grid);
+
+        // An added assignment can have a longer schedule name or a badge the rows the table was sized to lack
         WorkScheduleAssignmentDetailView createDialog = create(editor);
-        startDateField(createDialog).setTypedValue(OCT_1);
+        startDateField(createDialog).setTypedValue(DEC_1);
         workScheduleField(createDialog).setValue(schedule);
         clickOk(createDialog);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
 
-        assertThat(dates(grid)).containsExactly(JAN_1, DEC_1, NOV_1, OCT_1);
-
-        WorkScheduleAssignmentDetailView editDialog = edit(editor, OCT_1);
-        startDateField(editDialog).setTypedValue(FEB_1);
+        // So can an edited one
+        WorkScheduleAssignmentDetailView editDialog = edit(editor, NOV_1);
+        workScheduleField(editDialog).setValue(saveSchedule());
+        browserCalls(grid);
         clickOk(editDialog);
-
-        assertThat(dates(grid)).containsExactly(FEB_1, JAN_1, DEC_1, NOV_1);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
     }
 
     @Test
@@ -306,6 +367,27 @@ public class UserAssignmentsUiTest {
         // A removed assignment no longer counts, though its row is still saved
         remove(editor, today.minusMonths(1));
         assertThat(currentDates(grid)).containsExactly(today.minusMonths(2));
+    }
+
+    @Test
+    void editRedrawsEveryRow() {
+        LocalDate today = LocalDate.now();
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, today.minusMonths(1));
+        saveAssignment(user, schedule, today.plusMonths(1));
+        UserDetailView editor = openUser(user);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+        List<DataGridItems.ItemSetChangeEvent<WorkScheduleAssignment>> redraws = new ArrayList<>();
+        Objects.requireNonNull(grid.getItems()).addItemSetChangeListener(redraws::add);
+
+        // The edited row takes the Current badge from the other one, which must be drawn again too
+        WorkScheduleAssignmentDetailView dialog = edit(editor, today.plusMonths(1));
+        startDateField(dialog).setTypedValue(today);
+        clickOk(dialog);
+
+        assertThat(currentDates(grid)).containsExactly(today);
+        assertThat(redraws).isNotEmpty();
     }
 
     @Test
@@ -382,6 +464,27 @@ public class UserAssignmentsUiTest {
                 .hint(PersistenceHints.SOFT_DELETION, false)
                 .one()
                 .getDeletedDate()).isNotNull();
+    }
+
+    @Test
+    void removedAssignmentsDateCanBeTakenByAnEditedOne() {
+        User user = saveUser();
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(user, schedule, NOV_1);
+        WorkScheduleAssignment moved = saveAssignment(user, schedule, DEC_1);
+        UserDetailView editor = openUser(user);
+
+        remove(editor, NOV_1);
+        WorkScheduleAssignmentDetailView dialog = edit(editor, DEC_1);
+        startDateField(dialog).setTypedValue(NOV_1);
+        clickOk(dialog);
+
+        // The saved row from that date is removed in this editor, so it is not a duplicate
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+        assertThat(listed(assignmentsDataGrid(editor))).singleElement().satisfies(assignment -> {
+            assertThat(assignment.getStartDate()).isEqualTo(NOV_1);
+            assertThat(assignment.getId()).isEqualTo(moved.getId());
+        });
     }
 
     @AfterEach
@@ -516,6 +619,15 @@ public class UserAssignmentsUiTest {
     // As BadgeStyle.NEUTRAL marks a badge
     private static boolean isNeutral(Badge badge) {
         return badge.hasClassName("aura-accent-neutral");
+    }
+
+    private static List<String> browserCalls(DataGrid<WorkScheduleAssignment> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     private static Button dialogButton(DialogInfo dialog, String id) {

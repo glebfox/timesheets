@@ -35,13 +35,15 @@ import io.jmix.flowui.view.builder.DetailWindowClassBuilder;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
  * Creates a {@link WorkScheduleAssignment} in the list component of an editor, such as the user editor's
  * assignments, whose container is loaded by query. Opens {@link WorkScheduleAssignmentDetailView} as a dialog
- * with the editor's data context as its parent, so the dialog's OK adds the assignment to the list and to that
- * data context: the editor's OK saves it, and its Cancel discards it.
+ * with the editor's data context as its parent, so the dialog's OK adds the assignment at the top of the list
+ * and to that data context: the editor's OK saves it, and its Cancel discards it.
  * <p>
  * Needs no selection, and checks the permission the standard create action checks. It does not follow
  * the view's read-only mode: an editor opened read-only for lack of permission on its own entity still
@@ -110,7 +112,7 @@ public class WorkScheduleAssignmentCreateAction
 
     /**
      * Sets the function that sets up the dialog before it opens. The action itself hands the dialog
-     * the list's assignments to check the start date against.
+     * the list's assignments and the ids of those removed in the editor, to check the start date against.
      */
     public void setDetailViewConfigurer(@Nullable Consumer<WorkScheduleAssignmentDetailView> detailViewConfigurer) {
         this.detailViewConfigurer = detailViewConfigurer;
@@ -141,8 +143,10 @@ public class WorkScheduleAssignmentCreateAction
                         .newEntity()
                         // The editor's data context, so the assignment is saved with the editor and discarded with it
                         .withParentDataContext(ListActionTargets.getDataContext(target))
+                        // At the top of the list, whatever its start date
+                        .withAddFirst(true)
                         .withViewConfigurer(view -> {
-                            view.setSiblingAssignments(container::getItems);
+                            view.setSiblingAssignments(container.getItems(), getRemovedIds());
                             if (detailViewConfigurer != null) {
                                 detailViewConfigurer.accept(view);
                             }
@@ -153,5 +157,11 @@ public class WorkScheduleAssignmentCreateAction
         }
 
         builder.open();
+    }
+
+    private List<UUID> getRemovedIds() {
+        return ListActionTargets.getRemoved(target, WorkScheduleAssignment.class).stream()
+                .map(WorkScheduleAssignment::getId)
+                .toList();
     }
 }
