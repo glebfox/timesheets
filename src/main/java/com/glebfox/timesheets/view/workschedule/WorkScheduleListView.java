@@ -26,9 +26,7 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.flowui.component.grid.DataGrid;
-import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
-import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -45,10 +43,6 @@ public class WorkScheduleListView extends StandardListView<WorkSchedule> {
     @ViewComponent
     private DataGrid<WorkSchedule> workSchedulesDataGrid;
     @ViewComponent
-    private CollectionContainer<WorkSchedule> workSchedulesDc;
-    @ViewComponent
-    private CollectionLoader<WorkSchedule> workSchedulesDl;
-    @ViewComponent
     private MessageBundle messageBundle;
 
     @Autowired
@@ -56,22 +50,9 @@ public class WorkScheduleListView extends StandardListView<WorkSchedule> {
 
     @Subscribe(id = "workSchedulesDc", target = Target.DATA_CONTAINER)
     public void onWorkSchedulesDcCollectionChange(final CollectionContainer.CollectionChangeEvent<WorkSchedule> event) {
-        // The editor opens by navigation, so the list learns of a save only as the one row added or replaced,
-        // while saving a schedule as the default also unmarked the previous default in the database
-        if (event.getChangeType() != CollectionChangeType.REFRESH && countDefaults() > 1) {
-            workSchedulesDl.load();
-            return;
-        }
-
         // The browser sizes the auto-width columns to the rows it shows first, while the Default badge moves to
         // another schedule after that, and a reload, another page, or a save brings other names
         workSchedulesDataGrid.recalculateColumnWidths();
-    }
-
-    private long countDefaults() {
-        return workSchedulesDc.getItems().stream()
-                .filter(schedule -> Boolean.TRUE.equals(schedule.getIsDefault()))
-                .count();
     }
 
     @Supply(to = "workSchedulesDataGrid.name", subject = "renderer")

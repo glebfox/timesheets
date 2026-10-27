@@ -18,22 +18,26 @@ package com.glebfox.timesheets.action;
 
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
+import com.vaadin.flow.component.Focusable;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
 import io.jmix.core.security.EntityOp;
+import io.jmix.flowui.Dialogs;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
 import io.jmix.flowui.action.AdjustWhenViewReadOnly;
+import io.jmix.flowui.action.DialogAction;
 import io.jmix.flowui.action.list.SecuredListDataComponentAction;
+import io.jmix.flowui.kit.action.ActionVariant;
 import io.jmix.flowui.model.DataLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Makes the {@link WorkSchedule} selected in a list component the default one and saves it at once.
- * The previous default is unmarked in the same save by the rule that keeps one default schedule,
- * so the action reloads the list afterwards. A schedule deleted since the list was loaded is not saved:
+ * Makes the {@link WorkSchedule} selected in a list component the default one: it asks for a confirmation, then
+ * saves the schedule at once. The previous default is unmarked in the same save by the rule that keeps one default
+ * schedule, so the action reloads the list afterwards. A schedule deleted since the list was loaded is not saved:
  * the list is reloaded and a warning is shown.
  */
 @ActionType(WorkScheduleMakeDefaultAction.ID)
@@ -44,6 +48,7 @@ public class WorkScheduleMakeDefaultAction
     public static final String ID = "list_workSchedule_makeDefault";
 
     private DataManager dataManager;
+    private Dialogs dialogs;
     private Notifications notifications;
     private Messages messages;
 
@@ -72,6 +77,11 @@ public class WorkScheduleMakeDefaultAction
     @Autowired
     public void setDataManager(DataManager dataManager) {
         this.dataManager = dataManager;
+    }
+
+    @Autowired
+    public void setDialogs(Dialogs dialogs) {
+        this.dialogs = dialogs;
     }
 
     @Autowired
@@ -105,9 +115,27 @@ public class WorkScheduleMakeDefaultAction
             throw new IllegalStateException(String.format("There is not selected item in %s target",
                     getClass().getSimpleName()));
         }
-        // Found before the save, so nothing is saved for a list that cannot show the result
+        // Found before the confirmation, so nothing is saved for a list that cannot show the result
         DataLoader loader = ListActionTargets.getLoader(target, getClass());
 
+        // The header and the buttons of the standard remove confirmation
+        dialogs.createOptionDialog()
+                .withHeader(messages.getMessage("dialogs.Confirmation"))
+                .withText(messages.formatMessage(WorkScheduleMakeDefaultAction.class,
+                        "workScheduleMakeDefault.confirmation", selectedItem.getName()))
+                .withActions(
+                        new DialogAction(DialogAction.Type.YES)
+                                .withHandler(event -> {
+                                    makeDefault(selectedItem, loader);
+                                    focusTarget();
+                                })
+                                .withVariant(ActionVariant.PRIMARY),
+                        new DialogAction(DialogAction.Type.NO)
+                                .withHandler(event -> focusTarget()))
+                .open();
+    }
+
+    private void makeDefault(WorkSchedule selectedItem, DataLoader loader) {
         // A fresh instance, so the listed one stays as it was if the save fails
         WorkSchedule schedule = dataManager.load(Id.of(selectedItem)).optional().orElse(null);
         if (schedule == null) {
@@ -130,5 +158,11 @@ public class WorkScheduleMakeDefaultAction
                         "workScheduleMakeDefault.notification", schedule.getName()))
                 .withType(Notifications.Type.SUCCESS)
                 .show();
+    }
+
+    private void focusTarget() {
+        if (target instanceof Focusable<?> focusable) {
+            focusable.focus();
+        }
     }
 }

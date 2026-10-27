@@ -20,29 +20,31 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
-import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleListView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
+import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.Notifications;
-import io.jmix.flowui.component.checkbox.Switch;
+import io.jmix.flowui.component.genericfilter.GenericFilter;
 import io.jmix.flowui.component.grid.DataGrid;
-import io.jmix.flowui.component.textfield.TypedTextField;
+import io.jmix.flowui.component.propertyfilter.PropertyFilter;
 import io.jmix.flowui.kit.action.Action;
-import io.jmix.flowui.kit.component.button.JmixButton;
-import io.jmix.flowui.view.View;
+import io.jmix.flowui.model.CollectionLoader;
+import io.jmix.flowui.view.ViewControllerUtils;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import io.jmix.tabbedmode.testassist.UiTestUtils;
+import io.jmix.tabbedmode.testassist.dialog.DialogInfo;
 import io.jmix.tabbedmode.testassist.notification.NotificationInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -79,6 +81,8 @@ public class WorkScheduleListUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     CurrentAuthentication currentAuthentication;
+    @Autowired
+    Messages messages;
 
     UUID seedDefaultId;
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
@@ -93,7 +97,7 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
-    void makeDefaultMarksTheSelectedSchedule() {
+    void makeDefaultAsksFirstAndMarksTheSelectedScheduleOnYes() {
         WorkSchedule schedule = saveSchedule(uniqueName(), null);
         DataGrid<WorkSchedule> grid = openListGrid();
         Action makeDefault = Objects.requireNonNull(grid.getAction("makeDefault"));
@@ -101,6 +105,16 @@ public class WorkScheduleListUiTest {
         grid.select(listed(grid, schedule.getId()));
         assertThat(makeDefault.isEnabled()).isTrue();
         makeDefault.actionPerform(grid);
+
+        // The header of the standard remove confirmation, with its own text; nothing is saved before the answer
+        DialogInfo confirmation = confirmation();
+        assertThat(confirmation.getDialog().getHeaderTitle()).isEqualTo(messages.getMessage("dialogs.Confirmation"));
+        assertThat(confirmation.getContent().getElement().getTextRecursively())
+                .isEqualTo("Make «" + schedule.getName() + "» the default schedule? "
+                        + "Users with no assignments will work to it, past months included.");
+        assertThat(reload(schedule.getId()).getIsDefault()).isFalse();
+
+        dialogButton(confirmation, "yes").click();
 
         assertThat(reload(schedule.getId()).getIsDefault()).isTrue();
         assertThat(reload(seedDefaultId).getIsDefault()).isFalse();
@@ -117,17 +131,37 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
+    void makeDefaultDeclinedChangesNothing() {
+        WorkSchedule schedule = saveSchedule(uniqueName(), null);
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action makeDefault = Objects.requireNonNull(grid.getAction("makeDefault"));
+
+        grid.select(listed(grid, schedule.getId()));
+        assertThat(makeDefault.isEnabled()).isTrue();
+        makeDefault.actionPerform(grid);
+        dialogButton(confirmation(), "no").click();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(reload(schedule.getId()).getIsDefault()).isFalse();
+        assertThat(reload(seedDefaultId).getIsDefault()).isTrue();
+        assertThat(listed(grid, schedule.getId()).getIsDefault()).isFalse();
+        assertThat(makeDefault.isEnabled()).isTrue();
+        assertThat(UiTestUtils.getOpenedNotifications()).isEmpty();
+    }
+
+    @Test
     void makeDefaultOfAScheduleDeletedMeanwhileWarnsAndRefreshesTheList() {
         WorkSchedule schedule = saveSchedule(uniqueName(), null);
         DataGrid<WorkSchedule> grid = openListGrid();
         Action makeDefault = Objects.requireNonNull(grid.getAction("makeDefault"));
         grid.select(listed(grid, schedule.getId()));
 
-        // Deleted in another session after the list was loaded
-        dataManager.remove(reload(schedule.getId()));
-
         assertThat(makeDefault.isEnabled()).isTrue();
         makeDefault.actionPerform(grid);
+
+        // Deleted in another session after the list was loaded, while the confirmation is shown
+        dataManager.remove(reload(schedule.getId()));
+        dialogButton(confirmation(), "yes").click();
 
         assertThat(reload(seedDefaultId).getIsDefault()).isTrue();
         assertThat(Objects.requireNonNull(grid.getItems()).getItems())
@@ -157,45 +191,6 @@ public class WorkScheduleListUiTest {
 
         grid.deselectAll();
         assertThat(makeDefault.isEnabled()).isFalse();
-    }
-
-    @Test
-    void savingAnotherScheduleAsTheDefaultInTheEditorRefreshesTheList() {
-        WorkSchedule schedule = saveSchedule(uniqueName(), null);
-        DataGrid<WorkSchedule> grid = openListGrid();
-        Action edit = Objects.requireNonNull(grid.getAction("edit"));
-
-        grid.select(listed(grid, schedule.getId()));
-        assertThat(edit.isEnabled()).isTrue();
-        edit.actionPerform(grid);
-
-        WorkScheduleDetailView editor = UiTestUtils.getCurrentView();
-        UiTestUtils.<Switch>getComponent(editor, "isDefaultField").setValue(true);
-        UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
-
-        assertOnlyDefaultListed(schedule.getId());
-    }
-
-    @Test
-    void creatingTheDefaultInTheEditorRefreshesTheList() {
-        DataGrid<WorkSchedule> grid = openListGrid();
-        Action create = Objects.requireNonNull(grid.getAction("create"));
-
-        assertThat(create.isEnabled()).isTrue();
-        create.actionPerform(grid);
-
-        WorkScheduleDetailView editor = UiTestUtils.getCurrentView();
-        String name = uniqueName();
-        UiTestUtils.<TypedTextField<String>>getComponent(editor, "nameField").setValue(name);
-        UiTestUtils.<TypedTextField<WorkTime>>getComponent(editor, "workdayTimeField").setTypedValue(WorkTime.ofHours(8));
-        UiTestUtils.<Switch>getComponent(editor, "isDefaultField").setValue(true);
-        UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
-
-        WorkSchedule created = dataManager.load(WorkSchedule.class)
-                .query("e.name = ?1", name)
-                .one();
-        scheduleIds.add(Id.of(created));
-        assertOnlyDefaultListed(created.getId());
     }
 
     @Test
@@ -251,10 +246,39 @@ public class WorkScheduleListUiTest {
         grid.select(listed(grid, schedule.getId()));
         assertThat(makeDefault.isEnabled()).isTrue();
         makeDefault.actionPerform(grid);
+        dialogButton(confirmation(), "yes").click();
 
         // The Default badge moved to another row after the table was sized, so the browser sizes the name column
         // to the rows again
         assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+    }
+
+    @Test
+    void genericFilterFiltersTheListByName() {
+        WorkSchedule found = saveSchedule(uniqueName(), null);
+        WorkSchedule other = saveSchedule(uniqueName(), null);
+        viewBuilders.view(UiTestUtils.getCurrentView(), WorkScheduleListView.class).open();
+        WorkScheduleListView view = UiTestUtils.getCurrentView();
+        DataGrid<WorkSchedule> grid = UiTestUtils.getComponent(view, "workSchedulesDataGrid");
+
+        assertThat(listedIds(grid)).contains(seedDefaultId, found.getId(), other.getId());
+
+        GenericFilter filter = UiTestUtils.getComponent(view, "genericFilter");
+        CollectionLoader<WorkSchedule> loader = ViewControllerUtils.getViewData(view).getLoader("workSchedulesDl");
+        assertThat(filter.getDataLoader()).isSameAs(loader);
+
+        // A name condition, as a user adds it to the filter, types a part of the name, and applies the filter;
+        // a value set from the server does not apply it by itself
+        PropertyFilter<String> nameCondition = filter.filterComponentBuilder().<String>propertyFilter()
+                .property("name")
+                .operation(PropertyFilter.Operation.CONTAINS)
+                .build();
+        filter.getCurrentConfiguration().getRootLogicalFilterComponent().add(nameCondition);
+        filter.refreshCurrentConfiguration();
+        nameCondition.setValue(found.getName().substring(NAME_PREFIX.length()));
+        filter.apply();
+
+        assertThat(listedIds(grid)).containsExactly(found.getId());
     }
 
     @Test
@@ -296,23 +320,21 @@ public class WorkScheduleListUiTest {
         return UiTestUtils.getComponent(view, "workSchedulesDataGrid");
     }
 
-    /**
-     * Checks the list shown after an editor closed, whether the list came back as the same view or as a new one:
-     * the given schedule is the only default in it, and the only row with the Default badge.
-     */
-    private static void assertOnlyDefaultListed(UUID id) {
-        View<?> currentView = UiTestUtils.getCurrentView();
-        assertThat(currentView).isInstanceOf(WorkScheduleListView.class);
-        DataGrid<WorkSchedule> grid = UiTestUtils.getComponent(currentView, "workSchedulesDataGrid");
-        List<WorkSchedule> items = Objects.requireNonNull(grid.getItems()).getItems().stream().toList();
+    private static DialogInfo confirmation() {
+        return Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(), "a Make default confirmation");
+    }
 
-        assertThat(items).filteredOn(schedule -> Boolean.TRUE.equals(schedule.getIsDefault()))
-                .extracting(WorkSchedule::getId)
-                .containsExactly(id);
-        assertThat(items).filteredOn(schedule -> renderCell(grid, "name", schedule).getChildren()
-                        .anyMatch(Badge.class::isInstance))
-                .extracting(WorkSchedule::getId)
-                .containsExactly(id);
+    private static Button dialogButton(DialogInfo dialog, String id) {
+        return dialog.getButtons().stream()
+                .filter(button -> id.equals(button.getId().orElse(null)))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No '" + id + "' button in the dialog"));
+    }
+
+    private static List<UUID> listedIds(DataGrid<WorkSchedule> grid) {
+        return Objects.requireNonNull(grid.getItems()).getItems().stream()
+                .map(WorkSchedule::getId)
+                .toList();
     }
 
     private static WorkSchedule listed(DataGrid<WorkSchedule> grid, UUID id) {

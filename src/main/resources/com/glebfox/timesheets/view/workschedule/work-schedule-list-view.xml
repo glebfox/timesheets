@@ -17,7 +17,7 @@
 
 <view xmlns="http://jmix.io/schema/flowui/view"
       title="msg://workScheduleListView.title"
-      focusComponent="nameFilterField">
+      focusComponent="workSchedulesDataGrid">
     <data readOnly="true">
         <collection id="workSchedulesDc"
                     class="com.glebfox.timesheets.entity.schedule.WorkSchedule">
@@ -34,8 +34,8 @@
     <facets>
         <dataLoadCoordinator auto="true"/>
         <urlQueryParameters>
+            <genericFilter component="genericFilter"/>
             <pagination component="pagination"/>
-            <propertyFilter component="nameFilter"/>
         </urlQueryParameters>
     </facets>
     <actions>
@@ -45,20 +45,10 @@
     <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox"
             classNames="work-schedule-list-view">
         <vbox id="contentBox" classNames="overflow-auto">
-            <propertyFilter id="nameFilter"
-                            dataLoader="workSchedulesDl" property="name"
-                            operation="CONTAINS"
-                            labelVisible="false"
-                            width="100%" maxWidth="30em">
-                <textField id="nameFilterField"
-                           placeholder="msg://nameFilter.placeholder"
-                           clearButtonVisible="true">
-                    <prefix>
-                        <icon icon="gravity-ui:magnifier"/>
-                    </prefix>
-                </textField>
-            </propertyFilter>
-
+            <genericFilter id="genericFilter"
+                           dataLoader="workSchedulesDl">
+                <properties include=".*"/>
+            </genericFilter>
             <hbox id="buttonsPanel" classNames="buttons-panel">
                 <button id="createBtn" action="workSchedulesDataGrid.create"/>
                 <button id="editBtn" action="workSchedulesDataGrid.edit"/>
