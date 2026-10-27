@@ -6,7 +6,7 @@ The project list, the project editor, and the participant editor. What a project
 
 ## Projects
 
-`projects`, menu Project Management. Lists projects with the name, client, status as a badge (Open green, Closed red), and description, which is cut short with the full text in a popover that renders the Markdown. It offers a filter on any attribute and pagination, both kept in the URL, and Create, Edit, and Remove. It is also the project picker of the other editors.
+`projects`, menu Project Management. Lists projects with the name, client, status as a badge (Open green, Closed red), and description, which is cut short with the full text in a popover that renders the Markdown. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded, and Create, Edit, and Remove. It is also the project picker of the other editors.
 
 ## Project editor
 
