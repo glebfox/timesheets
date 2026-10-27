@@ -107,6 +107,11 @@
     outline-color: var(--aura-accent-contrast-color);
 }
 
+/* Invalid as Aura shows an invalid field: the bar's border takes the error color */
+.segmented-group[invalid]::part(group-field) {
+    border-color: var(--vaadin-input-field-error-color);
+}
+
 /* Read-only as Aura shows a read-only field: a dashed border, no fill, no shadow */
 .segmented-group[readonly]::part(group-field) {
     border-style: dashed;
