@@ -37,8 +37,8 @@ public class UnsavedInputSupport {
 
     /**
      * Asks the framework's unsaved-changes question when the view is closed other than with
-     * {@link StandardOutcome#SAVE} while its input differs from how it opened: Discard closes the view with
-     * {@link StandardOutcome#DISCARD}, Cancel keeps it open. Called from the view's
+     * {@link StandardOutcome#SAVE} while its input differs from how it opened: Yes closes the view with
+     * {@link StandardOutcome#DISCARD}, No keeps it open. Called from the view's
      * {@link View.BeforeCloseEvent} handler; the view itself tells whether its input changed.
      *
      * @param event        the view's before-close event
