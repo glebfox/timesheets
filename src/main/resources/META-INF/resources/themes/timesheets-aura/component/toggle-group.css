@@ -28,6 +28,8 @@
     /* The input stretches over the gap between the box and the label; without the box there is none */
     --vaadin-checkbox-gap: 0;
     --vaadin-checkbox-label-color: var(--vaadin-text-color);
+    /* The hover and press overlay is derived from the text color, as a button's is */
+    color: var(--vaadin-text-color);
     position: relative;
     display: flex;
     flex: 1 1 0;
@@ -40,12 +42,32 @@
     border-radius: var(--vaadin-radius-m);
     background: var(--aura-surface-color);
     box-shadow: var(--aura-shadow-xs);
+    transition: scale 0.18s;
 }
 
-/* The baseline guide of the item, which would push the label off center, and the box */
-.toggle-group > vaadin-checkbox::before,
 .toggle-group > vaadin-checkbox::part(checkbox) {
     display: none;
+}
+
+/* The item's baseline guide, which would push the label off center, becomes the overlay that Aura draws
+   over a button (vaadin-button::before): out of the flow, over the border, invisible until hovered or pressed */
+.toggle-group > vaadin-checkbox::before {
+    content: "";
+    position: absolute;
+    inset: calc(var(--vaadin-input-field-border-width, 1px) * -1);
+    /* The guide is aligned to the baseline's end, which would shrink the overlay to no height */
+    align-self: stretch;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s, background-color 0.1s;
+}
+
+@supports (color: hsl(0 0 0)) {
+    .toggle-group > vaadin-checkbox::before {
+        background-color: oklch(from currentColor calc(l + 0.4 - c) c h / calc(1 - l / 2));
+    }
 }
 
 .toggle-group > vaadin-checkbox > input {
@@ -60,20 +82,44 @@
 
 .toggle-group > vaadin-checkbox[checked] {
     --vaadin-checkbox-label-color: var(--aura-accent-contrast-color);
+    color: var(--aura-accent-contrast-color);
     border-color: transparent;
     background: var(--aura-accent-color);
     box-shadow: var(--aura-shadow-s);
 }
 
+/* Hovered and pressed as Aura shows a button: an unchecked item as a regular button, a checked one as a primary button.
+   A read-only or disabled group shows neither, as a disabled button does not */
 @media (any-hover: hover) {
-    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox:not([checked]):hover {
-        background: var(--vaadin-background-container);
+    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox:not([disabled], [active]):hover::before {
+        opacity: 0.03;
     }
 
-    /* A click unchecks a checked item, so its fill lightens as a primary button's does */
-    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox[checked]:hover {
-        background: color-mix(in srgb, var(--aura-accent-color) 88%, var(--aura-accent-contrast-color));
+    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox[checked]:not([disabled], [active]):hover::before {
+        opacity: 0.12;
     }
+}
+
+@media (min-resolution: 2x) {
+    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox[active]:not([disabled]) {
+        scale: 0.98;
+        transition-duration: 50ms;
+    }
+}
+
+.toggle-group:not([readonly], [disabled]) > vaadin-checkbox[active]:not([disabled]) {
+    box-shadow: none;
+}
+
+.toggle-group:not([readonly], [disabled]) > vaadin-checkbox[active]:not([disabled])::before {
+    /* Aura's lightness min(c, 1 - l + c), inside calc() so that the IDE's CSS grammar accepts it */
+    background: oklch(from currentColor calc(min(c, 1 - l + c)) calc(c * 0.9) h);
+    opacity: 0.08;
+    transition-duration: 0s;
+}
+
+.toggle-group:not([readonly], [disabled]) > vaadin-checkbox[checked][active]:not([disabled])::before {
+    opacity: 0.16;
 }
 
 /* The box carried the focus ring. The ring is drawn inside the button, clear of its edges,

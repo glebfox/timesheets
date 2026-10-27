@@ -39,6 +39,8 @@
     /* The input stretches over the gap between the radio and the label; without the radio there is none */
     --vaadin-radio-button-gap: 0;
     --vaadin-radio-button-label-color: var(--vaadin-text-color);
+    /* The hover and press overlay is derived from the text color, as a button's is */
+    color: var(--vaadin-text-color);
     position: relative;
     display: flex;
     flex: 1 1 0;
@@ -63,10 +65,29 @@
     border-end-end-radius: var(--_segmented-inner-radius);
 }
 
-/* The baseline guide of the item, which would push the label off center, and the radio */
-.segmented-group > vaadin-radio-button::before,
 .segmented-group > vaadin-radio-button::part(radio) {
     display: none;
+}
+
+/* The item's baseline guide, which would push the label off center, becomes the overlay that Aura draws
+   over a button (vaadin-button::before): out of the flow, over the whole segment, invisible until hovered or pressed */
+.segmented-group > vaadin-radio-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* The guide is aligned to the baseline's end, which would shrink the overlay to no height */
+    align-self: stretch;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s, background-color 0.1s;
+}
+
+@supports (color: hsl(0 0 0)) {
+    .segmented-group > vaadin-radio-button::before {
+        background-color: oklch(from currentColor calc(l + 0.4 - c) c h / calc(1 - l / 2));
+    }
 }
 
 .segmented-group > vaadin-radio-button > input {
@@ -82,14 +103,33 @@
 
 .segmented-group > vaadin-radio-button[checked] {
     --vaadin-radio-button-label-color: var(--aura-accent-contrast-color);
+    color: var(--aura-accent-contrast-color);
     background: var(--aura-accent-color);
 }
 
-/* The checked segment has no hover cue, since a click on it changes nothing */
+/* Hovered and pressed as Aura shows a button: an unchecked segment as a regular button, the checked one as a primary
+   button, which Aura's own radio button does too (its hover does not depend on being checked).
+   The segments do not shrink when pressed, as Aura's joined menu bar buttons do not.
+   A read-only or disabled group shows neither, as a disabled button does not */
 @media (any-hover: hover) {
-    .segmented-group:not([readonly], [disabled]) > vaadin-radio-button:not([checked]):hover {
-        background: var(--vaadin-background-container);
+    .segmented-group:not([readonly], [disabled]) > vaadin-radio-button:not([disabled], [active]):hover::before {
+        opacity: 0.03;
     }
+
+    .segmented-group:not([readonly], [disabled]) > vaadin-radio-button[checked]:not([disabled], [active]):hover::before {
+        opacity: 0.12;
+    }
+}
+
+.segmented-group:not([readonly], [disabled]) > vaadin-radio-button[active]:not([disabled])::before {
+    /* Aura's lightness min(c, 1 - l + c), inside calc() so that the IDE's CSS grammar accepts it */
+    background: oklch(from currentColor calc(min(c, 1 - l + c)) calc(c * 0.9) h);
+    opacity: 0.08;
+    transition-duration: 0s;
+}
+
+.segmented-group:not([readonly], [disabled]) > vaadin-radio-button[checked][active]:not([disabled])::before {
+    opacity: 0.16;
 }
 
 /* The radio carried the focus ring. The ring is drawn inside the segment, clear of its edges,
