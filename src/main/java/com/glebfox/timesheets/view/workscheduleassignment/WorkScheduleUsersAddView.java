@@ -17,12 +17,11 @@
 package com.glebfox.timesheets.view.workscheduleassignment;
 
 import com.glebfox.timesheets.app.WorkScheduleAssignmentSupport;
+import com.glebfox.timesheets.app.util.UnsavedInputSupport;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
-import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.html.Span;
-import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
 import io.jmix.flowui.component.SupportsTypedValue;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
@@ -30,25 +29,24 @@ import io.jmix.flowui.component.multiselectcomboboxpicker.JmixMultiSelectComboBo
 import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.view.*;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * Assigns several users to a work schedule from one start date. Opened as a dialog from the schedule editor,
- * which hands it the editor's assignments. Refuses users who already have an assignment from that date;
- * otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds one assignment per user
- * of {@link #getUsers()} from {@link #getStartDate()}.
+ * which hands it the editor's assignments as they stand when it opens. Refuses users who already have
+ * an assignment from that date; otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds one
+ * assignment per user of {@link #getUsers()} from {@link #getStartDate()}. Closed any other way while a field
+ * differs from how it opened, it asks whether to discard the input: Discard closes it, Cancel keeps it open.
  */
 @ViewController(WorkScheduleUsersAddView.ID)
 @ViewDescriptor("work-schedule-users-add-view.xml")
@@ -67,31 +65,32 @@ public class WorkScheduleUsersAddView extends StandardView {
     private MessageBundle messageBundle;
 
     @Autowired
-    private Messages messages;
-    @Autowired
     private MetadataTools metadataTools;
     @Autowired
     private ViewValidation viewValidation;
     @Autowired
     private WorkScheduleAssignmentSupport workScheduleAssignmentSupport;
+    @Autowired
+    private UnsavedInputSupport unsavedInputSupport;
 
-    @Nullable
-    private Supplier<Collection<WorkScheduleAssignment>> editorAssignments;
-    private Predicate<WorkScheduleAssignment> removedInEditor = assignment -> false;
+    private Collection<WorkScheduleAssignment> editorAssignments = List.of();
+    private Set<UUID> removedIds = Set.of();
+    private List<Object> openedValues = List.of();
     private boolean usersRefused;
 
     /**
-     * Sets the assignments to check the start date against: those of the opening editor. They may belong
-     * to any users. Required: the view does not open without them.
+     * Sets the assignments to check the start date against: those of the opening editor as they stand when
+     * the view opens. They may belong to any users. The view keeps copies, so a later change of the given
+     * collections does not reach it.
      *
-     * @param editorAssignments supplies the editor's assignments, saved or added there and not removed
-     * @param removedInEditor   tells whether a saved assignment is removed in the editor, so its row no longer
-     *                          counts
+     * @param editorAssignments the editor's assignments, saved or added there and not removed, possibly none
+     * @param removedIds        the ids of the saved assignments removed in the editor, whose rows no longer count,
+     *                          possibly none
      */
-    public void setEditorAssignments(Supplier<Collection<WorkScheduleAssignment>> editorAssignments,
-                                     Predicate<WorkScheduleAssignment> removedInEditor) {
-        this.editorAssignments = editorAssignments;
-        this.removedInEditor = removedInEditor;
+    public void setEditorAssignments(Collection<WorkScheduleAssignment> editorAssignments,
+                                     Collection<UUID> removedIds) {
+        this.editorAssignments = List.copyOf(Objects.requireNonNull(editorAssignments));
+        this.removedIds = Set.copyOf(Objects.requireNonNull(removedIds));
     }
 
     /**
@@ -119,21 +118,20 @@ public class WorkScheduleUsersAddView extends StandardView {
     }
 
     @Subscribe
-    public void onInit(final InitEvent event) {
-        // The fields are not bound to an entity, so they get the required message that bound fields get
-        usersField.setRequiredMessage(formatRequiredMessage(usersField.getLabel()));
-        startDateField.setRequiredMessage(formatRequiredMessage(startDateField.getLabel()));
-    }
-
-    private String formatRequiredMessage(String label) {
-        return messages.formatMessage("", "validation.required.defaultMsg", label);
+    public void onReady(final ReadyEvent event) {
+        openedValues = getFieldValues();
     }
 
     @Subscribe
-    public void onBeforeShow(final BeforeShowEvent event) {
-        // Without the editor's assignments the check would miss the ones added or removed there
-        Preconditions.checkState(editorAssignments != null,
-                "setEditorAssignments() must be called before the view opens");
+    public void onBeforeClose(final BeforeCloseEvent event) {
+        // OK takes the input; Cancel, Esc, and the close button ask before they discard a change
+        unsavedInputSupport.askBeforeDiscarding(event, !getFieldValues().equals(openedValues));
+    }
+
+    private List<Object> getFieldValues() {
+        // The users as a set, and no users as an empty one, whether the field was never filled or was emptied since
+        Collection<User> users = usersField.getTypedValue();
+        return Arrays.asList(users == null ? Set.of() : Set.copyOf(users), startDateField.getValue());
     }
 
     @Subscribe("usersField")
@@ -188,19 +186,18 @@ public class WorkScheduleUsersAddView extends StandardView {
     }
 
     private List<User> findAssignedUsers(List<User> users, LocalDate startDate) {
-        Collection<WorkScheduleAssignment> held = Objects.requireNonNull(editorAssignments).get();
-        Set<UUID> assignedUserIds = held.stream()
+        Set<UUID> assignedUserIds = editorAssignments.stream()
                 .filter(assignment -> startDate.equals(assignment.getStartDate()) && assignment.getUser() != null)
                 .map(assignment -> assignment.getUser().getId())
                 .collect(Collectors.toCollection(HashSet::new));
 
         // A saved row counts only when the editor does not hold it: a held assignment stands for its row
         // as edited there, and a removed one is gone
-        Set<UUID> heldIds = held.stream()
+        Set<UUID> heldIds = editorAssignments.stream()
                 .map(WorkScheduleAssignment::getId)
                 .collect(Collectors.toSet());
         workScheduleAssignmentSupport.loadAssignmentsFrom(users, startDate).stream()
-                .filter(saved -> !heldIds.contains(saved.getId()) && !removedInEditor.test(saved))
+                .filter(saved -> !heldIds.contains(saved.getId()) && !removedIds.contains(saved.getId()))
                 .forEach(saved -> assignedUserIds.add(saved.getUser().getId()));
 
         return users.stream()

@@ -44,8 +44,8 @@ import java.util.function.Consumer;
 /**
  * Assigns several users at once in the list component of an editor, such as the work schedule editor's
  * assignments, whose container is loaded by query. Opens {@link WorkScheduleUsersAddView}, which asks for
- * the users and a start date, and adds one {@link WorkScheduleAssignment} per user to the list. The assignments
- * are created in the editor's data context: the editor's OK saves them, and its Cancel discards them.
+ * the users and a start date, and adds one {@link WorkScheduleAssignment} per user at the top of the list. The
+ * assignments are created in the editor's data context: the editor's OK saves them, and its Cancel discards them.
  * <p>
  * Needs no selection, and checks the permission the standard create action checks. It does not follow
  * the view's read-only mode: an editor opened read-only for lack of permission on its own entity still
@@ -113,7 +113,7 @@ public class WorkScheduleUsersAddAction
 
     /**
      * Sets the function that sets up the dialog before it opens. The action itself hands the dialog
-     * the list's assignments to check the start date against.
+     * the list's assignments and the ids of those removed in the editor, to check the start date against.
      */
     public void setViewConfigurer(@Nullable Consumer<WorkScheduleUsersAddView> viewConfigurer) {
         this.viewConfigurer = viewConfigurer;
@@ -142,7 +142,8 @@ public class WorkScheduleUsersAddAction
 
         dialogWindows.view(ListActionTargets.getView(target), WorkScheduleUsersAddView.class)
                 .withViewConfigurer(view -> {
-                    view.setEditorAssignments(container::getItems, dataContext::isRemoved);
+                    view.setEditorAssignments(container.getItems(),
+                            ListActionTargets.getRemovedIds(target, WorkScheduleAssignment.class));
                     if (viewConfigurer != null) {
                         viewConfigurer.accept(view);
                     }
@@ -162,8 +163,8 @@ public class WorkScheduleUsersAddAction
         List<WorkScheduleAssignment> assignments = view.getUsers().stream()
                 .map(user -> createAssignment(dataContext, user, startDate))
                 .toList();
-        // One change of the container for all the users
-        container.getMutableItems().addAll(assignments);
+        // At the top of the list, whatever their start date, in one change of the container for all the users
+        container.getMutableItems().addAll(0, assignments);
     }
 
     private WorkScheduleAssignment createAssignment(DataContext dataContext, User user, LocalDate startDate) {

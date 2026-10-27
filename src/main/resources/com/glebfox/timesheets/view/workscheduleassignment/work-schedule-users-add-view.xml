@@ -36,7 +36,8 @@
             <multiSelectComboBoxPicker id="usersField"
                                        metaClass="ts_User"
                                        label="msg://usersField.label"
-                                       required="true">
+                                       required="true"
+                                       requiredMessage="msg://usersField.requiredMessage">
                 <itemsQuery class="com.glebfox.timesheets.entity.user.User"
                             searchStringFormat="(?i)%${inputString}%"
                             escapeValueForLike="true">
@@ -55,12 +56,14 @@
                 </itemsQuery>
                 <actions>
                     <action id="entityLookup" type="entity_lookup"/>
+                    <action id="clearLookup" type="entity_clear"/>
                 </actions>
             </multiSelectComboBoxPicker>
             <datePicker id="startDateField"
                         datatype="localDate"
                         label="msg://com.glebfox.timesheets.entity.schedule/WorkScheduleAssignment.startDate"
-                        required="true"/>
+                        required="true"
+                        requiredMessage="msg://startDateField.requiredMessage"/>
             <span id="workScheduleText" classNames="secondary-text"/>
         </formLayout>
         <hbox id="detailActions"

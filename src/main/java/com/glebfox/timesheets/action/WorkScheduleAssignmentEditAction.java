@@ -34,8 +34,6 @@ import io.jmix.flowui.view.StandardOutcome;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -139,7 +137,8 @@ public class WorkScheduleAssignmentEditAction
                 // The editor's data context, so the change is saved with the editor and discarded with it
                 .withParentDataContext(ListActionTargets.getDataContext(target))
                 .withViewConfigurer(view -> {
-                    view.setSiblingAssignments(container.getItems(), getRemovedIds());
+                    view.setSiblingAssignments(container.getItems(),
+                            ListActionTargets.getRemovedIds(target, WorkScheduleAssignment.class));
                     if (detailViewConfigurer != null) {
                         detailViewConfigurer.accept(view);
                     }
@@ -156,11 +155,5 @@ public class WorkScheduleAssignmentEditAction
         }
 
         dialogWindow.open();
-    }
-
-    private List<UUID> getRemovedIds() {
-        return ListActionTargets.getRemoved(target, WorkScheduleAssignment.class).stream()
-                .map(WorkScheduleAssignment::getId)
-                .toList();
     }
 }

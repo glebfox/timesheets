@@ -62,7 +62,7 @@
     <layout alignItems="STRETCH"
             padding="false" spacing="false"
             expand="contentBox">
-        <vbox id="contentBox" classNames="overflow-auto" expand="usersBox">
+        <vbox id="contentBox" classNames="overflow-auto" expand="assignmentsDataGrid">
             <formLayout id="form" dataContainer="workScheduleDc">
                 <textField id="nameField" property="name">
                     <prefix>
@@ -100,35 +100,29 @@
                         </query>
                     </itemsQuery>
                 </entityComboBox>
-                <switch id="isDefaultField" property="isDefault"/>
                 <textArea id="descriptionField" property="description"
                           minHeight="10rem" colspan="2"/>
             </formLayout>
-            <vbox id="usersBox" padding="false" expand="assignmentsDataGrid">
-                <h4 id="usersTitle" text="msg://usersTitle.text"/>
-                <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
-                    <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
-                    <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
-                    <button id="assignmentRemoveBtn" action="assignmentsDataGrid.remove"/>
-                </hbox>
-                <dataGrid id="assignmentsDataGrid"
-                          dataContainer="assignmentsDc"
-                          selectionMode="MULTI"
-                          width="100%" minHeight="20em">
-                    <actions>
-                        <action id="add" type="list_workScheduleUsers_add"/>
-                        <action id="edit" type="list_workScheduleAssignment_edit"/>
-                        <action id="remove" type="list_workScheduleAssignment_remove"/>
-                    </actions>
-                    <columns resizable="true">
-                        <column property="user"/>
-                        <!-- A fixed width, not autoWidth: the Current badge can appear after the table is sized,
-                             on an assignment added or edited here. It fits the widest date with the badge
-                             in English and Russian -->
-                        <column property="startDate" width="11rem" flexGrow="0"/>
-                    </columns>
-                </dataGrid>
-            </vbox>
+            <h4 id="usersTitle" text="msg://usersTitle.text"/>
+            <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
+                <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
+                <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
+                <button id="assignmentRemoveBtn" action="assignmentsDataGrid.remove"/>
+            </hbox>
+            <dataGrid id="assignmentsDataGrid"
+                      dataContainer="assignmentsDc"
+                      selectionMode="MULTI"
+                      width="100%" minHeight="20em">
+                <actions>
+                    <action id="add" type="list_workScheduleUsers_add"/>
+                    <action id="edit" type="list_workScheduleAssignment_edit"/>
+                    <action id="remove" type="list_workScheduleAssignment_remove"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="user" autoWidth="true"/>
+                    <column property="startDate" autoWidth="true" flexGrow="0"/>
+                </columns>
+            </dataGrid>
         </vbox>
         <hbox id="detailActions"
               classNames="footer-panel">

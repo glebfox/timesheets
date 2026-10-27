@@ -29,17 +29,23 @@ import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleAssignmentDetailView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleUsersAddView;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
+import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.ClientDetails;
+import io.jmix.core.security.SecurityContextHelper;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.combobox.EntityComboBox;
@@ -48,11 +54,11 @@ import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.multiselectcomboboxpicker.JmixMultiSelectComboBoxPicker;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.valuepicker.EntityPicker;
+import io.jmix.flowui.data.grid.DataGridItems;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewControllerUtils;
-import io.jmix.flowui.view.builder.WindowBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -62,10 +68,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -84,6 +92,8 @@ public class ScheduleUsersUiTest {
     static final LocalDate NOV_1 = LocalDate.of(2026, 11, 1);
     static final LocalDate DEC_1 = LocalDate.of(2026, 12, 1);
     static final LocalDate JAN_1 = LocalDate.of(2027, 1, 1);
+    static final LocalDate FEB_1 = LocalDate.of(2027, 2, 1);
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     @Autowired
     DataManager dataManager;
@@ -93,6 +103,10 @@ public class ScheduleUsersUiTest {
     MetadataTools metadataTools;
     @Autowired
     DialogWindows dialogWindows;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
+    @Autowired
+    Messages messages;
 
     List<Id<User>> userIds = new ArrayList<>();
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
@@ -181,13 +195,28 @@ public class ScheduleUsersUiTest {
         WorkScheduleUsersAddView dialog = add(editor);
         clickOk(dialog);
 
-        // The required messages of bound fields
+        // Worded as the framework words the required message of a bound field
         assertThat(usersField(dialog).isInvalid()).isTrue();
         assertThat(usersField(dialog).getErrorMessage()).isEqualTo("Users required");
         assertThat(startDateField(dialog).isInvalid()).isTrue();
         assertThat(startDateField(dialog).getErrorMessage()).isEqualTo("Start date required");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(listed(assignmentsDataGrid(editor))).isEmpty();
+    }
+
+    @Test
+    void russianRequiredMessagesNameTheFields() {
+        WorkSchedule schedule = saveSchedule();
+
+        systemAuthenticator.runWithUser("admin", () -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            WorkScheduleUsersAddView dialog = add(openSchedule(schedule));
+            clickOk(dialog);
+
+            assertThat(usersField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Пользователи\"");
+            assertThat(startDateField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Дата начала\"");
+        });
     }
 
     @Test
@@ -217,13 +246,77 @@ public class ScheduleUsersUiTest {
     }
 
     @Test
-    void addUsersDialogNeedsTheEditorAssignments() {
-        WindowBuilder<WorkScheduleUsersAddView> builder =
-                dialogWindows.view(UiTestUtils.getCurrentView(), WorkScheduleUsersAddView.class);
+    void dialogKeepsACopyOfTheAssignments() {
+        User a = saveUser("Ann");
+        WorkSchedule schedule = saveSchedule();
+        WorkScheduleUsersAddView dialog = add(openSchedule(schedule));
+        // Added in the editor and not saved yet
+        WorkScheduleAssignment added = dataManager.create(WorkScheduleAssignment.class);
+        added.setUser(a);
+        added.setWorkSchedule(schedule);
+        added.setStartDate(DEC_1);
+        List<WorkScheduleAssignment> assignments = new ArrayList<>(List.of(added));
+        dialog.setEditorAssignments(assignments, List.of());
 
-        assertThatThrownBy(builder::open)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("setEditorAssignments() must be called before the view opens");
+        // A change of the given collection after the dialog gets it does not reach the dialog
+        assignments.clear();
+        usersField(dialog).setTypedValue(List.of(a));
+        startDateField(dialog).setTypedValue(DEC_1);
+        clickOk(dialog);
+
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
+        assertThat(usersField(dialog).getErrorMessage())
+                .isEqualTo("Already assigned from this date: " + metadataTools.getInstanceName(a));
+    }
+
+    @Test
+    void dialogKeepsACopyOfTheRemovedIds() {
+        User a = saveUser("Ann");
+        WorkSchedule schedule = saveSchedule();
+        WorkScheduleAssignment saved = saveAssignment(a, schedule, DEC_1);
+        WorkScheduleUsersAddView dialog = add(openSchedule(schedule));
+        List<UUID> removedIds = new ArrayList<>(List.of(saved.getId()));
+        dialog.setEditorAssignments(List.of(), removedIds);
+
+        // A change of the given collection after the dialog gets it does not reach the dialog
+        removedIds.clear();
+        usersField(dialog).setTypedValue(List.of(a));
+        startDateField(dialog).setTypedValue(DEC_1);
+        clickOk(dialog);
+
+        // The saved row from that date counts as removed in the editor, so it is not a duplicate
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+    }
+
+    @Test
+    void removalIsKnownOnlyFromTheGivenIds() {
+        User a = saveUser("Ann");
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(a, schedule, DEC_1);
+        WorkScheduleDetailView editor = openSchedule(schedule);
+        remove(editor, a);
+
+        WorkScheduleUsersAddView dialog = add(editor);
+        // Removed in the editor's data context, but its id is not handed to the dialog
+        dialog.setEditorAssignments(List.of(), List.of());
+        usersField(dialog).setTypedValue(List.of(a));
+        startDateField(dialog).setTypedValue(DEC_1);
+        clickOk(dialog);
+
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
+        assertThat(usersField(dialog).getErrorMessage())
+                .isEqualTo("Already assigned from this date: " + metadataTools.getInstanceName(a));
+    }
+
+    @Test
+    void dialogRefusesNoAssignmentsOrRemovedIds() {
+        WorkScheduleUsersAddView dialog =
+                dialogWindows.view(UiTestUtils.getCurrentView(), WorkScheduleUsersAddView.class).build().getView();
+
+        assertThatThrownBy(() -> dialog.setEditorAssignments(null, List.of()))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> dialog.setEditorAssignments(List.of(), null))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -296,7 +389,7 @@ public class ScheduleUsersUiTest {
         // The saved row from that date is held in this editor and starts later there, so it is not a duplicate
         addUsers(editor, DEC_1, a);
 
-        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(JAN_1, DEC_1);
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(DEC_1, JAN_1);
     }
 
     @Test
@@ -407,7 +500,22 @@ public class ScheduleUsersUiTest {
     }
 
     @Test
-    void assignmentsAreSortedNewestFirst() {
+    void assignmentsLoadNewestFirstFromTheQuery() {
+        User a = saveUser("Ann");
+        User b = saveUser("Bob");
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(a, schedule, NOV_1);
+        saveAssignment(b, schedule, JAN_1);
+        WorkScheduleDetailView editor = openSchedule(schedule);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+
+        // The order is the query's own, not a sort of the table
+        assertThat(grid.getSortOrder()).isEmpty();
+        assertThat(dates(grid)).containsExactly(JAN_1, NOV_1);
+    }
+
+    @Test
+    void addedUsersAreAddedAtTheTop() {
         User a = saveUser("Ann");
         User b = saveUser("Bob");
         User c = saveUser("Cid");
@@ -415,14 +523,29 @@ public class ScheduleUsersUiTest {
         saveAssignment(a, schedule, NOV_1);
         saveAssignment(b, schedule, JAN_1);
         WorkScheduleDetailView editor = openSchedule(schedule);
-        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
 
-        assertThat(dates(grid)).containsExactly(JAN_1, NOV_1);
-
-        // Added assignments take their place by date
+        // Older than the first assignment listed, and still first
         addUsers(editor, DEC_1, c);
 
-        assertThat(dates(grid)).containsExactly(JAN_1, DEC_1, NOV_1);
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(DEC_1, JAN_1, NOV_1);
+    }
+
+    @Test
+    void editedAssignmentStaysInPlace() {
+        User a = saveUser("Ann");
+        User b = saveUser("Bob");
+        User c = saveUser("Cid");
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(a, schedule, NOV_1);
+        saveAssignment(b, schedule, DEC_1);
+        saveAssignment(c, schedule, JAN_1);
+        WorkScheduleDetailView editor = openSchedule(schedule);
+
+        WorkScheduleAssignmentDetailView dialog = edit(editor, a);
+        UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(dialog, "startDateField").setTypedValue(FEB_1);
+        clickOk(dialog);
+
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(JAN_1, DEC_1, FEB_1);
     }
 
     @Test
@@ -480,16 +603,136 @@ public class ScheduleUsersUiTest {
     }
 
     @Test
-    void startDateColumnHasAFixedWidth() {
-        WorkScheduleDetailView editor = openNewSchedule();
-        Grid.Column<WorkScheduleAssignment> column = Objects.requireNonNull(
-                assignmentsDataGrid(editor).getColumnByKey("startDate"));
+    void editRedrawsEveryRow() {
+        LocalDate today = LocalDate.now();
+        User a = saveUser("Ann");
+        WorkSchedule schedule = saveSchedule();
+        WorkScheduleAssignment past = saveAssignment(a, schedule, today.minusMonths(1));
+        WorkScheduleAssignment future = saveAssignment(a, schedule, today.plusMonths(1));
+        WorkScheduleDetailView editor = openSchedule(schedule);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+        List<DataGridItems.ItemSetChangeEvent<WorkScheduleAssignment>> redraws = new ArrayList<>();
+        Objects.requireNonNull(grid.getItems()).addItemSetChangeListener(redraws::add);
 
-        // The Current badge can appear after the table is sized, on an assignment added or edited here, so the
-        // column's width does not come from the rows it first shows
-        assertThat(column.isAutoWidth()).isFalse();
-        assertThat(column.getFlexGrow()).isZero();
-        assertThat(column.getWidth()).endsWith("rem");
+        // The edited row takes the Current badge from the other one, which must be drawn again too
+        WorkScheduleAssignmentDetailView dialog = edit(editor, listed(grid, future));
+        UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(dialog, "startDateField").setTypedValue(today);
+        clickOk(dialog);
+
+        assertThat(badges(grid, listed(grid, future))).hasSize(1);
+        assertThat(badges(grid, listed(grid, past))).isEmpty();
+        assertThat(redraws).isNotEmpty();
+    }
+
+    @Test
+    void userAndStartDateColumnsAreAutoWidth() {
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(openNewSchedule());
+
+        for (String key : List.of("user", "startDate")) {
+            Grid.Column<WorkScheduleAssignment> column = Objects.requireNonNull(grid.getColumnByKey(key));
+            assertThat(column.isAutoWidth()).as(key).isTrue();
+            assertThat(column.getWidth()).as(key).isNull();
+        }
+    }
+
+    @Test
+    void columnsAreMeasuredAgainWhenAssignmentsAreAddedOrEdited() {
+        User a = saveUser("Ann");
+        User b = saveUser("Bob");
+        WorkSchedule schedule = saveSchedule();
+        saveAssignment(a, schedule, NOV_1);
+        WorkScheduleDetailView editor = openSchedule(schedule);
+        DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+        // Drops what opening the editor queued for the browser
+        browserCalls(grid);
+
+        // An added assignment can have a longer user name or a badge the rows the table was sized to lack
+        addUsers(editor, DEC_1, b);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+
+        // So can an edited one
+        WorkScheduleAssignmentDetailView dialog = edit(editor, a);
+        UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(dialog, "startDateField").setTypedValue(JAN_1);
+        browserCalls(grid);
+        clickOk(dialog);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+    }
+
+    @Test
+    void cancelWithAChangeAsksAndDiscardClosesWithoutAdding() {
+        User a = saveUser("Ann");
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+        WorkScheduleUsersAddView dialog = add(editor);
+        usersField(dialog).setTypedValue(List.of(a));
+
+        UiTestUtils.<JmixButton>getComponent(dialog, "cancelBtn").click();
+
+        DialogInfo question = unsavedChangesQuestion();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).contains(dialog);
+
+        dialogButton(question, "yes").click();
+
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+        assertThat(listed(assignmentsDataGrid(editor))).isEmpty();
+    }
+
+    @Test
+    void closeWithAChangeAsksAndCancelKeepsTheDialog() {
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+        WorkScheduleUsersAddView dialog = add(editor);
+        startDateField(dialog).setTypedValue(DEC_1);
+
+        // How Esc and the dialog's close button close it
+        dialog.closeWithDefaultAction();
+
+        DialogInfo question = unsavedChangesQuestion();
+        dialogButton(question, "no").click();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
+        assertThat(startDateField(dialog).getTypedValue()).isEqualTo(DEC_1);
+        assertThat(listed(assignmentsDataGrid(editor))).isEmpty();
+    }
+
+    @Test
+    void unchangedDialogClosesWithoutAsking() {
+        User a = saveUser("Ann");
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+
+        WorkScheduleUsersAddView untouched = add(editor);
+        UiTestUtils.<JmixButton>getComponent(untouched, "cancelBtn").click();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(untouched);
+
+        // Fields changed and changed back are as the dialog opened
+        WorkScheduleUsersAddView restored = add(editor);
+        usersField(restored).setTypedValue(List.of(a));
+        startDateField(restored).setTypedValue(DEC_1);
+        Action clear = Objects.requireNonNull(usersField(restored).getAction("clearLookup"), "the clear action");
+        assertThat(clear.isEnabled()).isTrue();
+        clear.actionPerform(usersField(restored));
+        startDateField(restored).clear();
+        restored.closeWithDefaultAction();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(restored);
+        assertThat(listed(assignmentsDataGrid(editor))).isEmpty();
+    }
+
+    @Test
+    void okClosesWithoutAsking() {
+        User a = saveUser("Ann");
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+        WorkScheduleUsersAddView dialog = add(editor);
+        usersField(dialog).setTypedValue(List.of(a));
+        startDateField(dialog).setTypedValue(DEC_1);
+
+        clickOk(dialog);
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+        assertThat(dates(assignmentsDataGrid(editor))).containsExactly(DEC_1);
     }
 
     @AfterEach
@@ -550,11 +793,16 @@ public class ScheduleUsersUiTest {
     }
 
     private static WorkScheduleAssignmentDetailView edit(WorkScheduleDetailView editor, User user) {
+        return edit(editor, listed(assignmentsDataGrid(editor), user));
+    }
+
+    private static WorkScheduleAssignmentDetailView edit(WorkScheduleDetailView editor,
+                                                         WorkScheduleAssignment assignment) {
         DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
         Action edit = action(grid, "edit");
 
         grid.deselectAll();
-        grid.select(listed(grid, user));
+        grid.select(assignment);
         assertThat(edit.isEnabled()).isTrue();
         edit.actionPerform(grid);
 
@@ -637,6 +885,23 @@ public class ScheduleUsersUiTest {
         return cell.getChildren()
                 .filter(Badge.class::isInstance)
                 .map(Badge.class::cast)
+                .toList();
+    }
+
+    private DialogInfo unsavedChangesQuestion() {
+        DialogInfo question = Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(),
+                "a question about the unsaved changes");
+        assertThat(question.getDialog().getHeaderTitle())
+                .isEqualTo(messages.getMessage("dialogs.closeUnsaved.title"));
+        return question;
+    }
+
+    private static List<String> browserCalls(DataGrid<WorkScheduleAssignment> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
                 .toList();
     }
 

@@ -18,6 +18,7 @@ package com.glebfox.timesheets.action;
 
 import com.vaadin.flow.component.Component;
 import io.jmix.core.AccessManager;
+import io.jmix.core.entity.EntityValues;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.component.ListDataComponent;
 import io.jmix.flowui.component.UiComponentUtils;
@@ -33,12 +34,13 @@ import io.jmix.flowui.view.ViewControllerUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
  * Finds what a custom list action works on through its target: the container the list component shows and its
- * loader, the view that holds the component, its data context and the entities removed there, and whether
- * the current user may perform the action's operation on the entity the component shows.
+ * loader, the view that holds the component, its data context and the ids of the entities removed there,
+ * and whether the current user may perform the action's operation on the entity the component shows.
  */
 final class ListActionTargets {
 
@@ -122,18 +124,19 @@ final class ListActionTargets {
     }
 
     /**
-     * Returns the entities of a class removed in the data context of the view that holds a list component:
-     * gone from the view's lists, though not deleted until the view saves its changes.
+     * Returns the ids of the entities of a class removed in the data context of the view that holds a list
+     * component: gone from the view's lists, though not deleted until the view saves its changes.
      *
      * @param target      the action's list component
-     * @param entityClass the class of the entities to return
-     * @return the removed entities of that class, possibly none
+     * @param entityClass the class of the entities whose ids to return
+     * @return the ids of the removed entities of that class, possibly none
      * @throws IllegalStateException if the component is not attached to a view, or the view has no data context
      */
-    static <E> List<E> getRemoved(ListDataComponent<?> target, Class<E> entityClass) {
+    static List<UUID> getRemovedIds(ListDataComponent<?> target, Class<?> entityClass) {
         return getDataContext(target).getRemoved().stream()
                 .filter(entityClass::isInstance)
-                .map(entityClass::cast)
+                // Every entity of the application has a UUID id
+                .map(entity -> (UUID) EntityValues.getId(entity))
                 .toList();
     }
 

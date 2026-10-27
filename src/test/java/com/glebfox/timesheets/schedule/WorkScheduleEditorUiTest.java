@@ -33,10 +33,12 @@ import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
-import io.jmix.flowui.component.checkbox.Switch;
+import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.component.checkboxgroup.JmixCheckboxGroup;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.textfield.TypedTextField;
+import io.jmix.flowui.data.EntityValueSource;
+import io.jmix.flowui.data.SupportsValueSource;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -188,42 +190,34 @@ public class WorkScheduleEditorUiTest {
     }
 
     @Test
-    void defaultSwitchIsReadOnlyOnTheDefault() {
+    void editorHasNoDefaultSwitch() {
         WorkSchedule defaultSchedule = dataManager.load(WorkSchedule.class)
                 .query("e.isDefault = true")
                 .one();
         WorkScheduleDetailView defaultView = openSchedule(defaultSchedule);
 
-        assertThat(isDefaultField(defaultView).getValue()).isTrue();
-        assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
-        assertThat(isDefaultField(defaultView).getHelperText())
-                .isEqualTo("To change it, make another schedule the default");
-
-        WorkScheduleDetailView otherView = openSchedule(saveSchedule(uniqueName(), null));
-
-        assertThat(isDefaultField(otherView).getValue()).isFalse();
-        assertThat(isDefaultField(otherView).isReadOnly()).isFalse();
-        assertThat(isDefaultField(otherView).getHelperText()).isNull();
+        // A schedule becomes the default only through the list, so no field of the editor edits the flag
+        assertThat(UiComponentUtils.findComponent(defaultView, "isDefaultField")).isEmpty();
+        assertThat(boundProperties(defaultView)).contains("name").doesNotContain("isDefault");
     }
 
     @Test
-    void defaultSwitchFollowsTheViewReadOnlyModeAndStaysLockedOnTheDefault() {
+    void savingAScheduleKeepsTheDefault() {
         WorkSchedule defaultSchedule = dataManager.load(WorkSchedule.class)
                 .query("e.isDefault = true")
                 .one();
-        WorkScheduleDetailView defaultView = openSchedule(defaultSchedule);
+        WorkScheduleDetailView view = openSchedule(saveSchedule(uniqueName(), null));
 
-        defaultView.setReadOnly(true);
-        assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
-        defaultView.setReadOnly(false);
-        assertThat(isDefaultField(defaultView).isReadOnly()).isTrue();
+        String newName = uniqueName();
+        nameField(view).setValue(newName);
+        clickOk(view);
 
-        WorkScheduleDetailView otherView = openSchedule(saveSchedule(uniqueName(), null));
-
-        otherView.setReadOnly(true);
-        assertThat(isDefaultField(otherView).isReadOnly()).isTrue();
-        otherView.setReadOnly(false);
-        assertThat(isDefaultField(otherView).isReadOnly()).isFalse();
+        assertThat(UiTestUtils.<View<?>>getCurrentView()).isNotSameAs(view);
+        assertThat(loadByName(newName)).singleElement()
+                .extracting(WorkSchedule::getIsDefault).isEqualTo(false);
+        assertThat(dataManager.load(WorkSchedule.class)
+                .query("e.isDefault = true")
+                .list()).extracting(WorkSchedule::getId).containsExactly(defaultSchedule.getId());
     }
 
     @Test
@@ -322,8 +316,16 @@ public class WorkScheduleEditorUiTest {
         return UiTestUtils.getComponent(view, "holidayCalendarField");
     }
 
-    private static Switch isDefaultField(WorkScheduleDetailView view) {
-        return UiTestUtils.getComponent(view, "isDefaultField");
+    /**
+     * Returns the paths of the attributes that the view's fields are bound to.
+     */
+    private static List<String> boundProperties(WorkScheduleDetailView view) {
+        return UiComponentUtils.getComponents(view).stream()
+                .filter(SupportsValueSource.class::isInstance)
+                .map(component -> ((SupportsValueSource<?>) component).getValueSource())
+                .filter(EntityValueSource.class::isInstance)
+                .map(source -> ((EntityValueSource<?, ?>) source).getMetaPropertyPath().toPathString())
+                .toList();
     }
 
     private static String uniqueName() {

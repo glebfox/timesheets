@@ -29,19 +29,17 @@ import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleUsersAddView;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
-import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.EntityStates;
-import io.jmix.core.Sort;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
-import io.jmix.flowui.component.checkbox.Switch;
 import io.jmix.flowui.component.checkboxgroup.JmixCheckboxGroup;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.data.grid.ContainerDataGridItems;
 import io.jmix.flowui.exception.ValidationException;
 import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
@@ -58,6 +56,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -71,8 +70,6 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     private JmixCheckboxGroup<DayOfWeek> workdaysField;
     @ViewComponent
     private EntityComboBox<HolidayCalendar> holidayCalendarField;
-    @ViewComponent
-    private Switch isDefaultField;
     @ViewComponent
     private DataGrid<WorkScheduleAssignment> assignmentsDataGrid;
     @ViewComponent
@@ -95,7 +92,6 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
 
     private final Span workdaysSummary = new Span();
 
-    private boolean loadedAsDefault;
     private boolean fillingWorkdaysField;
     // The assignments in force today, found when the table is drawn and dropped whenever its assignments change
     @Nullable
@@ -104,6 +100,11 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     @Subscribe
     public void onInit(final InitEvent event) {
         initWorkdaysField();
+
+        // An edited assignment can take the Current badge from another row or give it to one, so an edit redraws
+        // every row, not only the edited one
+        ((ContainerDataGridItems<?>) Objects.requireNonNull(assignmentsDataGrid.getItems()))
+                .setRefreshAllOnItemReplace(true);
     }
 
     private void initWorkdaysField() {
@@ -129,19 +130,12 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
 
         fillWorkdaysField(schedule);
         updateWorkdaysSummary();
-
-        loadedAsDefault = Boolean.TRUE.equals(schedule.getIsDefault());
-        if (loadedAsDefault) {
-            isDefaultField.setHelperText(messageBundle.getMessage("isDefaultField.helperText"));
-        }
         updateReadOnlyFields();
 
         HolidayCalendar holidayCalendar = schedule.getHolidayCalendar();
         if (holidayCalendar != null && holidayCalendar.getDeletedDate() != null) {
             holidayCalendarField.setHelperText(messageBundle.getMessage("holidayCalendarField.deletedHelperText"));
         }
-
-        assignmentsDataGrid.sort(GridSortOrder.desc(assignmentsDataGrid.getColumnByKey("startDate")).build());
     }
 
     @Subscribe
@@ -152,11 +146,6 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     private void updateReadOnlyFields() {
         // The view's read-only mode reaches only the fields bound to a property
         workdaysField.setReadOnly(isReadOnly());
-        // The binding and the view's read-only mode set whether the switch is editable, and would make it
-        // editable again when the view leaves its read-only mode; the default's switch stays locked
-        if (loadedAsDefault) {
-            isDefaultField.setReadOnly(true);
-        }
     }
 
     @Install(to = "workdayTimeField", subject = "validator")
@@ -189,13 +178,11 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
             final CollectionContainer.CollectionChangeEvent<WorkScheduleAssignment> event) {
         currentAssignments = null;
 
-        // An added assignment is added last and an edited one stays in place, whatever its date, while the grid
-        // sorts its rows only when its sort order changes. Sorting again also redraws every row, so the Current
-        // badge moves when an edit changes which assignment is in force today
+        // The browser sizes the auto-width columns to the rows it shows first, while an added assignment or an edited
+        // one can have a longer user name or a badge those rows lack
         if (event.getChangeType() == CollectionChangeType.ADD_ITEMS
                 || event.getChangeType() == CollectionChangeType.SET_ITEM) {
-            // Unsorted, the table keeps the order the assignments are loaded in: newest first
-            componentSupport.sortAsShown(assignmentsDataGrid, assignmentsDc, Sort.by(Sort.Direction.DESC, "startDate"));
+            assignmentsDataGrid.recalculateColumnWidths();
         }
     }
 
