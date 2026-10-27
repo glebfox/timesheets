@@ -69,11 +69,12 @@
                     <action id="remove" type="list_remove"/>
                 </actions>
                 <columns resizable="true">
-                    <!-- Fixed widths, not autoWidth: a day added or edited after the table is sized can have
-                         a wider date, since weekday names and digits differ in width, or the longer type.
-                         They fit the widest date and type in English and Russian -->
-                    <column property="date" width="9rem" flexGrow="0"/>
-                    <column property="type" width="8rem" flexGrow="0"/>
+                    <column property="date" autoWidth="true" flexGrow="0">
+                        <!-- The weekday catches a wrong date: a workday on a Friday or a day off on a Sunday
+                             reads as wrong at once -->
+                        <localDateRenderer format="msg://dateColumn.format"/>
+                    </column>
+                    <column property="type" autoWidth="true" flexGrow="0"/>
                     <column property="name"/>
                 </columns>
             </dataGrid>

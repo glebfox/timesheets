@@ -51,6 +51,7 @@ public class HolidayCalendar {
 
     // No @OnDelete(DeletePolicy.CASCADE): a deleted calendar keeps its days,
     // so the plans of schedules that still refer to it do not change
+    @OrderBy("date DESC")
     @Composition
     @OneToMany(mappedBy = "calendar")
     private List<HolidayCalendarDay> days;

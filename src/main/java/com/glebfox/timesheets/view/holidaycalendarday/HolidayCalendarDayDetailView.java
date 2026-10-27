@@ -17,16 +17,15 @@
 package com.glebfox.timesheets.view.holidaycalendarday;
 
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
-import com.google.common.base.Preconditions;
 import io.jmix.flowui.exception.ValidationException;
 import io.jmix.flowui.view.*;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 /**
  * Edits one day of a holiday calendar. Opened as a dialog from the calendar editor, which hands it
@@ -41,24 +40,17 @@ public class HolidayCalendarDayDetailView extends StandardDetailView<HolidayCale
     @ViewComponent
     private MessageBundle messageBundle;
 
-    @Nullable
-    private Supplier<Collection<HolidayCalendarDay>> calendarDays;
+    private Collection<HolidayCalendarDay> calendarDays = List.of();
 
     /**
-     * Sets the days of the calendar to check the edited day's date against: the days of the calendar editor,
-     * saved or added there and not removed. The edited day itself may be among them. Required: the view
-     * does not open without them.
+     * Sets the days of the calendar to check the edited day's date against: the days of the calendar editor
+     * as they stand when the view opens, saved or added there and not removed. The edited day itself may be
+     * among them. The view keeps a copy, so a later change of the given collection does not reach it.
      *
-     * @param calendarDays supplies the calendar's days when the date is checked
+     * @param calendarDays the calendar's days, possibly none
      */
-    public void setCalendarDays(Supplier<Collection<HolidayCalendarDay>> calendarDays) {
-        this.calendarDays = calendarDays;
-    }
-
-    @Subscribe
-    public void onBeforeShow(final BeforeShowEvent event) {
-        // Without the editor's days the check would miss the dates added or changed there
-        Preconditions.checkState(calendarDays != null, "setCalendarDays() must be called before the view opens");
+    public void setCalendarDays(Collection<HolidayCalendarDay> calendarDays) {
+        this.calendarDays = List.copyOf(Objects.requireNonNull(calendarDays));
     }
 
     @Install(to = "dateField", subject = "validator")
@@ -68,7 +60,7 @@ public class HolidayCalendarDayDetailView extends StandardDetailView<HolidayCale
         }
 
         UUID editedId = getEditedEntity().getId();
-        boolean taken = Objects.requireNonNull(calendarDays).get().stream()
+        boolean taken = calendarDays.stream()
                 .anyMatch(day -> !day.getId().equals(editedId) && value.equals(day.getDate()));
         if (taken) {
             throw new ValidationException(messageBundle.getMessage("dateField.duplicateError"));

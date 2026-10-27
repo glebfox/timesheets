@@ -26,14 +26,19 @@ import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarListView;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDayDetailView;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridSortOrder;
-import com.vaadin.flow.data.renderer.TextRenderer;
+import com.vaadin.flow.component.internal.UIInternals;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
+import io.jmix.core.security.ClientDetails;
+import io.jmix.core.security.SecurityContextHelper;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.combobox.EntityComboBox;
@@ -57,10 +62,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -74,6 +81,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class HolidayCalendarViewsUiTest {
 
     static final String NAME_PREFIX = "Calendar views test ";
+
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     static final LocalDate JAN_1_2026 = LocalDate.of(2026, 1, 1);
     static final LocalDate NOV_4_2026 = LocalDate.of(2026, 11, 4);
@@ -90,20 +99,25 @@ public class HolidayCalendarViewsUiTest {
     DatatypeFormatter datatypeFormatter;
     @Autowired
     DialogWindows dialogWindows;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
 
     List<Id<HolidayCalendar>> calendarIds = new ArrayList<>();
 
     @Test
-    void daysAreSortedNewestFirst() {
+    void daysLoadNewestFirstFromTheModel() {
         HolidayCalendar calendar = saveCalendar(uniqueName(), JAN_1_2026, JAN_1_2027, NOV_4_2026);
 
         HolidayCalendarDetailView view = openCalendar(calendar);
+        DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
 
-        assertThat(dates(daysDataGrid(view))).containsExactly(JAN_1_2027, NOV_4_2026, JAN_1_2026);
+        // The order is the calendar's own, not a sort of the table
+        assertThat(grid.getSortOrder()).isEmpty();
+        assertThat(dates(grid)).containsExactly(JAN_1_2027, NOV_4_2026, JAN_1_2026);
     }
 
     @Test
-    void editedDayTakesItsPlaceByDate() {
+    void editedDayStaysInPlace() {
         HolidayCalendar calendar = saveCalendar(uniqueName(), JAN_1_2026, NOV_4_2026);
         HolidayCalendarDetailView view = openCalendar(calendar);
 
@@ -111,7 +125,7 @@ public class HolidayCalendarViewsUiTest {
         dateField(dayEditor).setTypedValue(JAN_1_2027);
         clickOk(dayEditor);
 
-        assertThat(dates(daysDataGrid(view))).containsExactly(JAN_1_2027, NOV_4_2026);
+        assertThat(dates(daysDataGrid(view))).containsExactly(NOV_4_2026, JAN_1_2027);
     }
 
     @Test
@@ -122,22 +136,57 @@ public class HolidayCalendarViewsUiTest {
 
         String cell = renderText(grid, "date", listed(grid, day -> JAN_1_2027.equals(day.getDate())));
 
-        assertThat(cell).isEqualTo("Fri, " + datatypeFormatter.formatLocalDate(JAN_1_2027));
+        assertThat(cell).isEqualTo("Fri, 01/01/2027");
     }
 
     @Test
-    void dateAndTypeColumnsHaveFixedWidths() {
+    void dateColumnFollowsTheRussianFormat() {
+        HolidayCalendar calendar = saveCalendar(uniqueName(), JAN_1_2027);
+
+        systemAuthenticator.runWithUser("admin", () -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            HolidayCalendarDetailView view = openCalendar(calendar);
+            DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
+
+            String cell = renderText(grid, "date", listed(grid, day -> JAN_1_2027.equals(day.getDate())));
+
+            // The date format writes the Russian weekday in lowercase
+            assertThat(cell).isEqualTo("пт, 01.01.2027");
+        });
+    }
+
+    @Test
+    void dateAndTypeColumnsAreAutoWidth() {
         HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
         DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
 
-        // Days added or edited after the table is sized can have a wider date or the longer type,
-        // so neither column's width comes from the rows it first shows
         for (String key : List.of("date", "type")) {
             Grid.Column<HolidayCalendarDay> column = Objects.requireNonNull(grid.getColumnByKey(key));
-            assertThat(column.isAutoWidth()).as(key).isFalse();
-            assertThat(column.getFlexGrow()).as(key).isZero();
-            assertThat(column.getWidth()).as(key).endsWith("rem");
+            assertThat(column.isAutoWidth()).as(key).isTrue();
+            assertThat(column.getWidth()).as(key).isNull();
         }
+    }
+
+    @Test
+    void columnsAreMeasuredAgainWhenDaysAreAddedOrEdited() {
+        HolidayCalendar calendar = saveCalendar(uniqueName(), NOV_4_2026);
+        HolidayCalendarDetailView view = openCalendar(calendar);
+        DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
+        // Drops what opening the editor queued for the browser
+        browserCalls(grid);
+
+        // An added day can have a wider date or the longer type than the rows the table was sized to
+        addNewYear(view);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+
+        // So can an edited one
+        HolidayCalendarDayDetailView dayEditor = editDay(view, NOV_4_2026);
+        UiTestUtils.<JmixRadioButtonGroup<HolidayCalendarDayType>>getComponent(dayEditor, "typeField")
+                .setValue(HolidayCalendarDayType.WORKDAY);
+        browserCalls(grid);
+        clickOk(dayEditor);
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
     }
 
     @Test
@@ -164,15 +213,31 @@ public class HolidayCalendarViewsUiTest {
     }
 
     @Test
-    void dayEditorNeedsTheCalendarDays() {
-        DetailWindowClassBuilder<HolidayCalendarDay, HolidayCalendarDayDetailView> builder =
-                dialogWindows.detail(UiTestUtils.getCurrentView(), HolidayCalendarDay.class)
-                        .withViewClass(HolidayCalendarDayDetailView.class)
-                        .newEntity();
+    void dayEditorKeepsTheDaysItWasGiven() {
+        HolidayCalendarDay otherDay = dataManager.create(HolidayCalendarDay.class);
+        otherDay.setDate(JAN_1_2027);
+        List<HolidayCalendarDay> days = new ArrayList<>(List.of(otherDay));
+        HolidayCalendarDayDetailView dayEditor = newDayEditor()
+                .withViewConfigurer(view -> view.setCalendarDays(days))
+                .open()
+                .getView();
 
-        assertThatThrownBy(builder::open)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("setCalendarDays() must be called before the view opens");
+        // A change of the given collection after the editor opens does not reach it
+        days.clear();
+        dateField(dayEditor).setTypedValue(JAN_1_2027);
+        clickOk(dayEditor);
+
+        assertThat(dateField(dayEditor).isInvalid()).isTrue();
+        assertThat(dateField(dayEditor).getErrorMessage()).isEqualTo("This day is already in the calendar");
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dayEditor);
+    }
+
+    @Test
+    void dayEditorRefusesNoCalendarDays() {
+        HolidayCalendarDayDetailView dayEditor = newDayEditor().build().getView();
+
+        assertThatThrownBy(() -> dayEditor.setCalendarDays(null))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -406,6 +471,15 @@ public class HolidayCalendarViewsUiTest {
         nameFilter.apply();
     }
 
+    /**
+     * Builds the day editor for a new day, opened on its own rather than from a calendar editor.
+     */
+    private DetailWindowClassBuilder<HolidayCalendarDay, HolidayCalendarDayDetailView> newDayEditor() {
+        return dialogWindows.detail(UiTestUtils.getCurrentView(), HolidayCalendarDay.class)
+                .withViewClass(HolidayCalendarDayDetailView.class)
+                .newEntity();
+    }
+
     private static HolidayCalendarDayDetailView editDay(HolidayCalendarDetailView view, LocalDate date) {
         DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
         Action edit = Objects.requireNonNull(grid.getAction("edit"));
@@ -477,9 +551,18 @@ public class HolidayCalendarViewsUiTest {
     }
 
     private static <T> String renderText(DataGrid<T> grid, String columnKey, T item) {
-        TextRenderer<T> renderer = (TextRenderer<T>) Objects.requireNonNull(grid.getColumnByKey(columnKey))
-                .getRenderer();
+        ComponentRenderer<?, T> renderer = (ComponentRenderer<?, T>)
+                Objects.requireNonNull(grid.getColumnByKey(columnKey)).getRenderer();
         return renderer.createComponent(item).getElement().getText();
+    }
+
+    private static List<String> browserCalls(DataGrid<HolidayCalendarDay> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     private static Button dialogButton(DialogInfo dialog, String id) {
