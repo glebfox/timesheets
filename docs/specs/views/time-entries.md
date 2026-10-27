@@ -10,7 +10,7 @@ The screens for logging and reviewing time: My time entries, Time entries, and t
 
 - order entries by date, newest first;
 - show the date, the task with its project beneath it, the spent time, the status as a badge (New yellow, Approved green, Rejected red, Closed neutral), the description, the tags as badges, and the rejection reason; a long description or rejection reason is cut short, with the full text in a popover that renders the Markdown;
-- offer a filter on any attribute and pagination, both kept in the URL;
+- offer a filter on any attribute and pagination, both kept when the browser page is reloaded;
 - offer Create, Edit, Remove, and Copy.
 
 In My time entries, Create, Edit, and Copy open the editor for an *own* entry, Create and Edit in the list's own tab, replacing the list until the editor closes. In Time entries they open it for a *general* one (see below).

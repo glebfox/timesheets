@@ -6,7 +6,7 @@ The client list, the client editor, and the client picker. What a client is: [cl
 
 ## Clients
 
-`clients`, menu Project Management. Shows clients as cards: the logo (or an avatar with initials), the name, and a contact information block listing the email, phone, address, and URL that are filled in; the URL is a link that opens in a new browser tab. When the list is empty, including when the filter matches nothing, a "There aren't any clients" placeholder replaces the cards. A name filter and pagination are kept in the URL.
+`clients`, menu Project Management. Shows clients as cards: the logo (or an avatar with initials), the name, and a contact information block listing the email, phone, address, and URL that are filled in; the URL is a link that opens in a new browser tab. When the list is empty, including when the filter matches nothing, a "There aren't any clients" placeholder replaces the cards. A name filter and pagination are kept when the browser page is reloaded.
 
 - **Create** — the primary button, disabled for users who may not create clients; it navigates to the client editor.
 - Each card's **Edit** button navigates to the editor; for users who may not edit clients it shows an eye icon and opens the editor read-only. Its **Remove** button is shown only to users who may delete clients and asks for confirmation.

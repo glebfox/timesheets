@@ -6,7 +6,7 @@ The user list and the user editor, under the Administration menu. What a user is
 
 ## Users
 
-`users`. Lists users by username, with the user (avatar, full name or username, and an Active or Inactive badge), email, and time zone. It offers a filter on any attribute and pagination, both kept in the URL.
+`users`. Lists users by username, with the user (avatar, full name or username, and an Active or Inactive badge), email, and time zone. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded.
 
 Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, whatever screens the user may open ([decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md)). The gear menu is hidden when none of its items is left.
 
