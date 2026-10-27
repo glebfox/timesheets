@@ -14,14 +14,25 @@
  * limitations under the License.
  */
 
-/* A checkbox group or a radio button group whose items read as a row of toggle buttons:
-   the box of each item is hidden, its label is the button, and a checked item is filled with the accent color.
-   The item's native input stretches over the whole button, so a click anywhere on it toggles the item,
+/* A checkbox group or a radio button group that reads as one segmented control:
+   the items are joined into a single bar that carries the border, divided by a shared line,
+   the box of each item is hidden, its label is the segment, and a checked segment is filled with the accent color.
+   The item's native input stretches over the whole segment, so a click anywhere on it toggles the item,
    and the keyboard works as it does for the group's checkboxes or radio buttons. */
 
+.segmented-group {
+    --_segmented-border-width: var(--vaadin-input-field-border-width, 1px);
+    /* The segments sit inside the bar's border, so their outer corners follow its inner edge */
+    --_segmented-inner-radius: calc(var(--vaadin-radius-m) - var(--_segmented-border-width));
+}
+
 .segmented-group::part(group-field) {
-    flex-flow: row wrap;
-    gap: var(--vaadin-gap-xs);
+    flex-flow: row nowrap;
+    gap: 0;
+    border: var(--_segmented-border-width) solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-m);
+    background: var(--aura-surface-color);
+    box-shadow: var(--aura-shadow-xs);
 }
 
 .segmented-group > :is(vaadin-checkbox, vaadin-radio-button) {
@@ -36,11 +47,23 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
-    border: var(--vaadin-input-field-border-width, 1px) solid var(--vaadin-border-color);
-    border-radius: var(--vaadin-radius-m);
-    background: var(--aura-surface-color);
-    box-shadow: var(--aura-shadow-xs);
+    /* The segments share the bar's width; a narrow inline padding keeps seven short day names on one line on a phone */
+    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-xs);
+}
+
+/* The line between two segments */
+.segmented-group > :is(vaadin-checkbox, vaadin-radio-button) + :is(vaadin-checkbox, vaadin-radio-button) {
+    border-inline-start: var(--_segmented-border-width) solid var(--vaadin-border-color);
+}
+
+.segmented-group > :is(vaadin-checkbox, vaadin-radio-button):first-of-type {
+    border-start-start-radius: var(--_segmented-inner-radius);
+    border-end-start-radius: var(--_segmented-inner-radius);
+}
+
+.segmented-group > :is(vaadin-checkbox, vaadin-radio-button):last-of-type {
+    border-start-end-radius: var(--_segmented-inner-radius);
+    border-end-end-radius: var(--_segmented-inner-radius);
 }
 
 /* The baseline guide of the item, which would push the label off center, and the box */
@@ -55,40 +78,73 @@
     inset: 0;
 }
 
+/* A disabled item fades its label, and a read-only radio button group disables its unchecked items:
+   the label colors below mark these states instead, alike for both groups */
+.segmented-group > :is(vaadin-checkbox, vaadin-radio-button) > label {
+    opacity: 1;
+}
+
 .segmented-group > :is(vaadin-checkbox, vaadin-radio-button)[checked] {
     --vaadin-checkbox-label-color: var(--aura-accent-contrast-color);
     --vaadin-radio-button-label-color: var(--aura-accent-contrast-color);
-    border-color: transparent;
     background: var(--aura-accent-color);
-    box-shadow: var(--aura-shadow-s);
 }
 
 @media (any-hover: hover) {
-    .segmented-group:not([readonly]) > :is(vaadin-checkbox, vaadin-radio-button):not([checked], [disabled]):hover {
+    .segmented-group:not([readonly], [disabled]) > :is(vaadin-checkbox, vaadin-radio-button):not([checked]):hover {
         background: var(--vaadin-background-container);
     }
 }
 
-/* The box carried the focus ring */
+/* The box carried the focus ring. The ring is drawn inside the segment, clear of its edges,
+   so the neighbors do not cover it; on a checked segment it takes the color of the label */
 .segmented-group > :is(vaadin-checkbox, vaadin-radio-button)[focus-ring] {
     outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
-    outline-offset: 1px;
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -2);
 }
 
-/* Read-only as Aura shows a read-only checkbox: a dashed border, no fill */
-.segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button) {
+.segmented-group > :is(vaadin-checkbox, vaadin-radio-button)[focus-ring][checked] {
+    outline-color: var(--aura-accent-contrast-color);
+}
+
+/* Read-only as Aura shows a read-only field: a dashed border, no fill, no shadow */
+.segmented-group[readonly]::part(group-field) {
     border-style: dashed;
     background: transparent;
     box-shadow: none;
 }
 
+.segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button) + :is(vaadin-checkbox, vaadin-radio-button) {
+    border-inline-start-style: dashed;
+}
+
 .segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button)[checked] {
     --vaadin-checkbox-label-color: var(--aura-accent-text-color);
     --vaadin-radio-button-label-color: var(--aura-accent-text-color);
-    border-color: var(--aura-accent-border-color);
     background: var(--aura-accent-surface);
 }
 
-.segmented-group > :is(vaadin-checkbox, vaadin-radio-button)[disabled] {
+.segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button)[focus-ring] {
+    outline-color: var(--vaadin-focus-ring-color);
+    outline-style: dashed;
+}
+
+/* Disabled as Aura shows a disabled field: a muted fill, no shadow, dimmed labels,
+   and a checked segment still told apart by a stronger fill */
+.segmented-group[disabled]::part(group-field) {
+    border-color: var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
     box-shadow: none;
+}
+
+.segmented-group[disabled] > :is(vaadin-checkbox, vaadin-radio-button) {
+    --vaadin-checkbox-label-color: var(--vaadin-text-color-disabled);
+    --vaadin-radio-button-label-color: var(--vaadin-text-color-disabled);
+    border-color: var(--vaadin-border-color-secondary);
+}
+
+.segmented-group[disabled] > :is(vaadin-checkbox, vaadin-radio-button)[checked] {
+    --vaadin-checkbox-label-color: var(--vaadin-text-color-secondary);
+    --vaadin-radio-button-label-color: var(--vaadin-text-color-secondary);
+    background: var(--vaadin-background-container-strong);
 }
