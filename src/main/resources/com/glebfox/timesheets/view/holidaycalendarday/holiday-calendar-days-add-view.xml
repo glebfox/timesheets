@@ -36,6 +36,7 @@
             <textField id="nameField"
                        label="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendarDay.name"
                        required="true"
+                       requiredMessage="msg://nameField.requiredMessage"
                        maxLength="255">
                 <prefix>
                     <icon icon="fontawesome-regular:address-card"/>
@@ -48,6 +49,7 @@
                                 datatype="localDate"
                                 label="msg://fromField.label"
                                 required="true"
+                                requiredMessage="msg://fromField.requiredMessage"
                                 width="100%" minWidth="0"/>
                     <span id="datesSeparator" text="msg://datesSeparator.text"/>
                     <datePicker id="toField"
@@ -61,6 +63,7 @@
                               label="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendarDay.type"
                               itemsEnum="com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType"
                               required="true"
+                              requiredMessage="msg://typeField.requiredMessage"
                               classNames="segmented-group"/>
         </formLayout>
         <hbox id="detailActions"

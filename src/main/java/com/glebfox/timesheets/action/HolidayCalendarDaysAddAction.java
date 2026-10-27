@@ -121,7 +121,7 @@ public class HolidayCalendarDaysAddAction
         DataContext dataContext = ListActionTargets.getDataContext(target);
 
         dialogWindows.view(ListActionTargets.getView(target), HolidayCalendarDaysAddView.class)
-                .withViewConfigurer(view -> view.setCalendarDays(daysContainer::getItems))
+                .withViewConfigurer(view -> view.setCalendarDays(daysContainer.getItems()))
                 .withAfterCloseListener(closeEvent -> {
                     if (closeEvent.closedWith(StandardOutcome.SAVE)) {
                         addDays(closeEvent.getView(), daysContainer, dataContext);
@@ -134,11 +134,11 @@ public class HolidayCalendarDaysAddAction
                                 CollectionPropertyContainer<HolidayCalendarDay> daysContainer,
                                 DataContext dataContext) {
         HolidayCalendar calendar = (HolidayCalendar) daysContainer.getMaster().getItem();
-        List<HolidayCalendarDay> days = view.getDates().stream()
+        List<HolidayCalendarDay> days = view.getDates().reversed().stream()
                 .map(date -> createDay(dataContext, calendar, date, view))
                 .toList();
-        // One change of the container for the whole range
-        daysContainer.getMutableItems().addAll(days);
+        // At the top of the table, newest first, in one change of the container
+        daysContainer.getMutableItems().addAll(0, days);
     }
 
     private static HolidayCalendarDay createDay(DataContext dataContext, HolidayCalendar calendar, LocalDate date,

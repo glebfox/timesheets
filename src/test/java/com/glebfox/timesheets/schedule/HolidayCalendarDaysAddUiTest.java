@@ -27,6 +27,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
+import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.ClientDetails;
@@ -43,7 +44,6 @@ import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewControllerUtils;
-import io.jmix.flowui.view.builder.WindowBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -95,6 +95,8 @@ public class HolidayCalendarDaysAddUiTest {
     SystemAuthenticator systemAuthenticator;
     @Autowired
     DialogWindows dialogWindows;
+    @Autowired
+    Messages messages;
 
     List<Id<HolidayCalendar>> calendarIds = new ArrayList<>();
 
@@ -120,7 +122,7 @@ public class HolidayCalendarDaysAddUiTest {
 
         assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
         List<LocalDate> newYearHolidays = DEC_31_2026.datesUntil(JAN_8_2027.plusDays(1)).toList();
-        // Newest first, as the table is sorted
+        // Added at the top, newest first
         assertThat(dates(daysDataGrid(view))).containsExactlyElementsOf(newYearHolidays.reversed());
         assertThat(daysDc(view).getItems())
                 .extracting(day -> day.getDate().getDayOfWeek())
@@ -137,6 +139,19 @@ public class HolidayCalendarDaysAddUiTest {
 
         assertThat(loadDays(calendar)).extracting(HolidayCalendarDay::getDate)
                 .containsExactlyInAnyOrderElementsOf(newYearHolidays);
+    }
+
+    @Test
+    void rangeOlderThanTheCalendarIsAddedAtTheTop() {
+        HolidayCalendar calendar = saveCalendar(uniqueName(), FEB_23_2027);
+        HolidayCalendarDetailView view = openCalendar(calendar);
+
+        HolidayCalendarDaysAddView dialog = openAddDialog(view);
+        fill(dialog, NEW_YEAR_HOLIDAYS, DEC_30_2026, DEC_31_2026);
+        clickOk(dialog);
+
+        // Above the later day the calendar has: added days go first, not into date order
+        assertThat(dates(daysDataGrid(view))).containsExactly(DEC_31_2026, DEC_30_2026, FEB_23_2027);
     }
 
     @Test
@@ -182,15 +197,51 @@ public class HolidayCalendarDaysAddUiTest {
         HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
 
         HolidayCalendarDaysAddView dialog = openAddDialog(view);
+        typeField(dialog).setValue(null);
         clickOk(dialog);
 
-        // The required messages of bound fields
+        // Worded as the framework words the required message of a bound field
         assertThat(nameField(dialog).isInvalid()).isTrue();
         assertThat(nameField(dialog).getErrorMessage()).isEqualTo("Name required");
         assertThat(fromField(dialog).isInvalid()).isTrue();
         assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Dates required");
+        assertThat(typeField(dialog).isInvalid()).isTrue();
+        assertThat(typeField(dialog).getErrorMessage()).isEqualTo("Type required");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
+    }
+
+    @Test
+    void russianRequiredMessagesNameTheFields() {
+        HolidayCalendar calendar = saveCalendar(uniqueName());
+
+        systemAuthenticator.runWithUser("admin", () -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            HolidayCalendarDaysAddView dialog = openAddDialog(openCalendar(calendar));
+            typeField(dialog).setValue(null);
+            clickOk(dialog);
+
+            assertThat(nameField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Название\"");
+            assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Даты\"");
+            assertThat(typeField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Тип\"");
+        });
+    }
+
+    @Test
+    void lastDayMinimumFollowsTheFirstDay() {
+        HolidayCalendarDaysAddView dialog = openAddDialog(openCalendar(saveCalendar(uniqueName())));
+
+        assertThat(toField(dialog).getMin()).isNull();
+
+        fromField(dialog).setTypedValue(JAN_8_2027);
+        assertThat(toField(dialog).getMin()).isEqualTo(JAN_8_2027);
+
+        fromField(dialog).setTypedValue(JAN_1_2027);
+        assertThat(toField(dialog).getMin()).isEqualTo(JAN_1_2027);
+
+        fromField(dialog).setTypedValue(null);
+        assertThat(toField(dialog).getMin()).isNull();
     }
 
     @Test
@@ -201,8 +252,10 @@ public class HolidayCalendarDaysAddUiTest {
         fill(dialog, NEW_YEAR_HOLIDAYS, JAN_8_2027, JAN_1_2027);
         clickOk(dialog);
 
+        // A last day typed before the first one breaks the field's minimum, so the framework refuses it
         assertThat(toField(dialog).isInvalid()).isTrue();
-        assertThat(toField(dialog).getErrorMessage()).isEqualTo("Must not be before the first day");
+        assertThat(toField(dialog).getErrorMessage())
+                .isEqualTo("Value should be greater than '" + datatypeFormatter.formatLocalDate(JAN_8_2027) + "'");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
     }
@@ -268,7 +321,7 @@ public class HolidayCalendarDaysAddUiTest {
         remove.actionPerform(grid);
         DialogInfo confirmation = Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(),
                 "a remove confirmation");
-        yesButton(confirmation).click();
+        dialogButton(confirmation, "yes").click();
         assertThat(daysDc(view).getItems()).isEmpty();
 
         HolidayCalendarDaysAddView dialog = openAddDialog(view);
@@ -307,13 +360,102 @@ public class HolidayCalendarDaysAddUiTest {
     }
 
     @Test
-    void dialogNeedsTheCalendarDays() {
-        WindowBuilder<HolidayCalendarDaysAddView> builder =
-                dialogWindows.view(UiTestUtils.getCurrentView(), HolidayCalendarDaysAddView.class);
+    void dialogKeepsACopyOfTheCalendarDays() {
+        HolidayCalendarDaysAddView dialog = openAddDialog(openCalendar(saveCalendar(uniqueName())));
+        HolidayCalendarDay day = dataManager.create(HolidayCalendarDay.class);
+        day.setDate(JAN_1_2027);
+        List<HolidayCalendarDay> days = new ArrayList<>(List.of(day));
+        dialog.setCalendarDays(days);
 
-        assertThatThrownBy(builder::open)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("setCalendarDays() must be called before the view opens");
+        // A change of the given collection after the dialog gets it does not reach the dialog
+        days.clear();
+        fill(dialog, NEW_YEAR_HOLIDAYS, JAN_1_2027, null);
+        clickOk(dialog);
+
+        assertThat(fromField(dialog).isInvalid()).isTrue();
+        assertThat(fromField(dialog).getErrorMessage())
+                .isEqualTo("Already in the calendar: " + datatypeFormatter.formatLocalDate(JAN_1_2027));
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
+    }
+
+    @Test
+    void dialogRefusesNoCalendarDays() {
+        HolidayCalendarDaysAddView dialog =
+                dialogWindows.view(UiTestUtils.getCurrentView(), HolidayCalendarDaysAddView.class).build().getView();
+
+        assertThatThrownBy(() -> dialog.setCalendarDays(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void cancelWithAChangeAsksAndDiscardClosesWithoutAdding() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+        HolidayCalendarDaysAddView dialog = openAddDialog(view);
+        fill(dialog, NEW_YEAR_HOLIDAYS, JAN_1_2027, null);
+
+        UiTestUtils.<JmixButton>getComponent(dialog, "cancelBtn").click();
+
+        DialogInfo question = unsavedChangesQuestion();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).contains(dialog);
+
+        dialogButton(question, "yes").click();
+
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+        assertThat(daysDc(view).getItems()).isEmpty();
+    }
+
+    @Test
+    void closeWithAChangeAsksAndCancelKeepsTheDialog() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+        HolidayCalendarDaysAddView dialog = openAddDialog(view);
+        typeField(dialog).setValue(HolidayCalendarDayType.WORKDAY);
+
+        // How Esc and the dialog's close button close it
+        dialog.closeWithDefaultAction();
+
+        DialogInfo question = unsavedChangesQuestion();
+        dialogButton(question, "no").click();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
+        assertThat(typeField(dialog).getValue()).isEqualTo(HolidayCalendarDayType.WORKDAY);
+        assertThat(daysDc(view).getItems()).isEmpty();
+    }
+
+    @Test
+    void unchangedDialogClosesWithoutAsking() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+
+        HolidayCalendarDaysAddView untouched = openAddDialog(view);
+        UiTestUtils.<JmixButton>getComponent(untouched, "cancelBtn").click();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(untouched);
+
+        // A field changed and changed back is as the dialog opened
+        HolidayCalendarDaysAddView restored = openAddDialog(view);
+        nameField(restored).setTypedValue(NEW_YEAR_HOLIDAYS);
+        typeField(restored).setValue(HolidayCalendarDayType.WORKDAY);
+        nameField(restored).clear();
+        typeField(restored).setValue(HolidayCalendarDayType.DAY_OFF);
+        restored.closeWithDefaultAction();
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(restored);
+        assertThat(daysDc(view).getItems()).isEmpty();
+    }
+
+    @Test
+    void okClosesWithoutAsking() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+        HolidayCalendarDaysAddView dialog = openAddDialog(view);
+        fill(dialog, NEW_YEAR_HOLIDAYS, JAN_1_2027, JAN_2_2027);
+
+        clickOk(dialog);
+
+        assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
+        assertThat(dates(daysDataGrid(view))).containsExactly(JAN_2_2027, JAN_1_2027);
     }
 
     @Test
@@ -432,11 +574,19 @@ public class HolidayCalendarDaysAddUiTest {
                 .toList();
     }
 
-    private static Button yesButton(DialogInfo dialog) {
+    private DialogInfo unsavedChangesQuestion() {
+        DialogInfo question = Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(),
+                "a question about the unsaved changes");
+        assertThat(question.getDialog().getHeaderTitle())
+                .isEqualTo(messages.getMessage("dialogs.closeUnsaved.title"));
+        return question;
+    }
+
+    private static Button dialogButton(DialogInfo dialog, String id) {
         return dialog.getButtons().stream()
-                .filter(button -> "yes".equals(button.getId().orElse(null)))
+                .filter(button -> id.equals(button.getId().orElse(null)))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("No 'yes' button in the dialog"));
+                .orElseThrow(() -> new AssertionError("No '" + id + "' button in the dialog"));
     }
 
     private static String uniqueName() {

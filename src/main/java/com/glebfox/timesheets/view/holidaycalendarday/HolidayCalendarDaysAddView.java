@@ -19,9 +19,7 @@ package com.glebfox.timesheets.view.holidaycalendarday;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
-import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.html.Span;
-import io.jmix.core.Messages;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.component.SupportsTypedValue;
@@ -30,16 +28,16 @@ import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
+import io.jmix.flowui.util.UnknownOperationResult;
 import io.jmix.flowui.view.*;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +45,7 @@ import java.util.stream.Collectors;
  * Opened as a dialog from the calendar editor, which hands it the calendar's days as they stand in the editor.
  * Refuses a range that ends before it starts, is longer than 31 days, or has a date the calendar already has;
  * otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds the days of {@link #getDates()}.
+ * Closed any other way after a field changed, it asks whether to discard the input, as a detail view does.
  */
 @ViewController(HolidayCalendarDaysAddView.ID)
 @ViewDescriptor("holiday-calendar-days-add-view.xml")
@@ -74,26 +73,25 @@ public class HolidayCalendarDaysAddView extends StandardView {
     private MessageBundle messageBundle;
 
     @Autowired
-    private Messages messages;
-    @Autowired
     private ViewValidation viewValidation;
     @Autowired
     private DatatypeFormatter datatypeFormatter;
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
-    @Nullable
-    private Supplier<Collection<HolidayCalendarDay>> calendarDays;
+    private Collection<HolidayCalendarDay> calendarDays = List.of();
+    private List<Object> openedValues = List.of();
     private boolean datesRefused;
 
     /**
-     * Sets the days of the calendar to check the range against: the days of the calendar editor,
-     * saved or added there and not removed. Required: the view does not open without them.
+     * Sets the days of the calendar to check the range against: the days of the calendar editor as they stand
+     * when the view opens, saved or added there and not removed. The view keeps a copy, so a later change
+     * of the given collection does not reach it.
      *
-     * @param calendarDays supplies the calendar's days when the range is checked
+     * @param calendarDays the calendar's days, possibly none
      */
-    public void setCalendarDays(Supplier<Collection<HolidayCalendarDay>> calendarDays) {
-        this.calendarDays = calendarDays;
+    public void setCalendarDays(Collection<HolidayCalendarDay> calendarDays) {
+        this.calendarDays = List.copyOf(Objects.requireNonNull(calendarDays));
     }
 
     /**
@@ -121,28 +119,40 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     @Subscribe
     public void onInit(final InitEvent event) {
-        // The fields are not bound to an entity, so they get the required message that bound fields get
-        nameField.setRequiredMessage(formatRequiredMessage(nameField.getLabel()));
-        fromField.setRequiredMessage(formatRequiredMessage(fromField.getLabel()));
-        typeField.setRequiredMessage(formatRequiredMessage(typeField.getLabel()));
-
         // Most calendar days are days off
         typeField.setValue(HolidayCalendarDayType.DAY_OFF);
     }
 
-    private String formatRequiredMessage(String label) {
-        return messages.formatMessage("", "validation.required.defaultMsg", label);
+    @Subscribe
+    public void onReady(final ReadyEvent event) {
+        openedValues = getFieldValues();
     }
 
     @Subscribe
-    public void onBeforeShow(final BeforeShowEvent event) {
-        // Without the editor's days the check would miss the ones added or removed there
-        Preconditions.checkState(calendarDays != null, "setCalendarDays() must be called before the view opens");
+    public void onBeforeClose(final BeforeCloseEvent event) {
+        // OK takes the input; Cancel, Esc, and the close button ask before they discard a change
+        if (!event.closedWith(StandardOutcome.SAVE)
+                && event.getCloseAction() instanceof ChangeTrackerCloseAction closeAction
+                && closeAction.isCheckForUnsavedChanges()
+                && !getFieldValues().equals(openedValues)) {
+            UnknownOperationResult result = new UnknownOperationResult();
+            viewValidation.showUnsavedChangesDialog(this)
+                    .onDiscard(() -> result.resume(close(StandardOutcome.DISCARD)))
+                    .onCancel(result::fail);
+            event.preventClose(result);
+        }
+    }
+
+    private List<Object> getFieldValues() {
+        // The values as the fields show them, nulls included
+        return Arrays.asList(nameField.getValue(), fromField.getValue(), toField.getValue(), typeField.getValue());
     }
 
     @Subscribe("fromField")
     public void onFromFieldTypedValueChange(
             final SupportsTypedValue.TypedValueChangeEvent<TypedDatePicker<LocalDate>, LocalDate> event) {
+        // The last day's picker offers no day before the first one
+        toField.setMin(event.getValue());
         onDatesChange();
     }
 
@@ -180,6 +190,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
         LocalDate to = getLastDay(from);
 
         if (to.isBefore(from)) {
+            // A safety net: the last day's minimum refuses such a day before OK gets here
             refuseDates(toField, messageBundle.getMessage("toField.beforeFromError"), errors);
         } else if (countDays(from, to) > MAX_DAYS) {
             refuseDates(toField, messageBundle.getMessage("toField.tooLongError"), errors);
@@ -200,7 +211,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
     }
 
     private List<LocalDate> findTakenDates(LocalDate from, LocalDate to) {
-        return Objects.requireNonNull(calendarDays).get().stream()
+        return calendarDays.stream()
                 .map(HolidayCalendarDay::getDate)
                 .filter(date -> date != null && !date.isBefore(from) && !date.isAfter(to))
                 .distinct()
