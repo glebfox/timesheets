@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * Refuses a range that ends before it starts, is longer than 31 days, or has a date the calendar already has;
  * otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds the days of {@link #getDates()}.
  * Closed any other way while a field differs from how it opened, it asks whether to discard the input:
- * Discard closes it, Cancel keeps it open.
+ * Yes closes it, No keeps it open.
  */
 @ViewController(HolidayCalendarDaysAddView.ID)
 @ViewDescriptor("holiday-calendar-days-add-view.xml")

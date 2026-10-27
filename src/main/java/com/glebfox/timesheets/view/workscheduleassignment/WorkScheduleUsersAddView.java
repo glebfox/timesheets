@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * which hands it the editor's assignments as they stand when it opens. Refuses users who already have
  * an assignment from that date; otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds one
  * assignment per user of {@link #getUsers()} from {@link #getStartDate()}. Closed any other way while a field
- * differs from how it opened, it asks whether to discard the input: Discard closes it, Cancel keeps it open.
+ * differs from how it opened, it asks whether to discard the input: Yes closes it, No keeps it open.
  */
 @ViewController(WorkScheduleUsersAddView.ID)
 @ViewDescriptor("work-schedule-users-add-view.xml")

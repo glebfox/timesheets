@@ -41,6 +41,10 @@ A replaced item redraws only its own row. A cell computed from other rows as wel
 
 Only a detail view checks for unsaved changes when it closes. A dialog that is a plain `StandardView` and collects input for its opener closes at once on Cancel, Esc, or its close button. The calendar days dialog and the add users dialog ask the framework's unsaved-changes question through `UnsavedInputSupport` in `app/util/`: each compares its fields with how it opened and passes the result from its `BeforeCloseEvent` handler. A close with `StandardOutcome.SAVE`, and a close that does not check for unsaved changes, such as one with `StandardOutcome.DISCARD`, pass without the question.
 
+## URL query parameters in tabbed mode
+
+In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on registers `NoopUrlQueryParametersFacetImpl` in place of the framework's facet, so a list's filter and pagination are not kept in the URL. A reload of the browser page keeps them all the same, since tabbed mode restores the open view; the browser's back and forward buttons create the view again, with an empty filter. The list descriptors keep the facet for when the add-on supports it.
+
 ## Generic filters for users who may not configure them
 
 A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles only Full access grants. Anyone else can use only the configurations the descriptor declares, so a generic filter that other roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).
