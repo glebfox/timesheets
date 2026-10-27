@@ -12,6 +12,8 @@ Every user-visible text is a message key, defined in both `messages_en.propertie
 
 A text with a count, such as "5 workdays", has one key per plural form, `<key>.one`, `<key>.few`, and `<key>.many`, in both bundles, and takes the form its count needs from `PluralForms` in `app/util/`. Russian uses all three forms; English repeats its `many` text under `few`.
 
+A required field that is not bound to an entity attribute names itself in its required message, as a bound field does; without a message it says only "The field is required". A field declared in a descriptor gets the message there, `requiredMessage="msg://<field>.requiredMessage"`, not from the controller, and both bundles word it as the framework words a bound field's, with the field's label: `%s required` in English, such as "Name required", and `Заполните поле "%s"` in Russian. The password fields of the user editor, and the tag fields the time entry editor builds in code, predate the rule.
+
 ## The current user's data
 
 A screen that shows the current user's own data, like My time entries or My tasks, narrows it with a query on the current user, not with a row-level role.

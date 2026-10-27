@@ -1,12 +1,12 @@
 # Views and actions
 
-Mechanics of the framework's detail views and list actions that the project's own actions and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
+Mechanics of the framework's views, grids, filters, and list actions that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
 
 ## Read-only detail views
 
 A detail view of a saved entity opens read-only when the current user may not update that entity: no entity-level update permission, or a row-level constraint that refuses it. The read-only mode changes two things only:
 
-- Fields bound to an entity attribute become read-only. A field the view fills itself, such as the work schedule editor's workday toggles, does not follow the mode unless the view sets it on each change of the mode.
+- Fields bound to an entity attribute become read-only. A field the view fills itself, such as the work schedule editor's workday buttons, does not follow the mode unless the view sets it on each change of the mode.
 - Component actions that implement `AdjustWhenViewReadOnly`, and return `true` from `isDisabledWhenViewReadOnly()`, are disabled.
 
 OK is not such an action, and saving has no read-only check, so OK still saves the view's data context. An action that must keep working in a read-only editor does not implement `AdjustWhenViewReadOnly` and relies on its own permission check; OK then saves only what such actions changed. The assignment actions of the user editor and the work schedule editor work this way, so a holder of Work schedule management changes assignments in a user editor that is read-only for them (`docs/specs/roles/work-schedule-management.md`).
@@ -29,4 +29,18 @@ Such a table uses custom actions instead, as the assignment tables of the user e
 
 ## Lists after an editor save
 
-The standard create and edit actions do not invoke their `afterSaveHandler` when the detail view opens by navigation, as the editors opened from this project's lists do; the framework only logs that the handler is set but not invoked. In tabbed mode the list stays open, and a save reaches it only as the saved row added to its container or replaced there. A list that must follow a save that changed other rows too, as the work schedule list must when a schedule becomes the default, listens for that change of its container and reloads.
+The standard create and edit actions do not invoke their `afterSaveHandler` when the detail view opens by navigation, as the editors opened from this project's lists do; the framework only logs that the handler is set but not invoked. In tabbed mode the list stays open, and a save reaches it only as the saved row added to its container or replaced there. A list that shows a value its own query does not load, as the holiday calendar list shows Filled until, listens for that change of its container and loads the value for the rows added or replaced.
+
+## Grids whose rows change after they are shown
+
+The browser sizes an `autoWidth` column once, to the rows it shows first. Rows that come later, whether added, replaced, or loaded again, and a badge that later appears on a row already shown, can be wider, and the column does not grow to fit them. A grid whose rows can change after it is shown calls `recalculateColumnWidths()` on those changes of its container: the work schedule list on every change, and the assignment and day tables of the editors when items are added or replaced. An `autoWidth` column that should keep its content width also has `flexGrow="0"`; otherwise it takes a share of the free width.
+
+A replaced item redraws only its own row. A cell computed from other rows as well, such as the Current badge of the assignment tables, would keep its old content on the rows not replaced, so those grids call `setRefreshAllOnItemReplace(true)` on their `ContainerDataGridItems`, and a replace redraws every row.
+
+## Input dialogs that are not detail views
+
+Only a detail view checks for unsaved changes when it closes. A dialog that is a plain `StandardView` and collects input for its opener closes at once on Cancel, Esc, or its close button. The calendar days dialog and the add users dialog ask the framework's unsaved-changes question through `UnsavedInputSupport` in `app/util/`: each compares its fields with how it opened and passes the result from its `BeforeCloseEvent` handler. A close with `StandardOutcome.SAVE`, and a close that does not check for unsaved changes, such as one with `StandardOutcome.DISCARD`, pass without the question.
+
+## Generic filters for users who may not configure them
+
+A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles only Full access grants. Anyone else can use only the configurations the descriptor declares, so a generic filter that other roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).

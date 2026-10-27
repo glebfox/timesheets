@@ -22,7 +22,7 @@ Exactly one non-deleted schedule is the default. A user's days before their firs
 - Marking a schedule as the default unmarks the previous default in the same save.
 - Unmarking the default, or deleting it, is refused while no other schedule is the default, with the message "There must be one default work schedule. Make another schedule the default first." To change the default, mark another schedule.
 
-The screens change the default only by marking another schedule: with Make default, with the editor's Default switch, or in the dialog that deleting the default opens ([settings](../views/settings.md#work-schedules)).
+The screens change the default only by marking another schedule: with Make default in the work schedule list, or in the dialog that deleting the default opens. The work schedule editor does not change it ([settings](../views/settings.md#work-schedules)).
 
 Why a listener and no unique index: [decision 0001](../../decisions/0001-one-default-work-schedule-enforced-by-a-listener.md).
 

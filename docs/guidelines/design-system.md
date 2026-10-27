@@ -66,7 +66,12 @@ Reach these colors through the theme names and classes rather than through the `
 
 **Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these.
 
-**Toggle buttons** are a checkbox group or a radio button group with the `segmented-group` class (`component/segmented-group.css`), as the work schedule editor's workdays and a holiday calendar day's type are: each item reads as a button, a checked one filled with the accent color, while the keyboard works as for the group's checkboxes or radio buttons.
+**Toggle buttons** are a checkbox group or a radio button group with a class that makes each item read as a button, a checked one filled with the accent color, while the keyboard works as for the group's checkboxes or radio buttons:
+
+- `toggle-group` (`component/toggle-group.css`), on a checkbox group, as the work schedule editor's workdays: a row of separate buttons, each pressed on its own.
+- `segmented-group` (`component/segmented-group.css`), on a radio button group, as a holiday calendar day's type: one bar of joined segments, since only one item can be chosen.
+
+Both show the states of an Aura field. Invalid, the borders take the error color. Read-only, the borders turn dashed and only a checked item keeps a faint accent tint, with a solid outline in the accent text color and a semibold label, so it reads as checked by more than its hue. Disabled, the labels dim and a checked item keeps a stronger fill.
 
 ---
 
