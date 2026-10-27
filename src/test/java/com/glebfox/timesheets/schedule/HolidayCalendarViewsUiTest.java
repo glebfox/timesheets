@@ -28,6 +28,7 @@ import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView
 import com.glebfox.timesheets.view.workschedule.WorkScheduleDetailView;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -38,11 +39,14 @@ import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.component.propertyfilter.PropertyFilter;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.View;
+import io.jmix.flowui.view.ViewControllerUtils;
 import io.jmix.flowui.view.builder.DetailWindowClassBuilder;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
@@ -263,6 +267,77 @@ public class HolidayCalendarViewsUiTest {
     }
 
     @Test
+    void filledUntilSortsByTheLatestDayWithEmptyCalendarsEarliest() {
+        String name = uniqueName();
+        // The name order differs from both orders by Filled until
+        HolidayCalendar earlier = saveCalendar(name + " A", DEC_31_2026);
+        HolidayCalendar empty = saveCalendar(name + " B");
+        HolidayCalendar later = saveCalendar(name + " C", JAN_1_2026, JAN_8_2027);
+        DataGrid<HolidayCalendar> grid = openListGrid(name);
+        Grid.Column<HolidayCalendar> filledUntil = Objects.requireNonNull(grid.getColumnByKey("filledUntil"));
+
+        assertThat(filledUntil.isSortable()).isTrue();
+
+        grid.sort(GridSortOrder.asc(filledUntil).build());
+        assertThat(listedIds(grid)).containsExactly(empty.getId(), earlier.getId(), later.getId());
+
+        grid.sort(GridSortOrder.desc(filledUntil).build());
+        assertThat(listedIds(grid)).containsExactly(later.getId(), earlier.getId(), empty.getId());
+    }
+
+    @Test
+    void nameSortsAfterFilledUntil() {
+        String name = uniqueName();
+        HolidayCalendar a = saveCalendar(name + " A", DEC_31_2026);
+        HolidayCalendar b = saveCalendar(name + " B");
+        HolidayCalendar c = saveCalendar(name + " C", JAN_8_2027);
+        DataGrid<HolidayCalendar> grid = openListGrid(name);
+
+        grid.sort(GridSortOrder.desc(Objects.requireNonNull(grid.getColumnByKey("filledUntil"))).build());
+        grid.sort(GridSortOrder.desc(Objects.requireNonNull(grid.getColumnByKey("name"))).build());
+        assertThat(listedIds(grid)).containsExactly(c.getId(), b.getId(), a.getId());
+
+        grid.sort(GridSortOrder.asc(Objects.requireNonNull(grid.getColumnByKey("name"))).build());
+        assertThat(listedIds(grid)).containsExactly(a.getId(), b.getId(), c.getId());
+    }
+
+    @Test
+    void filledUntilSortHoldsWhenTheListReloads() {
+        String name = uniqueName();
+        HolidayCalendar earlier = saveCalendar(name + " A", DEC_31_2026);
+        HolidayCalendar empty = saveCalendar(name + " B");
+        HolidayCalendar later = saveCalendar(name + " C", JAN_8_2027);
+        DataGrid<HolidayCalendar> grid = openListGrid(name);
+
+        grid.sort(GridSortOrder.asc(Objects.requireNonNull(grid.getColumnByKey("filledUntil"))).build());
+        // A changed filter reloads the list from the database
+        filterByName(UiTestUtils.getCurrentView(), name + " ");
+
+        assertThat(listedIds(grid)).containsExactly(empty.getId(), earlier.getId(), later.getId());
+    }
+
+    @Test
+    void filledUntilSortsAFullPageAsLoaded() {
+        String name = uniqueName();
+        HolidayCalendar earlier = saveCalendar(name + " A", DEC_31_2026);
+        HolidayCalendar empty = saveCalendar(name + " B");
+        saveCalendar(name + " C", JAN_8_2027);
+        DataGrid<HolidayCalendar> grid = openListGrid(name);
+        // A page that holds fewer calendars than the list has, so a header sort goes to the loader
+        CollectionLoader<HolidayCalendar> loader =
+                ViewControllerUtils.getViewData(UiTestUtils.getCurrentView()).getLoader("holidayCalendarsDl");
+        loader.setMaxResults(2);
+        loader.load();
+        Grid.Column<HolidayCalendar> filledUntil = Objects.requireNonNull(grid.getColumnByKey("filledUntil"));
+
+        grid.sort(GridSortOrder.asc(filledUntil).build());
+        assertThat(listedIds(grid)).containsExactly(empty.getId(), earlier.getId());
+
+        grid.sort(GridSortOrder.desc(filledUntil).build());
+        assertThat(listedIds(grid)).containsExactly(earlier.getId(), empty.getId());
+    }
+
+    @Test
     void scheduleEditorLooksUpACalendarInTheCalendarList() {
         HolidayCalendar calendar = saveCalendar(uniqueName());
         viewBuilders.detail(UiTestUtils.getCurrentView(), WorkSchedule.class).newEntity().open();
@@ -315,6 +390,22 @@ public class HolidayCalendarViewsUiTest {
         return UiTestUtils.getComponent(view, "holidayCalendarsDataGrid");
     }
 
+    /**
+     * Opens the calendar list filtered to the calendars whose name contains the given text.
+     */
+    private DataGrid<HolidayCalendar> openListGrid(String nameFilter) {
+        DataGrid<HolidayCalendar> grid = openListGrid();
+        filterByName(UiTestUtils.getCurrentView(), nameFilter);
+        return grid;
+    }
+
+    private static void filterByName(View<?> listView, String value) {
+        PropertyFilter<String> nameFilter = UiTestUtils.getComponent(listView, "nameFilter");
+        nameFilter.setValue(value);
+        // A value set from the server does not apply the filter by itself
+        nameFilter.apply();
+    }
+
     private static HolidayCalendarDayDetailView editDay(HolidayCalendarDetailView view, LocalDate date) {
         DataGrid<HolidayCalendarDay> grid = daysDataGrid(view);
         Action edit = Objects.requireNonNull(grid.getAction("edit"));
@@ -364,6 +455,12 @@ public class HolidayCalendarViewsUiTest {
     private static List<LocalDate> dates(DataGrid<HolidayCalendarDay> grid) {
         return Objects.requireNonNull(grid.getItems()).getItems().stream()
                 .map(HolidayCalendarDay::getDate)
+                .toList();
+    }
+
+    private static List<UUID> listedIds(DataGrid<HolidayCalendar> grid) {
+        return Objects.requireNonNull(grid.getItems()).getItems().stream()
+                .map(HolidayCalendar::getId)
                 .toList();
     }
 

@@ -18,22 +18,28 @@ package com.glebfox.timesheets.view.holidaycalendar;
 
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.view.main.MainView;
+import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
+import io.jmix.core.LoadContext;
+import io.jmix.core.Sort;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
+import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.model.CollectionChangeType;
 import io.jmix.flowui.model.CollectionContainer;
-import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Route(value = "holiday-calendars", layout = MainView.class)
@@ -42,6 +48,11 @@ import java.util.UUID;
 @LookupComponent("holidayCalendarsDataGrid")
 @DialogMode(width = "1024px", closeOnEsc = true)
 public class HolidayCalendarListView extends StandardListView<HolidayCalendar> {
+
+    private static final String FILLED_UNTIL = "filledUntil";
+
+    @ViewComponent
+    private DataGrid<HolidayCalendar> holidayCalendarsDataGrid;
 
     @Autowired
     private DataManager dataManager;
@@ -53,10 +64,42 @@ public class HolidayCalendarListView extends StandardListView<HolidayCalendar> {
      */
     private final Map<UUID, LocalDate> filledUntil = new HashMap<>();
 
-    @Subscribe(id = "holidayCalendarsDl", target = Target.DATA_LOADER)
-    public void onHolidayCalendarsDlPostLoad(final CollectionLoader.PostLoadEvent<HolidayCalendar> event) {
+    /**
+     * Orders calendars by Filled until, a calendar with no days as the earliest.
+     */
+    private final Comparator<HolidayCalendar> byFilledUntil = Comparator.comparing(
+            calendar -> filledUntil.get(calendar.getId()), Comparator.nullsFirst(Comparator.naturalOrder()));
+
+    @Subscribe
+    public void onInit(final InitEvent event) {
+        // Filled until is not an attribute, so the database cannot sort by it. The grid sorts the page in memory
+        // with this comparator while the page holds every calendar; otherwise it reloads the page, and the load
+        // delegate sorts it
+        Objects.requireNonNull(holidayCalendarsDataGrid.getColumnByKey(FILLED_UNTIL)).setComparator(byFilledUntil);
+    }
+
+    @Install(to = "holidayCalendarsDl", target = Target.DATA_LOADER)
+    private List<HolidayCalendar> holidayCalendarsDlLoadDelegate(final LoadContext<HolidayCalendar> loadContext) {
+        // The database rejects a sort by Filled until, which the grid leaves on the loader after an in-memory sort
+        LoadContext.Query query = Objects.requireNonNull(loadContext.getQuery());
+        if (query.getSort() != null) {
+            query.setSort(Sort.by(query.getSort().getOrders().stream()
+                    .filter(order -> !FILLED_UNTIL.equals(order.getProperty()))
+                    .toList()));
+        }
+
+        List<HolidayCalendar> calendars = new ArrayList<>(dataManager.loadList(loadContext));
         filledUntil.clear();
-        loadFilledUntil(event.getLoadedEntities());
+        loadFilledUntil(calendars);
+
+        // Only the header keeps a sort by Filled until: the grid drops it when it reloads a full page to sort it
+        holidayCalendarsDataGrid.getSortOrder().stream()
+                .filter(order -> FILLED_UNTIL.equals(order.getSorted().getKey()))
+                .findFirst()
+                .ifPresent(order -> calendars.sort(order.getDirection() == SortDirection.ASCENDING
+                        ? byFilledUntil
+                        : byFilledUntil.reversed()));
+        return calendars;
     }
 
     @Subscribe(id = "holidayCalendarsDc", target = Target.DATA_CONTAINER)
