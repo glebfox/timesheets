@@ -258,6 +258,16 @@ public class HolidayCalendarDaysAddUiTest {
                 .isEqualTo("Value should be greater than '" + datatypeFormatter.formatLocalDate(JAN_8_2027) + "'");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
+
+        // A changed first day checks the last one again: a day still too early names the new first day
+        fromField(dialog).setTypedValue(JAN_3_2027);
+        assertThat(toField(dialog).isInvalid()).isTrue();
+        assertThat(toField(dialog).getErrorMessage())
+                .isEqualTo("Value should be greater than '" + datatypeFormatter.formatLocalDate(JAN_3_2027) + "'");
+
+        // and a corrected range clears the refusal
+        fromField(dialog).setTypedValue(DEC_31_2026);
+        assertThat(toField(dialog).isInvalid()).isFalse();
     }
 
     @Test

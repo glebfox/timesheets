@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.holidaycalendarday;
 
 import com.glebfox.timesheets.app.util.PluralForms;
+import com.glebfox.timesheets.app.util.UnsavedInputSupport;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.vaadin.flow.component.html.Span;
@@ -28,7 +29,6 @@ import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
-import io.jmix.flowui.util.UnknownOperationResult;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -45,7 +45,8 @@ import java.util.stream.Collectors;
  * Opened as a dialog from the calendar editor, which hands it the calendar's days as they stand in the editor.
  * Refuses a range that ends before it starts, is longer than 31 days, or has a date the calendar already has;
  * otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds the days of {@link #getDates()}.
- * Closed any other way after a field changed, it asks whether to discard the input, as a detail view does.
+ * Closed any other way while a field differs from how it opened, it asks whether to discard the input:
+ * Discard closes it, Cancel keeps it open.
  */
 @ViewController(HolidayCalendarDaysAddView.ID)
 @ViewDescriptor("holiday-calendar-days-add-view.xml")
@@ -78,6 +79,8 @@ public class HolidayCalendarDaysAddView extends StandardView {
     private DatatypeFormatter datatypeFormatter;
     @Autowired
     private CurrentAuthentication currentAuthentication;
+    @Autowired
+    private UnsavedInputSupport unsavedInputSupport;
 
     private Collection<HolidayCalendarDay> calendarDays = List.of();
     private List<Object> openedValues = List.of();
@@ -131,16 +134,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
     @Subscribe
     public void onBeforeClose(final BeforeCloseEvent event) {
         // OK takes the input; Cancel, Esc, and the close button ask before they discard a change
-        if (!event.closedWith(StandardOutcome.SAVE)
-                && event.getCloseAction() instanceof ChangeTrackerCloseAction closeAction
-                && closeAction.isCheckForUnsavedChanges()
-                && !getFieldValues().equals(openedValues)) {
-            UnknownOperationResult result = new UnknownOperationResult();
-            viewValidation.showUnsavedChangesDialog(this)
-                    .onDiscard(() -> result.resume(close(StandardOutcome.DISCARD)))
-                    .onCancel(result::fail);
-            event.preventClose(result);
-        }
+        unsavedInputSupport.askBeforeDiscarding(event, !getFieldValues().equals(openedValues));
     }
 
     private List<Object> getFieldValues() {
@@ -153,6 +147,10 @@ public class HolidayCalendarDaysAddView extends StandardView {
             final SupportsTypedValue.TypedValueChangeEvent<TypedDatePicker<LocalDate>, LocalDate> event) {
         // The last day's picker offers no day before the first one
         toField.setMin(event.getValue());
+        if (toField.isInvalid()) {
+            // Runs the last day's validation against the new minimum, which a new minimum alone does not do
+            toField.setInvalid(false);
+        }
         onDatesChange();
     }
 
