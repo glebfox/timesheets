@@ -31,6 +31,9 @@ import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.ClientDetails;
+import io.jmix.core.security.SecurityContextHelper;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.combobox.EntityComboBox;
@@ -51,6 +54,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +70,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WorkScheduleDeletionUiTest {
 
     static final String NAME_PREFIX = "Deletion test ";
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     @Autowired
     DataManager dataManager;
@@ -77,6 +82,8 @@ public class WorkScheduleDeletionUiTest {
     OpenedDialogs openedDialogs;
     @Autowired
     OpenedNotifications openedNotifications;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
 
     UUID seedDefaultId;
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
@@ -199,9 +206,32 @@ public class WorkScheduleDeletionUiTest {
 
         assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(dialog);
         assertThat(newDefaultField.isInvalid()).isTrue();
+        // Worded as the framework words the required message of a bound field
+        assertThat(newDefaultField.getErrorMessage()).isEqualTo("New default schedule required");
         WorkSchedule seed = loadIncludingDeleted(seedDefaultId);
         assertThat(seed.getDeletedDate()).isNull();
         assertThat(seed.getIsDefault()).isTrue();
+    }
+
+    @Test
+    void russianRequiredMessageNamesTheField() {
+        saveSchedule(uniqueName());
+
+        systemAuthenticator.runWithUser("admin", () -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            DataGrid<WorkSchedule> grid = openListGrid();
+            Action remove = Objects.requireNonNull(grid.getAction("remove"));
+            grid.select(listed(grid, seedDefaultId));
+            assertThat(remove.isEnabled()).isTrue();
+            remove.actionPerform(grid);
+
+            DefaultWorkScheduleDeleteView dialog = openedDeleteDialog();
+            UiTestUtils.<JmixButton>getComponent(dialog, "deleteBtn").click();
+
+            assertThat(newDefaultField(dialog).getErrorMessage())
+                    .isEqualTo("Заполните поле \"Новый график по умолчанию\"");
+        });
     }
 
     @Test

@@ -45,7 +45,8 @@
                             itemsContainer="otherSchedulesDc"
                             label="msg://newDefaultField.label"
                             helperText="msg://newDefaultField.helperText"
-                            required="true">
+                            required="true"
+                            requiredMessage="msg://newDefaultField.requiredMessage">
                 <prefix>
                     <icon icon="gravity-ui:star"/>
                 </prefix>
