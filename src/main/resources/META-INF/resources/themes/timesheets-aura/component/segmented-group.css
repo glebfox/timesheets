@@ -118,10 +118,15 @@
     border-inline-start-style: dashed;
 }
 
+/* A checked segment is told apart by more than the hue of its label:
+   an outline in the label's color and a heavier label */
 .segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button)[checked] {
     --vaadin-checkbox-label-color: var(--aura-accent-text-color);
     --vaadin-radio-button-label-color: var(--aura-accent-text-color);
+    --vaadin-checkbox-label-font-weight: var(--aura-font-weight-semibold);
+    --vaadin-radio-button-label-font-weight: var(--aura-font-weight-semibold);
     background: var(--aura-accent-surface);
+    box-shadow: inset 0 0 0 var(--_segmented-border-width) var(--aura-accent-text-color);
 }
 
 .segmented-group[readonly] > :is(vaadin-checkbox, vaadin-radio-button)[focus-ring] {
