@@ -633,6 +633,8 @@ public class ScheduleUsersUiTest {
             assertThat(column.isAutoWidth()).as(key).isTrue();
             assertThat(column.getWidth()).as(key).isNull();
         }
+        // The date keeps its content width, and the user column takes the rest
+        assertThat(Objects.requireNonNull(grid.getColumnByKey("startDate")).getFlexGrow()).isZero();
     }
 
     @Test

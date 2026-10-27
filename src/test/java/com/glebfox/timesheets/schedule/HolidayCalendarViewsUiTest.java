@@ -165,6 +165,8 @@ public class HolidayCalendarViewsUiTest {
             Grid.Column<HolidayCalendarDay> column = Objects.requireNonNull(grid.getColumnByKey(key));
             assertThat(column.isAutoWidth()).as(key).isTrue();
             assertThat(column.getWidth()).as(key).isNull();
+            // The column keeps its content width, and the name column takes the rest
+            assertThat(column.getFlexGrow()).as(key).isZero();
         }
     }
 
