@@ -54,6 +54,12 @@
         <item view="ts_ProjectRole.list"
               title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title"
               icon="fontawesome-solid:user-tag"/>
+        <item view="ts_WorkSchedule.list"
+              title="msg://com.glebfox.timesheets.view.workschedule/workScheduleListView.title"
+              icon="fontawesome-solid:business-time"/>
+        <item view="ts_HolidayCalendar.list"
+              title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title"
+              icon="fontawesome-solid:calendar-check"/>
     </menu>
 
     <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"

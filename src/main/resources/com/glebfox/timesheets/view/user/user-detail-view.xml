@@ -25,6 +25,26 @@
             <fetchPlan extends="_base"/>
             <loader/>
         </instance>
+        <collection id="assignmentsDc"
+                    class="com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment">
+            <!-- The assignment editor checks start dates by user; deletedDate marks a deleted schedule -->
+            <fetchPlan extends="_local">
+                <property name="user" fetchPlan="_instance_name"/>
+                <property name="workSchedule" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <!-- Loaded by the controller for a saved user. The query must not navigate workSchedule:
+                 that joins the schedule table with the soft deletion filter and drops the assignments
+                 of a deleted schedule -->
+            <loader id="assignmentsDl">
+                <query>
+                    <![CDATA[select e from ts_WorkScheduleAssignment e
+                                where e.user = :user
+                                order by e.startDate desc]]>
+                </query>
+            </loader>
+        </collection>
     </data>
     <actions>
         <action id="saveAction" type="detail_saveClose"/>
@@ -85,6 +105,29 @@
                 </comboBox>
                 <switch id="activeField" property="active"/>
             </formLayout>
+
+            <h4 id="workScheduleTitle" text="msg://workScheduleTitle.text"/>
+            <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
+                <button id="assignmentCreateBtn" action="assignmentsDataGrid.create"/>
+                <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
+                <button id="assignmentRemoveBtn" action="assignmentsDataGrid.remove"/>
+            </hbox>
+            <dataGrid id="assignmentsDataGrid"
+                      dataContainer="assignmentsDc"
+                      selectionMode="MULTI"
+                      allRowsVisible="true"
+                      emptyStateText="msg://assignmentsDataGrid.emptyStateText"
+                      width="100%">
+                <actions>
+                    <action id="create" type="list_workScheduleAssignment_create"/>
+                    <action id="edit" type="list_workScheduleAssignment_edit"/>
+                    <action id="remove" type="list_workScheduleAssignment_remove"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="startDate" autoWidth="true" flexGrow="0"/>
+                    <column property="workSchedule" autoWidth="true"/>
+                </columns>
+            </dataGrid>
         </vbox>
         <hbox id="detailActions"
               classNames="footer-panel">

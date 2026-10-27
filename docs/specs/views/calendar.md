@@ -1,6 +1,6 @@
 # Calendar
 
-Source: `view/calendar/`, `app/CalendarSupport.java`, `app/util/FactAndPlan.java`, `app/util/WeekSummary.java`, `app/util/WeekStatus.java`, `entity/timeentry/TimeEntryCalendarWrapper.java`, `security/EditActiveTimeEntriesRole.java`
+Source: `view/calendar/`, `app/CalendarSupport.java`, `app/util/FactAndPlan.java`, `app/util/WeekSummary.java`, `app/util/WeekStatus.java`, `app/util/ComponentSupport.java`, `entity/timeentry/TimeEntryCalendarWrapper.java`, `security/EditActiveTimeEntriesRole.java`
 
 `calendar`, the first item of menu Timesheets. The current user's own [time entries](../data-model/time-entry.md) laid out on a month, with the time spent per day, per week, and for the month against the time planned.
 

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://workScheduleDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="workScheduleDc"
+                  class="com.glebfox.timesheets.entity.schedule.WorkSchedule">
+            <fetchPlan extends="_base">
+                <property name="holidayCalendar" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <loader/>
+        </instance>
+        <collection id="assignmentsDc"
+                    class="com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment">
+            <!-- The user cell shows the avatar and the active flag; the assignment editor checks start dates
+                 by user; deletedDate marks a deleted schedule there -->
+            <fetchPlan extends="_local">
+                <property name="user" fetchPlan="_instance_name">
+                    <property name="avatar"/>
+                    <property name="active"/>
+                </property>
+                <property name="workSchedule" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <!-- Loaded by the controller for a saved schedule. Only explicit assignments are listed:
+                 the default schedule's users without assignments are not -->
+            <loader id="assignmentsDl">
+                <query>
+                    <![CDATA[select e from ts_WorkScheduleAssignment e
+                                where e.workSchedule = :workSchedule
+                                order by e.startDate desc]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout alignItems="STRETCH"
+            padding="false" spacing="false"
+            expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto" expand="assignmentsDataGrid">
+            <formLayout id="form" dataContainer="workScheduleDc">
+                <textField id="nameField" property="name">
+                    <prefix>
+                        <icon icon="fontawesome-regular:address-card"/>
+                    </prefix>
+                </textField>
+                <textField id="workdayTimeField" property="workdayTime"
+                           placeholder="msg://workdayTimeField.placeholder">
+                    <prefix>
+                        <icon icon="gravity-ui:clock"/>
+                    </prefix>
+                </textField>
+                <checkboxGroup id="workdaysField"
+                               label="msg://workdaysField.label"
+                               required="true"
+                               requiredMessage="msg://workdaysField.requiredMessage"
+                               classNames="toggle-group"
+                               colspan="2"/>
+                <entityComboBox id="holidayCalendarField" property="holidayCalendar">
+                    <prefix>
+                        <icon icon="gravity-ui:calendar"/>
+                    </prefix>
+                    <actions>
+                        <action id="entityLookup" type="entity_lookup"/>
+                        <action id="entityClear" type="entity_clear"/>
+                    </actions>
+                    <itemsQuery class="com.glebfox.timesheets.entity.schedule.HolidayCalendar"
+                                searchStringFormat="(?i)%${inputString}%"
+                                escapeValueForLike="true">
+                        <fetchPlan extends="_instance_name"/>
+                        <query>
+                            <![CDATA[select e from ts_HolidayCalendar e
+                                        where e.name like :searchString escape '\'
+                                        order by e.name]]>
+                        </query>
+                    </itemsQuery>
+                </entityComboBox>
+                <textArea id="descriptionField" property="description"
+                          minHeight="10rem" colspan="2"/>
+            </formLayout>
+            <h4 id="usersTitle" text="msg://usersTitle.text"/>
+            <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
+                <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
+                <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
+                <button id="assignmentRemoveBtn" action="assignmentsDataGrid.remove"/>
+            </hbox>
+            <dataGrid id="assignmentsDataGrid"
+                      dataContainer="assignmentsDc"
+                      selectionMode="MULTI"
+                      width="100%" minHeight="20em">
+                <actions>
+                    <action id="add" type="list_workScheduleUsers_add"/>
+                    <action id="edit" type="list_workScheduleAssignment_edit"/>
+                    <action id="remove" type="list_workScheduleAssignment_remove"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="user" autoWidth="true"/>
+                    <column property="startDate" autoWidth="true" flexGrow="0"/>
+                </columns>
+            </dataGrid>
+        </vbox>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

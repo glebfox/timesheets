@@ -18,6 +18,7 @@ package com.glebfox.timesheets.view.calendar;
 
 
 import com.glebfox.timesheets.app.CalendarSupport;
+import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
@@ -113,7 +114,7 @@ public class CalendarView extends StandardView {
     @Autowired
     private Messages messages;
     @Autowired
-    private MetadataTools metadataTools;
+    private ComponentSupport componentSupport;
     @Autowired
     private DialogWindows dialogWindows;
     @Autowired
@@ -278,10 +279,10 @@ public class CalendarView extends StandardView {
     }
 
     private void updateMonthSummary(FactAndPlan month) {
-        monthLoggedValue.setText(formatTotal(month.fact()));
-        monthTargetValue.setText(formatTotal(month.plan()));
+        monthLoggedValue.setText(componentSupport.formatWorkTimeTotal(month.fact()));
+        monthTargetValue.setText(componentSupport.formatWorkTimeTotal(month.plan()));
 
-        String difference = formatTotal(month.difference());
+        String difference = componentSupport.formatWorkTimeTotal(month.difference());
         if (month.isExcess()) {
             monthRemainingValue.setText(messageBundle.formatMessage("monthSummary.overValue.text", difference));
             monthRemainingLabel.setText(messageBundle.getMessage("monthSummary.overTarget.text"));
@@ -309,10 +310,11 @@ public class CalendarView extends StandardView {
         FactAndPlan total = week.total();
         WeekStatus status = week.getStatus(today);
 
-        Span fact = new Span(formatTotal(total.fact()));
+        Span fact = new Span(componentSupport.formatWorkTimeTotal(total.fact()));
         fact.setClassName("calendar-view-week-summary-fact");
 
-        Span plan = new Span(messageBundle.formatMessage("weekSummary.plan.text", formatTotal(total.plan())));
+        Span plan = new Span(messageBundle.formatMessage("weekSummary.plan.text",
+                componentSupport.formatWorkTimeTotal(total.plan())));
         plan.setClassName("calendar-view-week-summary-plan");
 
         Div totals = new Div(fact, plan);
@@ -355,7 +357,7 @@ public class CalendarView extends StandardView {
     }
 
     private String getWeekStatusNote(WeekStatus status, FactAndPlan total) {
-        String difference = formatTotal(total.difference());
+        String difference = componentSupport.formatWorkTimeTotal(total.difference());
 
         return switch (status) {
             case OVER -> messageBundle.formatMessage("weekStatus.over.text", difference);
@@ -365,12 +367,6 @@ public class CalendarView extends StandardView {
             case UPCOMING -> messageBundle.getMessage("weekStatus.upcoming.text");
             case NO_WORKDAYS -> messageBundle.getMessage("weekStatus.noWorkdays.text");
         };
-    }
-
-    private String formatTotal(WorkTime time) {
-        return time.getMinutes() == 0
-                ? messageBundle.formatMessage("totalHours.format", time.getHours())
-                : metadataTools.format(time);
     }
 
     private String getTimeClassName(FactAndPlan factAndPlan) {

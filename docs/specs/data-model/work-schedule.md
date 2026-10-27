@@ -4,14 +4,14 @@ Source: `entity/schedule/WorkSchedule.java`, `app/WorkScheduleSupport.java`, `li
 
 A named weekly pattern of planned work, such as "Full time" or "0.5 rate": how long a workday is, which days of the week are workdays, and optionally a [holiday calendar](holiday-calendar.md) whose days override the week. Users are tied to schedules by [assignments](work-schedule-assignment.md); a user's plan for a day comes from them.
 
-Schedules are set up in Data Tools: no screen of the application manages them or shows a plan, and the calendar plans 8 hours Monday to Friday whatever a user's schedule ([calendar](../views/calendar.md#totals)).
+Schedules are managed in the [work schedule screens](../views/settings.md#work-schedules), and assignments in the user editor and the work schedule editor. No screen shows a plan: the calendar plans 8 hours Monday to Friday whatever a user's schedule ([calendar](../views/calendar.md#totals)).
 
 ## Attributes
 
 - **Name** — required; unique among non-deleted schedules (`docs/guidelines/database.md`).
 - **Description** — optional.
-- **Workday hours** — required; the planned time of each workday, a [work time](work-time.md) value such as 8h or 6h 30m. Zero is accepted; such a schedule plans nothing on any day.
-- **Monday** to **Sunday** — one flag per day of the week; a new schedule has Monday to Friday on and Saturday and Sunday off. All seven may be off; such a schedule plans time only on the Workday days of its holiday calendar, and none without one.
+- **Workday hours** — required; the planned time of each workday, a [work time](work-time.md) value such as 8h or 6h 30m. Zero is accepted everywhere but in the [editor](../views/settings.md#work-schedule-editor); such a schedule plans nothing on any day.
+- **Monday** to **Sunday** — one flag per day of the week; a new schedule has Monday to Friday on and Saturday and Sunday off. All seven may be off everywhere but in the editor; such a schedule plans time only on the Workday days of its holiday calendar, and none without one.
 - **Holiday calendar** — optional; without one, the schedule knows no holidays. Several schedules may share one calendar.
 - **Default** — off for a new schedule. See below.
 
@@ -21,6 +21,8 @@ Exactly one non-deleted schedule is the default. A user's days before their firs
 
 - Marking a schedule as the default unmarks the previous default in the same save.
 - Unmarking the default, or deleting it, is refused while no other schedule is the default, with the message "There must be one default work schedule. Make another schedule the default first." To change the default, mark another schedule.
+
+The screens change the default only by marking another schedule: with Make default in the work schedule list, or in the dialog that deleting the default opens. The work schedule editor does not change it ([settings](../views/settings.md#work-schedules)).
 
 Why a listener and no unique index: [decision 0001](../../decisions/0001-one-default-work-schedule-enforced-by-a-listener.md).
 

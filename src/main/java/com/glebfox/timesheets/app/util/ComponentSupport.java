@@ -19,12 +19,14 @@ package com.glebfox.timesheets.app.util;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
+import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.server.streams.DownloadHandler;
@@ -32,12 +34,19 @@ import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
+import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.time.DayOfWeek;
+import java.time.format.TextStyle;
+import java.time.temporal.WeekFields;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 @Component("ts_ComponentSupport")
 public class ComponentSupport {
@@ -45,13 +54,16 @@ public class ComponentSupport {
     private final UiComponents uiComponents;
     private final Messages messages;
     private final MetadataTools metadataTools;
+    private final CurrentAuthentication currentAuthentication;
 
     public ComponentSupport(UiComponents uiComponents,
                             Messages messages,
-                            MetadataTools metadataTools) {
+                            MetadataTools metadataTools,
+                            CurrentAuthentication currentAuthentication) {
         this.uiComponents = uiComponents;
         this.messages = messages;
         this.metadataTools = metadataTools;
+        this.currentAuthentication = currentAuthentication;
     }
 
     /**
@@ -118,6 +130,19 @@ public class ComponentSupport {
                 messages.getMessage(UserRenderer.class, Boolean.TRUE.equals(user.getActive())
                         ? "UserRenderer.userActive"
                         : "UserRenderer.userInactive"));
+    }
+
+    /**
+     * Creates a {@link Badge} with a text and a look, such as a status shown next to a name in a grid cell.
+     *
+     * @param text  the text of the badge
+     * @param style the look of the badge
+     * @return a new badge
+     */
+    public Badge createBadge(String text, BadgeStyle style) {
+        Badge badge = new Badge(text);
+        style.applyTo(badge);
+        return badge;
     }
 
     /**
@@ -192,5 +217,42 @@ public class ComponentSupport {
                         valueProvider.apply(item).getName())
                 .withProperty("project", item ->
                         metadataTools.format(valueProvider.apply(item).getProject()));
+    }
+
+    /**
+     * Returns the seven days of the week in the current user's week order: from the first day of the week
+     * of the user's locale, such as Sunday in English and Monday in Russian.
+     *
+     * @return the days of the week, starting from the locale's first day of the week
+     */
+    public List<DayOfWeek> getDaysOfWeek() {
+        DayOfWeek firstDayOfWeek = WeekFields.of(currentAuthentication.getLocale()).getFirstDayOfWeek();
+        return IntStream.range(0, 7)
+                .mapToObj(firstDayOfWeek::plus)
+                .toList();
+    }
+
+    /**
+     * Formats a day of the week as a short label in the current user's locale, such as "Mon" or "Пн".
+     * Short names that a locale writes in lowercase are capitalized.
+     *
+     * @param day the day of the week to format
+     * @return the short label of the day
+     */
+    public String formatDayOfWeekShort(DayOfWeek day) {
+        return StringUtils.capitalize(day.getDisplayName(TextStyle.SHORT_STANDALONE, currentAuthentication.getLocale()));
+    }
+
+    /**
+     * Formats a total of work time, such as a week's or a month's: whole hours without minutes, such as "40h",
+     * and any other time as the work time datatype formats it, such as "37h 30m".
+     *
+     * @param time the total to format
+     * @return the formatted total
+     */
+    public String formatWorkTimeTotal(WorkTime time) {
+        return time.getMinutes() == 0
+                ? messages.formatMessage(ComponentSupport.class, "totalHours.format", time.getHours())
+                : metadataTools.format(time);
     }
 }

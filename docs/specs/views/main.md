@@ -9,7 +9,7 @@ The application frame around every screen, the login page, and the error pages.
 The frame of the signed-in application. Screens open as tabs in its work area; tabs can be dragged, and each offers closing itself, the others, or all.
 
 - **Header** — the menu toggle, the "Timesheets" title, and the user menu. The user menu button shows the user's avatar and full name (the username when both names are empty), and marks a substituted user. Its header shows the name with the username beneath it. Its items are Substitute user, the theme switch, and Log out.
-- **Menu** — Timesheets (Calendar, My time entries, My tasks), Project Management (Clients, Projects, Time entries), Settings (Task types, Project roles), and Administration (Users) start expanded; Security, Data Tools, and Pessimistic locking hold the framework's own screens and start collapsed. A user sees only the items their roles allow.
+- **Menu** — Timesheets (Calendar, My time entries, My tasks), Project Management (Clients, Projects, Time entries), Settings (Task types, Project roles, Work schedules, Holiday calendars), and Administration (Users) start expanded; Security, Data Tools, and Pessimistic locking hold the framework's own screens and start collapsed. A user sees only the items their roles allow.
 - **Rejected badge** — the My time entries item carries a red badge with the number of the current user's Rejected [time entries](../data-model/time-entry.md#status), hidden when there are none. It refreshes while the user is signed in, whenever one of their entries changes status or is deleted, by anyone and from any session.
 
 ## Login
