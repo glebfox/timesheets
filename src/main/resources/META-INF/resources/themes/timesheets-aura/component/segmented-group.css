@@ -190,3 +190,66 @@
     --vaadin-radio-button-label-color: var(--vaadin-text-color-secondary);
     background: var(--vaadin-background-container-strong);
 }
+
+/* Forced colors (a high contrast mode) replace the theme's colors with the system's, so the states are drawn
+   in system colors, as Vaadin draws a radio button and a button there: the checked segment takes the selected-item
+   colors, the others read as system buttons */
+@media (forced-colors: active) {
+    .segmented-group::part(group-field) {
+        border-color: ButtonText;
+        background: ButtonFace;
+    }
+
+    .segmented-group > vaadin-radio-button {
+        --vaadin-radio-button-label-color: ButtonText;
+        color: ButtonText;
+    }
+
+    .segmented-group > vaadin-radio-button + vaadin-radio-button {
+        border-inline-start-color: ButtonText;
+    }
+
+    .segmented-group > vaadin-radio-button[checked] {
+        forced-color-adjust: none;
+        --vaadin-radio-button-label-color: SelectedItemText;
+        color: SelectedItemText;
+        background: SelectedItem;
+    }
+
+    .segmented-group > vaadin-radio-button[focus-ring],
+    .segmented-group[readonly] > vaadin-radio-button[focus-ring] {
+        outline-color: Highlight;
+    }
+
+    .segmented-group:not([readonly]) > vaadin-radio-button[focus-ring][checked] {
+        outline-color: SelectedItemText;
+    }
+
+    /* Read-only: no fill; the checked segment keeps a doubled solid outline inside the dashed bar, and its heavier label */
+    .segmented-group[readonly] > vaadin-radio-button[checked] {
+        --vaadin-radio-button-label-color: CanvasText;
+        color: CanvasText;
+        background: Canvas;
+        box-shadow: inset 0 0 0 calc(var(--_segmented-border-width) * 2) CanvasText;
+    }
+
+    .segmented-group[disabled]::part(group-field) {
+        border-color: GrayText;
+        background: transparent;
+    }
+
+    .segmented-group[disabled] > vaadin-radio-button + vaadin-radio-button {
+        border-inline-start-color: GrayText;
+    }
+
+    .segmented-group[disabled] > vaadin-radio-button {
+        --vaadin-radio-button-label-color: GrayText;
+        color: GrayText;
+    }
+
+    .segmented-group[disabled] > vaadin-radio-button[checked] {
+        --vaadin-radio-button-label-color: Canvas;
+        color: Canvas;
+        background: GrayText;
+    }
+}

@@ -173,3 +173,56 @@
     --vaadin-checkbox-label-color: var(--vaadin-text-color-secondary);
     background: var(--vaadin-background-container-strong);
 }
+
+/* Forced colors (a high contrast mode) replace the theme's colors with the system's, so the states are drawn
+   in system colors, as Vaadin draws a checkbox and a button there: a checked item takes the selected-item colors,
+   the others read as system buttons */
+@media (forced-colors: active) {
+    .toggle-group > vaadin-checkbox {
+        --vaadin-checkbox-label-color: ButtonText;
+        color: ButtonText;
+        border-color: ButtonText;
+        background: ButtonFace;
+    }
+
+    .toggle-group > vaadin-checkbox[checked] {
+        forced-color-adjust: none;
+        --vaadin-checkbox-label-color: SelectedItemText;
+        color: SelectedItemText;
+        border-color: CanvasText;
+        background: SelectedItem;
+        /* Kept from adjustment, it would keep the theme's shadow, which forced colors drop elsewhere */
+        box-shadow: none;
+    }
+
+    .toggle-group > vaadin-checkbox[focus-ring],
+    .toggle-group[readonly] > vaadin-checkbox[focus-ring] {
+        outline-color: Highlight;
+    }
+
+    .toggle-group:not([readonly]) > vaadin-checkbox[focus-ring][checked] {
+        outline-color: SelectedItemText;
+    }
+
+    /* Read-only: no fill; a checked item keeps a doubled solid border next to the dashed ones, and its heavier label */
+    .toggle-group[readonly] > vaadin-checkbox[checked] {
+        --vaadin-checkbox-label-color: CanvasText;
+        color: CanvasText;
+        border-color: CanvasText;
+        background: Canvas;
+        box-shadow: inset 0 0 0 var(--vaadin-input-field-border-width, 1px) CanvasText;
+    }
+
+    .toggle-group[disabled] > vaadin-checkbox {
+        --vaadin-checkbox-label-color: GrayText;
+        color: GrayText;
+        border-color: GrayText;
+        background: transparent;
+    }
+
+    .toggle-group[disabled] > vaadin-checkbox[checked] {
+        --vaadin-checkbox-label-color: Canvas;
+        color: Canvas;
+        background: GrayText;
+    }
+}
