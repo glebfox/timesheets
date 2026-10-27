@@ -28,6 +28,7 @@
 @import url('component/full-calendar.css');
 @import url('component/icon.css');
 @import url('component/segmented-group.css');
+@import url('component/toggle-group.css');
 
 @import url('app/error-page.css');
 @import url('app/popover-renderer.css');

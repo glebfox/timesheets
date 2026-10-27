@@ -79,7 +79,7 @@
                                label="msg://workdaysField.label"
                                required="true"
                                requiredMessage="msg://workdaysField.requiredMessage"
-                               classNames="segmented-group"
+                               classNames="toggle-group"
                                colspan="2"/>
                 <entityComboBox id="holidayCalendarField" property="holidayCalendar">
                     <prefix>

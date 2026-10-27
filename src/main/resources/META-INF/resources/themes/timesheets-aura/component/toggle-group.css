@@ -1,0 +1,129 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A checkbox group whose items read as a row of separate toggle buttons, each pressed on its own:
+   the box of each item is hidden, its label is the button, and a checked item is filled with the accent color.
+   The item's native input stretches over the whole button, so a click anywhere on it toggles the item,
+   and the keyboard works as it does for the group's checkboxes. */
+
+.toggle-group::part(group-field) {
+    flex-flow: row wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+.toggle-group > vaadin-checkbox {
+    /* The input stretches over the gap between the box and the label; without the box there is none */
+    --vaadin-checkbox-gap: 0;
+    --vaadin-checkbox-label-color: var(--vaadin-text-color);
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    /* A narrow inline padding keeps seven short day names on one line on a phone */
+    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-xs);
+    border: var(--vaadin-input-field-border-width, 1px) solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-m);
+    background: var(--aura-surface-color);
+    box-shadow: var(--aura-shadow-xs);
+}
+
+/* The baseline guide of the item, which would push the label off center, and the box */
+.toggle-group > vaadin-checkbox::before,
+.toggle-group > vaadin-checkbox::part(checkbox) {
+    display: none;
+}
+
+.toggle-group > vaadin-checkbox > input {
+    position: absolute;
+    inset: 0;
+}
+
+/* A disabled item fades its label: the label colors below mark that state instead */
+.toggle-group > vaadin-checkbox > label {
+    opacity: 1;
+}
+
+.toggle-group > vaadin-checkbox[checked] {
+    --vaadin-checkbox-label-color: var(--aura-accent-contrast-color);
+    border-color: transparent;
+    background: var(--aura-accent-color);
+    box-shadow: var(--aura-shadow-s);
+}
+
+@media (any-hover: hover) {
+    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox:not([checked]):hover {
+        background: var(--vaadin-background-container);
+    }
+
+    /* A click unchecks a checked item, so its fill lightens as a primary button's does */
+    .toggle-group:not([readonly], [disabled]) > vaadin-checkbox[checked]:hover {
+        background: color-mix(in srgb, var(--aura-accent-color) 88%, var(--aura-accent-contrast-color));
+    }
+}
+
+/* The box carried the focus ring. The ring is drawn inside the button, clear of its edges,
+   so it shows on the accent fill too; on a checked item it takes the color of the label */
+.toggle-group > vaadin-checkbox[focus-ring] {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -2);
+}
+
+.toggle-group > vaadin-checkbox[focus-ring][checked] {
+    outline-color: var(--aura-accent-contrast-color);
+}
+
+/* Invalid as Aura shows an invalid field: the borders take the error color */
+.toggle-group[invalid] > vaadin-checkbox {
+    border-color: var(--vaadin-input-field-error-color);
+}
+
+/* Read-only as Aura shows a read-only field: a dashed border, no fill, no shadow */
+.toggle-group[readonly] > vaadin-checkbox {
+    border-style: dashed;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* A checked item is told apart by more than the hue of its label:
+   a solid border in the label's color and a heavier label */
+.toggle-group[readonly] > vaadin-checkbox[checked] {
+    --vaadin-checkbox-label-color: var(--aura-accent-text-color);
+    --vaadin-checkbox-label-font-weight: var(--aura-font-weight-semibold);
+    border-style: solid;
+    border-color: var(--aura-accent-text-color);
+    background: var(--aura-accent-surface);
+}
+
+.toggle-group[readonly] > vaadin-checkbox[focus-ring] {
+    outline-color: var(--vaadin-focus-ring-color);
+    outline-style: dashed;
+}
+
+/* Disabled as Aura shows a disabled field: a muted fill, no shadow, dimmed labels,
+   and a checked item still told apart by a stronger fill */
+.toggle-group[disabled] > vaadin-checkbox {
+    --vaadin-checkbox-label-color: var(--vaadin-text-color-disabled);
+    border-color: var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
+    box-shadow: none;
+}
+
+.toggle-group[disabled] > vaadin-checkbox[checked] {
+    --vaadin-checkbox-label-color: var(--vaadin-text-color-secondary);
+    background: var(--vaadin-background-container-strong);
+}
