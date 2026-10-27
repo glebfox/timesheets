@@ -47,6 +47,11 @@
         <vbox id="contentBox" classNames="overflow-auto">
             <genericFilter id="genericFilter"
                            dataLoader="workSchedulesDl">
+                <configurations>
+                    <configuration id="byName" name="msg://byNameConfiguration.name" default="true">
+                        <propertyFilter property="name" operation="CONTAINS"/>
+                    </configuration>
+                </configurations>
                 <properties include=".*"/>
             </genericFilter>
             <hbox id="buttonsPanel" classNames="buttons-panel">

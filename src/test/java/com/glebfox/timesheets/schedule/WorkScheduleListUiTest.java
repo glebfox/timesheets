@@ -34,6 +34,7 @@ import io.jmix.core.SaveContext;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.Notifications;
+import io.jmix.flowui.component.filter.FilterComponent;
 import io.jmix.flowui.component.genericfilter.GenericFilter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.propertyfilter.PropertyFilter;
@@ -254,7 +255,8 @@ public class WorkScheduleListUiTest {
     }
 
     @Test
-    void genericFilterFiltersTheListByName() {
+    @SuppressWarnings("unchecked")
+    void genericFilterOpensWithANameConditionThatFiltersTheList() {
         WorkSchedule found = saveSchedule(uniqueName(), null);
         WorkSchedule other = saveSchedule(uniqueName(), null);
         viewBuilders.view(UiTestUtils.getCurrentView(), WorkScheduleListView.class).open();
@@ -267,14 +269,17 @@ public class WorkScheduleListUiTest {
         CollectionLoader<WorkSchedule> loader = ViewControllerUtils.getViewData(view).getLoader("workSchedulesDl");
         assertThat(filter.getDataLoader()).isSameAs(loader);
 
-        // A name condition, as a user adds it to the filter, types a part of the name, and applies the filter;
-        // a value set from the server does not apply it by itself
-        PropertyFilter<String> nameCondition = filter.filterComponentBuilder().<String>propertyFilter()
-                .property("name")
-                .operation(PropertyFilter.Operation.CONTAINS)
-                .build();
-        filter.getCurrentConfiguration().getRootLogicalFilterComponent().add(nameCondition);
-        filter.refreshCurrentConfiguration();
+        // The default configuration is shown on open, with a name condition only
+        assertThat(filter.getCurrentConfiguration()).isNotSameAs(filter.getEmptyConfiguration());
+        List<FilterComponent> conditions = filter.getCurrentConfiguration()
+                .getRootLogicalFilterComponent()
+                .getFilterComponents();
+        assertThat(conditions).singleElement().isInstanceOf(PropertyFilter.class);
+        PropertyFilter<String> nameCondition = (PropertyFilter<String>) conditions.getFirst();
+        assertThat(nameCondition.getProperty()).isEqualTo("name");
+        assertThat(nameCondition.getOperation()).isEqualTo(PropertyFilter.Operation.CONTAINS);
+
+        // A part of the name, then the filter applied; a value set from the server does not apply it by itself
         nameCondition.setValue(found.getName().substring(NAME_PREFIX.length()));
         filter.apply();
 

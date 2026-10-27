@@ -43,8 +43,11 @@ import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
+import io.jmix.flowui.component.filter.FilterComponent;
+import io.jmix.flowui.component.genericfilter.GenericFilter;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.multiselectcomboboxpicker.JmixMultiSelectComboBoxPicker;
+import io.jmix.flowui.component.propertyfilter.PropertyFilter;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
@@ -207,6 +210,35 @@ public class WorkScheduleManagementRoleUiTest {
         });
 
         assertThat(dataManager.load(Id.of(seedDefault)).one().getIsDefault()).isTrue();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void holderFiltersTheWorkScheduleListByName() {
+        WorkSchedule found = saveSchedule();
+        WorkSchedule other = saveSchedule();
+
+        systemAuthenticator.runWithUser(holder, () -> {
+            viewBuilders.view(UiTestUtils.getCurrentView(), WorkScheduleListView.class).open();
+            WorkScheduleListView list = UiTestUtils.getCurrentView();
+            DataGrid<WorkSchedule> grid = UiTestUtils.getComponent(list, "workSchedulesDataGrid");
+            assertThat(listedIds(grid)).contains(found.getId(), other.getId());
+
+            // The role does not let the holder add conditions, so the filter's default configuration brings
+            // the name condition
+            GenericFilter filter = UiTestUtils.getComponent(list, "genericFilter");
+            List<FilterComponent> conditions = filter.getCurrentConfiguration()
+                    .getRootLogicalFilterComponent()
+                    .getFilterComponents();
+            assertThat(conditions).singleElement().isInstanceOf(PropertyFilter.class);
+            PropertyFilter<String> nameCondition = (PropertyFilter<String>) conditions.getFirst();
+            assertThat(nameCondition.getProperty()).isEqualTo("name");
+
+            nameCondition.setValue(found.getName().substring(NAME_PREFIX.length()));
+            filter.apply();
+
+            assertThat(listedIds(grid)).containsExactly(found.getId());
+        });
     }
 
     @AfterEach
@@ -372,6 +404,12 @@ public class WorkScheduleManagementRoleUiTest {
                 .filter(condition)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No such item in " + grid.getId().orElse("the grid")));
+    }
+
+    private static List<UUID> listedIds(DataGrid<WorkSchedule> grid) {
+        return Objects.requireNonNull(grid.getItems()).getItems().stream()
+                .map(WorkSchedule::getId)
+                .toList();
     }
 
     private static void clickOk(View<?> view) {
