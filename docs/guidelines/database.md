@@ -25,3 +25,5 @@ Removing a record and adding another with the same unique key in one save, such 
 A record that refers to a soft-deleted one, such as a work schedule whose holiday calendar is deleted, or an assignment whose schedule is deleted, saves as it is and keeps the reference: the save needs no `PersistenceHints.SOFT_DELETION` hint, so an editor's save keeps soft deletion on. See `WorkScheduleEditorUiTest` and `UserAssignmentsUiTest`.
 
 A query condition that navigates such a reference, such as `e.workSchedule.name`, joins the referenced table with the soft deletion filter and drops the rows that refer to a deleted record. A load that must keep those rows, as the loads of assignments do, leaves the reference out of its conditions.
+
+A record that refers to a soft-deleted one still reaches it through its fetch plan, as a time entry loaded with its user does when the user is deleted. A load of the soft-deleted record by its own id, such as by the old reference id of a delete event, finds nothing unless soft deletion is off for that load. See `TimeEntryEventListener`.

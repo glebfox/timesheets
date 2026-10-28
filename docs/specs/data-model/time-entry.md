@@ -17,7 +17,7 @@ One user's time spent on one task on one day. Any number of entries may share a 
 
 Nothing in the application moves an entry between statuses on its own, and no transition is forbidden: whoever can edit an entry can set any status. Project roles take no part in it. Rejected is the only status with behavior attached: the entry's user sees their count of Rejected entries in the main menu ([main view](../views/main.md)), and the editor asks for a rejection reason ([time entries](../views/time-entries.md)).
 
-After an entry is created or deleted, or its status changes, the open sessions of the entry's user are told to refresh that count. A change that moves an entry to another user tells only the new user, and only if the status changed too.
+After an entry is created or deleted, or its status changes, the open sessions of the entry's user are told to refresh that count, whether or not that user is deleted. A change that moves an entry to another user tells only the new user, and only if the status changed too.
 
 ## Rules applied when editing
 
@@ -39,5 +39,6 @@ Deleting an entry soft-deletes it. **Known defect:** it also deletes every tag a
 
 - The editing rules above: no UI test exercises the time-entry editor.
 - The description and rejection reason being carried into a copy: the copy test does not check them.
-- The refresh of the rejected count in the user's open sessions: it needs a live session (`docs/guidelines/testing.md`).
+- Who is told when an entry is created, when a change moves it to another user, and when a change leaves its status alone: the tests check only an entry of a deleted user, when it is deleted or its status changes.
+- The rejected count refreshing in the open sessions that are told: it needs a live session (`docs/guidelines/testing.md`).
 - The tag deletion defect: no test in the suite.
