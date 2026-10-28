@@ -23,6 +23,7 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
@@ -36,6 +37,8 @@ import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.PersistenceHints;
+import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
+import io.jmix.fullcalendarflowui.component.model.Display;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +56,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @SpringBootTest
 @ExtendWith(AuthenticatedAsAdmin.class)
@@ -202,6 +206,34 @@ public class CalendarSupportTest {
 
         assertThatThrownBy(() -> calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, Map.of(), plan))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void dayMarksTest() {
+        // Monday, Nov 2 to Sunday, Nov 8, 2026: Wednesday a holiday, Saturday a moved workday
+        WorkPlan plan = new WorkPlan(
+                Map.of(LocalDate.of(2026, 11, 2), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 3), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 4), WorkTime.ZERO,
+                        LocalDate.of(2026, 11, 5), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 6), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 7), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 8), WorkTime.ZERO),
+                Map.of(LocalDate.of(2026, 11, 4), new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF),
+                        LocalDate.of(2026, 11, 7), new WorkPlan.HolidayDay("Working Saturday", HolidayCalendarDayType.WORKDAY)));
+
+        List<CalendarEvent> marks = calendarSupport.createDayMarks(plan, LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 9));
+
+        assertThat(marks).extracting(CalendarEvent::getStartDateTime, CalendarEvent::getClassNames,
+                        CalendarEvent::getTitle, CalendarEvent::getDescription)
+                .containsExactly(
+                        tuple(LocalDate.of(2026, 11, 4).atStartOfDay(),
+                                "calendar-view-unplanned-day calendar-view-holiday-day-off", "Unity Day", "Unity Day"),
+                        tuple(LocalDate.of(2026, 11, 7).atStartOfDay(),
+                                "calendar-view-holiday-workday", "Working Saturday", "Working Saturday"),
+                        tuple(LocalDate.of(2026, 11, 8).atStartOfDay(), "calendar-view-unplanned-day", null, null));
+        assertThat(marks).extracting(CalendarEvent::getDisplay).containsOnly(Display.BACKGROUND);
+        assertThat(marks).extracting(CalendarEvent::getAllDay).containsOnly(true);
     }
 
     @Test

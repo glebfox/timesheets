@@ -60,6 +60,7 @@ import io.jmix.fullcalendarflowui.component.contextmenu.FullCalendarContextMenu;
 import io.jmix.fullcalendarflowui.component.contextmenu.event.DayCell;
 import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.EntityCalendarEvent;
+import io.jmix.fullcalendarflowui.component.data.ListCalendarDataProvider;
 import io.jmix.fullcalendarflowui.component.event.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -79,6 +80,11 @@ import java.util.Map;
 @ViewController("ts_CalendarView")
 @ViewDescriptor("calendar-view.xml")
 public class CalendarView extends StandardView {
+
+    /**
+     * The id of the calendar's data provider of the day marks, built by {@link CalendarSupport#createDayMarks}.
+     */
+    public static final String DAY_MARKS_PROVIDER_ID = "dayMarksProvider";
 
     private static final Logger log = LoggerFactory.getLogger(CalendarView.class);
 
@@ -139,6 +145,7 @@ public class CalendarView extends StandardView {
 
     private Span monthName;
     private Span monthYear;
+    private ListCalendarDataProvider dayMarksProvider;
 
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
@@ -157,6 +164,7 @@ public class CalendarView extends StandardView {
     @Subscribe
     private void onInit(final InitEvent event) {
         initMonthHeader();
+        initDayMarks();
         initCalendarContextMenu();
     }
 
@@ -169,6 +177,12 @@ public class CalendarView extends StandardView {
         // The space keeps the heading's text "September 2026" for assistive technology;
         // it is not rendered as a flex item, so the visual gap stays the header's column gap
         monthHeader.add(monthName, new Text(" "), monthYear);
+    }
+
+    private void initDayMarks() {
+        // Added here: the descriptor declares only container and callback data providers
+        dayMarksProvider = new ListCalendarDataProvider(DAY_MARKS_PROVIDER_ID);
+        calendar.addDataProvider(dayMarksProvider);
     }
 
     @Install(to = "timeEntriesDl", target = Target.DATA_LOADER)
@@ -196,7 +210,9 @@ public class CalendarView extends StandardView {
             CalendarEvent calendarEvent = context.getCalendarEvent();
             DayCell dayCell = context.getDayCell();
 
-            if (calendarEvent != null) {
+            // The add-on reports a right-click on a background event, such as a day mark, as a right-click
+            // on an event, along with the day cell; on a day mark the day cell's menu is offered
+            if (isTimeEntry(calendarEvent)) {
                 contextMenu.addItem(messages.getMessage("actions.Copy"), __ ->
                         copyTimeEntry(calendarEvent));
                 contextMenu.addItem(messages.getMessage("actions.Remove"), __ ->
@@ -292,6 +308,10 @@ public class CalendarView extends StandardView {
         // The plan of the user whose entries the calendar shows
         User user = (User) currentUserSubstitution.getEffectiveUser();
         workPlan = workPlanSupport.loadWorkPlan(user, gridStartDate, gridEndDate);
+
+        // The marks of the new plan replace the previous ones: the provider has no method to set its items
+        dayMarksProvider.removeAllItems();
+        dayMarksProvider.addItems(calendarSupport.createDayMarks(workPlan, gridStartDate, gridEndDate));
     }
 
     private void updateHoursSummary() {
@@ -441,6 +461,11 @@ public class CalendarView extends StandardView {
 
     @Subscribe("calendar")
     private void onCalendarEventClick(final EventClickEvent event) {
+        // A click on a day mark does nothing
+        if (!isTimeEntry(event.getCalendarEvent())) {
+            return;
+        }
+
         TimeEntryCalendarWrapper timeEntryToEdit = findTimeEntry(event.getCalendarEvent());
         if (timeEntryToEdit == null) {
             return;
@@ -589,6 +614,11 @@ public class CalendarView extends StandardView {
 
     private LocalDate getToday() {
         return LocalDate.now();
+    }
+
+    private boolean isTimeEntry(@Nullable CalendarEvent calendarEvent) {
+        return calendarEvent instanceof EntityCalendarEvent<?> entityCalendarEvent
+                && entityCalendarEvent.getEntity() instanceof TimeEntryCalendarWrapper;
     }
 
     @Nullable

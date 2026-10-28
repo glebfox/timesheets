@@ -20,6 +20,7 @@ import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import io.jmix.core.DataManager;
@@ -29,6 +30,9 @@ import io.jmix.core.common.util.Preconditions;
 import io.jmix.flowui.Dialogs;
 import io.jmix.flowui.action.DialogAction;
 import io.jmix.flowui.kit.action.ActionVariant;
+import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
+import io.jmix.fullcalendarflowui.component.data.SimpleCalendarEvent;
+import io.jmix.fullcalendarflowui.component.model.Display;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -39,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -48,6 +53,19 @@ import java.util.stream.Collectors;
  */
 @Component("ts_CalendarSupport")
 public class CalendarSupport {
+
+    /**
+     * The class name of the mark of a day that plans nothing.
+     */
+    public static final String UNPLANNED_DAY_CLASS_NAME = "calendar-view-unplanned-day";
+    /**
+     * The class name of the mark of a day that a holiday calendar makes a day off.
+     */
+    public static final String HOLIDAY_DAY_OFF_CLASS_NAME = "calendar-view-holiday-day-off";
+    /**
+     * The class name of the mark of a day that a holiday calendar makes a workday.
+     */
+    public static final String HOLIDAY_WORKDAY_CLASS_NAME = "calendar-view-holiday-workday";
 
     private final TimeEntrySupport timeEntrySupport;
     private final DataManager dataManager;
@@ -168,6 +186,64 @@ public class CalendarSupport {
         return weeksSummary.stream()
                 .map(WeekSummary::total)
                 .reduce(FactAndPlan.ZERO, FactAndPlan::plus);
+    }
+
+    // The day marks are background events, which FullCalendar itself adds and removes. FullCalendar's
+    // business hours are a weekly pattern and cannot vary by date. The add-on's dayCellClassNamesGenerator
+    // adds class names to a day cell and never removes them (as https://github.com/jmix-framework/jmix/issues/5840),
+    // so a cell would keep a previous plan's shading. Each day gets an event of its own: a background event
+    // over several days is rendered in its first day's cell, and a right-click on a later day would report the first.
+
+    /**
+     * Creates the marks of the days of the specified range for a calendar: background events that shade
+     * a day that plans nothing and show the name of a holiday calendar day.
+     *
+     * @param plan      the plan to take the days from; it must cover every day of the range
+     * @param startDate the first day of the range
+     * @param endDate   the day after the last day of the range (exclusive)
+     * @return one event per day that plans nothing or has a holiday calendar day, in date order; a day
+     * with a plan and without a holiday calendar day has none
+     * @throws IllegalArgumentException if the plan does not cover a day of the range
+     */
+    public List<CalendarEvent> createDayMarks(WorkPlan plan, LocalDate startDate, LocalDate endDate) {
+        Preconditions.checkNotNullArgument(plan);
+        Preconditions.checkNotNullArgument(startDate);
+        Preconditions.checkNotNullArgument(endDate);
+
+        List<CalendarEvent> dayMarks = new ArrayList<>();
+        for (LocalDate date = startDate; date.isBefore(endDate); date = date.plusDays(1)) {
+            List<String> classNames = new ArrayList<>();
+            if (!plan.isWorkday(date)) {
+                classNames.add(UNPLANNED_DAY_CLASS_NAME);
+            }
+
+            Optional<WorkPlan.HolidayDay> holidayDay = plan.findHolidayDay(date);
+            holidayDay.ifPresent(day -> classNames.add(getHolidayDayClassName(day.type())));
+
+            if (classNames.isEmpty()) {
+                continue;
+            }
+
+            String name = holidayDay.map(WorkPlan.HolidayDay::name).orElse(null);
+            dayMarks.add(SimpleCalendarEvent.create()
+                    .withAllDay(true)
+                    .withStartDateTime(date.atStartOfDay())
+                    .withDisplay(Display.BACKGROUND)
+                    .withClassNames(String.join(" ", classNames))
+                    // The calendar shows the title in the day and the description as its tooltip
+                    .withTitle(name)
+                    .withDescription(name)
+                    .build());
+        }
+
+        return dayMarks;
+    }
+
+    private String getHolidayDayClassName(HolidayCalendarDayType type) {
+        return switch (type) {
+            case DAY_OFF -> HOLIDAY_DAY_OFF_CLASS_NAME;
+            case WORKDAY -> HOLIDAY_WORKDAY_CLASS_NAME;
+        };
     }
 
     /**

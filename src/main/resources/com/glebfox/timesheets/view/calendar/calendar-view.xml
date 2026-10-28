@@ -64,7 +64,6 @@
                                defaultDayMaxEventsEnabled="true"
                                displayEventTime="false"
                                eventStartEditable="true"
-                               defaultBusinessHoursEnabled="true"
                                navigationLinksEnabled="true">
                 <calendar:displayModeProperties>
                     <calendar:dayGridMonth fixedWeekCount="false"/>

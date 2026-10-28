@@ -341,3 +341,50 @@
 .jmix-day-cell-bottom-text.matching-time {
     color: var(--ts-success-color);
 }
+
+/* Day marks */
+
+/* A day without a plan has the fill a weekend had under FullCalendar's business hours, square as that
+   fill was: Jmix's Aura stylesheet rounds every .fc-event, and a background event is one */
+.calendar-view .fc .fc-bg-event.calendar-view-unplanned-day {
+    background: var(--fc-non-business-color);
+    border-radius: 0;
+    opacity: 1;
+}
+
+/* A named day with a plan has no fill */
+.calendar-view .fc .fc-bg-event:not(.calendar-view-unplanned-day) {
+    background: transparent;
+    opacity: 1;
+}
+
+/* FullCalendar renders a background event's title inside it; it stands in the day-number row
+   and ends before the number, whose click creates an entry */
+.calendar-view .fc .fc-bg-event .fc-event-title {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0 calc(var(--aura-font-size-m) * 2.4);
+    margin: 0;
+    padding: var(--vaadin-padding-xs);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-xs);
+    font-style: normal;
+    font-weight: var(--aura-font-weight-medium);
+    line-height: var(--aura-line-height-xs);
+}
+
+.calendar-view .fc .calendar-view-holiday-day-off .fc-event-title {
+    color: var(--ts-danger-color);
+}
+
+.calendar-view .fc .calendar-view-holiday-workday .fc-event-title {
+    color: var(--aura-accent-text-color);
+}
+
+/* Dimmed on the neighboring months' days, as their entries are */
+.calendar-view .fc .fc-day-other .fc-bg-event .fc-event-title {
+    opacity: 0.3;
+}
