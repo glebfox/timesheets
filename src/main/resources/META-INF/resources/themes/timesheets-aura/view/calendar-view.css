@@ -395,3 +395,14 @@
 .calendar-view .fc .fc-day-other .fc-bg-event .fc-event-title {
     opacity: 0.3;
 }
+
+/* FullCalendar dims a neighboring month's day number through the number's row, and that opacity
+   makes the row a stacking context, which keeps the number under the cell's day mark whatever its
+   own z-index: the mark would take the number's click. Dimmed itself instead, the number stays on top */
+.calendar-view .fc .fc-day-other .fc-daygrid-day-top {
+    opacity: 1;
+}
+
+.calendar-view .fc .fc-day-other .fc-daygrid-day-number {
+    opacity: 0.3;
+}
