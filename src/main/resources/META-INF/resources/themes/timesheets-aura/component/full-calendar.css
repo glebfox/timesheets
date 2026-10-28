@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-.fc-day-other .fc-daygrid-day-events {
+/* A neighboring month's day dims its entries and its "+N more" link, not their container: an opacity
+   on the container would make it a stacking context under the day's background events, which would
+   then take the entries' clicks, while each entry and link keeps its own z-index above them. Scoped to
+   the cell's events, since the "+N more" popover carries the day's classes too */
+.fc-day-other .fc-daygrid-day-events .fc-daygrid-event,
+.fc-day-other .fc-daygrid-day-events .fc-daygrid-more-link {
     opacity: 0.3;
 }
 
