@@ -18,6 +18,7 @@ package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
+import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
@@ -46,10 +47,12 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ExtendWith(AuthenticatedAsAdmin.class)
@@ -63,26 +66,11 @@ public class CalendarSupportTest {
     @Autowired
     CalendarSupport calendarSupport;
     @Autowired
+    WorkPlanSupport workPlanSupport;
+    @Autowired
     CurrentAuthentication currentAuthentication;
 
     List<Object> entities = new ArrayList<>();
-
-    @Test
-    void plannedTimeTest() {
-        LocalDate monday = LocalDate.of(2024, 12, 2);
-
-        for (int i = 0; i < 5; i++) {
-            LocalDate workday = monday.plusDays(i);
-            assertThat(calendarSupport.isWorkday(workday)).isTrue();
-            assertThat(calendarSupport.getPlannedTime(workday)).isEqualTo(WorkTime.ofHours(8));
-        }
-
-        for (int i = 5; i < 7; i++) {
-            LocalDate weekend = monday.plusDays(i);
-            assertThat(calendarSupport.isWorkday(weekend)).isFalse();
-            assertThat(calendarSupport.getPlannedTime(weekend)).isEqualTo(WorkTime.ZERO);
-        }
-    }
 
     @Test
     void spentTimeByDayTest() {
@@ -115,7 +103,8 @@ public class CalendarSupportTest {
 
         /* When */
         List<WeekSummary> weeksSummary =
-                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, spentTimeByDay);
+                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, spentTimeByDay,
+                        loadDecemberPlan());
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         /* Then */
@@ -154,7 +143,8 @@ public class CalendarSupportTest {
 
         /* When */
         List<WeekSummary> weeksSummary =
-                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.SUNDAY, spentTimeByDay);
+                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.SUNDAY, spentTimeByDay,
+                        loadDecemberPlan());
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         /* Then */
@@ -178,6 +168,40 @@ public class CalendarSupportTest {
         assertThat(weeksSummary.get(4).lastDay()).isEqualTo(LocalDate.of(2024, 12, 31));
 
         assertThat(monthSummary).isEqualTo(factAndPlan(WorkTime.of(43, 30), WorkTime.ofHours(176)));
+    }
+
+    @Test
+    void weeksSummaryFollowsThePlanTest() {
+        /* Given */
+        Map<LocalDate, WorkTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
+        // Monday, Dec 2 is a holiday and Saturday, Dec 7 is worked for 4 hours
+        WorkPlan plan = decemberPlan(Map.of(
+                LocalDate.of(2024, 12, 2), WorkTime.ZERO,
+                LocalDate.of(2024, 12, 7), WorkTime.ofHours(4)));
+
+        /* When */
+        List<WeekSummary> weeksSummary =
+                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, spentTimeByDay, plan);
+        FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
+
+        /* Then */
+        assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
+                factAndPlan(WorkTime.ofHours(2), WorkTime.ZERO),
+                factAndPlan(WorkTime.ofHours(40), WorkTime.ofHours(36)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
+                factAndPlan(WorkTime.of(1, 30), WorkTime.ofHours(16))
+        );
+        assertThat(monthSummary).isEqualTo(factAndPlan(WorkTime.of(43, 30), WorkTime.ofHours(172)));
+    }
+
+    @Test
+    void weeksSummaryRequiresAPlanOfTheWholeMonthTest() {
+        WorkPlan plan = new WorkPlan(Map.of(LocalDate.of(2024, 12, 2), WorkTime.ofHours(8)));
+
+        assertThatThrownBy(() -> calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, Map.of(), plan))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -245,6 +269,24 @@ public class CalendarSupportTest {
         timeEntries.add(timeEntry(LocalDate.of(2024, 12, 31), WorkTime.of(1, 30)));
 
         return timeEntries;
+    }
+
+    private WorkPlan loadDecemberPlan() {
+        // admin has no assignments, so the default schedule plans the month: 8 hours Monday to Friday,
+        // with no holiday calendar in the test profile
+        return workPlanSupport.loadWorkPlan((User) currentAuthentication.getUser(),
+                DECEMBER_2024.atDay(1), DECEMBER_2024.plusMonths(1).atDay(1));
+    }
+
+    private WorkPlan decemberPlan(Map<LocalDate, WorkTime> overrides) {
+        Map<LocalDate, WorkTime> plannedTimeByDay = new HashMap<>();
+        DECEMBER_2024.atDay(1).datesUntil(DECEMBER_2024.plusMonths(1).atDay(1)).forEach(day -> {
+            boolean weekend = day.getDayOfWeek() == DayOfWeek.SATURDAY || day.getDayOfWeek() == DayOfWeek.SUNDAY;
+            plannedTimeByDay.put(day, weekend ? WorkTime.ZERO : WorkTime.ofHours(8));
+        });
+        plannedTimeByDay.putAll(overrides);
+
+        return new WorkPlan(plannedTimeByDay);
     }
 
     private TimeEntryCalendarWrapper timeEntry(LocalDate date, WorkTime spentTime) {

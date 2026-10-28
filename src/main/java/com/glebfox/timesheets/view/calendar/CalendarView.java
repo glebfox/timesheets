@@ -18,14 +18,17 @@ package com.glebfox.timesheets.view.calendar;
 
 
 import com.glebfox.timesheets.app.CalendarSupport;
+import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
+import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
+import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.base.Preconditions;
@@ -42,6 +45,7 @@ import io.jmix.core.*;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
 import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.accesscontext.UiEntityContext;
@@ -125,6 +129,10 @@ public class CalendarView extends StandardView {
     private CurrentAuthentication currentAuthentication;
     @Autowired
     private CalendarSupport calendarSupport;
+    @Autowired
+    private WorkPlanSupport workPlanSupport;
+    @Autowired
+    private CurrentUserSubstitution currentUserSubstitution;
 
     @ViewComponent
     private MessageBundle messageBundle;
@@ -135,6 +143,13 @@ public class CalendarView extends StandardView {
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
     private Map<LocalDate, WorkTime> spentTimeByDay = Collections.emptyMap();
+    @Nullable
+    private WorkPlan workPlan;
+    // The range the month grid shows, as the calendar reports it: the end is exclusive
+    @Nullable
+    private LocalDate gridStartDate;
+    @Nullable
+    private LocalDate gridEndDate;
 
     private UiEntityContext entityContext;
     private InMemoryCrudEntityContext crudEntityContext;
@@ -258,20 +273,34 @@ public class CalendarView extends StandardView {
         // The month grid starts with the first day of a week, which the calendar takes
         // from its own messages rather than from the locale
         firstDayOfWeek = displayModeInfo.getActiveStartDate().getDayOfWeek();
+        gridStartDate = event.getStartDate();
+        gridEndDate = event.getEndDate();
 
         updateMonthHeader();
         updateTodayButton();
 
+        // The plan goes first: loading the entries recomputes the totals and resets the day colors,
+        // which read the plan
+        loadWorkPlan();
         loadTimeEntries(event.getStartDate(), event.getEndDate());
     }
 
+    private void loadWorkPlan() {
+        Preconditions.checkState(gridStartDate != null && gridEndDate != null,
+                "The calendar has not reported the dates it shows");
+
+        // The plan of the user whose entries the calendar shows
+        User user = (User) currentUserSubstitution.getEffectiveUser();
+        workPlan = workPlanSupport.loadWorkPlan(user, gridStartDate, gridEndDate);
+    }
+
     private void updateHoursSummary() {
-        if (displayedMonth == null || firstDayOfWeek == null) {
+        if (displayedMonth == null || firstDayOfWeek == null || workPlan == null) {
             return;
         }
 
         List<WeekSummary> weeksSummary =
-                calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay);
+                calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay, workPlan);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         updateWeeksSummary(weeksSummary);
@@ -399,6 +428,9 @@ public class CalendarView extends StandardView {
 
     @Subscribe(id = "refreshBtn", subject = "clickListener")
     private void onRefreshBtnClick(final ClickEvent<JmixButton> event) {
+        if (gridStartDate != null && gridEndDate != null) {
+            loadWorkPlan();
+        }
         getViewData().loadAll();
 
         notifications.create(messageBundle.formatMessage("info.dataReloaded.text"))
@@ -497,13 +529,13 @@ public class CalendarView extends StandardView {
     @Install(to = "calendar", subject = "dayCellBottomTextClassNamesGenerator")
     private List<String> calendarDayCellBottomTextClassNamesGenerator(final DayCellBottomTextClassNamesContext context) {
         LocalDate date = context.getDate();
-        if (!calendarSupport.isWorkday(date)) {
+        if (workPlan == null || !workPlan.covers(date) || !workPlan.isWorkday(date)) {
             return null;
         }
 
         FactAndPlan daySummary = new FactAndPlan(
                 spentTimeByDay.getOrDefault(date, WorkTime.ZERO),
-                calendarSupport.getPlannedTime(date));
+                workPlan.getPlannedTime(date));
 
         return List.of(getTimeClassName(daySummary));
     }
