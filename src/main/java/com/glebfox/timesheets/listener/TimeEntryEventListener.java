@@ -24,6 +24,7 @@ import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
 import io.jmix.core.event.AttributeChanges;
 import io.jmix.core.event.EntityChangedEvent;
+import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.UiEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -61,8 +62,12 @@ public class TimeEntryEventListener {
         if (EntityChangedEvent.Type.DELETED == event.getType()) {
             Id<User> userId = changes.getOldValue("user");
             if (userId != null) {
-                User user = dataManager.load(userId).one();
-                publishEvent(user.getUsername());
+                // The user may be soft-deleted, as the entry's reference still reaches them,
+                // or removed in the same save, and then there is no one to tell
+                dataManager.load(userId)
+                        .hint(PersistenceHints.SOFT_DELETION, false)
+                        .optional()
+                        .ifPresent(user -> publishEvent(user.getUsername()));
             }
         }
     }
