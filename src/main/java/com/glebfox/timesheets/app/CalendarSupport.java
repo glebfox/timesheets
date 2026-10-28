@@ -193,6 +193,8 @@ public class CalendarSupport {
     // adds class names to a day cell and never removes them (as https://github.com/jmix-framework/jmix/issues/5840),
     // so a cell would keep a previous plan's shading. Each day gets an event of its own: a background event
     // over several days is rendered in its first day's cell, and a right-click on a later day would report the first.
+    // Its id is its date, so a click sent before a reload replaced the marks finds the new mark of its day;
+    // the add-on throws on the id of an event its data provider no longer has.
 
     /**
      * Creates the marks of the days of the specified range for a calendar: background events that shade
@@ -225,7 +227,7 @@ public class CalendarSupport {
             }
 
             String name = holidayDay.map(WorkPlan.HolidayDay::name).orElse(null);
-            dayMarks.add(SimpleCalendarEvent.create()
+            dayMarks.add(SimpleCalendarEvent.create(date)
                     .withAllDay(true)
                     .withStartDateTime(date.atStartOfDay())
                     .withDisplay(Display.BACKGROUND)

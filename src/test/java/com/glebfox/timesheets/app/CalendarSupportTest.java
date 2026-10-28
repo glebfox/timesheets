@@ -234,6 +234,13 @@ public class CalendarSupportTest {
                         tuple(LocalDate.of(2026, 11, 8).atStartOfDay(), "calendar-view-unplanned-day", null, null));
         assertThat(marks).extracting(CalendarEvent::getDisplay).containsOnly(Display.BACKGROUND);
         assertThat(marks).extracting(CalendarEvent::getAllDay).containsOnly(true);
+
+        // A day's mark keeps its id from one load to the next, and each day has an id of its own
+        List<CalendarEvent> reloadedMarks =
+                calendarSupport.createDayMarks(plan, LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 9));
+        assertThat(reloadedMarks).extracting(CalendarEvent::getId)
+                .containsExactlyElementsOf(marks.stream().map(CalendarEvent::getId).toList());
+        assertThat(marks).extracting(CalendarEvent::getId).doesNotHaveDuplicates();
     }
 
     @Test
