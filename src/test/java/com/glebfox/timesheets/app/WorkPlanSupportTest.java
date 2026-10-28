@@ -84,6 +84,7 @@ public class WorkPlanSupportTest {
         assertThat(plan.isWorkday(november(7))).isFalse();
         assertThat(plan.covers(NOVEMBER_START)).isTrue();
         assertThat(plan.covers(NOVEMBER_END)).isFalse();
+        assertThat(plan.findHolidayDay(november(4))).isEmpty();
     }
 
     @Test
@@ -129,6 +130,40 @@ public class WorkPlanSupportTest {
     }
 
     @Test
+    void holidayCalendarDaysCarryTheirNames() {
+        User user = createUser();
+        assign(user, sevenHours().schedule(), LocalDate.of(2026, 10, 1));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.findHolidayDay(november(4)))
+                .contains(new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF));
+        assertThat(plan.findHolidayDay(november(7)))
+                .contains(new WorkPlan.HolidayDay("Working Saturday", HolidayCalendarDayType.WORKDAY));
+        assertThat(plan.findHolidayDay(november(5))).isEmpty();
+    }
+
+    @Test
+    void holidayNamesFollowTheScheduleInForce() {
+        User user = createUser();
+        assign(user, sevenHours().schedule(), LocalDate.of(2026, 10, 1));
+        HolidayCalendar otherCalendar = createCalendar("Other calendar");
+        addDay(otherCalendar, november(3), HolidayCalendarDayType.DAY_OFF, "Before the switch");
+        addDay(otherCalendar, november(5), HolidayCalendarDayType.DAY_OFF, "Other holiday");
+        assign(user, createSchedule("Other schedule", WorkTime.ofHours(8), otherCalendar, MONDAY_TO_FRIDAY), november(5));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.findHolidayDay(november(3))).isEmpty();
+        assertThat(plan.findHolidayDay(november(4))).map(WorkPlan.HolidayDay::name).contains("Unity Day");
+        assertThat(plan.findHolidayDay(november(5))).map(WorkPlan.HolidayDay::name).contains("Other holiday");
+        assertThat(plan.getPlannedTime(november(5))).isEqualTo(WorkTime.ZERO);
+        // The seven-hour calendar's working Saturday no longer applies after the switch
+        assertThat(plan.findHolidayDay(november(7))).isEmpty();
+        assertThat(plan.getPlannedTime(november(7))).isEqualTo(WorkTime.ZERO);
+    }
+
+    @Test
     void daysOfAnotherCalendarDoNotCount() {
         User user = createUser();
         assign(user, sevenHours().schedule(), LocalDate.of(2026, 10, 1));
@@ -138,6 +173,7 @@ public class WorkPlanSupportTest {
         WorkPlan plan = novemberPlan(user);
 
         assertThat(plan.getPlannedTime(november(5))).isEqualTo(WorkTime.ofHours(7));
+        assertThat(plan.findHolidayDay(november(5))).isEmpty();
     }
 
     @Test
@@ -154,6 +190,7 @@ public class WorkPlanSupportTest {
         assertThat(plan.getPlannedTime(november(7))).isEqualTo(WorkTime.ofHours(7));
         // From the deleted schedule, not the 8-hour default
         assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(7));
+        assertThat(plan.findHolidayDay(november(4))).map(WorkPlan.HolidayDay::name).contains("Unity Day");
     }
 
     @Test
@@ -169,6 +206,7 @@ public class WorkPlanSupportTest {
 
         assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(7));
         assertThat(plan.getPlannedTime(november(4))).isEqualTo(WorkTime.ofHours(7));
+        assertThat(plan.findHolidayDay(november(4))).isEmpty();
     }
 
     @Test

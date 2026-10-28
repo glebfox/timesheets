@@ -18,14 +18,17 @@ package com.glebfox.timesheets.view.calendar;
 
 
 import com.glebfox.timesheets.app.CalendarSupport;
+import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
+import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryCalendarWrapper;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
+import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.base.Preconditions;
@@ -42,6 +45,7 @@ import io.jmix.core.*;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
 import io.jmix.core.metamodel.model.MetaClass;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.accesscontext.UiEntityContext;
@@ -56,6 +60,7 @@ import io.jmix.fullcalendarflowui.component.contextmenu.FullCalendarContextMenu;
 import io.jmix.fullcalendarflowui.component.contextmenu.event.DayCell;
 import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.EntityCalendarEvent;
+import io.jmix.fullcalendarflowui.component.data.ListCalendarDataProvider;
 import io.jmix.fullcalendarflowui.component.event.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -75,6 +80,11 @@ import java.util.Map;
 @ViewController("ts_CalendarView")
 @ViewDescriptor("calendar-view.xml")
 public class CalendarView extends StandardView {
+
+    /**
+     * The id of the calendar's data provider of the day marks, built by {@link CalendarSupport#createDayMarks}.
+     */
+    public static final String DAY_MARKS_PROVIDER_ID = "dayMarksProvider";
 
     private static final Logger log = LoggerFactory.getLogger(CalendarView.class);
 
@@ -125,16 +135,28 @@ public class CalendarView extends StandardView {
     private CurrentAuthentication currentAuthentication;
     @Autowired
     private CalendarSupport calendarSupport;
+    @Autowired
+    private WorkPlanSupport workPlanSupport;
+    @Autowired
+    private CurrentUserSubstitution currentUserSubstitution;
 
     @ViewComponent
     private MessageBundle messageBundle;
 
     private Span monthName;
     private Span monthYear;
+    private ListCalendarDataProvider dayMarksProvider;
 
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
     private Map<LocalDate, WorkTime> spentTimeByDay = Collections.emptyMap();
+    @Nullable
+    private WorkPlan workPlan;
+    // The range the month grid shows, as the calendar reports it: the end is exclusive
+    @Nullable
+    private LocalDate gridStartDate;
+    @Nullable
+    private LocalDate gridEndDate;
 
     private UiEntityContext entityContext;
     private InMemoryCrudEntityContext crudEntityContext;
@@ -142,6 +164,7 @@ public class CalendarView extends StandardView {
     @Subscribe
     private void onInit(final InitEvent event) {
         initMonthHeader();
+        initDayMarks();
         initCalendarContextMenu();
     }
 
@@ -154,6 +177,12 @@ public class CalendarView extends StandardView {
         // The space keeps the heading's text "September 2026" for assistive technology;
         // it is not rendered as a flex item, so the visual gap stays the header's column gap
         monthHeader.add(monthName, new Text(" "), monthYear);
+    }
+
+    private void initDayMarks() {
+        // Added here: the descriptor declares only container and callback data providers
+        dayMarksProvider = new ListCalendarDataProvider(DAY_MARKS_PROVIDER_ID);
+        calendar.addDataProvider(dayMarksProvider);
     }
 
     @Install(to = "timeEntriesDl", target = Target.DATA_LOADER)
@@ -181,7 +210,9 @@ public class CalendarView extends StandardView {
             CalendarEvent calendarEvent = context.getCalendarEvent();
             DayCell dayCell = context.getDayCell();
 
-            if (calendarEvent != null) {
+            // The add-on reports a right-click on a background event, such as a day mark, as a right-click
+            // on an event, along with the day cell; on a day mark the day cell's menu is offered
+            if (isTimeEntry(calendarEvent)) {
                 contextMenu.addItem(messages.getMessage("actions.Copy"), __ ->
                         copyTimeEntry(calendarEvent));
                 contextMenu.addItem(messages.getMessage("actions.Remove"), __ ->
@@ -258,20 +289,38 @@ public class CalendarView extends StandardView {
         // The month grid starts with the first day of a week, which the calendar takes
         // from its own messages rather than from the locale
         firstDayOfWeek = displayModeInfo.getActiveStartDate().getDayOfWeek();
+        gridStartDate = event.getStartDate();
+        gridEndDate = event.getEndDate();
 
         updateMonthHeader();
         updateTodayButton();
 
+        // The plan goes first: loading the entries recomputes the totals and resets the day colors,
+        // which read the plan
+        loadWorkPlan();
         loadTimeEntries(event.getStartDate(), event.getEndDate());
     }
 
+    private void loadWorkPlan() {
+        Preconditions.checkState(gridStartDate != null && gridEndDate != null,
+                "The calendar has not reported the dates it shows");
+
+        // The plan of the user whose entries the calendar shows
+        User user = (User) currentUserSubstitution.getEffectiveUser();
+        workPlan = workPlanSupport.loadWorkPlan(user, gridStartDate, gridEndDate);
+
+        // The marks of the new plan replace the previous ones: the provider has no method to set its items
+        dayMarksProvider.removeAllItems();
+        dayMarksProvider.addItems(calendarSupport.createDayMarks(workPlan, gridStartDate, gridEndDate));
+    }
+
     private void updateHoursSummary() {
-        if (displayedMonth == null || firstDayOfWeek == null) {
+        if (displayedMonth == null || firstDayOfWeek == null || workPlan == null) {
             return;
         }
 
         List<WeekSummary> weeksSummary =
-                calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay);
+                calendarSupport.calculateWeeksSummary(displayedMonth, firstDayOfWeek, spentTimeByDay, workPlan);
         FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
 
         updateWeeksSummary(weeksSummary);
@@ -399,6 +448,9 @@ public class CalendarView extends StandardView {
 
     @Subscribe(id = "refreshBtn", subject = "clickListener")
     private void onRefreshBtnClick(final ClickEvent<JmixButton> event) {
+        if (gridStartDate != null && gridEndDate != null) {
+            loadWorkPlan();
+        }
         getViewData().loadAll();
 
         notifications.create(messageBundle.formatMessage("info.dataReloaded.text"))
@@ -409,6 +461,11 @@ public class CalendarView extends StandardView {
 
     @Subscribe("calendar")
     private void onCalendarEventClick(final EventClickEvent event) {
+        // A click on a day mark does nothing
+        if (!isTimeEntry(event.getCalendarEvent())) {
+            return;
+        }
+
         TimeEntryCalendarWrapper timeEntryToEdit = findTimeEntry(event.getCalendarEvent());
         if (timeEntryToEdit == null) {
             return;
@@ -497,13 +554,13 @@ public class CalendarView extends StandardView {
     @Install(to = "calendar", subject = "dayCellBottomTextClassNamesGenerator")
     private List<String> calendarDayCellBottomTextClassNamesGenerator(final DayCellBottomTextClassNamesContext context) {
         LocalDate date = context.getDate();
-        if (!calendarSupport.isWorkday(date)) {
+        if (workPlan == null || !workPlan.covers(date) || !workPlan.isWorkday(date)) {
             return null;
         }
 
         FactAndPlan daySummary = new FactAndPlan(
                 spentTimeByDay.getOrDefault(date, WorkTime.ZERO),
-                calendarSupport.getPlannedTime(date));
+                workPlan.getPlannedTime(date));
 
         return List.of(getTimeClassName(daySummary));
     }
@@ -557,6 +614,11 @@ public class CalendarView extends StandardView {
 
     private LocalDate getToday() {
         return LocalDate.now();
+    }
+
+    private boolean isTimeEntry(@Nullable CalendarEvent calendarEvent) {
+        return calendarEvent instanceof EntityCalendarEvent<?> entityCalendarEvent
+                && entityCalendarEvent.getEntity() instanceof TimeEntryCalendarWrapper;
     }
 
     @Nullable

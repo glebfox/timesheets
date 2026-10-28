@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.app.util;
 
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -41,6 +42,28 @@ class WorkPlanTest {
         assertThatThrownBy(() -> plan.getPlannedTime(LocalDate.of(2026, 11, 3)))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> plan.isWorkday(LocalDate.of(2026, 11, 3)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void findsHolidayDaysOnlyInItsRange() {
+        WorkPlan plan = new WorkPlan(
+                Map.of(LocalDate.of(2026, 11, 2), WorkTime.ofHours(8),
+                        LocalDate.of(2026, 11, 4), WorkTime.ZERO),
+                Map.of(LocalDate.of(2026, 11, 4), new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF)));
+
+        assertThat(plan.findHolidayDay(LocalDate.of(2026, 11, 4)))
+                .contains(new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF));
+        assertThat(plan.findHolidayDay(LocalDate.of(2026, 11, 2))).isEmpty();
+        assertThatThrownBy(() -> plan.findHolidayDay(LocalDate.of(2026, 11, 3)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void refusesHolidayDaysOutsideItsRange() {
+        assertThatThrownBy(() -> new WorkPlan(
+                Map.of(LocalDate.of(2026, 11, 2), WorkTime.ofHours(8)),
+                Map.of(LocalDate.of(2026, 11, 4), new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF))))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

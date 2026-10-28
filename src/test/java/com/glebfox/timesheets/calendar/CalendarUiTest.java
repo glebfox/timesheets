@@ -22,6 +22,11 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
+import com.glebfox.timesheets.entity.schedule.WorkSchedule;
+import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
@@ -41,9 +46,12 @@ import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.view.View;
 import io.jmix.fullcalendarflowui.component.FullCalendar;
+import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.ContainerCalendarDataProvider;
 import io.jmix.fullcalendarflowui.component.data.EntityCalendarEvent;
+import io.jmix.fullcalendarflowui.component.data.ListCalendarDataProvider;
 import io.jmix.fullcalendarflowui.component.event.AbstractEventMoveEvent.OldValues;
 import io.jmix.fullcalendarflowui.component.event.DatesSetEvent;
 import io.jmix.fullcalendarflowui.component.event.DisplayModeInfo;
@@ -61,6 +69,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +145,98 @@ public class CalendarUiTest {
         assertThat(dataManager.load(Id.of(timeEntry)).optional()).isEmpty();
     }
 
+    @Test
+    void weekendsAreMarkedTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* When */
+            CalendarView calendarView = openCalendar();
+
+            /* Then */
+            // admin has no assignments, so the default schedule plans the grid: 8 hours Monday to Friday,
+            // with no holiday calendar in the test profile
+            List<CalendarEvent> dayMarks = getDayMarks(calendarView);
+            assertThat(dayMarks).extracting(CalendarUiTest::dateOf)
+                    .hasSize(10)
+                    .containsExactlyElementsOf(GRID_START.datesUntil(GRID_END)
+                            .filter(date -> date.getDayOfWeek() == DayOfWeek.SATURDAY
+                                    || date.getDayOfWeek() == DayOfWeek.SUNDAY)
+                            .toList());
+            assertThat(dayMarks).extracting(CalendarEvent::getClassNames).containsOnly("calendar-view-unplanned-day");
+            assertThat(dayMarks).extracting(CalendarEvent::getTitle).containsOnlyNulls();
+        });
+    }
+
+    @Test
+    void refreshReloadsThePlanTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            CalendarView calendarView = openCalendar();
+            assertThat(getDayMarks(calendarView)).extracting(CalendarUiTest::dateOf).doesNotContain(DAY);
+
+            // Saved after the calendar has loaded its plan: Saturdays become workdays, and Tuesday, Dec 3 a holiday
+            assignScheduleWithHoliday();
+
+            /* When */
+            JmixButton refreshBtn = UiTestUtils.getComponent(calendarView, "refreshBtn");
+            refreshBtn.click();
+
+            /* Then */
+            List<CalendarEvent> dayMarks = getDayMarks(calendarView);
+            assertThat(dayMarks).extracting(CalendarUiTest::dateOf)
+                    .doesNotContain(LocalDate.of(2024, 12, 7))
+                    .contains(LocalDate.of(2024, 12, 8));
+            assertThat(dayMarks).filteredOn(dayMark -> dateOf(dayMark).equals(DAY))
+                    .singleElement()
+                    .extracting(CalendarEvent::getClassNames, CalendarEvent::getTitle)
+                    .containsExactly("calendar-view-unplanned-day calendar-view-holiday-day-off", "Test holiday");
+        });
+    }
+
+    @Test
+    void navigatingReplacesTheDayMarksTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            CalendarView calendarView = openCalendar();
+
+            /* When */
+            // January 2025 starts on Wednesday, so its month grid runs from December 29 to February 1
+            LocalDate januaryGridStart = LocalDate.of(2024, 12, 29);
+            LocalDate januaryGridEnd = LocalDate.of(2025, 2, 2);
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            ComponentUtil.fireEvent(calendar,
+                    new DatesSetEvent(calendar, true, januaryGridStart, januaryGridEnd,
+                            new DisplayModeInfo(januaryGridStart, januaryGridEnd,
+                                    LocalDate.of(2025, 1, 1), LocalDate.of(2025, 2, 1),
+                                    CalendarDisplayModes.DAY_GRID_MONTH)));
+
+            /* Then */
+            assertThat(getDayMarks(calendarView)).extracting(CalendarUiTest::dateOf)
+                    .allMatch(date -> !date.isBefore(januaryGridStart))
+                    .contains(LocalDate.of(2025, 2, 1));
+        });
+    }
+
+    @Test
+    void clickingADayMarkDoesNothingTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            CalendarView calendarView = openCalendar();
+            // Sunday, Dec 1: the default schedule plans no weekend day
+            CalendarEvent dayMark = getDayMarks(calendarView).getFirst();
+
+            /* When */
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            ComponentUtil.fireEvent(calendar,
+                    new EventClickEvent(calendar, true, null, dayMark, getDayMarksProvider(calendarView),
+                            monthDisplayModeInfo()));
+
+            /* Then */
+            assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(calendarView);
+            assertThat(UiTestUtils.getOpenedViewDialogs()).isEmpty();
+            assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        });
+    }
+
     @AfterEach
     void tearDown() {
         // The tests change and remove what they created, so the instances in the list are stale
@@ -208,6 +309,20 @@ public class CalendarUiTest {
         return calendar.getDataProvider("timeEntriesDataProvider");
     }
 
+    private List<CalendarEvent> getDayMarks(CalendarView calendarView) {
+        return getDayMarksProvider(calendarView).getItems();
+    }
+
+    private ListCalendarDataProvider getDayMarksProvider(CalendarView calendarView) {
+        FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+        return Objects.requireNonNull(
+                calendar.getDataProvider(CalendarView.DAY_MARKS_PROVIDER_ID), "The calendar has no day marks");
+    }
+
+    private static LocalDate dateOf(CalendarEvent dayMark) {
+        return Objects.requireNonNull(dayMark.getStartDateTime(), "A day mark has no date").toLocalDate();
+    }
+
     private DisplayModeInfo monthDisplayModeInfo() {
         return new DisplayModeInfo(GRID_START, GRID_END, GRID_START, GRID_START.plusMonths(1),
                 CalendarDisplayModes.DAY_GRID_MONTH);
@@ -235,13 +350,9 @@ public class CalendarUiTest {
         task.setStatus(TaskStatus.ACTIVE);
         entities.add(task);
 
-        User user = dataManager.load(User.class)
-                .query("e.username = ?1", USERNAME)
-                .one();
-
         TimeEntry timeEntry = dataManager.create(TimeEntry.class);
         timeEntry.setDate(DAY);
-        timeEntry.setUser(user);
+        timeEntry.setUser(loadUser());
         timeEntry.setTask(task);
         timeEntry.setSpentTime(WorkTime.ofHours(1));
         timeEntry.setStatus(TimeEntryStatus.NEW);
@@ -250,5 +361,40 @@ public class CalendarUiTest {
         dataManager.saveAll(entities);
 
         return timeEntry;
+    }
+
+    // Assigns admin, from the start of the grid, to 8 hours Monday to Saturday with a calendar
+    // where Tuesday, Dec 3 is a day off
+    private void assignScheduleWithHoliday() {
+        HolidayCalendar holidayCalendar = dataManager.create(HolidayCalendar.class);
+        holidayCalendar.setName("Calendar UI Test Holiday Calendar");
+
+        HolidayCalendarDay holiday = dataManager.create(HolidayCalendarDay.class);
+        holiday.setCalendar(holidayCalendar);
+        holiday.setDate(DAY);
+        holiday.setType(HolidayCalendarDayType.DAY_OFF);
+        holiday.setName("Test holiday");
+
+        WorkSchedule schedule = dataManager.create(WorkSchedule.class);
+        schedule.setName("Calendar UI Test Schedule");
+        schedule.setWorkdayTime(WorkTime.ofHours(8));
+        schedule.setSaturday(true);
+        schedule.setHolidayCalendar(holidayCalendar);
+
+        WorkScheduleAssignment assignment = dataManager.create(WorkScheduleAssignment.class);
+        assignment.setUser(loadUser());
+        assignment.setWorkSchedule(schedule);
+        assignment.setStartDate(GRID_START);
+
+        // The order lets the teardown remove each before what it refers to
+        List<Object> created = List.of(holidayCalendar, holiday, schedule, assignment);
+        entities.addAll(created);
+        dataManager.saveAll(created);
+    }
+
+    private User loadUser() {
+        return dataManager.load(User.class)
+                .query("e.username = ?1", USERNAME)
+                .one();
     }
 }
