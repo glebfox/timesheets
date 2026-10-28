@@ -19,7 +19,8 @@
 ## Features
 
 - **Time logging** — log time against the tasks you can book: active tasks of open projects you take part in. Type durations the way you think of them: `4:30`, `90`, or `4h 30m`.
-- **Calendar** — your month at a glance: entries by day with daily, weekly, and monthly totals against your work schedule, with public holidays and moved workdays named on their days; create, copy, or drag an entry to another day right there.
+- **Calendar** — your month at a glance: entries by day with daily, weekly, and monthly totals against your work schedule, with holidays and moved days named on their days; create, copy, or drag an entry to another day right there.
+- **Work schedules** — how long a workday is and which days of the week are worked, optionally with a holiday calendar of public holidays and moved days that several schedules can share. A user is assigned a schedule from a date, and the default schedule covers the days no assignment does.
 - **Review** — every entry is New, Approved, Rejected, or Closed. A rejected entry carries the reason, and its owner sees the number of rejected entries in the menu, updated live.
 - **Projects** — a project belongs to a client and owns its tasks, its participants with their project roles, and its tag groups.
 - **Tags** — time entries are tagged from the tag groups of their project, and a task can make some groups required.
