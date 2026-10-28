@@ -359,13 +359,20 @@
 }
 
 /* FullCalendar renders a background event's title inside it; it stands in the day-number row
-   and ends before the number, whose click creates an entry */
+   and ends before the number, whose click creates an entry. The end reserve holds a two-digit
+   number's box, its padding included, and a gap. The extra block-start padding sets the title's
+   baseline level with the number's: the number's line is taller, so half the difference of the
+   line heights centers the two lines, and its type is larger, which sets its baseline lower by
+   about half the difference of the font sizes */
 .calendar-view .fc .fc-bg-event .fc-event-title {
     position: absolute;
     inset-block-start: 0;
     inset-inline: 0 calc(var(--aura-font-size-m) * 2.4);
     margin: 0;
     padding: var(--vaadin-padding-xs);
+    padding-block-start: calc(var(--vaadin-padding-xs)
+                              + (var(--aura-line-height-m) - var(--aura-line-height-xs)) / 2
+                              + (var(--aura-font-size-m) - var(--aura-font-size-xs)) / 2);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
