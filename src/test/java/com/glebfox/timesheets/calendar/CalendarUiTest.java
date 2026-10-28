@@ -46,6 +46,7 @@ import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.view.View;
 import io.jmix.fullcalendarflowui.component.FullCalendar;
 import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.ContainerCalendarDataProvider;
@@ -215,6 +216,27 @@ public class CalendarUiTest {
         });
     }
 
+    @Test
+    void clickingADayMarkDoesNothingTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            CalendarView calendarView = openCalendar();
+            // Sunday, Dec 1: the default schedule plans no weekend day
+            CalendarEvent dayMark = getDayMarks(calendarView).getFirst();
+
+            /* When */
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            ComponentUtil.fireEvent(calendar,
+                    new EventClickEvent(calendar, true, null, dayMark, getDayMarksProvider(calendarView),
+                            monthDisplayModeInfo()));
+
+            /* Then */
+            assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(calendarView);
+            assertThat(UiTestUtils.getOpenedViewDialogs()).isEmpty();
+            assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        });
+    }
+
     @AfterEach
     void tearDown() {
         // The tests change and remove what they created, so the instances in the list are stale
@@ -288,10 +310,13 @@ public class CalendarUiTest {
     }
 
     private List<CalendarEvent> getDayMarks(CalendarView calendarView) {
+        return getDayMarksProvider(calendarView).getItems();
+    }
+
+    private ListCalendarDataProvider getDayMarksProvider(CalendarView calendarView) {
         FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
-        ListCalendarDataProvider dayMarksProvider = Objects.requireNonNull(
+        return Objects.requireNonNull(
                 calendar.getDataProvider(CalendarView.DAY_MARKS_PROVIDER_ID), "The calendar has no day marks");
-        return dayMarksProvider.getItems();
     }
 
     private static LocalDate dateOf(CalendarEvent dayMark) {
