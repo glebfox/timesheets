@@ -36,6 +36,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 ## Documentation Hygiene
 
 - A spec states what a unit does, not how: a statement belongs only if it survives a behavior-preserving refactor. Platform mechanics go to guidelines; when unsure, leave it in the spec.
+- A platform quirk that only one screen works around is a code comment next to that code, with the upstream issue when there is one; a guideline holds a mechanic that holds across the project.
 - "Spec" means the per-unit docs in `docs/specs/`; a design or a plan is not one.
 - `ARCHITECTURE.md` maps packages and their roles, not classes: a statement belongs only if it stays true when a class is added, renamed, or removed. Specific classes are named in the specs' `Source:` and in the guidelines that need them.
 - Living docs describe what is built, never what is planned. A planned change lives in its issue until it lands.
