@@ -4,7 +4,7 @@ Source: `entity/schedule/HolidayCalendar.java`, `entity/schedule/HolidayCalendar
 
 A named list of dated days that override the weekly pattern of the [work schedules](work-schedule.md) that use it, such as a country's public holidays and the weekend days moved to workdays because of them. One calendar spans all years: days are entered as they become known, year by year. Several schedules share one calendar, so "Full time" and "0.5 rate" in one country do not repeat the holiday list.
 
-Calendars and their days are managed in the [holiday calendar screens](../views/settings.md#holiday-calendars).
+Calendars and their days are managed in the [holiday calendar screens](../views/settings.md#holiday-calendars). The [calendar](../views/calendar.md#days) names each day of a user's holiday calendar, the one of their schedule in force that day, in that day's cell, colored by its type.
 
 ## Attributes
 
