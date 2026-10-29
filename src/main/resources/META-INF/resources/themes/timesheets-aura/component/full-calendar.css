@@ -31,11 +31,19 @@
     padding: var(--vaadin-padding-xs);
 }
 
+/* The height of a day's bottom text: its line and the padding Jmix gives it */
+.fc-daygrid-day {
+    --day-cell-bottom-text-height: calc(var(--aura-line-height-xs) + var(--vaadin-padding-xs) * 2);
+}
+
 .fc-daygrid-day.jmix-has-bottom-text .jmix-day-cell-bottom-text {
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-xs);
 }
 
+/* Keeps a short cell tall enough for the bottom text under the day number. It does not keep the
+   entries off the text: FullCalendar fits them into the height from the top of their box to the
+   bottom of the cell, whatever the frame's padding */
 .fc-daygrid-day.jmix-has-bottom-text .fc-daygrid-day-frame {
-    padding-bottom: calc(var(--aura-font-size-s) + var(--vaadin-padding-xs) * 3);
+    padding-bottom: var(--day-cell-bottom-text-height);
 }
