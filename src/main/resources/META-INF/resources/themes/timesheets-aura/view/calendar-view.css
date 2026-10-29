@@ -348,7 +348,8 @@
    keeps them under the day number. 1px is FullCalendar's own margin. The children are offset, not
    transformed: a transform would make each a stacking context under the day marks, which would then
    take the entries' clicks. Keyed on the view, whose every day has a total, not on the class Jmix gives
-   a cell with a bottom text: Jmix adds it after FullCalendar has measured the cell */
+   a cell with a bottom text: Jmix adds it after FullCalendar has measured the cell. The entries that
+   FullCalendar hides keep the absolute position it gives them */
 .calendar-view .fc .fc-daygrid-day-events {
     margin-top: calc(1px + var(--day-cell-bottom-text-height));
 }
@@ -357,11 +358,6 @@
 .calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-day-bottom {
     position: relative;
     top: calc(var(--day-cell-bottom-text-height) * -1);
-}
-
-/* FullCalendar sets the top of an absolutely positioned entry itself, such as the one being dragged */
-.calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-event-harness-abs {
-    margin-top: calc(var(--day-cell-bottom-text-height) * -1);
 }
 
 /* Day marks */
