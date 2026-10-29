@@ -152,7 +152,7 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
     private Div createBody(String username) {
         Div usernameDiv = new Div();
         usernameDiv.setText(username);
-        usernameDiv.setClassName("body secondary-text");
+        usernameDiv.setClassName("body");
         return usernameDiv;
     }
 }

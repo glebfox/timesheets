@@ -11,7 +11,7 @@
 
 **Aura and Lumo are two different, incompatible design systems.** This project uses **Aura**. Do not use `--lumo-*` CSS variables — they belong to the Lumo theme and must not be mixed with Aura. Use `--aura-*` variables for Aura-specific properties (typography, shadows) and `--vaadin-*` variables for base properties shared across all themes (spacing, radius, colors).
 
-Lumo's utility classes, such as `text-secondary`, `text-s`, `font-bold`, or `p-m`, do not exist here either: neither Aura layer defines utility classes, so such a class does nothing and nothing reports it. The shared styles the project needs are its own classes in `app/util.css`, such as `secondary-text`.
+Lumo's utility classes, such as `text-secondary`, `text-s`, `font-bold`, or `p-m`, do not exist here either: neither Aura layer defines utility classes, so such a class does nothing and nothing reports it. Java code sets no utility classes at all, the project's own included: `docs/conventions.md`.
 
 **Always use Aura theme variables instead of hard-coded values** (e.g., `--aura-font-size-xs` through `--aura-font-size-xl` for font sizes). Do not use hardcoded `px`, `rem`, or `em` values when an Aura variable exists. This ensures consistency with the Vaadin Aura theme and allows global adjustments through theme customization. Some existing theme files predate this rule and still hard-code sizes.
 

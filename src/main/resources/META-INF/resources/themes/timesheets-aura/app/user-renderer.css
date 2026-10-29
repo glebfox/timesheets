@@ -30,6 +30,9 @@
 
 .user-name-layout > .title {
     grid-area: title;
+    font-size: var(--aura-font-size-m);
+    font-weight: var(--aura-font-weight-medium);
+    color: var(--vaadin-text-color);
 }
 
 .user-name-layout > .title-suffix {
@@ -39,6 +42,8 @@
 
 .user-name-layout > .body {
     grid-area: body;
+    font-size: var(--aura-font-size-s);
+    color: var(--vaadin-text-color-secondary);
 }
 
 .user-name-layout > .title-body {
