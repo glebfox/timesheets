@@ -1,6 +1,6 @@
 # Work schedule management
 
-Source: `security/WorkScheduleManagementRole.java`
+Source: `security/WorkScheduleManagementRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `work-schedule-management`, named "Work schedule management". It includes [User: read only](user-read-only.md).
 
@@ -23,7 +23,7 @@ Why the role has no update permission on users: [decision 0003](../../decisions/
 
 ## Holders
 
-None in code or seed data.
+- The demo user `mossman`, in the `dev` demo data only.
 
 ## Not covered
 

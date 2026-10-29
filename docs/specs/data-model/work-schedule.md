@@ -1,6 +1,6 @@
 # Work schedule
 
-Source: `entity/schedule/WorkSchedule.java`, `app/WorkScheduleSupport.java`, `listener/WorkScheduleEventListener.java`, `app/WorkPlanSupport.java`, `app/util/WorkPlan.java`, `liquibase/changelog/2026/10/25-161255-08247a92.xml`, `liquibase/changelog/init-data/090-init-work-schedule.xml`
+Source: `entity/schedule/WorkSchedule.java`, `app/WorkScheduleSupport.java`, `listener/WorkScheduleEventListener.java`, `app/WorkPlanSupport.java`, `app/util/WorkPlan.java`, `liquibase/changelog/2026/10/25-161255-08247a92.xml`, `demo/DemoDataLoader.java`
 
 A named weekly pattern of planned work, such as "Full time" or "0.5 rate": how long a workday is, which days of the week are workdays, and optionally a [holiday calendar](holiday-calendar.md) whose days override the week. Users are tied to schedules by [assignments](work-schedule-assignment.md); a user's plan for a day comes from them.
 

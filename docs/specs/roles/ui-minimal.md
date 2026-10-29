@@ -1,6 +1,6 @@
 # UI: minimal access
 
-Source: `security/UiMinimalRole.java`
+Source: `security/UiMinimalRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `ui-minimal`, named "UI: minimal access", with UI scope.
 
@@ -14,7 +14,7 @@ It grants no entity access and no other view, so on its own a user can sign in a
 
 ## Holders
 
-None in code or seed data.
+- The demo user `mossman`, in the `dev` demo data only.
 
 ## Not covered
 

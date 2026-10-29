@@ -57,7 +57,7 @@ Run the application with demo data:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. Without the `dev` profile, only the schema and the `admin` user are created.
+Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. With the `dev` profile, an empty database gets demo data: people and organizations of the Half-Life and Portal games, with time logged over the weeks up to today; every demo user's password is their username. Without it, only the schema and the `admin` user are created.
 
 Run the tests, which use an in-memory HSQLDB:
 

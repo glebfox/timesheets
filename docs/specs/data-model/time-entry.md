@@ -39,6 +39,6 @@ Deleting an entry soft-deletes it. **Known defect:** it also deletes every tag a
 
 - The editing rules above: no UI test exercises the time-entry editor.
 - The description and rejection reason being carried into a copy: the copy test does not check them.
-- Who is told when an entry is created, when a change moves it to another user, and when a change leaves its status alone: the tests check only an entry of a deleted user, when it is deleted or its status changes.
+- Who is told when an entry is created, when a change moves it to another user, and when a change leaves its status alone: the tests check only an entry of a deleted user, when it is deleted or its status changes; `DemoDataLoaderTest` checks that each entry the demo data creates tells someone once, but not whom.
 - The rejected count refreshing in the open sessions that are told: it needs a live session (`docs/guidelines/testing.md`).
 - The tag deletion defect: no test in the suite.

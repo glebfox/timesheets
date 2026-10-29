@@ -15,7 +15,8 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; Jmix Studio learns of a component from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
-- `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`) and demo data in `init-data/`. See `docs/guidelines/database.md`.
+- `demo/` — the demo data that a `dev` start loads; its images are under the same package in resources.
+- `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`). See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.
 
@@ -23,8 +24,8 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 
 ## Profiles
 
-- Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase context `prod`, which creates the schema, the `admin` user, and the default work schedule, with no demo data.
-- `dev`: Liquibase context `dev`, which also loads the demo data; the login form is pre-filled with `admin`/`admin`.
+- Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase creates the schema, the `admin` user, and the default work schedule, with no demo data.
+- `dev`: on a start against a database without clients, the application loads the demo data: people and organizations of the Half-Life and Portal games, their projects, and time logged over the eight weeks before the current week and the current week up to the day of the start. Every demo user's password is their username. A database that has clients, deleted ones included, is left as it is: to get the demo data again, recreate the database. The login form is pre-filled with `admin`/`admin`.
 - `test`: in-memory HSQLDB.
 
 ## Commands

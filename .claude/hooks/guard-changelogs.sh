@@ -4,7 +4,7 @@
 # - PreToolUse of a call that names the files it writes (Edit, Write, IDE create or reformat): denied.
 # - Around any other call that can change files (a shell command, an IDE patch or rename): the changelogs are
 #   checksummed before and after, and only what that call changed is reported.
-# "On main" means in origin/main as last fetched. Demo data in init-data/ is not guarded: database.md allows editing it.
+# "On main" means in origin/main as last fetched.
 input=$(cat)
 . "$(dirname "$0")/lib.sh"
 [ -n "$main_checkout" ] || exit 0
@@ -16,9 +16,9 @@ tool=$(get '.tool_name')
 ide_root=$(get '.tool_input.projectPath // empty')
 [ -n "$ide_root" ] || ide_root=$main_checkout
 
-# Applied: present at the merge-base with origin/main, outside init-data/, and without a validCheckSum marker.
+# Applied: present at the merge-base with origin/main, and without a validCheckSum marker.
 applied() { # <checkout> <path relative to it>
-  case "$2" in "$dir"/init-data/*) return 1 ;; "$dir"/*) ;; *) return 1 ;; esac
+  case "$2" in "$dir"/*) ;; *) return 1 ;; esac
   local base
   base=$(git -C "$1" merge-base HEAD origin/main 2>/dev/null) || return 1
   git -C "$1" cat-file -e "$base:$2" 2>/dev/null || return 1
@@ -28,7 +28,7 @@ applied() { # <checkout> <path relative to it>
 # One "crc size path" line per guarded changelog in the checkouts given one per line.
 sums() {
   while IFS= read -r c; do
-    [ -n "$c" ] && [ -d "$c/$dir" ] && find "$c/$dir" -type f ! -path '*/init-data/*' -exec cksum {} +
+    [ -n "$c" ] && [ -d "$c/$dir" ] && find "$c/$dir" -type f -exec cksum {} +
   done <<<"$1" | sort
 }
 
