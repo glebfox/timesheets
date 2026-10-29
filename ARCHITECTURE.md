@@ -15,7 +15,6 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; Jmix Studio learns of a component from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
-- `router/error/` — custom error pages; their HTML templates are in `META-INF/resources/errorpages/`.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`) and demo data in `init-data/`. See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.

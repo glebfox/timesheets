@@ -1,6 +1,6 @@
 # Main view, login, and error pages
 
-Source: `view/main/`, `view/login/`, `router/error/`, `menu.xml`, `security/UiMinimalRole.java`
+Source: `view/main/`, `view/login/`, `menu.xml`, `security/UiMinimalRole.java`
 
 The application frame around every screen, the login page, and the error pages.
 
@@ -18,9 +18,12 @@ The frame of the signed-in application. Screens open as tabs in its work area; t
 
 ## Error pages
 
-An unknown address shows a "Nothing was found" page and a screen the user may not open shows an "Access denied" page, each with a link back to the application.
+An unknown address followed within the application without reloading the page, such as through a link to a screen that no longer exists, shows Vaadin's default page, "Could not navigate to" the address, which in development mode also lists the application's routes. An unknown address typed into the browser never reaches the application: a signed-in user gets the server's plain error page (Spring Boot's Whitelabel Error Page) with status 403, and a signed-out user is sent to the login page. Why such addresses stay forbidden: [decision 0005](../../decisions/0005-addresses-that-open-no-view-stay-forbidden.md).
+
+A screen the user may not open does not open, whether its address is followed or typed into the browser: an "Access denied" notification is shown instead, over the main view when the address was typed.
 
 ## Not covered
 
 - The live refresh of the rejected badge: it needs two live sessions (`docs/guidelines/testing.md`).
+- What an address typed into the browser gets before any screen opens, the 403 and the redirect to the login page: no test sends a request through the security filters.
 - The rest of these screens: no UI test exists for them.
