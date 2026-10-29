@@ -39,6 +39,7 @@
 
 .user-name-layout > .body {
     grid-area: body;
+    color: var(--vaadin-text-color-secondary);
 }
 
 .user-name-layout > .title-body {

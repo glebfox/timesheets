@@ -6,7 +6,7 @@ The user list and the user editor, under the Administration menu. What a user is
 
 ## Users
 
-`users`. Lists users by username, with the user (avatar, full name or username, and an Active or Inactive badge), email, and time zone. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded.
+`users`. Lists users by username, with the user (avatar, and full name or username), email, the status as a green Active or red Inactive badge, and time zone. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded.
 
 Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, whatever screens the user may open ([decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md)). The gear menu is hidden when none of its items is left.
 
@@ -33,6 +33,7 @@ The section stays editable when the editor opens read-only for a user who may no
 
 ## Not covered
 
+- The Users list's cells: no test renders them, so the user cell without a status badge and the status column's Active and Inactive badges and their colors are unchecked; the UI tests only find a created user among the list's items and check the security actions.
 - The password mismatch, the locked username, and the warning: the user editor's UI tests cover only creating a user with matching passwords, the avatar field, and the Work schedule section.
 - Hiding the security actions: the UI tests cover `admin`, who sees all four, and a user who may not edit users and may open none of their screens but Change password's, who sees none; no other combination.
 - How the Work schedule section looks in the editor, with its badges and its empty table, and Cancel closing an unchanged editor that has assignments without asking to save: checked live only.
