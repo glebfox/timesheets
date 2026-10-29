@@ -15,10 +15,10 @@ Alternatives considered and rejected:
 
 The application keeps the default of Jmix and Vaadin: an address that opens no view and matches no other rule is refused for everyone. Not opening more than the views need is worth more than the "Nothing was found" page for a typed address. Decided by the user.
 
-The error pages stay in the application.
+With that, the custom "Nothing was found" page would show only for an unknown address followed within the application, and the custom "Access denied" page never, since tabbed mode checks access to a view itself and shows a notification. The application drops both pages and keeps the defaults of the platform.
 
 ## Consequences
 
-- A typed unknown address gets the server's plain 403 page when signed in and the login page when signed out ([main view, login, and error pages](../specs/views/main.md#error-pages)); the "Nothing was found" page appears only for an unknown address followed within the application.
+- A typed unknown address gets the server's plain 403 page when signed in and the login page when signed out ([main view, login, and error pages](../specs/views/main.md#error-pages)); an unknown address followed within the application gets Vaadin's default not-found page.
 - An HTTP endpoint added outside the views, such as a REST endpoint, is refused for everyone until it gets its own security filter chain, which must state who may call it.
-- Showing the "Nothing was found" page for a typed address takes a way that opens nothing beyond the views.
+- A custom page for a typed unknown address needs a way that opens nothing beyond the views.
