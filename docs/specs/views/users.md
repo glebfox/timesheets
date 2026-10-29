@@ -33,7 +33,7 @@ The section stays editable when the editor opens read-only for a user who may no
 
 ## Not covered
 
-- The Users list's cells: no test renders them, so the user cell without a status badge and the status column's Active and Inactive badges and their colors are unchecked; the UI tests only find a created user among the list's items and check the security actions.
+- The Users list's cells, the user cell without a status badge and the status column's Active and Inactive badges and their colors: checked live only; the UI tests only find a created user among the list's items and check the security actions.
 - The password mismatch, the locked username, and the warning: the user editor's UI tests cover only creating a user with matching passwords, the avatar field, and the Work schedule section.
 - Hiding the security actions: the UI tests cover `admin`, who sees all four, and a user who may not edit users and may open none of their screens but Change password's, who sees none; no other combination.
 - How the Work schedule section looks in the editor, with its badges and its empty table, and Cancel closing an unchanged editor that has assignments without asking to save: checked live only.

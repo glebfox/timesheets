@@ -131,7 +131,7 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
     private Div createTitle(String fullName) {
         Div fullNameDiv = new Div();
         fullNameDiv.setText(fullName);
-        fullNameDiv.setClassName("title text-m font-bold text-body");
+        fullNameDiv.setClassName("title");
         return fullNameDiv;
     }
 
@@ -152,7 +152,7 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
     private Div createBody(String username) {
         Div usernameDiv = new Div();
         usernameDiv.setText(username);
-        usernameDiv.setClassName("body text-s text-secondary");
+        usernameDiv.setClassName("body secondary-text");
         return usernameDiv;
     }
 }
