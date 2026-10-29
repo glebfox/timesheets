@@ -26,6 +26,7 @@ import com.vaadin.flow.function.SerializableSupplier;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -34,22 +35,42 @@ import java.util.function.Function;
 /**
  * A renderer that generates a custom visual representation for a user item.
  * This class extends {@link ComponentRenderer} to create a UI component
- * representing a user with additional visual elements such as avatar, name, and status badge.
+ * representing a user with additional visual elements such as avatar, name, and an optional status badge.
  *
  * @param <ITEM> the type of the items being rendered
  */
+@NullMarked
 public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
 
-    private final Function<ITEM, User> valueProvider;
-    private final Function<User, String> statusProvider;
+    private final Function<ITEM, @Nullable User> valueProvider;
+    private final @Nullable Function<User, String> statusProvider;
 
-    public UserRenderer(Function<ITEM, User> valueProvider,
-                        Function<User, String> statusProvider) {
+    /**
+     * Creates a renderer that shows a user without a status badge.
+     *
+     * @param valueProvider a function that extracts the {@link User} from an item; an item without a user
+     *                      renders as an empty cell
+     */
+    public UserRenderer(Function<ITEM, @Nullable User> valueProvider) {
+        this(valueProvider, null);
+    }
+
+    /**
+     * Creates a renderer that shows a user with a status badge, if a status provider is given.
+     *
+     * @param valueProvider  a function that extracts the {@link User} from an item; an item without a user
+     *                       renders as an empty cell
+     * @param statusProvider a function that gives the text of the status badge, which is green for an active
+     *                       user and red for an inactive one, or {@code null} for no badge
+     */
+    public UserRenderer(Function<ITEM, @Nullable User> valueProvider,
+                        @Nullable Function<User, String> statusProvider) {
         super(((SerializableSupplier<Div>) null));
         this.valueProvider = valueProvider;
         this.statusProvider = statusProvider;
     }
 
+    @Nullable
     @Override
     public Div createComponent(ITEM item) {
         User user = valueProvider.apply(item);
@@ -66,14 +87,19 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
 
         Div wrapper = new Div();
         wrapper.setClassName("user-name-layout");
-        wrapper.add(avatar, title, activeBadge);
+        wrapper.add(avatar, title);
+        if (activeBadge != null) {
+            wrapper.add(activeBadge);
+        }
 
         if (name.equals(fullName)) {
             Div body = createBody(user.getUsername());
             wrapper.add(body);
         } else {
             title.addClassNames("title-body");
-            activeBadge.addClassNames("title-suffix-body");
+            if (activeBadge != null) {
+                activeBadge.addClassNames("title-suffix-body");
+            }
         }
 
         return wrapper;
@@ -86,7 +112,7 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
         ).trim();
     }
 
-    private Avatar createAvatar(String name, @Nullable byte[] data) {
+    private Avatar createAvatar(String name, byte @Nullable [] data) {
         Avatar avatar = new Avatar(name);
         avatar.getElement().setAttribute("tabindex", "-1");
 
@@ -105,22 +131,28 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
     private Div createTitle(String fullName) {
         Div fullNameDiv = new Div();
         fullNameDiv.setText(fullName);
-        fullNameDiv.setClassName("title text-m font-bold text-body");
+        fullNameDiv.setClassName("title");
         return fullNameDiv;
     }
 
+    @Nullable
     private Badge createStatusBadge(User user) {
+        if (statusProvider == null) {
+            return null;
+        }
+
         Badge activeBadge = new Badge(statusProvider.apply(user));
         activeBadge.setClassName("title-suffix");
         activeBadge.addThemeVariants(BadgeVariant.SMALL,
                 Boolean.TRUE.equals(user.getActive()) ? BadgeVariant.SUCCESS : BadgeVariant.ERROR);
+
         return activeBadge;
     }
 
     private Div createBody(String username) {
         Div usernameDiv = new Div();
         usernameDiv.setText(username);
-        usernameDiv.setClassName("body text-s text-secondary");
+        usernameDiv.setClassName("body");
         return usernameDiv;
     }
 }

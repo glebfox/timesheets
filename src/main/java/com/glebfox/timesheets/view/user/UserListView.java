@@ -72,7 +72,12 @@ public class UserListView extends StandardListView<User> {
 
     @Supply(to = "usersDataGrid.username", subject = "renderer")
     private Renderer<User> usersDataGridUsernameRenderer() {
-        return componentSupport.createUserRenderer();
+        return componentSupport.createUserRendererShort();
+    }
+
+    @Supply(to = "usersDataGrid.active", subject = "renderer")
+    private Renderer<User> usersDataGridActiveRenderer() {
+        return componentSupport.createUserStatusRender();
     }
 
     private void hideForbiddenSecurityActions() {

@@ -34,6 +34,10 @@ An action of a list component that the framework does not provide, such as Make 
 
 A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.
 
+## CSS classes set from Java
+
+A component or renderer with its own Java class and its own stylesheet in the theme, such as the user cell, gives its parts classes that name them, such as `title`, and its stylesheet gives their look; it sets no utility classes, ones that each carry a single look such as a font size or a color. A piece built in place, with no class or stylesheet of its own, such as a grid renderer in a view, may set the project's utility classes from `app/util.css`. Lumo's utility classes are used nowhere. Aura's classes that `docs/guidelines/design-system.md` prescribes, such as `aura-accent-neutral` on a badge, are not utility classes. Why: [decision 0006](decisions/0006-a-component-with-its-own-stylesheet-sets-no-utility-classes.md).
+
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>: <short description>` — imperative, one subject line, no scope and no prose body. Types in use: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.

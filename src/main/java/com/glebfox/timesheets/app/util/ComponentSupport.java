@@ -117,6 +117,17 @@ public class ComponentSupport {
     }
 
     /**
+     * Creates a {@link UserRenderer} for rendering a {@link User} entity without the activity status badge:
+     * the user's avatar and name only, for a grid that shows the status in a column of its own.
+     *
+     * @return a {@link UserRenderer} instance configured to render users without their status
+     * @see #createUserStatusRender()
+     */
+    public UserRenderer<User> createUserRendererShort() {
+        return createUserRendererShort(user -> user);
+    }
+
+    /**
      * Creates a {@link UserRenderer} for rendering custom user visualizations based on the provided value provider.
      * The renderer utilizes the specified function to extract user information from the given items
      * and renders the User properties including their status.
@@ -125,11 +136,39 @@ public class ComponentSupport {
      * @param <ITEM>        the type of the items being rendered
      * @return a {@link UserRenderer} instance configured to render user information with associated status
      */
-    public <ITEM> UserRenderer<ITEM> createUserRenderer(Function<ITEM, User> valueProvider) {
-        return new UserRenderer<>(valueProvider, user ->
-                messages.getMessage(UserRenderer.class, Boolean.TRUE.equals(user.getActive())
-                        ? "UserRenderer.userActive"
-                        : "UserRenderer.userInactive"));
+    public <ITEM> UserRenderer<ITEM> createUserRenderer(Function<ITEM, @Nullable User> valueProvider) {
+        return new UserRenderer<>(valueProvider, this::getUserStatusText);
+    }
+
+    /**
+     * Creates a {@link UserRenderer} for rendering users extracted from items by the provided value provider,
+     * without the activity status badge: the user's avatar and name only.
+     *
+     * @param valueProvider a function that extracts {@link User} instances from items of the specified type
+     * @param <ITEM>        the type of the items being rendered
+     * @return a {@link UserRenderer} instance configured to render user information without their status
+     */
+    public <ITEM> UserRenderer<ITEM> createUserRendererShort(Function<ITEM, @Nullable User> valueProvider) {
+        return new UserRenderer<>(valueProvider);
+    }
+
+    /**
+     * Creates a {@link BadgeRender} for rendering the activity status of {@link User} entities: a green
+     * Active badge or a red Inactive one, the same text as the status badge of {@link #createUserRenderer()}.
+     *
+     * @return a {@link BadgeRender} instance for rendering {@link User} status
+     */
+    public BadgeRender<User> createUserStatusRender() {
+        return new BadgeRender<>(
+                this::getUserStatusText,
+                user -> Boolean.TRUE.equals(user.getActive()) ? BadgeStyle.SUCCESS : BadgeStyle.ERROR
+        );
+    }
+
+    private String getUserStatusText(User user) {
+        return messages.getMessage(UserRenderer.class, Boolean.TRUE.equals(user.getActive())
+                ? "UserRenderer.userActive"
+                : "UserRenderer.userInactive");
     }
 
     /**
