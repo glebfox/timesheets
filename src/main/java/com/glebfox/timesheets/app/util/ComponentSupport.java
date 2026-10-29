@@ -95,7 +95,10 @@ public class ComponentSupport {
                     new DownloadResponse(new ByteArrayInputStream(data),
                             "avatar.png", null, data.length));
 
-            avatar.setImageHandler(downloadHandler);
+            // Vaadin answers 403 for the image of a disabled avatar, such as one on a tab that is not selected,
+            // where opening a new tab re-renders the client list. Vaadin serves Image and IFrame sources this way
+            // since 25.2, but not Avatar images: https://github.com/vaadin/flow/issues/22772
+            avatar.setImageHandler(downloadHandler.inline().allowDisabled());
         }
 
         if (!Strings.isNullOrEmpty(className)) {
