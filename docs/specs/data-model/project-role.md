@@ -8,7 +8,7 @@ A catalog entry naming the role a participant plays in a project, such as "Devel
 
 - **Name** — required; unique among non-deleted roles (`docs/guidelines/database.md`).
 - **Type** — required: Manager, Approver, Member, or Observer. The type has no behavior: it only colors the role's badge on screens.
-- **Description** — optional, in Markdown.
+- **Description** — optional.
 
 ## Deletion
 

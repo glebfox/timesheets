@@ -108,7 +108,7 @@
                                 <column property="type"/>
                                 <column property="status"/>
                                 <column property="description" flexGrow="2">
-                                    <popoverRenderer markdown="true"/>
+                                    <popoverRenderer/>
                                 </column>
                             </columns>
                         </dataGrid>

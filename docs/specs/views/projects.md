@@ -18,7 +18,7 @@ The project list, the project editor, and the participant editor. What a project
 
 Three tabs below hold what the project owns. Their changes, including those made in the dialogs they open, reach the database only when the project is saved. The one exception is a project role created from the participant editor: it is saved at once.
 
-- **Tasks** — name, type, status as a badge (Active green, Inactive red), and description, cut short with the full text in a popover that renders the Markdown. Create and Edit open the [task editor](tasks.md#task-editor) in a dialog; Remove; **Close** turns the selected Active task Inactive and does nothing to an Inactive one.
+- **Tasks** — name, type, status as a badge (Active green, Inactive red), and description, cut short with the full text in a popover. Create and Edit open the [task editor](tasks.md#task-editor) in a dialog; Remove; **Close** turns the selected Active task Inactive and does nothing to an Inactive one.
 - **Participants** — the user (avatar, name, and an Active or Inactive badge) and the role as a badge colored by role type: Manager primary, Approver green, Observer neutral, Member plain. Create and Edit open the participant editor in a dialog; Remove; **Add participants** lists every project role, and choosing one opens the user picker in multi-select mode and adds each chosen user with that role. Users who already participate are not filtered out: adding one again breaks the one-participation rule, and the save fails on PostgreSQL.
 - **Tag groups** — the name. Create and Edit open the [tag group editor](tags.md#tag-group-editor) in a dialog; Remove.
 
