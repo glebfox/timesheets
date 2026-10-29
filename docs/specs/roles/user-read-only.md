@@ -1,6 +1,6 @@
 # User: read only
 
-Source: `security/UserReadOnlyRole.java`
+Source: `security/UserReadOnlyRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `user-read-only`, named "User: read only".
 
@@ -13,7 +13,7 @@ It grants nothing else: no signing in, no creating, changing, or deleting users,
 
 ## Holders
 
-None in code or seed data.
+None directly. The demo user `mossman` gets it through [Work schedule management](work-schedule-management.md), in the `dev` demo data only.
 
 ## Not covered
 

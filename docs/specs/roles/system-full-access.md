@@ -1,6 +1,6 @@
 # Full access
 
-Source: `security/FullAccessRole.java`, `security/DatabaseUserRepository.java`, `liquibase/changelog/010-init-user.xml`, `liquibase/changelog/init-data/010-init-user.xml`
+Source: `security/FullAccessRole.java`, `security/DatabaseUserRepository.java`, `liquibase/changelog/010-init-user.xml`, `demo/DemoDataLoader.java`
 
 Resource role `system-full-access`, named "Full Access".
 
@@ -11,7 +11,7 @@ Every operation on every entity, changing every attribute, every view, every men
 ## Holders
 
 - The `admin` user, in every environment.
-- The demo user `anderson`, in the `dev` demo data only.
+- Every active user of the `dev` demo data except `mossman`.
 - The system user, which code running without a signed-in user authenticates as.
 
 ## Not covered

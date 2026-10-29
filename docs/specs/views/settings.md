@@ -53,7 +53,7 @@ A 480px dialog, titled "Work schedule assignment", that assigns several users to
 
 An empty field is marked "Users required" or "Start date required" («Заполните поле "Пользователи"», «Заполните поле "Дата начала"»).
 
-OK adds one assignment per selected user, from that date, to this schedule, at the top of the table. It is refused, with both fields marked, when any selected user already has an assignment from that date to any schedule, saved or added in this editor and not removed: "Already assigned from this date: Thomas Anderson [anderson]", listing every such user by name and username. Nothing is skipped or overwritten. Changing either field clears the refusal.
+OK adds one assignment per selected user, from that date, to this schedule, at the top of the table. It is refused, with both fields marked, when any selected user already has an assignment from that date to any schedule, saved or added in this editor and not removed: "Already assigned from this date: Gordon Freeman [freeman]", listing every such user by name and username. Nothing is skipped or overwritten. Changing either field clears the refusal.
 
 Closing the dialog any other way, with Cancel, Esc, or the close button, while a field differs from how the dialog opened, asks the framework's question "Do you want to discard unsaved changes?": Yes closes the dialog and adds nothing, No keeps it open as it was. A field changed and changed back counts as unchanged, and so do users picked and cleared again. OK, and closing an unchanged dialog, ask nothing.
 
