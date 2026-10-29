@@ -1,6 +1,6 @@
 # Main view, login, and error pages
 
-Source: `view/main/`, `view/login/`, `router/error/`, `menu.xml`, `security/UiMinimalRole.java`
+Source: `view/main/`, `view/login/`, `router/error/`, `menu.xml`, `security/UiMinimalRole.java`, `security/TsSecurityConfiguration.java`
 
 The application frame around every screen, the login page, and the error pages.
 
@@ -18,9 +18,10 @@ The frame of the signed-in application. Screens open as tabs in its work area; t
 
 ## Error pages
 
-An unknown address shows a "Nothing was found" page and a screen the user may not open shows an "Access denied" page, each with a link back to the application.
+An unknown address shows a "Nothing was found" page, whether it is typed into the browser or followed within the application, and a screen the user may not open shows an "Access denied" page, each with a link back to the application. A signed-out user who opens an unknown address is sent to the login page instead. Why an unknown address asks only for a signed-in user: [decision 0005](../../decisions/0005-requests-that-open-no-view-need-only-sign-in.md).
 
 ## Not covered
 
 - The live refresh of the rejected badge: it needs two live sessions (`docs/guidelines/testing.md`).
-- The rest of these screens: no UI test exists for them.
+- A signed-out user at an unknown address being sent to the login page: a test cannot send a signed-out request through the security filters (`docs/guidelines/testing.md`).
+- The rest of these screens, the error pages included: no UI test exists for them. For an unknown address, a test checks only that the security filters let a signed-in user's request through to the application.

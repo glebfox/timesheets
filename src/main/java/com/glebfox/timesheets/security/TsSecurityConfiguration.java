@@ -16,12 +16,16 @@
 
 package com.glebfox.timesheets.security;
 
+import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
+import io.jmix.securityflowui.security.FlowuiVaadinWebSecurity;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer.AuthorizedUrl;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * This configuration complements standard security configurations that come from Jmix modules (security-flowui, oidc,
- * authserver).
+ * The security of the Flow UI, in place of the default configuration from the security-flowui module, which steps
+ * aside when an application declares its own subclass of {@link FlowuiVaadinWebSecurity}.
  * <p>
  * You can configure custom API endpoints security by defining {@link SecurityFilterChain} beans in this class.
  * In most cases, custom SecurityFilterChain must be applied first, so the proper
@@ -42,9 +46,18 @@ import org.springframework.security.web.SecurityFilterChain;
  *     return http.build();
  * }
  * </pre>
- *
- * @see io.jmix.securityflowui.security.FlowuiVaadinWebSecurity
  */
 @Configuration
-public class TsSecurityConfiguration {
+public class TsSecurityConfiguration extends FlowuiVaadinWebSecurity {
+
+    @Override
+    protected void configureVaadinSpecifics(HttpSecurity http) {
+        http.with(VaadinSecurityConfigurer.vaadin(), configurer -> {
+            initLoginView(configurer);
+            // Vaadin denies by default every request whose address opens no view, so a signed-in user who types
+            // an unknown address gets a 403 from Spring Security instead of the "Nothing was found" page
+            // (docs/decisions/0005)
+            configurer.anyRequest(AuthorizedUrl::authenticated);
+        });
+    }
 }
