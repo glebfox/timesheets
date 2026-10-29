@@ -342,6 +342,24 @@
     color: var(--ts-success-color);
 }
 
+/* Keeps the entries and the "+N more" link off the day's total. FullCalendar fits them into the
+   height from the top of their box to the bottom of the cell, so the box is lowered by the total's
+   height, which ends that height at the total, and its children are raised back by as much, which
+   keeps them under the day number. 1px is FullCalendar's own margin. The children are offset, not
+   transformed: a transform would make each a stacking context under the day marks, which would then
+   take the entries' clicks. Keyed on the view, whose every day has a total, not on the class Jmix gives
+   a cell with a bottom text: Jmix adds it after FullCalendar has measured the cell. The entries that
+   FullCalendar hides keep the absolute position it gives them */
+.calendar-view .fc .fc-daygrid-day-events {
+    margin-top: calc(1px + var(--day-cell-bottom-text-height));
+}
+
+.calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-event-harness:not(.fc-daygrid-event-harness-abs),
+.calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-day-bottom {
+    position: relative;
+    top: calc(var(--day-cell-bottom-text-height) * -1);
+}
+
 /* Day marks */
 
 /* A day without a plan has the fill a weekend had under FullCalendar's business hours, square as that
