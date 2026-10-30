@@ -24,6 +24,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ApprovalPeriodTest {
 
@@ -108,6 +109,46 @@ class ApprovalPeriodTest {
         ApprovalPeriod week = ApprovalPeriod.weekOf(LocalDate.of(2026, 10, 22), DayOfWeek.SUNDAY);
 
         assertThat(week.weekRows(DayOfWeek.SUNDAY)).containsExactly(week.days());
+    }
+
+    @Test
+    void weekRowsOfAWeekThatDoesNotStartOnTheFirstDayOfWeekSpanTwoRows() {
+        // Sunday, Oct 18 to Saturday, Oct 24, laid out in rows that start on Monday
+        ApprovalPeriod week = ApprovalPeriod.weekOf(LocalDate.of(2026, 10, 22), DayOfWeek.SUNDAY);
+
+        List<List<LocalDate>> rows = week.weekRows(DayOfWeek.MONDAY);
+
+        assertThat(rows).hasSize(2).allSatisfy(row -> assertThat(row).hasSize(7));
+        assertThat(rows.getFirst().getFirst()).isEqualTo(LocalDate.of(2026, 10, 12));
+        assertThat(rows.getLast().getFirst()).isEqualTo(LocalDate.of(2026, 10, 19));
+        assertThat(rows.getLast().getLast()).isEqualTo(LocalDate.of(2026, 10, 25));
+    }
+
+    @Test
+    void aWeekMustLastSevenDays() {
+        LocalDate start = LocalDate.of(2026, 10, 18);
+
+        assertThatThrownBy(() -> new ApprovalPeriod(ApprovalMode.WEEK, start, start.plusDays(5)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ApprovalPeriod(ApprovalMode.WEEK, start, start.plusDays(7)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aMonthMustRunFromItsFirstToItsLastDay() {
+        assertThatThrownBy(() -> new ApprovalPeriod(
+                ApprovalMode.MONTH, LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 31)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new ApprovalPeriod(
+                ApprovalMode.MONTH, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 30)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aPeriodMustNotEndBeforeItStarts() {
+        assertThatThrownBy(() -> new ApprovalPeriod(
+                ApprovalMode.WEEK, LocalDate.of(2026, 10, 24), LocalDate.of(2026, 10, 18)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
