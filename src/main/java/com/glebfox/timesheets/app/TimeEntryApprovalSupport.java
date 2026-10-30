@@ -19,25 +19,36 @@ package com.glebfox.timesheets.app;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
+import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.DataManager;
+import io.jmix.core.EntitySet;
 import io.jmix.core.FetchMode;
 import io.jmix.core.FetchPlan;
+import io.jmix.core.FetchPlanBuilder;
+import io.jmix.core.FetchPlans;
+import io.jmix.core.SaveContext;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
+import jakarta.persistence.OptimisticLockException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Decides which time entries the current user may approve and loads them.
  * <p>
  * The approver is always the effective user, so under user substitution it is the substituted user.
  * The rule is written once, as the constant {@code APPROVABLE_ENTRY}, and every query of this bean that applies
- * it embeds that constant.
+ * it embeds that constant. The operations, {@link #approve} and {@link #reject}, check it again before they save.
  */
 @Component("ts_TimeEntryApprovalSupport")
 public class TimeEntryApprovalSupport {
@@ -83,11 +94,14 @@ public class TimeEntryApprovalSupport {
             """.formatted(MANAGER, APPROVER);
 
     private final DataManager dataManager;
+    private final FetchPlans fetchPlans;
     private final CurrentUserSubstitution currentUserSubstitution;
 
     public TimeEntryApprovalSupport(DataManager dataManager,
+                                    FetchPlans fetchPlans,
                                     CurrentUserSubstitution currentUserSubstitution) {
         this.dataManager = dataManager;
+        this.fetchPlans = fetchPlans;
         this.currentUserSubstitution = currentUserSubstitution;
     }
 
@@ -128,11 +142,7 @@ public class TimeEntryApprovalSupport {
                 .parameter("approverId", approverId())
                 .parameter("dateFrom", from)
                 .parameter("dateTo", to)
-                .fetchPlan(fetchPlan -> fetchPlan.addFetchPlan(FetchPlan.BASE)
-                        .add("user", FetchPlan.BASE, FetchMode.BATCH)
-                        .add("task", task -> task.addFetchPlan(FetchPlan.BASE)
-                                .add("project", FetchPlan.INSTANCE_NAME))
-                        .add("tags", FetchPlan.INSTANCE_NAME));
+                .fetchPlan(TimeEntryApprovalSupport::addEntryAttributes);
         if (project != null) {
             loader.parameter("projectId", project.getId());
         }
@@ -181,6 +191,116 @@ public class TimeEntryApprovalSupport {
                 .parameter("approverId", approverId())
                 .one();
         return count > 0;
+    }
+
+    /**
+     * Sets the entries to Approved. An entry that was rejected keeps its rejection reason.
+     * <p>
+     * The entries are read again by id, so a stale instance never decides what is saved. The operation either
+     * changes every entry or none: all of them are saved in one {@link SaveContext}, which also lets the time
+     * entry listener tell each entry's user.
+     *
+     * @param entries the entries to approve, as the screen loaded them
+     * @return the saved entries, one for each distinct entry given and in that order, loaded as
+     * {@link #loadEntriesToApprove} loads them
+     * @throws IllegalArgumentException if an entry is outside what the current user may approve, is Closed, or is
+     *                                  already Approved
+     * @throws OptimisticLockException  if an entry has changed since it was loaded
+     */
+    public List<TimeEntry> approve(Collection<TimeEntry> entries) {
+        return changeStatus(entries, entry -> {
+            if (entry.getStatus() == TimeEntryStatus.APPROVED) {
+                throw new IllegalArgumentException("Time entry %s is already approved".formatted(entry.getId()));
+            }
+            entry.setStatus(TimeEntryStatus.APPROVED);
+        });
+    }
+
+    /**
+     * Sets the entries to Rejected with the reason, which replaces an earlier one.
+     * <p>
+     * The entries are read again by id, so a stale instance never decides what is saved. The operation either
+     * changes every entry or none: all of them are saved in one {@link SaveContext}, which also lets the time
+     * entry listener tell each entry's user.
+     *
+     * @param entries the entries to reject, as the screen loaded them
+     * @param reason  why the entries are rejected
+     * @return the saved entries, one for each distinct entry given and in that order, loaded as
+     * {@link #loadEntriesToApprove} loads them
+     * @throws IllegalArgumentException if the reason is blank, or an entry is outside what the current user may
+     *                                  approve, or is Closed
+     * @throws OptimisticLockException  if an entry has changed since it was loaded
+     */
+    public List<TimeEntry> reject(Collection<TimeEntry> entries, String reason) {
+        if (reason.isBlank()) {
+            throw new IllegalArgumentException("The rejection reason is required");
+        }
+        return changeStatus(entries, entry -> {
+            entry.setStatus(TimeEntryStatus.REJECTED);
+            entry.setRejectionReason(reason);
+        });
+    }
+
+    /**
+     * Applies the edit to the current state of the entries and saves them all or none.
+     * <p>
+     * An entry that is gone or outside the rule is refused before anything else, so that the answer for an entry
+     * the user may not approve never depends on its version. A stale version comes next, before the status: an
+     * entry that was approved or closed meanwhile is stale, and the screen reloads on it.
+     */
+    private List<TimeEntry> changeStatus(Collection<TimeEntry> entries, Consumer<TimeEntry> edit) {
+        if (entries.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> ids = entries.stream().map(TimeEntry::getId).distinct().toList();
+        // Own attributes only: saving them leaves the entry's references and tags as they are
+        Map<UUID, TimeEntry> current = dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.id in :ids and " + APPROVABLE_ENTRY)
+                .parameter("ids", ids)
+                .parameter("approverId", approverId())
+                .fetchPlan(FetchPlan.LOCAL)
+                .list().stream()
+                .collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
+
+        for (UUID id : ids) {
+            if (!current.containsKey(id)) {
+                throw new IllegalArgumentException(
+                        "Time entry %s is not one the current user may approve or reject".formatted(id));
+            }
+        }
+        for (TimeEntry given : entries) {
+            if (!Objects.equals(current.get(given.getId()).getVersion(), given.getVersion())) {
+                throw new OptimisticLockException(
+                        "Time entry %s has changed since it was loaded".formatted(given.getId()));
+            }
+        }
+        for (TimeEntry entry : current.values()) {
+            if (entry.getStatus() == TimeEntryStatus.CLOSED) {
+                throw new IllegalArgumentException("Time entry %s is closed".formatted(entry.getId()));
+            }
+            edit.accept(entry);
+        }
+
+        FetchPlanBuilder builder = fetchPlans.builder(TimeEntry.class);
+        addEntryAttributes(builder);
+        FetchPlan fetchPlan = builder.build();
+        SaveContext saveContext = new SaveContext();
+        current.values().forEach(entry -> saveContext.saving(entry, fetchPlan));
+        EntitySet saved = dataManager.save(saveContext);
+        return ids.stream().map(id -> saved.get(TimeEntry.class, id)).toList();
+    }
+
+    /**
+     * What the approval screen shows of an entry. The user is read in a query of its own, not joined to the
+     * entry: a join to the user table would drop the entry of a deleted user.
+     */
+    private static void addEntryAttributes(FetchPlanBuilder builder) {
+        builder.addFetchPlan(FetchPlan.BASE)
+                .add("user", FetchPlan.BASE, FetchMode.BATCH)
+                .add("task", task -> task.addFetchPlan(FetchPlan.BASE)
+                        .add("project", FetchPlan.INSTANCE_NAME))
+                .add("tags", FetchPlan.INSTANCE_NAME);
     }
 
     private UUID approverId() {

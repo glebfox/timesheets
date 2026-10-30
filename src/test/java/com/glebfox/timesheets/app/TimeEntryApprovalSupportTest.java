@@ -30,33 +30,44 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
 import io.jmix.core.DataManager;
+import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.core.usersubstitution.UserSubstitutionManager;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.UiEventPublisher;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import io.jmix.securitydata.entity.UserSubstitutionEntity;
+import jakarta.persistence.OptimisticLockException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verify;
 
 /**
  * The fixture is two projects, P and Q:
@@ -79,6 +90,8 @@ public class TimeEntryApprovalSupportTest {
     UserSubstitutionManager userSubstitutionManager;
     @Autowired
     TimeEntryApprovalSupport approvalSupport;
+    @MockitoSpyBean
+    UiEventPublisher uiEventPublisher;
 
     String prefix;
     LocalDate today;
@@ -440,6 +453,189 @@ public class TimeEntryApprovalSupportTest {
                 .containsExactly(roleName(ProjectRoleType.MEMBER));
     }
 
+    @Test
+    void approveSetsApprovedAndKeepsTheReason() {
+        TimeEntry rejected = withStatus(memberEntry, TimeEntryStatus.REJECTED, "r");
+
+        List<TimeEntry> approved = asUser(approver1, () -> approvalSupport.approve(List.of(rejected)));
+
+        TimeEntry stored = reload(memberEntry);
+        assertThat(stored.getStatus()).isEqualTo(TimeEntryStatus.APPROVED);
+        assertThat(stored.getRejectionReason()).isEqualTo("r");
+        assertThat(approved).extracting(TimeEntry::getId).containsExactly(memberEntry.getId());
+        assertThat(approved).extracting(TimeEntry::getStatus).containsExactly(TimeEntryStatus.APPROVED);
+    }
+
+    @Test
+    void approveRefusesAnEntryOutsideTheRule() {
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(memberEntry, managerEntry))))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(managerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void approveRefusesAnApproversOwnEntryButNotAManagers() {
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(approver1Entry))))
+                .isInstanceOf(IllegalArgumentException.class);
+        asUser(manager, () -> approvalSupport.approve(List.of(managerEntry)));
+
+        assertThat(reload(approver1Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(managerEntry).getStatus()).isEqualTo(TimeEntryStatus.APPROVED);
+    }
+
+    @Test
+    void approveRefusesClosedAndApprovedEntries() {
+        TimeEntry closed = withStatus(memberEntry, TimeEntryStatus.CLOSED, null);
+        TimeEntry approved = withStatus(approver2Entry, TimeEntryStatus.APPROVED, null);
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(closed))))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(approved))))
+                .isInstanceOf(IllegalArgumentException.class);
+        // An entry that could be approved beside a refused one stays as it is
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(formerEntry, closed))))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(reload(formerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.CLOSED);
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.APPROVED);
+    }
+
+    @Test
+    void approveFailsWhenAnEntryChangedMeanwhile() {
+        TimeEntry stale = reload(memberEntry);
+        TimeEntry changed = reload(memberEntry);
+        changed.setDescription("edited meanwhile");
+        dataManager.saveWithoutReload(changed);
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(stale, approver2Entry))))
+                .isInstanceOf(OptimisticLockException.class);
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void rejectSetsRejectedWithTheReason() {
+        TimeEntry approved = withStatus(approver2Entry, TimeEntryStatus.APPROVED, null);
+        TimeEntry rejected = withStatus(formerEntry, TimeEntryStatus.REJECTED, "old reason");
+
+        List<TimeEntry> result = asUser(approver1,
+                () -> approvalSupport.reject(List.of(memberEntry, approved, rejected), "new reason"));
+
+        assertThat(result).extracting(TimeEntry::getId)
+                .containsExactly(memberEntry.getId(), approver2Entry.getId(), formerEntry.getId());
+        for (TimeEntry entry : List.of(memberEntry, approver2Entry, formerEntry)) {
+            TimeEntry stored = reload(entry);
+            assertThat(stored.getStatus()).isEqualTo(TimeEntryStatus.REJECTED);
+            assertThat(stored.getRejectionReason()).isEqualTo("new reason");
+        }
+    }
+
+    @Test
+    void rejectRequiresAReason() {
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.reject(List.of(memberEntry), " \n")))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.reject(List.of(memberEntry), "")))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        TimeEntry stored = reload(memberEntry);
+        assertThat(stored.getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(stored.getRejectionReason()).isNull();
+    }
+
+    @Test
+    void rejectRefusesEntriesOutsideTheRuleAndClosedOnes() {
+        TimeEntry closed = withStatus(approver2Entry, TimeEntryStatus.CLOSED, null);
+
+        assertThatThrownBy(() -> asUser(approver1,
+                () -> approvalSupport.reject(List.of(memberEntry, managerEntry), "reason")))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> asUser(approver1,
+                () -> approvalSupport.reject(List.of(memberEntry, closed), "reason")))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(managerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.CLOSED);
+    }
+
+    @Test
+    void rejectFailsWhenAnEntryChangedMeanwhile() {
+        TimeEntry stale = reload(memberEntry);
+        TimeEntry changed = reload(memberEntry);
+        changed.setDescription("edited meanwhile");
+        dataManager.saveWithoutReload(changed);
+
+        assertThatThrownBy(() -> asUser(approver1,
+                () -> approvalSupport.reject(List.of(approver2Entry, stale), "reason")))
+                .isInstanceOf(OptimisticLockException.class);
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void anEmptyCollectionChangesNothing() {
+        assertThat(asUser(approver1, () -> approvalSupport.approve(List.of()))).isEmpty();
+        assertThat(asUser(approver1, () -> approvalSupport.reject(List.of(), "reason"))).isEmpty();
+    }
+
+    @Test
+    void entriesOfDeletedUsersCanBeApprovedAndRejected() {
+        dataManager.remove(former);
+
+        List<TimeEntry> approved = asUser(approver1, () -> approvalSupport.approve(List.of(formerEntry)));
+        // The entry that came back is current, so it can be changed again
+        List<TimeEntry> rejected = asUser(approver1, () -> approvalSupport.reject(approved, "reason"));
+
+        assertThat(approved).extracting(TimeEntry::getStatus).containsExactly(TimeEntryStatus.APPROVED);
+        assertThat(rejected).extracting(TimeEntry::getStatus).containsExactly(TimeEntryStatus.REJECTED);
+        assertThat(reload(formerEntry).getStatus()).isEqualTo(TimeEntryStatus.REJECTED);
+        assertThat(rejected.get(0).getUser().getUsername()).isEqualTo(former.getUsername());
+    }
+
+    @Test
+    void savedEntriesCarryWhatTheScreenShowsAndKeepTheirTags() {
+        TimeEntry tagged = reload(memberEntry);
+        tagged.setTags(List.of(tag));
+        dataManager.saveWithoutReload(tagged);
+
+        TimeEntry current = reload(memberEntry);
+
+        List<TimeEntry> approved = asUser(manager, () -> approvalSupport.approve(List.of(current)));
+
+        TimeEntry saved = approved.get(0);
+        assertThat(saved.getStatus()).isEqualTo(TimeEntryStatus.APPROVED);
+        assertThat(saved.getSpentTime()).isEqualTo(WorkTime.ofHours(1));
+        assertThat(saved.getUser().getUsername()).isEqualTo(member.getUsername());
+        assertThat(saved.getTask().getName()).isEqualTo(pTask.getName());
+        assertThat(saved.getTask().getProject().getName()).isEqualTo(projectP.getName());
+        assertThat(saved.getTags()).extracting(Tag::getName).containsExactly(tag.getName());
+        TimeEntry stored = dataManager.load(Id.of(memberEntry))
+                .fetchPlan(plan -> plan.addFetchPlan(FetchPlan.BASE).add("tags", FetchPlan.INSTANCE_NAME))
+                .one();
+        assertThat(stored.getTags()).extracting(Tag::getName).containsExactly(tag.getName());
+    }
+
+    @Test
+    void approveAndRejectTellTheEntryUser() {
+        clearInvocations(uiEventPublisher);
+        asUser(approver1, () -> approvalSupport.approve(List.of(memberEntry)));
+
+        verify(uiEventPublisher).publishEventForUsers(
+                any(TimeEntryStatusChangedEvent.class), eq(Set.of(member.getUsername())));
+
+        TimeEntry current = reload(memberEntry);
+        clearInvocations(uiEventPublisher);
+        asUser(approver1, () -> approvalSupport.reject(List.of(current), "reason"));
+
+        verify(uiEventPublisher).publishEventForUsers(
+                any(TimeEntryStatusChangedEvent.class), eq(Set.of(member.getUsername())));
+    }
+
     @AfterEach
     void tearDown() {
         // Soft-deleted rows and role assignments are removed for good, reloaded by id, children before parents
@@ -452,6 +648,17 @@ public class TimeEntryApprovalSupportTest {
                             .setHint(PersistenceHints.SOFT_DELETION, false)));
         }
         createdIds.clear();
+    }
+
+    private TimeEntry reload(TimeEntry entry) {
+        return dataManager.load(Id.of(entry)).one();
+    }
+
+    private TimeEntry withStatus(TimeEntry entry, TimeEntryStatus status, String rejectionReason) {
+        TimeEntry loaded = reload(entry);
+        loaded.setStatus(status);
+        loaded.setRejectionReason(rejectionReason);
+        return dataManager.save(loaded);
     }
 
     private <T> T asUser(User user, Supplier<T> action) {
