@@ -65,9 +65,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -85,7 +82,8 @@ import java.util.UUID;
  * The screen where the managers and approvers of projects review the time logged on them, person by person.
  * <p>
  * It shows the time entries of one period, a week or a month, that the current user may approve: a roster of the
- * people who logged them, one of whom is the selected person, and the progress of the whole team.
+ * people who logged them, one of whom is the selected person, the progress of the whole team, and the selected
+ * person's period in a {@link ApprovalPersonPanel}. In a month, one week of the person's is listed in full.
  */
 @Route(value = "approve-time-entries", layout = MainView.class)
 @ViewController(TimeEntryApprovalView.ID)
@@ -98,10 +96,6 @@ public class TimeEntryApprovalView extends StandardView {
      * The key of the user setting that remembers the mode, a constant of {@link ApprovalMode}.
      */
     static final String MODE_SETTING = ID + ".mode";
-
-    // The order of the segments of a status bar: the settled time first, then what waits, then what was sent back
-    private static final List<TimeEntryStatus> STATUS_BAR_ORDER = List.of(
-            TimeEntryStatus.CLOSED, TimeEntryStatus.APPROVED, TimeEntryStatus.NEW, TimeEntryStatus.REJECTED);
 
     @ViewComponent
     private JmixRadioButtonGroup<ApprovalMode> modeField;
@@ -117,8 +111,6 @@ public class TimeEntryApprovalView extends StandardView {
     private Span teamProgressText;
     @ViewComponent
     private Span teamProgressDetails;
-    @ViewComponent
-    private Div teamProgressBar;
     @ViewComponent
     private Div rosterBox;
     @ViewComponent
@@ -153,8 +145,9 @@ public class TimeEntryApprovalView extends StandardView {
 
     private Locale locale;
     private DayOfWeek firstDayOfWeek;
-    private Span periodName;
-    private Span periodYear;
+    private ApprovalPeriodTitle periodTitles;
+    private ApprovalStatusBar teamProgressBar;
+    private ApprovalPersonPanel personPanel;
 
     private List<Project> projectsToApprove = List.of();
     // Null until the view is shown
@@ -165,6 +158,12 @@ public class TimeEntryApprovalView extends StandardView {
     private List<ApprovalPerson> rosterPeople = List.of();
     @Nullable
     private User selectedPerson;
+    // The person the panel shows, as loaded; a new load gives the same user a new instance
+    @Nullable
+    private ApprovalPerson shownPerson;
+    // In a month, the first day of the week listed; null in a week, or with nobody selected
+    @Nullable
+    private LocalDate selectedWeek;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -172,10 +171,10 @@ public class TimeEntryApprovalView extends StandardView {
         // Weeks start as in the Calendar
         firstDayOfWeek = componentSupport.getDaysOfWeek().getFirst();
 
-        initPeriodTitle();
+        periodTitles = new ApprovalPeriodTitle(messageBundle::getMessage, locale);
         initRoster();
-        // The bar repeats what the text beside it says
-        teamProgressBar.getElement().setAttribute("aria-hidden", "true");
+        initTeamProgressBar();
+        initPersonPanel();
 
         projectsToApprove = approvalSupport.loadProjectsToApprove();
         projectField.setItems(projectsToApprove);
@@ -190,19 +189,28 @@ public class TimeEntryApprovalView extends StandardView {
         setPeriod(defaultPeriod(Objects.requireNonNull(modeField.getValue())));
     }
 
-    private void initPeriodTitle() {
-        periodName = new Span();
-        periodYear = new Span();
-        periodYear.setClassName("time-entry-approval-view-period-year");
-        // The space keeps the title "October 2026" whole for assistive technology
-        periodTitle.add(periodName, new Text(" "), periodYear);
-    }
-
     private void initRoster() {
         rosterScopeField.setItems(List.of(ApprovalRosterScope.values()));
         rosterScopeField.setValue(ApprovalRosterScope.NEEDS_REVIEW);
         rosterList.setRenderer(new ComponentRenderer<>(this::createRosterCard, this::updateRosterCard));
         rosterList.setItemAccessibleNameGenerator(person -> ApprovalRosterCard.nameOf(person.user()));
+    }
+
+    private void initTeamProgressBar() {
+        teamProgressBar = new ApprovalStatusBar();
+        teamProgressBar.addClassName("time-entry-approval-view-team-progress-bar");
+        teamProgress.add(teamProgressBar);
+    }
+
+    private void initPersonPanel() {
+        personPanel = new ApprovalPersonPanel(componentSupport, messages, metadataTools, locale, periodTitles);
+        // A click on the grid goes through the same way as selectWeek from outside
+        personPanel.addWeekClickListener(event -> selectWeek(event.getWeekStart()));
+        personPanel.addDayClickListener(event -> {
+            selectWeek(ApprovalPeriod.weekStartOf(event.getDay(), firstDayOfWeek));
+            personPanel.scrollToDay(event.getDay());
+        });
+        personBox.add(personPanel);
     }
 
     /**
@@ -249,6 +257,35 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
+     * Returns the week whose entries are listed in a month.
+     *
+     * @return the first day of the week, a row of the month's grid; {@code null} in a week, or with nobody selected
+     */
+    @Nullable
+    public LocalDate getSelectedWeek() {
+        return selectedWeek;
+    }
+
+    /**
+     * Lists the entries of another week of the selected person's month, as a click on its card does.
+     *
+     * @param weekStart the first day of a row of the month's grid
+     * @throws IllegalStateException    if the screen shows a week, or nobody is selected
+     * @throws IllegalArgumentException if no row of the month's grid starts on the day
+     */
+    public void selectWeek(LocalDate weekStart) {
+        Preconditions.checkState(getPeriod().mode() == ApprovalMode.MONTH && selectedPerson != null,
+                "Only a person's month lists a week");
+        Preconditions.checkArgument(isWeekOfPeriod(weekStart), "No week of %s starts on %s", period, weekStart);
+        if (weekStart.equals(selectedWeek)) {
+            return;
+        }
+
+        selectedWeek = weekStart;
+        personPanel.showWeek(weekStart);
+    }
+
+    /**
      * Selects a person the roster shows.
      *
      * @param user the person's user
@@ -260,7 +297,8 @@ public class TimeEntryApprovalView extends StandardView {
         Optional<ApprovalPerson> previous = selectedPerson != null
                 ? findShown(selectedPerson.getId())
                 : Optional.empty();
-        setSelectedPerson(person);
+        // Choosing the person shown again keeps their week
+        setSelectedPerson(person, true);
 
         // Only the two cards whose mark changes are redrawn, and in place: a refresh of all the items would create
         // every card anew, and the card chosen from the keyboard would lose the focus.
@@ -390,28 +428,17 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     private void updatePeriodTitle(ApprovalPeriod current) {
-        LocalDate start = current.start();
-        LocalDate end = current.end();
-
-        if (current.mode() == ApprovalMode.MONTH) {
-            periodName.setText(StringUtils.capitalize(
-                    start.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale)));
-            periodYear.setText(String.valueOf(start.getYear()));
-            return;
+        periodTitle.removeAll();
+        // Text nodes between the parts keep the title, such as "October 2026", whole for assistive technology
+        for (ApprovalPeriodTitle.Part part : periodTitles.format(current)) {
+            if (part.year()) {
+                Span year = new Span(part.text());
+                year.setClassName("time-entry-approval-view-period-year");
+                periodTitle.add(year);
+            } else {
+                periodTitle.add(new Text(part.text()));
+            }
         }
-
-        String keyPrefix = YearMonth.from(start).equals(YearMonth.from(end))
-                ? "periodTitle.week.sameMonth"
-                : "periodTitle.week.otherMonth";
-        periodName.setText(messageBundle.formatMessage("periodTitle.range",
-                formatDate(start, keyPrefix + ".start"), formatDate(end, keyPrefix + ".end")));
-        periodYear.setText(start.getYear() == end.getYear()
-                ? String.valueOf(start.getYear())
-                : messageBundle.formatMessage("periodTitle.range", start.getYear(), end.getYear()));
-    }
-
-    private String formatDate(LocalDate date, String patternKey) {
-        return date.format(DateTimeFormatter.ofPattern(messageBundle.getMessage(patternKey), locale));
     }
 
     private void updateTeamProgress() {
@@ -432,25 +459,7 @@ public class TimeEntryApprovalView extends StandardView {
                 countText("teamProgress.rejected", rejected))
                 : waiting);
 
-        updateStatusBar(teamProgressBar, totals);
-    }
-
-    /**
-     * Splits the bar into one segment per status with entries, as wide as their share of the entries. The segments
-     * take their colors from the theme by the classes of the statuses.
-     */
-    private void updateStatusBar(Div bar, ApprovalTotals totals) {
-        bar.removeAll();
-        for (TimeEntryStatus status : STATUS_BAR_ORDER) {
-            int count = totals.count(status);
-            if (count > 0) {
-                Span segment = new Span();
-                segment.addClassName(ApprovalStatusClassNames.of(status));
-                // A share computed from the data, so it is set in place rather than by a class
-                segment.getStyle().set("flex-grow", String.valueOf(count));
-                bar.add(segment);
-            }
-        }
+        teamProgressBar.setTotals(totals);
     }
 
     private void showRoster(boolean keepSelection) {
@@ -467,7 +476,7 @@ public class TimeEntryApprovalView extends StandardView {
         if (toSelect == null && !rosterPeople.isEmpty()) {
             toSelect = rosterPeople.getFirst();
         }
-        setSelectedPerson(toSelect);
+        setSelectedPerson(toSelect, keepSelection);
         rosterList.setItems(rosterPeople);
 
         updateEmptyState();
@@ -498,10 +507,39 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
-     * The one place the selection changes: every way of selecting a person comes through here.
+     * The one place the selection changes: every way of selecting a person comes through here, and it shows the
+     * person. In a month, the week listed stays when the same person stays selected and the caller keeps it, as a
+     * reload does; otherwise the person opens on their opening week.
      */
-    private void setSelectedPerson(@Nullable ApprovalPerson person) {
+    private void setSelectedPerson(@Nullable ApprovalPerson person, boolean keepWeek) {
+        boolean samePerson = person != null && selectedPerson != null
+                && selectedPerson.getId().equals(person.user().getId());
         selectedPerson = person != null ? person.user() : null;
+        // Nothing to redraw, as when the roster's switch or search keeps the person; a redraw would also take the
+        // focus from a week card
+        if (keepWeek && person != null && person == shownPerson) {
+            return;
+        }
+        shownPerson = person;
+
+        if (person == null) {
+            selectedWeek = null;
+            personPanel.clear();
+            return;
+        }
+
+        ApprovalPeriod current = getPeriod();
+        if (current.mode() == ApprovalMode.WEEK) {
+            selectedWeek = null;
+        } else if (!(keepWeek && samePerson && selectedWeek != null && isWeekOfPeriod(selectedWeek))) {
+            selectedWeek = ApprovalPersonPanel.openingWeekOf(person, current, firstDayOfWeek);
+        }
+        personPanel.show(person, roleNamesByUser.getOrDefault(person.user().getId(), List.of()), current,
+                selectedWeek);
+    }
+
+    private boolean isWeekOfPeriod(LocalDate weekStart) {
+        return getPeriod().weekRows(firstDayOfWeek).stream().anyMatch(row -> row.getFirst().equals(weekStart));
     }
 
     private boolean isSelected(ApprovalPerson person) {

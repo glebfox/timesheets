@@ -141,7 +141,9 @@
 }
 
 .time-entry-approval-view-person {
+    display: flex;
     flex: 1 1 auto;
+    flex-direction: column;
     min-width: 0;
     min-height: 0;
 }
@@ -274,4 +276,568 @@
 
 .approval-fingerprint .empty {
     fill: var(--vaadin-border-color-secondary);
+}
+
+/* Selected person: the header, the figures, and the month grid with a week's entries or the week board */
+
+.approval-person-panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--vaadin-gap-m);
+    box-sizing: border-box;
+    min-height: 0;
+    overflow-y: auto;
+    /* Room for the focus rings of the parts along the edges */
+    padding: var(--vaadin-focus-ring-width);
+}
+
+/* The color of a status, for the parts that show it: a dot, a line, and an entry's stripe */
+.approval-person-panel .new {
+    --_status-color: var(--ts-warning-color);
+}
+
+.approval-person-panel .approved {
+    --_status-color: var(--ts-success-color);
+}
+
+.approval-person-panel .rejected {
+    --_status-color: var(--ts-danger-color);
+}
+
+.approval-person-panel .closed {
+    --_status-color: var(--aura-neutral);
+}
+
+.approval-person-panel .dot {
+    display: inline-block;
+    flex-shrink: 0;
+    /* As small as the smallest gap, so it reads as a mark beside the text */
+    width: var(--vaadin-gap-s);
+    height: var(--vaadin-gap-s);
+    border-radius: 50%;
+    background: var(--_status-color);
+}
+
+.approval-person-panel .line {
+    height: var(--vaadin-progress-bar-height);
+    border-radius: var(--vaadin-radius-s);
+    background: var(--_status-color);
+}
+
+/* A slot for actions that has none takes no room */
+.approval-person-panel .actions:empty {
+    display: none;
+}
+
+.approval-person-panel > .header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "avatar name actions"
+        "avatar details actions";
+    align-items: center;
+    column-gap: var(--vaadin-gap-m);
+    row-gap: var(--vaadin-gap-xs);
+}
+
+.approval-person-panel > .header > .avatar {
+    grid-area: avatar;
+}
+
+.approval-person-panel > .header > .name {
+    grid-area: name;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-l);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-l);
+}
+
+.approval-person-panel > .header > .details {
+    grid-area: details;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel > .header > .actions {
+    grid-area: actions;
+    display: flex;
+    gap: var(--vaadin-gap-s);
+}
+
+/* Four figures in an even row */
+.approval-person-panel > .figures {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--vaadin-gap-s);
+}
+
+.approval-person-panel .figure {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "label label"
+        "value details"
+        "bar bar";
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+}
+
+.approval-person-panel .figure > .label {
+    grid-area: label;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel .figure > .value {
+    grid-area: value;
+
+    font-size: var(--aura-font-size-xl);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xl);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-person-panel .figure.empty > .value {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-person-panel .figure > .details {
+    grid-area: details;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel .figure > .approval-status-bar {
+    grid-area: bar;
+    margin-block-start: var(--vaadin-gap-xs);
+}
+
+/* Month grid: seven days and a week card per row */
+
+.approval-month-grid {
+    display: grid;
+    /* The week card is wide enough for its hours, its entries, and two badges */
+    grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(10rem, 1.5fr);
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+}
+
+.approval-month-grid > .heading {
+    padding: var(--vaadin-padding-xs);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
+    text-align: center;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .day {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border-inline-end: 1px solid var(--vaadin-border-color-secondary);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.approval-month-grid > .day:not(.outside) {
+    cursor: pointer;
+}
+
+.approval-month-grid > .day.weekend {
+    background: var(--vaadin-background-container);
+}
+
+/* A neighbouring month's day is dimmed and shows only its number */
+.approval-month-grid > .day.outside {
+    color: var(--vaadin-text-color-disabled);
+}
+
+.approval-month-grid > .day.selected {
+    background: var(--aura-accent-surface);
+}
+
+.approval-month-grid > .day:not(.outside):hover {
+    background: var(--vaadin-background-container-strong);
+}
+
+.approval-month-grid > .day > .number {
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .day:not(.outside) > .number {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-month-grid > .day > .hours {
+    grid-row: 2;
+    align-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+
+    font-weight: var(--aura-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-month-grid > .day > .line {
+    grid-row: 3;
+}
+
+.approval-month-grid > .week {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "hours count"
+        "badges actions";
+    align-content: center;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    row-gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
+    cursor: pointer;
+}
+
+/* The grid's own border closes the last row */
+.approval-month-grid > :is(.day, .week):nth-last-child(-n + 8) {
+    border-block-end: none;
+}
+
+.approval-month-grid > .week:hover {
+    background: var(--vaadin-background-container-strong);
+}
+
+.approval-month-grid > .week:focus-visible {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+}
+
+/* The selected week: the accent surface, with an accent line along its start edge, as a selected roster card */
+.approval-month-grid > .week.selected {
+    background: var(--aura-accent-surface);
+    box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
+}
+
+.approval-month-grid > .week > .hours {
+    grid-area: hours;
+
+    font-weight: var(--aura-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-month-grid > .week > .count {
+    grid-area: count;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .week > .badges {
+    grid-area: badges;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-month-grid > .week > .actions {
+    grid-area: actions;
+    justify-self: end;
+}
+
+/* The entries of a week in a month, grouped by day */
+
+.approval-person-panel > .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-m);
+}
+
+.approval-person-panel > .entries > .entries-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+}
+
+.approval-person-panel > .entries > .entries-header > h4 {
+    margin: 0;
+
+    font-size: var(--aura-font-size-m);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-m);
+}
+
+.approval-person-panel > .entries > .empty {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-person-panel > .entries > .entries-day {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-person-panel .day-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* A rule fills the header up to the day's actions */
+.approval-person-panel .day-header::after {
+    content: "";
+    flex: 1 1 auto;
+    order: 1;
+    height: 1px;
+    background: var(--vaadin-border-color-secondary);
+}
+
+.approval-person-panel .day-header > .date {
+    color: var(--vaadin-text-color);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-person-panel .day-header > .hours {
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-person-panel .day-header > .actions {
+    display: flex;
+    order: 2;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* Week board: a column per day */
+
+.approval-week-board {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--vaadin-gap-s);
+}
+
+.approval-week-board > .column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+.approval-week-board > .column > .header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "day hours"
+        "line line"
+        "actions actions";
+    align-items: baseline;
+    row-gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-week-board > .column.weekend > .header {
+    background: var(--vaadin-background-container);
+}
+
+.approval-week-board > .column > .header > .day {
+    grid-area: day;
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-week-board > .column > .header > .hours {
+    grid-area: hours;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-week-board > .column > .header > .line {
+    grid-area: line;
+}
+
+.approval-week-board > .column > .header > .actions {
+    grid-area: actions;
+}
+
+.approval-week-board > .column > .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* Entry card: a stripe in the status color, the time, what was done, and the actions */
+
+.approval-entry-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "time content actions";
+    align-items: start;
+    column-gap: var(--vaadin-gap-m);
+    box-sizing: border-box;
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-m);
+    overflow: hidden;
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+}
+
+/* Approved entries stay, so the period reads complete, but step back */
+.approval-entry-card.approved {
+    opacity: 0.6;
+}
+
+.approval-entry-card > .stripe {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--vaadin-gap-xs);
+    background: var(--_status-color);
+}
+
+.approval-entry-card > .time {
+    grid-area: time;
+    white-space: nowrap;
+
+    font-weight: var(--aura-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-entry-card > .content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+}
+
+.approval-entry-card > .content > .task {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--vaadin-gap-s);
+}
+
+.approval-entry-card > .content > .task > .task-name {
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-entry-card > .content > .task > .project {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+}
+
+.approval-entry-card > .content > .description {
+    overflow-wrap: anywhere;
+}
+
+/* The rendered Markdown sits flush with the parts around it, in their line height: its base styles set their own,
+   which would also put the cut of a compact card's description off its third line */
+.approval-entry-card > .content > :is(.description, .reason) vaadin-markdown {
+    line-height: inherit;
+}
+
+.approval-entry-card > .content > :is(.description, .reason) vaadin-markdown > :first-child {
+    margin-block-start: 0;
+}
+
+.approval-entry-card > .content > :is(.description, .reason) vaadin-markdown > :last-child {
+    margin-block-end: 0;
+}
+
+.approval-entry-card > .content > .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* The reason an entry was rejected, set off by a line in the color of Rejected */
+.approval-entry-card > .content > .reason {
+    padding-inline-start: var(--vaadin-padding-s);
+    border-inline-start: var(--vaadin-focus-ring-width) solid var(--ts-danger-color);
+    overflow-wrap: anywhere;
+
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-entry-card > .actions {
+    grid-area: actions;
+    display: flex;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* On the week board: the time and the actions over the rest, the description cut after three lines */
+.approval-entry-card.compact {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "time actions"
+        "content content";
+    align-items: center;
+    column-gap: var(--vaadin-gap-xs);
+    row-gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-s);
+}
+
+.approval-entry-card.compact > .content > .task {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.approval-entry-card.compact > .content > .task > .task-name {
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-entry-card.compact > .content > .description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    /* Also where line clamping does not reach into the rendered Markdown */
+    max-height: calc(var(--aura-line-height-s) * 3);
+    overflow: hidden;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
 }

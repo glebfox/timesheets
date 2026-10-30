@@ -32,22 +32,31 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.view.timeentry.approval.ApprovalEntryCard;
 import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Svg;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.internal.UIInternals;
+import com.vaadin.flow.component.markdown.Markdown;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.ClientDetails;
+import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
@@ -58,11 +67,15 @@ import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import io.jmix.tabbedmode.testassist.UiTestUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.parser.Parser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -70,14 +83,18 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The fixture is one project on which admin is a Manager, with time logged in October 2026 by Ann Ash (a new entry),
- * Bob Birch (an approved one), and Cid Cole (a new and a rejected one).
+ * Bob Birch (an approved one), and Cid Cole (a rejected one and, a week later, a new one), and by Cid on the last day
+ * of September (a new one). Each entry is four hours.
  */
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -87,6 +104,7 @@ public class TimeEntryApprovalViewUiTest {
     static final String MODE_SETTING = "ts_TimeEntry.approval.mode";
     // October 2026 starts on a Thursday, so its weeks reach into the neighbouring months in either week order
     static final YearMonth OCTOBER = YearMonth.of(2026, 10);
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     @Autowired
     DataManager dataManager;
@@ -112,6 +130,11 @@ public class TimeEntryApprovalViewUiTest {
     User ann;
     User bob;
     User cid;
+    TimeEntry annWaiting;
+    TimeEntry bobApproved;
+    TimeEntry cidRejected;
+    TimeEntry cidWaiting;
+    TimeEntry cidInSeptember;
 
     List<Id<?>> createdIds = new ArrayList<>();
 
@@ -135,10 +158,14 @@ public class TimeEntryApprovalViewUiTest {
         saveParticipant(project, bob, memberRole);
         saveParticipant(project, cid, memberRole);
 
-        saveEntry(task, ann, OCTOBER.atDay(5), TimeEntryStatus.NEW);
-        saveEntry(task, bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED);
-        saveEntry(task, cid, OCTOBER.atDay(7), TimeEntryStatus.NEW);
-        saveEntry(task, cid, OCTOBER.atDay(8), TimeEntryStatus.REJECTED);
+        // Two weeks of October in either week order: Ann's, Bob's, and Cid's rejected entry in one, Cid's new one
+        // in the next
+        annWaiting = saveEntry(task, ann, OCTOBER.atDay(5), TimeEntryStatus.NEW);
+        bobApproved = saveEntry(task, bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED);
+        cidRejected = saveEntry(task, cid, OCTOBER.atDay(8), TimeEntryStatus.REJECTED);
+        cidWaiting = saveEntry(task, cid, OCTOBER.atDay(14), TimeEntryStatus.NEW);
+        // In the first row of October's grid whether weeks start on Sunday or on Monday
+        cidInSeptember = saveEntry(task, cid, LocalDate.of(2026, 9, 30), TimeEntryStatus.NEW);
     }
 
     @Test
@@ -355,6 +382,223 @@ public class TimeEntryApprovalViewUiTest {
         });
     }
 
+    @Test
+    void selectingAPersonShowsTheirFigures() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+
+            view.selectPerson(cid);
+
+            Component header = descendantOf(personBox(view), "header");
+            assertThat(textOf(descendantOf(header, "name"))).isEqualTo("Cid Cole");
+            assertThat(textOf(descendantOf(header, "details")))
+                    .contains(memberRole.getName(), project.getName());
+
+            assertThat(figureOf(view, "logged")).containsExactly("Logged", "8h", "2 entries");
+            assertThat(figureOf(view, "waiting")).containsExactly("Waiting", "1", "entry · 4h");
+            assertThat(figureOf(view, "approved")).containsExactly("Approved", "0");
+            assertThat(figureOf(view, "rejected")).containsExactly("Rejected", "1", "entry · 4h");
+            // The bar of the Logged figure is split by status, settled time first
+            assertThat(statusBarOf(UiTestUtils.getComponent(view, "figure-logged")))
+                    .containsExactly("new", "rejected");
+        });
+    }
+
+    @Test
+    void monthOpensOnTheFirstWeekWithWaitingEntries() {
+        // So that the week that waits is neither Cid's first nor his last week with entries
+        saveEntry(task, cid, OCTOBER.atDay(21), TimeEntryStatus.APPROVED);
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+
+            assertThat(selectedOf(view)).isEqualTo(ann.getUsername());
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(annWaiting));
+            assertThat(listedOf(view)).containsExactly(annWaiting.getId());
+
+            // Cid's rejected entry is a week before the one that waits, an approved one a week after
+            view.selectPerson(cid);
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidWaiting));
+            assertThat(listedOf(view)).containsExactly(cidWaiting.getId());
+            assertThat(classesOf(weekCardOf(view, weekStartOf(cidWaiting)))).contains("selected");
+
+            // With nothing waiting, the last week with entries
+            view.selectPerson(bob);
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(bobApproved));
+            assertThat(listedOf(view)).containsExactly(bobApproved.getId());
+
+            // A reload keeps the week shown
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(cidRejected));
+            view.reload();
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidRejected));
+            assertThat(listedOf(view)).containsExactly(cidRejected.getId());
+        });
+    }
+
+    @Test
+    void clickingAWeekCardShowsThatWeek() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+
+            click(weekCardOf(view, weekStartOf(cidRejected)));
+
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidRejected));
+            assertThat(listedOf(view)).containsExactly(cidRejected.getId());
+            assertThat(classesOf(weekCardOf(view, weekStartOf(cidRejected)))).contains("selected");
+            assertThat(classesOf(weekCardOf(view, weekStartOf(cidWaiting)))).doesNotContain("selected");
+            // The days of the week are marked too
+            assertThat(classesOf(dayOf(view, cidRejected.getDate()))).contains("selected");
+            assertThat(classesOf(dayOf(view, cidWaiting.getDate()))).doesNotContain("selected");
+        });
+    }
+
+    @Test
+    void clickingADayShowsItsWeekAndScrollsToTheDay() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(cidRejected));
+
+            click(dayOf(view, cidWaiting.getDate()));
+
+            assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidWaiting));
+            assertThat(listedOf(view)).containsExactly(cidWaiting.getId());
+            // The list scrolls to the group of the day's entries
+            Component day = entryCardOf(view, cidWaiting).getParent().orElseThrow();
+            assertThat(browserCalls(day)).anyMatch(call -> call.contains("scrollIntoView"));
+        });
+    }
+
+    @Test
+    void monthCountsOnlyItsOwnDays() {
+        LocalDate september30 = cidInSeptember.getDate();
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+            LocalDate firstRow = weekStartOf(OCTOBER.atDay(1));
+
+            // September 30 is in October's first row, dimmed and empty
+            Component september30Cell = dayOf(view, september30);
+            assertThat(classesOf(september30Cell)).contains("outside");
+            assertThat(findDescendant(september30Cell, "hours")).isEmpty();
+            assertThat(textOf(descendantOf(weekCardOf(view, firstRow), "hours"))).isEqualTo("0h");
+            assertThat(figureOf(view, "logged")).containsExactly("Logged", "8h", "2 entries");
+            assertThat(figureOf(view, "waiting")).containsExactly("Waiting", "1", "entry · 4h");
+            assertThat(fingerprintBarsOf(view, cid)).isEqualTo(2);
+            view.selectWeek(firstRow);
+            assertThat(listedOf(view)).isEmpty();
+
+            // In September it counts, and October's days of the last row show nothing
+            view.setPeriod(ApprovalPeriod.monthOf(YearMonth.of(2026, 9)));
+            assertThat(selectedOf(view)).isEqualTo(cid.getUsername());
+            LocalDate lastRow = weekStartOf(cidInSeptember);
+            assertThat(view.getSelectedWeek()).isEqualTo(lastRow);
+            assertThat(textOf(descendantOf(dayOf(view, september30), "hours"))).isEqualTo("4h");
+            assertThat(textOf(descendantOf(weekCardOf(view, lastRow), "hours"))).isEqualTo("4h");
+            assertThat(figureOf(view, "logged")).containsExactly("Logged", "4h", "1 entry");
+            assertThat(listedOf(view)).containsExactly(cidInSeptember.getId());
+            assertThat(fingerprintBarsOf(view, cid)).isEqualTo(1);
+            assertThat(classesOf(dayOf(view, OCTOBER.atDay(1)))).contains("outside");
+            assertThat(findDescendant(dayOf(view, OCTOBER.atDay(1)), "hours")).isEmpty();
+        });
+    }
+
+    @Test
+    void weekModeShowsSevenColumnsInTheLocaleOrder() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            modeField(view).setValue(ApprovalMode.WEEK);
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+            view.setPeriod(ApprovalPeriod.weekOf(cidRejected.getDate(), firstDayOfWeek()));
+            view.selectPerson(cid);
+
+            assertThat(columnDaysOf(view)).containsExactlyElementsOf(componentSupport.getDaysOfWeek());
+            assertThat(columnDaysOf(view).getFirst()).isEqualTo(DayOfWeek.SUNDAY);
+            Component column = UiTestUtils.getComponent(view, "column-" + cidRejected.getDate());
+            assertThat(textOf(descendantOf(column, "day"))).isEqualTo("Thu 8");
+            assertThat(textOf(descendantOf(column, "hours"))).isEqualTo("4h");
+            assertThat(listedOf(view)).containsExactly(cidRejected.getId());
+            assertThat(entryCardOf(view, cidRejected).getParent().flatMap(Component::getParent))
+                    .contains(column);
+            assertThat(view.getSelectedWeek()).isNull();
+            assertThat(figureOf(view, "logged")).containsExactly("Logged", "4h", "1 entry");
+        });
+
+        // A week starts on Monday in Russian
+        asAdmin(() -> {
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+            TimeEntryApprovalView view = open();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+            view.setPeriod(ApprovalPeriod.weekOf(cidRejected.getDate(), DayOfWeek.MONDAY));
+            view.selectPerson(cid);
+
+            assertThat(columnDaysOf(view)).containsExactly(DayOfWeek.MONDAY, DayOfWeek.TUESDAY,
+                    DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY);
+            Component monday = UiTestUtils.getComponent(view, "column-" + OCTOBER.atDay(5));
+            assertThat(textOf(descendantOf(monday, "day"))).isEqualTo("Пн 5");
+        });
+    }
+
+    @Test
+    void closedEntriesHaveNoButtons() {
+        TimeEntry annClosed = saveEntry(task, ann, OCTOBER.atDay(6), TimeEntryStatus.CLOSED);
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+
+            assertThat(listedOf(view)).containsExactly(annWaiting.getId(), annClosed.getId());
+            assertThat(buttonsOf(view, annClosed)).isEmpty();
+            assertThat(classesOf(entryCardOf(view, annClosed))).contains("approval-entry-card", "closed");
+
+            // ✓ approves a new or a rejected entry, ✕ rejects a new, an approved, or a rejected one
+            assertThat(buttonsOf(view, annWaiting)).containsExactly("approve", "reject");
+            view.selectPerson(bob);
+            assertThat(buttonsOf(view, bobApproved)).containsExactly("reject");
+            assertThat(classesOf(entryCardOf(view, bobApproved))).contains("approved");
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(cidRejected));
+            assertThat(buttonsOf(view, cidRejected)).containsExactly("approve", "reject");
+        });
+    }
+
+    @Test
+    void anEntryShowsItsTaskDescriptionAndRejectionReason() {
+        TimeEntry reasoned = save(dataManager.create(TimeEntry.class), e -> {
+            e.setTask(task);
+            e.setUser(cid);
+            e.setDate(OCTOBER.atDay(9));
+            e.setSpentTime(WorkTime.of(2, 30));
+            e.setStatus(TimeEntryStatus.REJECTED);
+            e.setDescription("Calibrated the **spectrometer**");
+            e.setRejectionReason("Say which sample.");
+        });
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(reasoned));
+
+            Component card = entryCardOf(view, reasoned);
+            assertThat(textOf(descendantOf(card, "time"))).isEqualTo("2h 30m");
+            assertThat(textOf(descendantOf(card, "task"))).contains(task.getName(), project.getName(), "Rejected");
+            assertThat(markdownOf(descendantOf(card, "description"))).isEqualTo("Calibrated the **spectrometer**");
+            assertThat(markdownOf(descendantOf(card, "reason"))).isEqualTo("Say which sample.");
+
+            // A new entry has neither a status badge nor a reason
+            view.selectWeek(weekStartOf(cidWaiting));
+            Component waitingCard = entryCardOf(view, cidWaiting);
+            assertThat(textOf(descendantOf(waitingCard, "task"))).doesNotContain("New");
+            assertThat(findDescendant(waitingCard, "reason")).isEmpty();
+            assertThat(findDescendant(waitingCard, "description")).isEmpty();
+        });
+    }
+
     @AfterEach
     void tearDown() {
         try {
@@ -435,6 +679,133 @@ public class TimeEntryApprovalViewUiTest {
         return partOf(card, "badges").getChildren().map(Badge.class::cast).toList();
     }
 
+    private DayOfWeek firstDayOfWeek() {
+        return componentSupport.getDaysOfWeek().getFirst();
+    }
+
+    private LocalDate weekStartOf(TimeEntry entry) {
+        return weekStartOf(entry.getDate());
+    }
+
+    private LocalDate weekStartOf(LocalDate date) {
+        return ApprovalPeriod.weekStartOf(date, firstDayOfWeek());
+    }
+
+    private static Div personBox(TimeEntryApprovalView view) {
+        return UiTestUtils.getComponent(view, "personBox");
+    }
+
+    private static Component dayOf(TimeEntryApprovalView view, LocalDate day) {
+        return UiTestUtils.getComponent(view, "day-" + day);
+    }
+
+    private static Component weekCardOf(TimeEntryApprovalView view, LocalDate weekStart) {
+        return UiTestUtils.getComponent(view, "week-" + weekStart);
+    }
+
+    private static ApprovalEntryCard entryCardOf(TimeEntryApprovalView view, TimeEntry entry) {
+        return UiTestUtils.getComponent(view, "entry-" + entry.getId());
+    }
+
+    /**
+     * Lists the entries the selected person's area shows, in order: the selected week's in Month mode, the week's in
+     * Week mode.
+     */
+    private static List<UUID> listedOf(TimeEntryApprovalView view) {
+        return descendantsOf(personBox(view))
+                .filter(ApprovalEntryCard.class::isInstance)
+                .map(card -> ((ApprovalEntryCard) card).getEntry().getId())
+                .toList();
+    }
+
+    private static List<String> buttonsOf(TimeEntryApprovalView view, TimeEntry entry) {
+        List<String> buttons = new ArrayList<>();
+        if (UiComponentUtils.findComponent(view, "approveEntryBtn-" + entry.getId()).isPresent()) {
+            buttons.add("approve");
+        }
+        if (UiComponentUtils.findComponent(view, "rejectEntryBtn-" + entry.getId()).isPresent()) {
+            buttons.add("reject");
+        }
+        return buttons;
+    }
+
+    /**
+     * Reads a figure's label, value, and details, the parts it shows.
+     */
+    private static List<String> figureOf(TimeEntryApprovalView view, String name) {
+        Component figure = UiTestUtils.getComponent(view, "figure-" + name);
+        return Stream.of("label", "value", "details")
+                .flatMap(part -> findDescendant(figure, part).stream())
+                .map(TimeEntryApprovalViewUiTest::textOf)
+                .toList();
+    }
+
+    private static List<String> statusBarOf(Component container) {
+        // By the elements: the bar is a composite, whose own child is the element it shares with its content
+        return descendantOf(container, "approval-status-bar").getElement().getChildren()
+                .flatMap(segment -> segment.getClassList().stream())
+                .toList();
+    }
+
+    private static List<DayOfWeek> columnDaysOf(TimeEntryApprovalView view) {
+        return descendantsOf(personBox(view))
+                .map(Component::getId)
+                .flatMap(Optional::stream)
+                .filter(id -> id.startsWith("column-"))
+                .map(id -> LocalDate.parse(id.substring("column-".length())).getDayOfWeek())
+                .toList();
+    }
+
+    private int fingerprintBarsOf(TimeEntryApprovalView view, User user) {
+        Svg fingerprint = (Svg) partOf(cardOf(view, user, List.of()), "fingerprint");
+        Document svg = Jsoup.parse(fingerprint.getElement().getProperty("innerHTML"), "", Parser.xmlParser());
+        return svg.select("rect.bar").size();
+    }
+
+    private static String markdownOf(Component container) {
+        return descendantsOf(container)
+                .filter(Markdown.class::isInstance)
+                .map(markdown -> ((Markdown) markdown).getContent())
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static void click(Component component) {
+        ComponentUtil.fireEvent(component, new ClickEvent<>(component));
+    }
+
+    private static List<String> browserCalls(Component component) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == component.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
+    }
+
+    private static Stream<Component> descendantsOf(Component root) {
+        return root.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendantsOf(child)));
+    }
+
+    private static Optional<Component> findDescendant(Component root, String className) {
+        return descendantsOf(root)
+                .filter(component -> component.getElement().getClassList().contains(className))
+                .findFirst();
+    }
+
+    private static Component descendantOf(Component root, String className) {
+        return findDescendant(root, className).orElseThrow(() -> new AssertionError(
+                "No part with the class '%s' in %s".formatted(className, root)));
+    }
+
+    private static List<String> classesOf(Component component) {
+        return List.copyOf(component.getElement().getClassList());
+    }
+
+    private static String textOf(Component component) {
+        return component.getElement().getTextRecursively();
+    }
+
     private static String periodTitleOf(TimeEntryApprovalView view) {
         H2 periodTitle = UiTestUtils.getComponent(view, "periodTitle");
         return periodTitle.getElement().getTextRecursively();
@@ -506,8 +877,8 @@ public class TimeEntryApprovalViewUiTest {
         });
     }
 
-    private void saveEntry(Task entryTask, User user, LocalDate date, TimeEntryStatus status) {
-        save(dataManager.create(TimeEntry.class), e -> {
+    private TimeEntry saveEntry(Task entryTask, User user, LocalDate date, TimeEntryStatus status) {
+        return save(dataManager.create(TimeEntry.class), e -> {
             e.setTask(entryTask);
             e.setUser(user);
             e.setDate(date);

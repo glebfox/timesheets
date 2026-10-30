@@ -37,12 +37,12 @@
                       ariaLabel="msg://projectField.ariaLabel"
                       clearButtonVisible="true"
                       classNames="time-entry-approval-view-project"/>
+            <!-- The controller adds the bar split by status after the label -->
             <div id="teamProgress" classNames="time-entry-approval-view-team-progress">
                 <div classNames="time-entry-approval-view-team-progress-label">
                     <span id="teamProgressText" classNames="time-entry-approval-view-team-progress-text"/>
                     <span id="teamProgressDetails" classNames="time-entry-approval-view-team-progress-details"/>
                 </div>
-                <div id="teamProgressBar" classNames="approval-status-bar time-entry-approval-view-team-progress-bar"/>
             </div>
         </div>
 

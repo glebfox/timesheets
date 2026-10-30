@@ -18,12 +18,8 @@ package com.glebfox.timesheets.view.timeentry.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ApprovalPerson;
-import com.glebfox.timesheets.app.util.ApprovalTotals;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.PluralForms;
-import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
-import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ClickNotifier;
@@ -31,7 +27,6 @@ import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import io.jmix.core.Messages;
 
@@ -54,10 +49,6 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
     static final String CLASS_NAME = "approval-roster-card";
     static final String SELECTED_CLASS_NAME = "selected";
 
-    private final ComponentSupport componentSupport;
-    private final Messages messages;
-    private final Locale locale;
-
     /**
      * Creates the card of a person.
      *
@@ -71,10 +62,6 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
      */
     public ApprovalRosterCard(ApprovalPerson person, List<String> roleNames, ApprovalPeriod period,
                               ComponentSupport componentSupport, Messages messages, Locale locale) {
-        this.componentSupport = componentSupport;
-        this.messages = messages;
-        this.locale = locale;
-
         String name = nameOf(person.user());
 
         Div content = getContent();
@@ -95,7 +82,7 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
 
         Div badges = new Div();
         badges.addClassName("badges");
-        createBadges(person.totals()).forEach(badges::add);
+        ApprovalStatusBadges.of(person.totals(), componentSupport, messages, locale).forEach(badges::add);
 
         content.add(avatar, nameText, badges);
 
@@ -141,36 +128,5 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
     public void setSelected(boolean selected) {
         getContent().setClassName(SELECTED_CLASS_NAME, selected);
         getContent().getElement().setAttribute("aria-pressed", String.valueOf(selected));
-    }
-
-    private List<Badge> createBadges(ApprovalTotals totals) {
-        int waiting = totals.count(TimeEntryStatus.NEW);
-        int rejected = totals.count(TimeEntryStatus.REJECTED);
-
-        if (waiting > 0) {
-            Badge waitingBadge = componentSupport.createBadge(countText("rosterCard.waiting", waiting),
-                    BadgeStyle.WARNING);
-            if (rejected == 0) {
-                return List.of(waitingBadge);
-            }
-
-            // Beside the waiting count, the rejected one is a bare number that names itself to assistive technology
-            String rejectedText = countText("rosterCard.rejected", rejected);
-            Badge rejectedBadge = componentSupport.createBadge(String.valueOf(rejected), BadgeStyle.ERROR);
-            rejectedBadge.getElement().setAttribute("title", rejectedText);
-            rejectedBadge.getElement().setAttribute("aria-label", rejectedText);
-            return List.of(waitingBadge, rejectedBadge);
-        }
-
-        if (rejected > 0) {
-            return List.of(componentSupport.createBadge(countText("rosterCard.rejected", rejected), BadgeStyle.ERROR));
-        }
-
-        return List.of(componentSupport.createBadge(
-                messages.getMessage(ApprovalRosterCard.class, "rosterCard.approved", locale), BadgeStyle.SUCCESS));
-    }
-
-    private String countText(String key, int count) {
-        return messages.formatMessage(ApprovalRosterCard.class, PluralForms.key(key, count, locale), locale, count);
     }
 }
