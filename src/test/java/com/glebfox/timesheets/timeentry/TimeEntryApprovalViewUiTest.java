@@ -32,13 +32,19 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Svg;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
+import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
@@ -63,6 +69,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -91,6 +98,8 @@ public class TimeEntryApprovalViewUiTest {
     UserSettingsService userSettingsService;
     @Autowired
     ComponentSupport componentSupport;
+    @Autowired
+    Messages messages;
 
     String prefix;
     Client client;
@@ -187,6 +196,8 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(view.getRosterPeople()).isEmpty();
             assertThat(view.getSelectedPerson()).isNull();
             assertThat(emptyStateBox(view).isVisible()).isTrue();
+            assertThat(emptyStateOf(view)).containsExactly("No time logged",
+                    "Nobody has logged time in this period on the projects you approve.");
 
             previousBtn.click();
             assertThat(periodTitleOf(view)).isEqualTo("October 2026");
@@ -292,13 +303,50 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
+    void rosterCardShowsWhatWaitsWhatWasRejectedAndWhatIsApproved() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+
+            // Cid has a new and a rejected entry: the rejected count beside the waiting one is a bare number
+            // that names itself to assistive technology
+            ApprovalRosterCard cidCard = cardOf(view, cid, List.of(memberRole.getName()));
+            List<Badge> cidBadges = badgesOf(cidCard);
+            assertThat(cidBadges).extracting(Badge::getText).containsExactly("1 waiting", "1");
+            assertThat(cidBadges.get(1).getElement().getAttribute("aria-label")).isEqualTo("1 rejected");
+            assertThat(textOf(cidCard, "name")).isEqualTo("Cid Cole");
+            assertThat(textOf(cidCard, "role")).isEqualTo(memberRole.getName());
+            assertThat(textOf(cidCard, "logged")).isEqualTo("8h logged");
+            assertThat(partOf(cidCard, "fingerprint")).isInstanceOf(Svg.class);
+
+            // Bob has only an approved entry; a card given no role names has no role line
+            ApprovalRosterCard bobCard = cardOf(view, bob, List.of());
+            assertThat(badgesOf(bobCard)).extracting(Badge::getText).containsExactly("✓ Approved");
+            assertThat(partsOf(bobCard)).doesNotContain("role");
+            assertThat(textOf(bobCard, "logged")).isEqualTo("4h logged");
+
+            // The mark of the selected card
+            assertThat(bobCard.getContent().hasClassName("selected")).isFalse();
+            bobCard.setSelected(true);
+            assertThat(bobCard.getContent().hasClassName("selected")).isTrue();
+            assertThat(bobCard.getElement().getAttribute("aria-pressed")).isEqualTo("true");
+        });
+    }
+
+    @Test
     void userWhoApprovesNowhereSeesTheEmptyState() {
         removeForGood(Id.of(adminOnProject));
 
         asAdmin(() -> {
             TimeEntryApprovalView view = open();
             assertThat(emptyStateBox(view).isVisible()).isTrue();
+            assertThat(emptyStateOf(view)).containsExactly("You approve time on no project",
+                    "Time is approved by the managers and approvers of a project. Once you have one of these roles "
+                            + "on a project, the time logged on it shows here.");
             assertThat(view.getRosterPeople()).isEmpty();
+            // Nobody to look for and no project to choose
+            assertThat(UiTestUtils.<Div>getComponent(view, "rosterBox").isVisible()).isFalse();
+            assertThat(UiTestUtils.<JmixComboBox<Project>>getComponent(view, "projectField").isVisible()).isFalse();
 
             view.setPeriod(ApprovalPeriod.monthOf(OCTOBER));
             assertThat(emptyStateBox(view).isVisible()).isTrue();
@@ -346,6 +394,45 @@ public class TimeEntryApprovalViewUiTest {
 
     private static Div emptyStateBox(TimeEntryApprovalView view) {
         return UiTestUtils.getComponent(view, "emptyStateBox");
+    }
+
+    private static List<String> emptyStateOf(TimeEntryApprovalView view) {
+        H3 header = UiTestUtils.getComponent(view, "emptyStateHeader");
+        Span text = UiTestUtils.getComponent(view, "emptyStateText");
+        return List.of(header.getText(), text.getText());
+    }
+
+    /**
+     * Builds a person's roster card as the roster draws it. Without a browser the roster requests no items, so its
+     * renderer never runs in a UI test.
+     */
+    private ApprovalRosterCard cardOf(TimeEntryApprovalView view, User user, List<String> roleNames) {
+        ApprovalPerson person = view.getRosterPeople().stream()
+                .filter(shown -> shown.user().getId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow();
+        return new ApprovalRosterCard(person, roleNames, view.getPeriod(), componentSupport, messages, Locale.ENGLISH);
+    }
+
+    private static List<String> partsOf(ApprovalRosterCard card) {
+        return card.getContent().getChildren()
+                .flatMap(part -> part.getElement().getClassList().stream())
+                .toList();
+    }
+
+    private static Component partOf(ApprovalRosterCard card, String className) {
+        return card.getContent().getChildren()
+                .filter(part -> part.getElement().getClassList().contains(className))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static String textOf(ApprovalRosterCard card, String className) {
+        return partOf(card, className).getElement().getText();
+    }
+
+    private static List<Badge> badgesOf(ApprovalRosterCard card) {
+        return partOf(card, "badges").getChildren().map(Badge.class::cast).toList();
     }
 
     private static String periodTitleOf(TimeEntryApprovalView view) {

@@ -76,7 +76,7 @@ public final class ApprovalFingerprint {
             List<TimeEntry> entries = entriesByDay.getOrDefault(days.get(i), List.of());
             Optional<TimeEntryStatus> status = ApprovalTotals.dayStatus(entries);
             double height = status.isPresent() ? heightOf(entries) : BASE_HEIGHT;
-            String className = status.map(value -> "bar " + statusClassName(value)).orElse("empty");
+            String className = status.map(value -> "bar " + ApprovalStatusClassNames.of(value)).orElse("empty");
 
             svg.append("<rect class=\"").append(className).append('"')
                     .append(" x=\"").append(i * DAY_WIDTH + BAR_OFFSET).append('"')
@@ -92,15 +92,6 @@ public final class ApprovalFingerprint {
         long minutes = ApprovalTotals.of(entries).time().toMinutes();
         double height = (double) HEIGHT * Math.min(minutes, FULL_MINUTES) / FULL_MINUTES;
         return Math.max(height, BASE_HEIGHT);
-    }
-
-    private static String statusClassName(TimeEntryStatus status) {
-        return switch (status) {
-            case NEW -> "new";
-            case APPROVED -> "approved";
-            case REJECTED -> "rejected";
-            case CLOSED -> "closed";
-        };
     }
 
     // SVG takes a dot for decimals whatever the user's locale

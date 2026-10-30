@@ -33,11 +33,13 @@ import com.glebfox.timesheets.view.main.MainView;
 import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
@@ -199,7 +201,7 @@ public class TimeEntryApprovalView extends StandardView {
     private void initRoster() {
         rosterScopeField.setItems(List.of(ApprovalRosterScope.values()));
         rosterScopeField.setValue(ApprovalRosterScope.NEEDS_REVIEW);
-        rosterList.setRenderer(new ComponentRenderer<>(this::createRosterCard));
+        rosterList.setRenderer(new ComponentRenderer<>(this::createRosterCard, this::updateRosterCard));
         rosterList.setItemAccessibleNameGenerator(person -> ApprovalRosterCard.nameOf(person.user()));
     }
 
@@ -255,9 +257,17 @@ public class TimeEntryApprovalView extends StandardView {
     public void selectPerson(User user) {
         ApprovalPerson person = findShown(user.getId()).orElseThrow(() -> new IllegalArgumentException(
                 "The roster does not show user %s".formatted(user.getId())));
+        Optional<ApprovalPerson> previous = selectedPerson != null
+                ? findShown(selectedPerson.getId())
+                : Optional.empty();
         setSelectedPerson(person);
-        // Redraws the cards, so the selection mark moves; the roster has its items, as it shows the person
-        Objects.requireNonNull(rosterList.getDataProvider()).refreshAll();
+
+        // Only the two cards whose mark changes are redrawn, and in place: a refresh of all the items would create
+        // every card anew, and the card chosen from the keyboard would lose the focus.
+        // The roster has its items, as it shows the person
+        DataProvider<ApprovalPerson, ?> items = Objects.requireNonNull(rosterList.getDataProvider());
+        previous.filter(other -> other != person).ifPresent(items::refreshItem);
+        items.refreshItem(person);
     }
 
     /**
@@ -332,15 +342,11 @@ public class TimeEntryApprovalView extends StandardView {
                 ? List.of()
                 : approvalSupport.loadEntriesToApprove(projectField.getValue(), current.start(), current.end());
 
-        overview = ApprovalOverview.of(entries, TimeEntryApprovalView::sortingNameOf);
+        overview = ApprovalOverview.of(entries, User::getDisplayName);
         roleNamesByUser = loadRoleNames(entries);
 
         updateTeamProgress();
         showRoster(keepSelection);
-    }
-
-    private static String sortingNameOf(User user) {
-        return StringUtils.defaultIfEmpty(user.getDisplayName(), user.getUsername());
     }
 
     /**
@@ -439,21 +445,12 @@ public class TimeEntryApprovalView extends StandardView {
             int count = totals.count(status);
             if (count > 0) {
                 Span segment = new Span();
-                segment.addClassName(statusClassName(status));
+                segment.addClassName(ApprovalStatusClassNames.of(status));
                 // A share computed from the data, so it is set in place rather than by a class
                 segment.getStyle().set("flex-grow", String.valueOf(count));
                 bar.add(segment);
             }
         }
-    }
-
-    private static String statusClassName(TimeEntryStatus status) {
-        return switch (status) {
-            case NEW -> "new";
-            case APPROVED -> "approved";
-            case REJECTED -> "rejected";
-            case CLOSED -> "closed";
-        };
     }
 
     private void showRoster(boolean keepSelection) {
@@ -509,6 +506,18 @@ public class TimeEntryApprovalView extends StandardView {
 
     private boolean isSelected(ApprovalPerson person) {
         return selectedPerson != null && selectedPerson.getId().equals(person.user().getId());
+    }
+
+    /**
+     * Brings a card drawn before up to date with the selection, keeping the card itself. A roster item only changes its
+     * selection: a reload gives the roster new items, and their cards are created anew.
+     */
+    private Component updateRosterCard(Component card, ApprovalPerson person) {
+        if (card instanceof ApprovalRosterCard rosterCard) {
+            rosterCard.setSelected(isSelected(person));
+            return rosterCard;
+        }
+        return createRosterCard(person);
     }
 
     private ApprovalRosterCard createRosterCard(ApprovalPerson person) {
