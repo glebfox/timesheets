@@ -95,7 +95,13 @@ public class ComponentSupport {
                     new DownloadResponse(new ByteArrayInputStream(data),
                             "avatar.png", null, data.length));
 
-            avatar.setImageHandler(downloadHandler);
+            // Vaadin answers 403 for the image of a disabled avatar. Tabbed mode disables the content of a tab that
+            // is not selected, and opening a new tab re-renders the client list's cards just before their tab is
+            // disabled, so the browser requests the new images from disabled avatars. Vaadin serves Image and IFrame
+            // sources while disabled, but not Avatar images: https://github.com/vaadin/flow/issues/22772
+            // inline() comes first: setImageHandler makes only a predefined handler inline, not the wrapper
+            // that allowDisabled() returns.
+            avatar.setImageHandler(downloadHandler.inline().allowDisabled());
         }
 
         if (!Strings.isNullOrEmpty(className)) {

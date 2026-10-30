@@ -1,6 +1,6 @@
 # Client screens
 
-Source: `view/client/`, `component/avatarupload/`
+Source: `view/client/`, `component/avatarupload/`, `app/util/ComponentSupport.java`
 
 The client list, the client editor, and the client picker. What a client is: [client](../data-model/client.md).
 
