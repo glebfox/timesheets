@@ -241,7 +241,8 @@ public class TimeEntryApprovalRoleTest {
             assertThat(entry.getUser().getUsername()).isEqualTo(member.getUsername());
             assertThat(entry.getTask().getProject().getName()).isEqualTo(project.getName());
             assertThat(entry.getTags()).extracting(Tag::getName).containsExactly(USERNAME_PREFIX + "tag");
-            // A tag's instance name carries its group, so the group is read under the holder too
+            // The group loads with the tag, through the tag's instance name. This does not check the grant to read
+            // groups: a load starting from an entry does not need it, and holderReadsWhatTheScreenShows guards it
             TagGroup tagGroup = entry.getTags().getFirst().getTagGroup();
             assertThat(tagGroup).isNotNull();
             assertThat(tagGroup.getName()).isEqualTo(USERNAME_PREFIX + "tag group");
