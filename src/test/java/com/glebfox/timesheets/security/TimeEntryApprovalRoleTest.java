@@ -182,6 +182,9 @@ public class TimeEntryApprovalRoleTest {
 
     @Test
     void holderReadsWhatTheScreenShows() {
+        // The data layer checks the entity's READ only for the entity a load starts from, so a load cannot show the
+        // grants of Task, ProjectRole, Tag, TagGroup, and User, which the screen reaches through other entities.
+        // The entity context of the UI checks each of them.
         systemAuthenticator.runWithUser(holder, () -> {
             for (Class<?> entityClass : List.of(Task.class, Project.class, ProjectParticipant.class,
                     ProjectRole.class, Tag.class, TagGroup.class, User.class)) {
@@ -238,6 +241,10 @@ public class TimeEntryApprovalRoleTest {
             assertThat(entry.getUser().getUsername()).isEqualTo(member.getUsername());
             assertThat(entry.getTask().getProject().getName()).isEqualTo(project.getName());
             assertThat(entry.getTags()).extracting(Tag::getName).containsExactly(USERNAME_PREFIX + "tag");
+            // A tag's instance name carries its group, so the group is read under the holder too
+            TagGroup tagGroup = entry.getTags().getFirst().getTagGroup();
+            assertThat(tagGroup).isNotNull();
+            assertThat(tagGroup.getName()).isEqualTo(USERNAME_PREFIX + "tag group");
 
             assertThat(approvalSupport.loadParticipants(projects))
                     .extracting(p -> p.getUser().getId(), p -> p.getRole().getType())
