@@ -443,12 +443,25 @@ public class TimeEntryApprovalViewUiTest {
             TimeEntryApprovalView view = openInOctober();
             view.selectPerson(cid);
 
-            click(weekCardOf(view, weekStartOf(cidRejected)));
+            Component rejectedWeek = weekCardOf(view, weekStartOf(cidRejected));
+            click(weekSelectOf(rejectedWeek));
 
             assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidRejected));
             assertThat(listedOf(view)).containsExactly(cidRejected.getId());
-            assertThat(classesOf(weekCardOf(view, weekStartOf(cidRejected)))).contains("selected");
+            assertThat(classesOf(rejectedWeek)).contains("selected");
+            assertThat(weekSelectOf(rejectedWeek).getElement().getAttribute("aria-pressed")).isEqualTo("true");
             assertThat(classesOf(weekCardOf(view, weekStartOf(cidWaiting)))).doesNotContain("selected");
+            assertThat(weekSelectOf(weekCardOf(view, weekStartOf(cidWaiting))).getElement()
+                    .getAttribute("aria-pressed")).isEqualTo("false");
+            // The button names the week with what it shows
+            assertThat(weekSelectOf(rejectedWeek).getElement().getAttribute("aria-label"))
+                    .endsWith(": 4h, 1 entry, 1 rejected");
+
+            // The week's actions sit beside the button, not in it, so a control there neither is named by the button
+            // nor selects the week when clicked or pressed
+            assertThat(rejectedWeek.getElement().getAttribute("role")).isNull();
+            assertThat(weekSelectOf(rejectedWeek).getElement().getAttribute("role")).isEqualTo("button");
+            assertThat(descendantOf(rejectedWeek, "actions").getParent()).contains(rejectedWeek);
             // The days of the week are marked too
             assertThat(classesOf(dayOf(view, cidRejected.getDate()))).contains("selected");
             assertThat(classesOf(dayOf(view, cidWaiting.getDate()))).doesNotContain("selected");
@@ -469,6 +482,7 @@ public class TimeEntryApprovalViewUiTest {
             // The list scrolls to the group of the day's entries
             Component day = entryCardOf(view, cidWaiting).getParent().orElseThrow();
             assertThat(browserCalls(day)).anyMatch(call -> call.contains("scrollIntoView"));
+            assertThat(textOf(descendantOf(day, "day-header"))).isEqualTo("Wed, Oct 14 · 4h");
         });
     }
 
@@ -491,6 +505,9 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(fingerprintBarsOf(view, cid)).isEqualTo(2);
             view.selectWeek(firstRow);
             assertThat(listedOf(view)).isEmpty();
+            // Only the row's days of October are marked as the selected week
+            assertThat(classesOf(september30Cell)).doesNotContain("selected");
+            assertThat(classesOf(dayOf(view, OCTOBER.atDay(1)))).contains("selected");
 
             // In September it counts, and October's days of the last row show nothing
             view.setPeriod(ApprovalPeriod.monthOf(YearMonth.of(2026, 9)));
@@ -701,6 +718,13 @@ public class TimeEntryApprovalViewUiTest {
 
     private static Component weekCardOf(TimeEntryApprovalView view, LocalDate weekStart) {
         return UiTestUtils.getComponent(view, "week-" + weekStart);
+    }
+
+    /**
+     * Returns the part of a week card that selects the week.
+     */
+    private static Component weekSelectOf(Component weekCard) {
+        return descendantOf(weekCard, "summary");
     }
 
     private static ApprovalEntryCard entryCardOf(TimeEntryApprovalView view, TimeEntry entry) {

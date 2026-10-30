@@ -54,11 +54,14 @@ import java.util.Optional;
  * whether it came from the browser; the grid does not change the selected week by itself, see
  * {@link #setSelectedWeek}.
  * <p>
- * The grid has the class {@code approval-month-grid}. Its parts are {@code heading} cells, {@code day} cells with the
- * id {@code day-<date>} and the classes {@code weekend}, {@code outside} for a neighbouring day, and
- * {@code selected}, with the parts {@code number}, {@code hours} (holding a {@code dot}), and {@code line}; and
- * {@code week} cards with the id {@code week-<first day>} and the class {@code selected}, with the parts
- * {@code hours}, {@code count}, {@code badges}, and {@code actions}, where the actions of a week go.
+ * The grid has the class {@code approval-month-grid}. Its parts are {@code heading} cells; {@code day} cells with the
+ * id {@code day-<date>} and the classes {@code weekend}, {@code outside} for a neighbouring day, and, for a day of
+ * the month in the selected week, {@code selected}, with the parts {@code number}, {@code hours} (holding a
+ * {@code dot}), and {@code line}; and {@code week} cards with the id {@code week-<first day>} and the class
+ * {@code selected}. A week card holds a {@code summary}, with the parts {@code hours}, {@code count}, and
+ * {@code badges}, which is the button that selects the week, and beside it the {@code actions} of the week, so that
+ * a control placed there works on its own: it is neither inside the button nor named by it, and its clicks and keys
+ * do not select the week.
  */
 final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
 
@@ -70,9 +73,8 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
     private final Messages messages;
     private final Locale locale;
     private final ApprovalPeriodTitle titles;
-    // The cells of each row and its week card, by the first day of the row
-    private final Map<LocalDate, List<Div>> rowCells = new LinkedHashMap<>();
-    private final Map<LocalDate, Div> weekCards = new LinkedHashMap<>();
+    // The parts of each row, by the first day of the row
+    private final Map<LocalDate, Week> weeks = new LinkedHashMap<>();
 
     /**
      * Creates the grid of a month.
@@ -107,7 +109,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         grid.add(createHeading(messages.getMessage(ApprovalMonthGrid.class, "monthGrid.week", locale)));
 
         for (List<LocalDate> row : period.weekRows(daysOfWeek.getFirst())) {
-            List<Div> cells = new ArrayList<>();
+            List<Div> monthDays = new ArrayList<>();
             List<TimeEntry> weekEntries = new ArrayList<>();
             for (LocalDate day : row) {
                 List<TimeEntry> dayEntries = period.contains(day)
@@ -118,34 +120,33 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
                 Div cell = createDay(day, dayEntries);
                 if (period.contains(day)) {
                     cell.addClickListener(event -> onDayClick.accept(day, event.isFromClient()));
+                    monthDays.add(cell);
                 }
-                cells.add(cell);
+                grid.add(cell);
             }
 
             LocalDate weekStart = row.getFirst();
-            Div weekCard = createWeekCard(row, ApprovalTotals.of(weekEntries));
-            weekCard.addClickListener(event -> onWeekClick.accept(weekStart, event.isFromClient()));
-
-            rowCells.put(weekStart, cells);
-            weekCards.put(weekStart, weekCard);
-            cells.forEach(grid::add);
-            grid.add(weekCard);
+            Week week = createWeek(row, ApprovalTotals.of(weekEntries), monthDays);
+            week.summary().addClickListener(event -> onWeekClick.accept(weekStart, event.isFromClient()));
+            weeks.put(weekStart, week);
+            grid.add(week.card());
         }
     }
 
     /**
-     * Marks the week whose entries are listed: its days and its card.
+     * Marks the week whose entries are listed: its card and its days of the month. Its days of a neighbouring month
+     * stay as they are, since they show nothing.
      *
      * @param weekStart the first day of a row of the grid
      * @throws IllegalArgumentException if no row of the grid starts on the day
      */
     void setSelectedWeek(LocalDate weekStart) {
-        Preconditions.checkArgument(weekCards.containsKey(weekStart), "No week of %s starts on %s", period, weekStart);
-        weekCards.forEach((start, card) -> {
+        Preconditions.checkArgument(weeks.containsKey(weekStart), "No week of %s starts on %s", period, weekStart);
+        weeks.forEach((start, week) -> {
             boolean selected = start.equals(weekStart);
-            card.setClassName(SELECTED_CLASS_NAME, selected);
-            card.getElement().setAttribute("aria-pressed", String.valueOf(selected));
-            rowCells.get(start).forEach(cell -> cell.setClassName(SELECTED_CLASS_NAME, selected));
+            week.card().setClassName(SELECTED_CLASS_NAME, selected);
+            week.summary().getElement().setAttribute("aria-pressed", String.valueOf(selected));
+            week.monthDays().forEach(cell -> cell.setClassName(SELECTED_CLASS_NAME, selected));
         });
     }
 
@@ -184,7 +185,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         return cell;
     }
 
-    private Div createWeekCard(List<LocalDate> row, ApprovalTotals totals) {
+    private Week createWeek(List<LocalDate> row, ApprovalTotals totals, List<Div> monthDays) {
         Div hours = new Div(componentSupport.formatWorkTimeTotal(totals.time()));
         hours.addClassName("hours");
 
@@ -196,36 +197,48 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         List<Badge> statusBadges = ApprovalStatusBadges.of(totals, componentSupport, messages, locale);
         statusBadges.forEach(badges::add);
 
-        // Where the actions of the week go
-        Div actions = new Div();
-        actions.addClassName("actions");
-
-        Div card = new Div(hours, count, badges, actions);
-        card.setId("week-" + row.getFirst());
-        card.addClassName("week");
-
-        // Chosen as a button is: by a click, or by Enter or Space while it has the focus, which click it here.
-        // Without preventDefault, Space would also scroll the page
-        card.getElement().setAttribute("role", "button");
-        card.getElement().setAttribute("tabindex", "0");
-        card.getElement()
-                .addEventListener("keydown", event -> ComponentUtil.fireEvent(card, new ClickEvent<>(card)))
+        // The button that selects the week: chosen by a click, or by Enter or Space while it has the focus, which
+        // click it here. Without preventDefault, Space would also scroll the page
+        Div summary = new Div(hours, count, badges);
+        summary.addClassName("summary");
+        summary.getElement().setAttribute("role", "button");
+        summary.getElement().setAttribute("tabindex", "0");
+        summary.getElement()
+                .addEventListener("keydown", event -> ComponentUtil.fireEvent(summary, new ClickEvent<>(summary)))
                 .setFilter("event.key === 'Enter' || event.key === ' '")
                 .preventDefault();
 
-        // The card does not say which week it is, so its name tells it with what it shows
-        List<LocalDate> monthDays = row.stream().filter(period::contains).toList();
-        List<String> summary = new ArrayList<>(List.of(hours.getText(), count.getText()));
-        statusBadges.stream().map(ApprovalStatusBadges::spokenTextOf).forEach(summary::add);
-        card.getElement().setAttribute("aria-label", messages.formatMessage(ApprovalMonthGrid.class,
+        // The summary does not say which week it is, so its name tells it with what it shows
+        List<LocalDate> days = row.stream().filter(period::contains).toList();
+        List<String> spoken = new ArrayList<>(List.of(hours.getText(), count.getText()));
+        statusBadges.stream().map(ApprovalStatusBadges::spokenTextOf).forEach(spoken::add);
+        summary.getElement().setAttribute("aria-label", messages.formatMessage(ApprovalMonthGrid.class,
                 "weekCard.ariaLabel", locale,
-                titles.formatDates(monthDays.getFirst(), monthDays.getLast()), String.join(", ", summary)));
+                titles.formatDates(days.getFirst(), days.getLast()), String.join(", ", spoken)));
 
-        return card;
+        // Where the actions of the week go: beside the button, not in it
+        Div actions = new Div();
+        actions.addClassName("actions");
+
+        Div card = new Div(summary, actions);
+        card.setId("week-" + row.getFirst());
+        card.addClassName("week");
+
+        return new Week(card, summary, monthDays);
     }
 
     private String entryCountText(int count) {
         return messages.formatMessage(ApprovalMonthGrid.class, PluralForms.key("entryCount", count, locale), locale,
                 count);
+    }
+
+    /**
+     * The parts of a row that show whether its week is selected.
+     *
+     * @param card      the week card
+     * @param summary   the button of the card that selects the week
+     * @param monthDays the cells of the row's days of the month
+     */
+    private record Week(Div card, Div summary, List<Div> monthDays) {
     }
 }

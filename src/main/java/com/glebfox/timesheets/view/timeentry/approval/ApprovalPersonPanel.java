@@ -66,8 +66,8 @@ import java.util.stream.Collectors;
  * {@code figures}, each a {@code figure} with the id {@code figure-logged}, {@code figure-waiting},
  * {@code figure-approved}, or {@code figure-rejected} and the parts {@code label}, {@code value}, and {@code details};
  * and, for a month, the {@code entries} of a week, with an {@code entries-header} and an {@code entries-day} for each
- * day with entries, whose {@code day-header} has the {@code date}, the {@code hours}, and the {@code actions} of the
- * day.
+ * day with entries, whose {@code day-header} has the {@code date}, a {@code separator}, the {@code hours}, and the
+ * {@code actions} of the day.
  * <p>
  * The panel is a container so that a lookup of components by id, as Jmix does it, reaches its parts.
  */
@@ -370,6 +370,9 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
                 componentSupport.formatDayOfWeekShort(day.getDayOfWeek()), date));
         dateText.addClassName("date");
 
+        Span separator = new Span(messages.getMessage(ApprovalPersonPanel.class, "entriesDay.separator", locale));
+        separator.addClassName("separator");
+
         Span hours = new Span(componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time()));
         hours.addClassName("hours");
 
@@ -377,7 +380,9 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         Div actions = new Div();
         actions.addClassName("actions");
 
-        Div header = new Div(dateText, hours, actions);
+        // The spaces take no room in the header's layout, but keep the heading, such as "Mon, Oct 19 · 6h", in words
+        // for assistive technology
+        Div header = new Div(dateText, new Text(" "), separator, new Text(" "), hours, actions);
         header.addClassName("day-header");
 
         Div group = new Div(header);

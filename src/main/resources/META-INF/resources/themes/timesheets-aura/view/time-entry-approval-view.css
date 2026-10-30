@@ -292,24 +292,29 @@
     padding: var(--vaadin-focus-ring-width);
 }
 
-/* The color of a status, for the parts that show it: a dot, a line, and an entry's stripe */
-.approval-person-panel .new {
+/* The color of a status, for the parts that show it: a dot, a line, and an entry card's stripe. Each takes it from
+   its own status class, so it shows wherever the part is placed */
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).new,
+.approval-entry-card.new {
     --_status-color: var(--ts-warning-color);
 }
 
-.approval-person-panel .approved {
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).approved,
+.approval-entry-card.approved {
     --_status-color: var(--ts-success-color);
 }
 
-.approval-person-panel .rejected {
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).rejected,
+.approval-entry-card.rejected {
     --_status-color: var(--ts-danger-color);
 }
 
-.approval-person-panel .closed {
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).closed,
+.approval-entry-card.closed {
     --_status-color: var(--aura-neutral);
 }
 
-.approval-person-panel .dot {
+:is(.approval-person-panel, .approval-month-grid) .dot {
     display: inline-block;
     flex-shrink: 0;
     /* As small as the smallest gap, so it reads as a mark beside the text */
@@ -319,14 +324,15 @@
     background: var(--_status-color);
 }
 
-.approval-person-panel .line {
+:is(.approval-month-grid, .approval-week-board) .line {
     height: var(--vaadin-progress-bar-height);
     border-radius: var(--vaadin-radius-s);
     background: var(--_status-color);
 }
 
-/* A slot for actions that has none takes no room */
-.approval-person-panel .actions:empty {
+/* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
+   the layouts around a slot leave no gap for it */
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board, .approval-entry-card) .actions:empty {
     display: none;
 }
 
@@ -337,12 +343,12 @@
         "avatar name actions"
         "avatar details actions";
     align-items: center;
-    column-gap: var(--vaadin-gap-m);
     row-gap: var(--vaadin-gap-xs);
 }
 
 .approval-person-panel > .header > .avatar {
     grid-area: avatar;
+    margin-inline-end: var(--vaadin-gap-m);
 }
 
 .approval-person-panel > .header > .name {
@@ -371,8 +377,12 @@
 
 .approval-person-panel > .header > .actions {
     grid-area: actions;
+}
+
+.approval-person-panel > .header > .actions:not(:empty) {
     display: flex;
     gap: var(--vaadin-gap-s);
+    margin-inline-start: var(--vaadin-gap-m);
 }
 
 /* Four figures in an even row */
@@ -514,20 +524,12 @@
     grid-row: 3;
 }
 
+/* A week card: the button that selects the week fills it, and the week's actions sit beside the button, not in it */
 .approval-month-grid > .week {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-        "hours count"
-        "badges actions";
-    align-content: center;
-    align-items: baseline;
-    column-gap: var(--vaadin-gap-s);
-    row-gap: var(--vaadin-gap-xs);
-    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    display: flex;
+    align-items: stretch;
     border-block-end: 1px solid var(--vaadin-border-color-secondary);
     background: var(--vaadin-background-container);
-    cursor: pointer;
 }
 
 /* The grid's own border closes the last row */
@@ -535,13 +537,8 @@
     border-block-end: none;
 }
 
-.approval-month-grid > .week:hover {
+.approval-month-grid > .week:has(> .summary:hover) {
     background: var(--vaadin-background-container-strong);
-}
-
-.approval-month-grid > .week:focus-visible {
-    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
-    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
 }
 
 /* The selected week: the accent surface, with an accent line along its start edge, as a selected roster card */
@@ -550,14 +547,35 @@
     box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
 }
 
-.approval-month-grid > .week > .hours {
+.approval-month-grid > .week > .summary {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "hours count"
+        "badges badges";
+    align-content: center;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    row-gap: var(--vaadin-gap-xs);
+    min-width: 0;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    cursor: pointer;
+}
+
+.approval-month-grid > .week > .summary:focus-visible {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+}
+
+.approval-month-grid > .week > .summary > .hours {
     grid-area: hours;
 
     font-weight: var(--aura-font-weight-semibold);
     font-variant-numeric: tabular-nums;
 }
 
-.approval-month-grid > .week > .count {
+.approval-month-grid > .week > .summary > .count {
     grid-area: count;
 
     color: var(--vaadin-text-color-secondary);
@@ -565,16 +583,19 @@
     line-height: var(--aura-line-height-xs);
 }
 
-.approval-month-grid > .week > .badges {
+.approval-month-grid > .week > .summary > .badges {
     grid-area: badges;
     display: flex;
     flex-wrap: wrap;
     gap: var(--vaadin-gap-xs);
 }
 
-.approval-month-grid > .week > .actions {
-    grid-area: actions;
-    justify-self: end;
+.approval-month-grid > .week > .actions:not(:empty) {
+    display: flex;
+    flex-shrink: 0;
+    align-items: end;
+    gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-xs) 0;
 }
 
 /* The entries of a week in a month, grouped by day */
@@ -637,7 +658,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-.approval-person-panel .day-header > .actions {
+.approval-person-panel .day-header > .actions:not(:empty) {
     display: flex;
     order: 2;
     gap: var(--vaadin-gap-xs);
@@ -659,14 +680,12 @@
     min-width: 0;
 }
 
+/* The day and its hours on the first row; the line and the actions, when there are any, each on a row of its own */
 .approval-week-board > .column > .header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-        "day hours"
-        "line line"
-        "actions actions";
     align-items: baseline;
+    column-gap: var(--vaadin-gap-xs);
     row-gap: var(--vaadin-gap-xs);
     padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
     border: 1px solid var(--vaadin-border-color-secondary);
@@ -681,22 +700,24 @@
 }
 
 .approval-week-board > .column > .header > .day {
-    grid-area: day;
+    grid-column: 1;
     font-weight: var(--aura-font-weight-semibold);
 }
 
 .approval-week-board > .column > .header > .hours {
-    grid-area: hours;
+    grid-column: 2;
     color: var(--vaadin-text-color-secondary);
     font-variant-numeric: tabular-nums;
 }
 
 .approval-week-board > .column > .header > .line {
-    grid-area: line;
+    grid-column: 1 / -1;
 }
 
-.approval-week-board > .column > .header > .actions {
-    grid-area: actions;
+.approval-week-board > .column > .header > .actions:not(:empty) {
+    display: flex;
+    grid-column: 1 / -1;
+    gap: var(--vaadin-gap-xs);
 }
 
 .approval-week-board > .column > .entries {
@@ -713,7 +734,6 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: "time content actions";
     align-items: start;
-    column-gap: var(--vaadin-gap-m);
     box-sizing: border-box;
     padding: var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-m);
     overflow: hidden;
@@ -736,6 +756,7 @@
 
 .approval-entry-card > .time {
     grid-area: time;
+    margin-inline-end: var(--vaadin-gap-m);
     white-space: nowrap;
 
     font-weight: var(--aura-font-weight-semibold);
@@ -802,8 +823,12 @@
 
 .approval-entry-card > .actions {
     grid-area: actions;
+}
+
+.approval-entry-card > .actions:not(:empty) {
     display: flex;
     gap: var(--vaadin-gap-xs);
+    margin-inline-start: var(--vaadin-gap-s);
 }
 
 /* On the week board: the time and the actions over the rest, the description cut after three lines */
@@ -813,9 +838,16 @@
         "time actions"
         "content content";
     align-items: center;
-    column-gap: var(--vaadin-gap-xs);
     row-gap: var(--vaadin-gap-xs);
     padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-s);
+}
+
+.approval-entry-card.compact > .time {
+    margin-inline-end: 0;
+}
+
+.approval-entry-card.compact > .actions:not(:empty) {
+    margin-inline-start: var(--vaadin-gap-xs);
 }
 
 .approval-entry-card.compact > .content > .task {
