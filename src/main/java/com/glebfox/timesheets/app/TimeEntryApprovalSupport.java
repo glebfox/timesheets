@@ -205,7 +205,8 @@ public class TimeEntryApprovalSupport {
      * {@link #loadEntriesToApprove} loads them
      * @throws IllegalArgumentException if an entry is outside what the current user may approve, is Closed, or is
      *                                  already Approved
-     * @throws OptimisticLockException  if an entry has changed since it was loaded
+     * @throws OptimisticLockException  if an entry has changed or vanished since it was loaded: it was changed,
+     *                                  deleted, or moved out of reach, or its task or project was deleted
      */
     public List<TimeEntry> approve(Collection<TimeEntry> entries) {
         return changeStatus(entries, entry -> {
@@ -224,14 +225,18 @@ public class TimeEntryApprovalSupport {
      * entry listener tell each entry's user.
      *
      * @param entries the entries to reject, as the screen loaded them
-     * @param reason  why the entries are rejected
+     * @param reason  why the entries are rejected, stored as given
      * @return the saved entries, one for each distinct entry given and in that order, loaded as
      * {@link #loadEntriesToApprove} loads them
      * @throws IllegalArgumentException if the reason is blank, or an entry is outside what the current user may
      *                                  approve, or is Closed
-     * @throws OptimisticLockException  if an entry has changed since it was loaded
+     * @throws OptimisticLockException  if an entry has changed or vanished since it was loaded: it was changed,
+     *                                  deleted, or moved out of reach, or its task or project was deleted
      */
     public List<TimeEntry> reject(Collection<TimeEntry> entries, String reason) {
+        if (entries.isEmpty()) {
+            return List.of();
+        }
         if (reason.isBlank()) {
             throw new IllegalArgumentException("The rejection reason is required");
         }
@@ -244,9 +249,11 @@ public class TimeEntryApprovalSupport {
     /**
      * Applies the edit to the current state of the entries and saves them all or none.
      * <p>
-     * An entry that is gone or outside the rule is refused before anything else, so that the answer for an entry
-     * the user may not approve never depends on its version. A stale version comes next, before the status: an
-     * entry that was approved or closed meanwhile is stale, and the screen reloads on it.
+     * The checks run in this order. First, an entry that is stale: it was changed, or it is gone, which includes an
+     * entry of a deleted task or project and one the user cannot reach any more, such as an entry moved to a task of
+     * another project. The screen reloads on that, so it comes before any refusal, whether or not the entry is
+     * still in the rule. Next, an entry that is current but outside the rule is refused. Last, the status: an entry
+     * that was approved or closed meanwhile has a new version, so it surfaces as stale, not as "already approved".
      */
     private List<TimeEntry> changeStatus(Collection<TimeEntry> entries, Consumer<TimeEntry> edit) {
         if (entries.isEmpty()) {
@@ -255,25 +262,32 @@ public class TimeEntryApprovalSupport {
 
         List<UUID> ids = entries.stream().map(TimeEntry::getId).distinct().toList();
         // Own attributes only: saving them leaves the entry's references and tags as they are
-        Map<UUID, TimeEntry> current = dataManager.load(TimeEntry.class)
+        Map<UUID, TimeEntry> current = byId(dataManager.load(TimeEntry.class)
                 .query("select e from ts_TimeEntry e where e.id in :ids and " + APPROVABLE_ENTRY)
                 .parameter("ids", ids)
                 .parameter("approverId", approverId())
                 .fetchPlan(FetchPlan.LOCAL)
-                .list().stream()
-                .collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
+                .list());
+        List<UUID> outsideTheRule = ids.stream().filter(id -> !current.containsKey(id)).toList();
+        // Only a refusal needs to know what became of the entries outside the rule, so this runs on that path alone.
+        // An entry is there while its task and its project are: they are not part of the entry's own version.
+        Map<UUID, TimeEntry> outside = outsideTheRule.isEmpty() ? Map.of() : byId(dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.id in :ids "
+                        + "and exists (select pr from ts_Project pr where pr = e.task.project)")
+                .parameter("ids", outsideTheRule)
+                .fetchPlan(FetchPlan.LOCAL)
+                .list());
 
-        for (UUID id : ids) {
-            if (!current.containsKey(id)) {
-                throw new IllegalArgumentException(
-                        "Time entry %s is not one the current user may approve or reject".formatted(id));
-            }
-        }
         for (TimeEntry given : entries) {
-            if (!Objects.equals(current.get(given.getId()).getVersion(), given.getVersion())) {
+            TimeEntry now = current.getOrDefault(given.getId(), outside.get(given.getId()));
+            if (now == null || !Objects.equals(now.getVersion(), given.getVersion())) {
                 throw new OptimisticLockException(
                         "Time entry %s has changed since it was loaded".formatted(given.getId()));
             }
+        }
+        if (!outsideTheRule.isEmpty()) {
+            throw new IllegalArgumentException("Time entry %s is not one the current user may approve or reject"
+                    .formatted(outsideTheRule.get(0)));
         }
         for (TimeEntry entry : current.values()) {
             if (entry.getStatus() == TimeEntryStatus.CLOSED) {
@@ -289,6 +303,10 @@ public class TimeEntryApprovalSupport {
         current.values().forEach(entry -> saveContext.saving(entry, fetchPlan));
         EntitySet saved = dataManager.save(saveContext);
         return ids.stream().map(id -> saved.get(TimeEntry.class, id)).toList();
+    }
+
+    private static Map<UUID, TimeEntry> byId(List<TimeEntry> entries) {
+        return entries.stream().collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
     }
 
     /**

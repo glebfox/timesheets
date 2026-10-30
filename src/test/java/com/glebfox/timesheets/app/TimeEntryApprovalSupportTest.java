@@ -469,7 +469,8 @@ public class TimeEntryApprovalSupportTest {
     @Test
     void approveRefusesAnEntryOutsideTheRule() {
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(memberEntry, managerEntry))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("may approve or reject");
 
         assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
         assertThat(reload(managerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
@@ -478,7 +479,8 @@ public class TimeEntryApprovalSupportTest {
     @Test
     void approveRefusesAnApproversOwnEntryButNotAManagers() {
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(approver1Entry))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("may approve or reject");
         asUser(manager, () -> approvalSupport.approve(List.of(managerEntry)));
 
         assertThat(reload(approver1Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
@@ -491,12 +493,15 @@ public class TimeEntryApprovalSupportTest {
         TimeEntry approved = withStatus(approver2Entry, TimeEntryStatus.APPROVED, null);
 
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(closed))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is closed");
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(approved))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is already approved");
         // An entry that could be approved beside a refused one stays as it is
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(formerEntry, closed))))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is closed");
 
         assertThat(reload(formerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
         assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.CLOSED);
@@ -505,16 +510,70 @@ public class TimeEntryApprovalSupportTest {
 
     @Test
     void approveFailsWhenAnEntryChangedMeanwhile() {
-        TimeEntry stale = reload(memberEntry);
-        TimeEntry changed = reload(memberEntry);
-        changed.setDescription("edited meanwhile");
-        dataManager.saveWithoutReload(changed);
+        TimeEntry stale = staleCopyOf(memberEntry);
 
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(stale, approver2Entry))))
                 .isInstanceOf(OptimisticLockException.class);
 
         assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
         assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void approveFailsWhenAnEntryWasDeletedMeanwhile() {
+        TimeEntry stale = reload(memberEntry);
+        dataManager.remove(memberEntry);
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(stale, approver2Entry))))
+                .isInstanceOf(OptimisticLockException.class);
+
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void rejectFailsWhenAnEntryMovedOutOfScopeMeanwhile() {
+        TimeEntry stale = reload(memberEntry);
+        TimeEntry moved = reload(memberEntry);
+        // Project Q is one where approver1 is a plain member
+        moved.setTask(qTask);
+        dataManager.saveWithoutReload(moved);
+
+        assertThatThrownBy(() -> asUser(approver1,
+                () -> approvalSupport.reject(List.of(stale, approver2Entry), "reason")))
+                .isInstanceOf(OptimisticLockException.class);
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void approveFailsWhenTheTaskOfAnEntryWasDeletedMeanwhile() {
+        // The fixture deleted pTaskDeleted after the entry was saved, which leaves the entry's own version alone
+        TimeEntry stale = reload(memberEntryOnDeletedTask);
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(stale, approver2Entry))))
+                .isInstanceOf(OptimisticLockException.class);
+
+        assertThat(reload(approver2Entry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
+    void approveFailsWhenTheProjectOfAnEntryWasDeletedMeanwhile() {
+        // member manages Q, so the entry is theirs to approve until the project is deleted
+        TimeEntry stale = reload(approver1EntryOnQ);
+        dataManager.remove(projectQ);
+
+        assertThatThrownBy(() -> asUser(member, () -> approvalSupport.approve(List.of(stale))))
+                .isInstanceOf(OptimisticLockException.class);
+    }
+
+    @Test
+    void anEntryOutsideTheRuleThatChangedMeanwhileIsStaleNotRefused() {
+        // approver1 may not approve managerEntry; once it has changed, it counts as stale before it is refused
+        TimeEntry stale = staleCopyOf(managerEntry);
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.approve(List.of(stale))))
+                .isInstanceOf(OptimisticLockException.class);
     }
 
     @Test
@@ -537,9 +596,11 @@ public class TimeEntryApprovalSupportTest {
     @Test
     void rejectRequiresAReason() {
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.reject(List.of(memberEntry), " \n")))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("reason is required");
         assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.reject(List.of(memberEntry), "")))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("reason is required");
 
         TimeEntry stored = reload(memberEntry);
         assertThat(stored.getStatus()).isEqualTo(TimeEntryStatus.NEW);
@@ -552,10 +613,12 @@ public class TimeEntryApprovalSupportTest {
 
         assertThatThrownBy(() -> asUser(approver1,
                 () -> approvalSupport.reject(List.of(memberEntry, managerEntry), "reason")))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("may approve or reject");
         assertThatThrownBy(() -> asUser(approver1,
                 () -> approvalSupport.reject(List.of(memberEntry, closed), "reason")))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is closed");
 
         assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
         assertThat(reload(managerEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
@@ -564,10 +627,7 @@ public class TimeEntryApprovalSupportTest {
 
     @Test
     void rejectFailsWhenAnEntryChangedMeanwhile() {
-        TimeEntry stale = reload(memberEntry);
-        TimeEntry changed = reload(memberEntry);
-        changed.setDescription("edited meanwhile");
-        dataManager.saveWithoutReload(changed);
+        TimeEntry stale = staleCopyOf(memberEntry);
 
         assertThatThrownBy(() -> asUser(approver1,
                 () -> approvalSupport.reject(List.of(approver2Entry, stale), "reason")))
@@ -581,6 +641,7 @@ public class TimeEntryApprovalSupportTest {
     void anEmptyCollectionChangesNothing() {
         assertThat(asUser(approver1, () -> approvalSupport.approve(List.of()))).isEmpty();
         assertThat(asUser(approver1, () -> approvalSupport.reject(List.of(), "reason"))).isEmpty();
+        assertThat(asUser(approver1, () -> approvalSupport.reject(List.of(), ""))).isEmpty();
     }
 
     @Test
@@ -652,6 +713,18 @@ public class TimeEntryApprovalSupportTest {
 
     private TimeEntry reload(TimeEntry entry) {
         return dataManager.load(Id.of(entry)).one();
+    }
+
+    /**
+     * Returns the entry as the screen loaded it, and then changes the entry in the database as its author would,
+     * so that the returned instance is stale.
+     */
+    private TimeEntry staleCopyOf(TimeEntry entry) {
+        TimeEntry stale = reload(entry);
+        TimeEntry changed = reload(entry);
+        changed.setDescription("edited meanwhile");
+        dataManager.saveWithoutReload(changed);
+        return stale;
     }
 
     private TimeEntry withStatus(TimeEntry entry, TimeEntryStatus status, String rejectionReason) {
