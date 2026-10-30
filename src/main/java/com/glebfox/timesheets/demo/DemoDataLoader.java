@@ -37,6 +37,7 @@ import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.security.FullAccessRole;
+import com.glebfox.timesheets.security.TimeEntryApprovalRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.security.WorkScheduleManagementRole;
 import io.jmix.core.DataManager;
@@ -356,6 +357,7 @@ public class DemoDataLoader {
                 if (user.getUsername().equals("mossman")) {
                     assignRole(user, UiMinimalRole.CODE);
                     assignRole(user, WorkScheduleManagementRole.CODE);
+                    assignRole(user, TimeEntryApprovalRole.CODE);
                 } else {
                     assignRole(user, FullAccessRole.CODE);
                 }
@@ -490,7 +492,7 @@ public class DemoDataLoader {
             task(borealis, "Expedition planning", "Management", false);
             task(borealis, "Arctic field work", "Research", true);
             participants(borealis,
-                    "magnusson", "Project Manager", "mossman", "Research Scientist", "alyx", "Engineer",
+                    "magnusson", "Project Manager", "mossman", "Approver", "alyx", "Engineer",
                     "odessa", "Security Officer");
 
             DemoProject rocketLaunch = project(clients.get("White Forest"), "Rocket Launch",
