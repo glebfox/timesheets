@@ -16,7 +16,8 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
-      title="msg://timeEntryApprovalView.title">
+      title="msg://timeEntryApprovalView.title"
+      focusComponent="rosterSearchField">
     <layout classNames="time-entry-approval-view">
         <div id="toolbar" classNames="time-entry-approval-view-toolbar">
             <radioButtonGroup id="modeField"

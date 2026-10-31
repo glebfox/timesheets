@@ -163,8 +163,10 @@
     background: var(--ts-danger-color);
 }
 
+/* Closed is neutral, as its status badge is: the mid gray of secondary text, which Aura derives from the same neutral
+   in either theme, and not the neutral itself, which is nearly black or nearly white */
 .approval-status-bar > .closed {
-    background: var(--aura-neutral);
+    background: var(--vaadin-text-color-secondary);
 }
 
 /* Work area: the roster on the left, the selected person or the empty state beside it */
@@ -326,8 +328,9 @@
     fill: var(--ts-danger-color);
 }
 
+/* The neutral of Closed, as in the status bar */
 .approval-fingerprint .bar.closed {
-    fill: var(--aura-neutral);
+    fill: var(--vaadin-text-color-secondary);
 }
 
 .approval-fingerprint .empty {
@@ -365,9 +368,10 @@
     --_status-color: var(--ts-danger-color);
 }
 
+/* The neutral of Closed, as in the status bar */
 :is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).closed,
 .approval-entry-card.closed {
-    --_status-color: var(--aura-neutral);
+    --_status-color: var(--vaadin-text-color-secondary);
 }
 
 :is(.approval-person-panel, .approval-month-grid) .dot {

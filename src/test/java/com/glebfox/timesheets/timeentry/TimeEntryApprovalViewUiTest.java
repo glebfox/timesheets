@@ -332,6 +332,51 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
+    void opensWithTheFocusInTheRosterSearch() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = open();
+
+            // Not on the first button of the toolbar
+            TypedTextField<String> searchField = UiTestUtils.getComponent(view, "rosterSearchField");
+            JmixButton previousBtn = UiTestUtils.getComponent(view, "previousBtn");
+            assertThat(searchField.getElement().getProperty("autofocus", false)).isTrue();
+            assertThat(previousBtn.getElement().getProperty("autofocus", false)).isFalse();
+        });
+    }
+
+    @Test
+    void rosterScrollsToASelectionThatNoClickMade() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+            TypedTextField<String> searchField = UiTestUtils.getComponent(view, "rosterSearchField");
+            Component rosterList = UiTestUtils.getComponent(view, "rosterList");
+            rosterScrollsOf(rosterList);
+
+            // A click selects a card in view, so the roster stays where it is
+            view.selectPerson(bob);
+            assertThat(rosterOf(view)).containsExactly(ann.getUsername(), cid.getUsername(), bob.getUsername());
+            assertThat(rosterScrollsOf(rosterList)).isEmpty();
+
+            // The search moves the selected person's card, and the roster follows it, there and back
+            searchField.setValue("birch");
+            assertThat(rosterScrollsOf(rosterList)).containsExactly(0);
+            searchField.clear();
+            assertThat(rosterScrollsOf(rosterList)).containsExactly(2);
+
+            // A reload that leaves the card where it was keeps the roster's scroll
+            view.reload();
+            assertThat(selectedOf(view)).isEqualTo(bob.getUsername());
+            assertThat(rosterScrollsOf(rosterList)).isEmpty();
+
+            // Another period selects the first person, and the roster shows their card
+            view.setPeriod(ApprovalPeriod.monthOf(OCTOBER));
+            assertThat(selectedOf(view)).isEqualTo(ann.getUsername());
+            assertThat(rosterScrollsOf(rosterList)).containsExactly(0);
+        });
+    }
+
+    @Test
     void rosterCardShowsWhatWaitsWhatWasRejectedAndWhatIsApproved() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openInOctober();
@@ -806,6 +851,20 @@ public class TimeEntryApprovalViewUiTest {
         return internals.dumpPendingJavaScriptInvocations().stream()
                 .filter(invocation -> invocation.getOwner() == component.getElement().getNode())
                 .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
+    }
+
+    /**
+     * Lists the indexes the server asked the browser to scroll the roster to since the previous call, and forgets the
+     * calls.
+     */
+    private static List<Object> rosterScrollsOf(Component rosterList) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == rosterList.getElement().getNode())
+                .filter(invocation -> invocation.getInvocation().getExpression().contains("scrollToIndex"))
+                .map(invocation -> invocation.getInvocation().getParameters().getFirst())
                 .toList();
     }
 

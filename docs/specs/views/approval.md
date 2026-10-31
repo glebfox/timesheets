@@ -37,9 +37,9 @@ On the left, a card for everyone with entries in the period, showing:
 - a fingerprint of the period, one bar per day, as tall as the time logged that day, full at 10 hours, in the color of the day's status: Rejected when any entry of the day is, otherwise New when any is, otherwise Approved when any is, otherwise neutral for Closed;
 - the time logged in the period.
 
-A search field finds a person by a part of the first name, the last name, or the username, whatever the case; a full name typed across both names matches nobody. A switch shows **Needs review**, the people with waiting entries and the default, or **Everyone**. People with waiting entries come first, then by name ignoring case.
+The screen opens with the focus in the search field. It finds a person by a part of the first name, the last name, or the username, whatever the case; a full name typed across both names matches nobody. A switch shows **Needs review**, the people with waiting entries and the default, or **Everyone**. People with waiting entries come first, then by name ignoring case.
 
-The first person shown is selected when the screen opens and when the mode, the period, or the project changes. After an action the selected person stays while still shown. A card is chosen by a click, or by Enter or Space; choosing the selected person again changes nothing. When the switch or the search hides the selected person, the first person shown is selected.
+The first person shown is selected when the screen opens and when the mode, the period, or the project changes. After an action the selected person stays while still shown. A card is chosen by a click, or by Enter or Space; choosing the selected person again changes nothing. When the switch or the search hides the selected person, the first person shown is selected. The roster scrolls to the selected person's card when it was not chosen there: when the mode, the period, or the project changes, and when a reload, the switch, or the search selects another person or moves the card.
 
 With nobody to show, a message says why: the user approves on no project, nobody logged time in the period (naming the project when one is chosen), nobody has time waiting (under Needs review), or nobody matches the search.
 
@@ -78,7 +78,7 @@ A change that would leave the basket behind asks "Discard N entries from the rej
 
 ## Not covered
 
-- How the screen looks, which no test sees (`docs/guidelines/testing.md`): the status colors, stripes, dots, and lines, the dimming of Approved entries, the three-line cut on the week board, the place of the floating bar and the side dialog and its width, the focus after a dialog closes, and the smooth scroll to a day.
+- How the screen looks, which no test sees (`docs/guidelines/testing.md`): the status colors, stripes, dots, and lines, the dimming of Approved entries, the three-line cut on the week board, the place of the floating bar and the side dialog and its width, the layouts that follow the width of the screen and of a board's column, and where the focus and the scrolls land, the roster's and the smooth scroll to a day: the tests see only the calls that the server queues for the browser.
 - The roster as users see it: its cards come from a renderer that never runs in a UI test, so the tests build a card directly. What the view gives a card, the role names and the selection mark, and the card's redraw in place when another person is chosen are checked by no test.
 - The reject basket's edges: the questions of the period's previous and default-period buttons and of the roster's search, and a basket in Week mode or across two weeks. The tests ask through Next, the mode, the project, the roster's switch, and the view's own `selectPerson`. A reload that hides the selected person, and the entries a reload takes out of the basket (above), are untested too.
 - Choosing a person by a click, Enter, or Space on a roster card: the cards never exist in a UI test, so the tests choose through the view's own `selectPerson`.

@@ -205,6 +205,9 @@ public class TimeEntryApprovalView extends StandardView {
     // In a month, the first day of the week listed; null in a week, or with nobody selected
     @Nullable
     private LocalDate selectedWeek;
+    // Where the roster last showed the selected person's card; null with nobody selected
+    @Nullable
+    private RosterPlace rosterPlace;
     // The reject basket: entries of the person shown, by id, in the order they were put in, each as last loaded
     private final Map<UUID, TimeEntry> basket = new LinkedHashMap<>();
     // The reason of a rejection that failed, which the dialog opens on again; empty for none
@@ -394,6 +397,8 @@ public class TimeEntryApprovalView extends StandardView {
                 : Optional.empty();
         // Choosing the person shown again keeps their week
         setSelectedPerson(person, true);
+        // Chosen on a card the user sees, so the roster stays where it is
+        rosterPlace = placeInRoster(person.user().getId());
 
         // Only the two cards whose mark changes are redrawn, and in place: a refresh of all the items would create
         // every card anew, and the card chosen from the keyboard would lose the focus.
@@ -648,8 +653,32 @@ public class TimeEntryApprovalView extends StandardView {
         }
         setSelectedPerson(toSelect, keepSelection);
         rosterList.setItems(rosterPeople);
+        scrollRosterToSelected(!keepSelection);
 
         updateEmptyState();
+    }
+
+    /**
+     * Scrolls the roster to the selected person's card when the user has not seen it there: in a new roster, such as
+     * of another period, or after a reload or a change of the switch or the search that selected another person or
+     * moved the card. The roster keeps its items' scroll otherwise, and a card chosen by a click is in view already.
+     */
+    private void scrollRosterToSelected(boolean newRoster) {
+        RosterPlace place = selectedPerson != null ? placeInRoster(selectedPerson.getId()) : null;
+        if (place != null && (newRoster || !place.equals(rosterPlace))) {
+            rosterList.scrollToIndex(place.index());
+        }
+        rosterPlace = place;
+    }
+
+    @Nullable
+    private RosterPlace placeInRoster(UUID userId) {
+        for (int index = 0; index < rosterPeople.size(); index++) {
+            if (userId.equals(rosterPeople.get(index).user().getId())) {
+                return new RosterPlace(userId, index);
+            }
+        }
+        return null;
     }
 
     private boolean isInRoster(ApprovalPerson person) {
@@ -945,5 +974,14 @@ public class TimeEntryApprovalView extends StandardView {
 
     private String countText(String key, int count) {
         return messageBundle.formatMessage(PluralForms.key(key, count, locale), count);
+    }
+
+    /**
+     * A person's card in the roster.
+     *
+     * @param userId the person's user
+     * @param index  the place of the card among those the roster shows
+     */
+    private record RosterPlace(UUID userId, int index) {
     }
 }
