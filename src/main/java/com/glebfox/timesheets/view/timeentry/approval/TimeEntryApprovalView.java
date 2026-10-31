@@ -111,8 +111,9 @@ import java.util.stream.Collectors;
  * {@link ApprovalBasketBar} shows them, and its Write a reason opens the {@link ApprovalRejectDialog}, where they are
  * rejected together with one reason. A change that would leave the basket behind, of the person, the period, the
  * mode, the project, or a roster's filter that hides the person, asks first whether to discard it; No keeps
- * everything as it was. A rejection, like an approval, fails as a whole for an entry changed meanwhile; the basket then
- * keeps its entries as they are now, and the dialog opens again on the reason written.
+ * everything as it was. A reload never drops the basket by hiding its person: it keeps them in the roster. A
+ * rejection, like an approval, fails as a whole for an entry changed meanwhile; the basket then keeps its entries as
+ * they are now, and the dialog opens again on the reason written.
  */
 @Route(value = "approve-time-entries", layout = MainView.class)
 @ViewController(TimeEntryApprovalView.ID)
@@ -410,7 +411,8 @@ public class TimeEntryApprovalView extends StandardView {
 
     /**
      * Loads the period again, such as after an action changed its entries. The selected person stays selected while
-     * the roster still shows them; otherwise the first person shown is selected.
+     * the roster still shows them, or while the reject basket has their entries; otherwise the first person shown is
+     * selected.
      */
     public void reload() {
         load(true);
@@ -643,7 +645,12 @@ public class TimeEntryApprovalView extends StandardView {
             return;
         }
 
-        rosterPeople = overview.people().stream().filter(this::isInRoster).toList();
+        // A reload keeps the selected person whose basket still has entries, even where the switch now hides them, as
+        // after approving their last waiting entries: moving the selection would drop the basket without asking
+        rosterPeople = overview.people().stream()
+                .filter(person -> isInRoster(person) || (keepSelection && isSelected(person)
+                        && basketHasEntriesOf(person)))
+                .toList();
 
         ApprovalPerson toSelect = keepSelection && selectedPerson != null
                 ? findShown(selectedPerson.getId()).orElse(null)
@@ -849,12 +856,7 @@ public class TimeEntryApprovalView extends StandardView {
      */
     private void keepBasketOf(@Nullable ApprovalPerson person) {
         if (!basket.isEmpty()) {
-            ApprovalPeriod current = getPeriod();
-            Map<UUID, TimeEntry> loaded = person == null
-                    ? Map.of()
-                    : person.entries().stream()
-                    .filter(entry -> current.contains(entry.getDate()) && ApprovalEntryCard.canBeRejected(entry))
-                    .collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
+            Map<UUID, TimeEntry> loaded = person == null ? Map.of() : rejectableEntriesOf(person);
 
             List<UUID> kept = basket.keySet().stream().filter(loaded::containsKey).toList();
             basket.clear();
@@ -864,6 +866,22 @@ public class TimeEntryApprovalView extends StandardView {
             }
         }
         basketBar.setEntries(basket.values());
+    }
+
+    /**
+     * Tells whether the basket has an entry of the person that the period still shows and that can still be rejected:
+     * what {@link #keepBasketOf} would keep.
+     */
+    private boolean basketHasEntriesOf(ApprovalPerson person) {
+        Map<UUID, TimeEntry> loaded = rejectableEntriesOf(person);
+        return basket.keySet().stream().anyMatch(loaded::containsKey);
+    }
+
+    private Map<UUID, TimeEntry> rejectableEntriesOf(ApprovalPerson person) {
+        ApprovalPeriod current = getPeriod();
+        return person.entries().stream()
+                .filter(entry -> current.contains(entry.getDate()) && ApprovalEntryCard.canBeRejected(entry))
+                .collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
     }
 
     private void openRejectDialog() {

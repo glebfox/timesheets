@@ -52,6 +52,7 @@ import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.component.markdowneditor.MarkdownEditor;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.sidedialog.SideDialog;
+import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.component.sidedialog.SideDialogPosition;
 import io.jmix.flowui.settings.UserSettingsService;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -556,6 +557,68 @@ public class TimeEntryApprovalRejectUiTest {
         });
     }
 
+    @Test
+    void aReloadThatLeavesNothingWaitingKeepsThePersonWhoseBasketHasEntries() {
+        asAdmin(() -> {
+            // Under Needs review, the default, Cid is shown while something of his waits
+            TimeEntryApprovalView view = openOnCidsWeekUnderNeedsReview();
+            click(view, "rejectEntryBtn-" + cidApproved.getId());
+
+            click(view, "approvePersonBtn");
+            dialogButton(lastDialog(), "yes").click();
+
+            // Nothing of Cid's waits now, which Needs review would hide, but his basket has an entry
+            assertThat(statusOf(cidMonday)).isEqualTo(TimeEntryStatus.APPROVED);
+            assertThat(statusOf(cidTuesday)).isEqualTo(TimeEntryStatus.APPROVED);
+            assertThat(statusOf(cidLater)).isEqualTo(TimeEntryStatus.APPROVED);
+            assertSuccess("3 entries approved");
+            assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+            assertThat(selectedOf(view)).isEqualTo(cid.getId());
+            assertThat(view.getRosterPeople()).extracting(person -> person.user().getId()).contains(cid.getId());
+            assertThat(basketOf(view)).containsExactly(cidApproved.getId());
+            assertThat(basketBar(view).isVisible()).isTrue();
+
+            // A change of the search that would hide him asks all the same
+            TypedTextField<String> searchField = UiTestUtils.getComponent(view, "rosterSearchField");
+            searchField.setValue("ann");
+            dialogButton(discardQuestion(), "no").click();
+            assertThat(searchField.getValue()).isEmpty();
+            assertThat(selectedOf(view)).isEqualTo(cid.getId());
+            assertThat(basketOf(view)).containsExactly(cidApproved.getId());
+
+            searchField.setValue("ann");
+            dialogButton(discardQuestion(), "yes").click();
+            assertThat(selectedOf(view)).isEqualTo(ann.getId());
+            assertThat(basketOf(view)).isEmpty();
+        });
+    }
+
+    @Test
+    void aFailedRejectionKeepsThePersonAndTheReasonWhenTheReloadLeavesNothingWaiting() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openOnCidsWeekUnderNeedsReview();
+            click(view, "rejectEntryBtn-" + cidMonday.getId());
+            click(view, "writeReasonBtn");
+            SideDialog dialog = rejectDialogOf(view);
+            click(partOf(dialog, "quickReason-description"));
+
+            // Another approver approves everything of Cid's that waits after the screen loaded it
+            approveBehindTheScreen(cidMonday, cidTuesday, cidLater);
+
+            assertThatThrownBy(() -> click(partOf(dialog, "rejectBtn")))
+                    .isInstanceOf(OptimisticLockException.class);
+
+            // Nothing is rejected, and Cid, no longer waiting, stays with his basket and the reason written
+            assertThat(statusOf(cidMonday)).isEqualTo(TimeEntryStatus.APPROVED);
+            assertThat(selectedOf(view)).isEqualTo(cid.getId());
+            assertThat(basketOf(view)).containsExactly(cidMonday.getId());
+
+            click(view, "writeReasonBtn");
+            assertThat(this.<MarkdownEditor>partOf(rejectDialogOf(view), "reasonField").getValue())
+                    .isEqualTo(DESCRIPTION_REASON);
+        });
+    }
+
     @AfterEach
     void tearDown() {
         try {
@@ -587,6 +650,28 @@ public class TimeEntryApprovalRejectUiTest {
         view.selectPerson(cid);
         view.selectWeek(weekStartOf(cidMonday.getDate()));
         return view;
+    }
+
+    /**
+     * Opens the screen on Cid's October as it opens, under Needs review, with the week of the 5th listed.
+     */
+    private TimeEntryApprovalView openOnCidsWeekUnderNeedsReview() {
+        TimeEntryApprovalView view = open();
+        view.setPeriod(ApprovalPeriod.monthOf(OCTOBER));
+        view.selectPerson(cid);
+        view.selectWeek(weekStartOf(cidMonday.getDate()));
+        return view;
+    }
+
+    /**
+     * Approves entries as another approver does, without the screen knowing.
+     */
+    private void approveBehindTheScreen(TimeEntry... entries) {
+        for (TimeEntry entry : entries) {
+            TimeEntry current = reload(entry);
+            current.setStatus(TimeEntryStatus.APPROVED);
+            dataManager.saveWithoutReload(current);
+        }
     }
 
     private LocalDate weekStartOf(LocalDate date) {
