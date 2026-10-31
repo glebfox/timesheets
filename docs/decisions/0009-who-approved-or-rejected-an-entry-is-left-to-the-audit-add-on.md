@@ -1,4 +1,4 @@
-# 0009 Approving and rejecting keep no record of who did it or when
+# 0009 Who approved or rejected an entry is left to the Audit add-on
 
 Status: accepted
 
