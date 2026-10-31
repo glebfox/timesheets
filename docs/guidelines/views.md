@@ -41,6 +41,8 @@ A replaced item redraws only its own row. A cell computed from other rows as wel
 
 Only a detail view checks for unsaved changes when it closes. A dialog that is a plain `StandardView` and collects input for its opener closes at once on Cancel, Esc, or its close button. The calendar days dialog and the add users dialog ask the framework's unsaved-changes question through `UnsavedInputSupport` in `app/util/`: each compares its fields with how it opened and passes the result from its `BeforeCloseEvent` handler. A close with `StandardOutcome.SAVE`, and a close that does not check for unsaved changes, such as one with `StandardOutcome.DISCARD`, pass without the question.
 
+A side dialog, such as the reject dialog of the approval screen, is a component of the view that opened it, not a view, so it asks through `UnsavedInputSupport.askBeforeClosing(sideDialog, owner, inputChanged)`, which closes the dialog at once when nothing changed and otherwise asks the question and closes it on Yes. Its Cancel button calls it, and so must its close-action listener, set with `withCloseActionListener`: once a listener is set, Esc and a click outside no longer close the dialog on their own, so the listener routes both.
+
 ## URL query parameters in tabbed mode
 
 In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on registers `NoopUrlQueryParametersFacetImpl` in place of the framework's facet, so a list's filter and pagination are not kept in the URL. A reload of the browser page keeps them all the same, since tabbed mode restores the open view; the browser's back and forward buttons create the view again, with an empty filter. The list descriptors keep the facet for when the add-on supports it.

@@ -8,8 +8,8 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 
 - `entity/<area>/` — entities and their enums, one subpackage per domain area, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
 - `datatype/` — custom value types with their Jmix datatypes and JPA converters.
-- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return and the helpers that several views share.
-- `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
+- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return, a screen's own value types that need no UI, such as the periods and totals of the approval screen, and the helpers that several views share.
+- `view/<entity>/` — view controllers; each descriptor sits at the matching path under resources. A view made of several components that only it uses keeps them beside its controller in a subpackage of its own, such as `view/timeentry/approval/`. Specs: `docs/specs/views/`.
 - `action/` — custom list actions and the helpers they share.
 - `data/renderer/` — reusable grid renderers.
 - `component/` — custom UI components and icon sets. A component usable in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`; Jmix Studio learns of a component from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
