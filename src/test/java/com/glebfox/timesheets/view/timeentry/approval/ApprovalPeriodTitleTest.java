@@ -78,6 +78,17 @@ class ApprovalPeriodTitleTest {
     }
 
     @Test
+    void periodWithinASentenceKeepsTheMonthAsTheLanguageWritesIt() {
+        ApprovalPeriod october = ApprovalPeriod.monthOf(YearMonth.of(2026, 10));
+        ApprovalPeriod week = ApprovalPeriod.weekOf(LocalDate.of(2026, 10, 18), DayOfWeek.SUNDAY);
+
+        assertThat(formatter(Locale.ENGLISH).formatInText(october)).isEqualTo("October 2026");
+        assertThat(formatter(RUSSIAN).formatInText(october)).isEqualTo("октябрь 2026");
+        assertThat(formatter(Locale.ENGLISH).formatInText(week)).isEqualTo("Oct 18 – 24 2026");
+        assertThat(formatter(RUSSIAN).formatInText(week)).isEqualTo("18 – 24 окт. 2026");
+    }
+
+    @Test
     void datesOfPartOfAWeekHaveNoYear() {
         LocalDate first = LocalDate.of(2026, 10, 1);
         LocalDate third = LocalDate.of(2026, 10, 3);

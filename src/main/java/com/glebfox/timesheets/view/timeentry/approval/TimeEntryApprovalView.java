@@ -757,14 +757,13 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
-     * Names the days of a scope as the question does: the period's title for the whole period, otherwise the dates.
+     * Names the days of a scope as the question does: the period as a sentence names it for the whole period,
+     * otherwise the dates.
      */
     private String scopeText(ApprovalScope scope) {
         ApprovalPeriod current = getPeriod();
         if (scope.from().equals(current.start()) && scope.to().equals(current.end())) {
-            return periodTitles.format(current).stream()
-                    .map(ApprovalPeriodTitle.Part::text)
-                    .collect(Collectors.joining());
+            return periodTitles.formatInText(current);
         }
         return periodTitles.formatDates(scope.from(), scope.to());
     }

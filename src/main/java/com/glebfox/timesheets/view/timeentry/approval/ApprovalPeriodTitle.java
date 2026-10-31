@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Formats the titles of approval periods, such as "October 2026", "Oct 18 – 24 2026", or "Oct 25 – Nov 1 2026", with
@@ -89,6 +90,23 @@ final class ApprovalPeriodTitle {
         parts.addAll(List.of(new Part(formatDate(end, OTHER_MONTH_KEY + ".end"), false), SPACE, yearOf(end)));
         addText(parts, around[2]);
         return List.copyOf(parts);
+    }
+
+    /**
+     * Formats a period as a sentence names it, such as "October 2026" in English and "октябрь 2026" in Russian: a
+     * month's name as the language writes it within a sentence, where a title capitalizes it, and a week's dates as
+     * its title has them.
+     *
+     * @param period a month or a week
+     * @return the period's name, in one text
+     */
+    String formatInText(ApprovalPeriod period) {
+        if (period.mode() == ApprovalMode.MONTH) {
+            LocalDate start = period.start();
+            return start.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale) + SPACE.text()
+                    + start.getYear();
+        }
+        return format(period).stream().map(Part::text).collect(Collectors.joining());
     }
 
     /**

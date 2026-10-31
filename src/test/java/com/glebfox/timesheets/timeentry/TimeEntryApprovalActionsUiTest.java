@@ -439,9 +439,10 @@ public class TimeEntryApprovalActionsUiTest {
             // 5 takes the form of "many", 2 the form of "few", and 1 that of "one"
             assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Утвердить 5 ожидающих записей");
 
+            // Within the sentence the month is written as Russian writes it there, in lowercase
             click(view, "approveDayBtn-" + monday);
             DialogInfo confirmation = confirmation();
-            assertThat(textOf(confirmation)).startsWith("Утвердить 2 записи (Cid Cole, ");
+            assertThat(textOf(confirmation)).isEqualTo("Утвердить 2 записи (Cid Cole, 5 окт., 8ч)?");
             dialogButton(confirmation, "yes").click();
             assertThat(lastNotification().getText()).isEqualTo("Утверждены 2 записи");
 
@@ -450,7 +451,7 @@ public class TimeEntryApprovalActionsUiTest {
 
             click(view, "approvePersonBtn");
             DialogInfo rest = confirmation();
-            assertThat(textOf(rest)).startsWith("Утвердить 2 записи (Cid Cole, ");
+            assertThat(textOf(rest)).isEqualTo("Утвердить 2 записи (Cid Cole, октябрь 2026, 8ч)?");
             dialogButton(rest, "yes").click();
             assertThat(lastNotification().getText()).isEqualTo("Утверждены 2 записи");
         });
