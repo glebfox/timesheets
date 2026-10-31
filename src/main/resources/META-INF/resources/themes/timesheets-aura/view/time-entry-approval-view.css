@@ -17,9 +17,14 @@
 .time-entry-approval-view {
     /* Wide enough for a name, two badges, and a month's fingerprint of readable bars */
     --_roster-width: 20rem;
+    /* The toolbar takes its layout from the view's width */
+    container-name: approval-view;
+    container-type: inline-size;
 }
 
-/* Toolbar */
+/* Toolbar: the controls on a row, and the team progress on a row of its own below them; on a wide view, all on one
+   row. The view's width alone decides which, never the texts, whose width changes with the mode, the period, and the
+   language: so the toolbar's height, and the roster below it, stay put while they change */
 
 .time-entry-approval-view-toolbar {
     display: flex;
@@ -27,6 +32,11 @@
     align-items: center;
     gap: var(--vaadin-gap-s);
     width: 100%;
+}
+
+/* Wide enough for a project's name of a few words, such as "Anomalous Materials", beside the clear button */
+.time-entry-approval-view-project {
+    width: 14rem;
 }
 
 .time-entry-approval-view-period {
@@ -54,16 +64,31 @@
 
 .time-entry-approval-view-team-progress {
     display: flex;
+    flex-basis: 100%;
     align-items: center;
+    justify-content: flex-end;
     gap: var(--vaadin-gap-m);
-    margin-inline-start: auto;
+    min-width: 0;
+}
+
+/* With nobody's time to count it is hidden, but keeps its place, so that the toolbar is as tall as with it */
+.time-entry-approval-view-team-progress.empty {
+    visibility: hidden;
 }
 
 .time-entry-approval-view-team-progress-label {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    min-width: 0;
     text-align: end;
+}
+
+/* A line each, so that the progress is as tall whatever it says; cut short only where nothing else gives way */
+.time-entry-approval-view-team-progress-label > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .time-entry-approval-view-team-progress-text {
@@ -78,8 +103,37 @@
     line-height: var(--aura-line-height-xs);
 }
 
-.time-entry-approval-view-team-progress-bar {
+.time-entry-approval-view-team-progress > .time-entry-approval-view-team-progress-bar {
     width: 12rem;
+}
+
+/* Wide enough for the longest controls, those of a week in Russian, and the team progress beside them: the view at
+   1440 pixels with the navigation drawer open is about 72rem wide */
+@container approval-view (width >= 70rem) {
+    .time-entry-approval-view-toolbar {
+        flex-wrap: nowrap;
+    }
+
+    /* The controls keep their width; the team progress gives way, its bar first, down to a short one */
+    .time-entry-approval-view-toolbar > * {
+        flex-shrink: 0;
+    }
+
+    .time-entry-approval-view-toolbar > .time-entry-approval-view-team-progress {
+        flex: 0 1 auto;
+        margin-inline-start: auto;
+    }
+
+    /* Shrinks so little beside the bar that the bar gives way first, and the texts only once it is at its shortest */
+    .time-entry-approval-view-team-progress-label {
+        flex-shrink: 0.01;
+    }
+
+    .time-entry-approval-view-team-progress > .time-entry-approval-view-team-progress-bar {
+        flex: 0 1 12rem;
+        width: auto;
+        min-width: 3rem;
+    }
 }
 
 /* A bar split by the statuses of time entries, one segment per status, as wide as its share */
@@ -526,10 +580,11 @@
     grid-row: 3;
 }
 
-/* A week card: the button that selects the week fills it, and the week's actions sit beside the button, not in it */
+/* A week card: the button that selects the week fills it, and the week's actions sit below the button, not in it, on
+   a row of their own: beside it they would take the width that the hours, the entries, and the badges need */
 .approval-month-grid > .week {
     display: flex;
-    align-items: stretch;
+    flex-direction: column;
     border-block-end: 1px solid var(--vaadin-border-color-secondary);
     background: var(--vaadin-background-container);
 }
@@ -572,6 +627,7 @@
 
 .approval-month-grid > .week > .summary > .hours {
     grid-area: hours;
+    white-space: nowrap;
 
     font-weight: var(--aura-font-weight-semibold);
     font-variant-numeric: tabular-nums;
@@ -592,12 +648,12 @@
     gap: var(--vaadin-gap-xs);
 }
 
+/* Under the badges, in line with the summary's content */
 .approval-month-grid > .week > .actions:not(:empty) {
     display: flex;
-    flex-shrink: 0;
-    align-items: end;
+    flex-wrap: wrap;
     gap: var(--vaadin-gap-xs);
-    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-xs) 0;
+    padding: 0 var(--vaadin-padding-s) var(--vaadin-padding-xs);
 }
 
 /* The entries of a week in a month, grouped by day */
@@ -666,26 +722,32 @@
     gap: var(--vaadin-gap-xs);
 }
 
-/* Week board: a column per day */
+/* Week board: a column per day, at least as wide as a compact card needs for the words of a task, a tag, and its two
+   buttons; where seven such columns do not fit, the board scrolls sideways within itself, never the page */
 
 .approval-week-board {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(6.5rem, 1fr));
     align-items: start;
     gap: var(--vaadin-gap-s);
+    overflow-x: auto;
 }
 
+/* The header and the cards of a column take their layout from the column's width */
 .approval-week-board > .column {
     display: flex;
     flex-direction: column;
     gap: var(--vaadin-gap-s);
     min-width: 0;
+    container-name: approval-day;
+    container-type: inline-size;
 }
 
-/* The day and its hours on the first row; the line and the actions, when there are any, each on a row of its own */
+/* The day and its hours on the first row, the hours below the day where both do not fit; the line and the actions,
+   when there are any, each on a row of its own */
 .approval-week-board > .column > .header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     column-gap: var(--vaadin-gap-xs);
     row-gap: var(--vaadin-gap-xs);
@@ -702,24 +764,40 @@
 }
 
 .approval-week-board > .column > .header > .day {
-    grid-column: 1;
+    white-space: nowrap;
     font-weight: var(--aura-font-weight-semibold);
 }
 
 .approval-week-board > .column > .header > .hours {
-    grid-column: 2;
+    margin-inline-start: auto;
+    white-space: nowrap;
     color: var(--vaadin-text-color-secondary);
     font-variant-numeric: tabular-nums;
 }
 
 .approval-week-board > .column > .header > .line {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
 }
 
 .approval-week-board > .column > .header > .actions:not(:empty) {
     display: flex;
-    grid-column: 1 / -1;
+    flex-basis: 100%;
     gap: var(--vaadin-gap-xs);
+    min-width: 0;
+}
+
+/* A button never reaches past its column */
+.approval-week-board > .column > .header > .actions > vaadin-button {
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* A column narrower than the text of Approve day needs, in either language, shows the button's icon alone: the button
+   still names itself to assistive technology, and on hover */
+@container approval-day (width < 10rem) {
+    .approval-week-board > .column > .header > .actions > vaadin-button::part(label) {
+        display: none;
+    }
 }
 
 .approval-week-board > .column > .entries {
@@ -842,13 +920,14 @@
     margin-inline-start: var(--vaadin-gap-s);
 }
 
-/* On the week board: the time and the actions over the rest, the description cut after three lines */
+/* On the week board: the time, the rest, and the actions each on a row of its own, so that the buttons cover neither
+   the time nor the text of a narrow column; the description cut after three lines */
 .approval-entry-card.compact {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-        "time actions"
-        "content content";
-    align-items: center;
+        "time"
+        "content"
+        "actions";
     row-gap: var(--vaadin-gap-xs);
     padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-s);
 }
@@ -858,12 +937,35 @@
 }
 
 .approval-entry-card.compact > .actions:not(:empty) {
-    margin-inline-start: var(--vaadin-gap-xs);
+    justify-self: end;
+    margin-inline-start: 0;
 }
 
+/* A column wide enough for the time and both buttons side by side has them on one row, over the rest */
+@container approval-day (width >= 10rem) {
+    .approval-entry-card.compact {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "time actions"
+            "content content";
+        align-items: center;
+    }
+
+    .approval-entry-card.compact > .actions:not(:empty) {
+        margin-inline-start: var(--vaadin-gap-xs);
+    }
+}
+
+/* A word longer than the column breaks rather than running past the card's edge */
 .approval-entry-card.compact > .content > .task {
     flex-direction: column;
     align-items: flex-start;
+    overflow-wrap: anywhere;
+}
+
+/* A badge longer than the column is cut short with an ellipsis */
+.approval-entry-card.compact vaadin-badge {
+    max-width: 100%;
 }
 
 .approval-entry-card.compact > .content > .task > .task-name {

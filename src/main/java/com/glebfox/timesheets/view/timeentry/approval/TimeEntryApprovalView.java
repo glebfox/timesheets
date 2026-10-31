@@ -612,7 +612,8 @@ public class TimeEntryApprovalView extends StandardView {
 
     private void updateTeamProgress() {
         int people = overview.people().size();
-        teamProgress.setVisible(people > 0);
+        // Hidden, but keeping its place, so that the toolbar is as tall as before and the roster does not move
+        teamProgress.setClassName("empty", people == 0);
         if (people == 0) {
             return;
         }

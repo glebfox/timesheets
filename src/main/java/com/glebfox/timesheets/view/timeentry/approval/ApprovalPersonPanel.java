@@ -197,7 +197,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
                     entry -> createEntryCard(entry, true), componentSupport, messages, locale);
             panel.add(board);
             for (LocalDate day : period.days()) {
-                addDayButton(drawnButtons, board.getDayActions(day), day);
+                addDayButton(drawnButtons, board.getDayActions(day), day, true);
             }
         }
         drawnButtons.refresh();
@@ -452,7 +452,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         // Where the actions of the day go
         Div actions = new Div();
         actions.addClassName("actions");
-        addDayButton(listedButtons, actions, day);
+        addDayButton(listedButtons, actions, day, false);
 
         // The spaces take no room in the header's layout, but keep the heading, such as "Mon, Oct 19 · 6h", in words
         // for assistive technology
@@ -501,11 +501,19 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         drawnButtons.add(actions, button, scope, count -> text);
     }
 
-    private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day) {
+    /**
+     * Adds the button of a day. On the week board, a column too narrow for the button's text shows its icon alone, so
+     * there the button also names itself on hover.
+     */
+    private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day, boolean onBoard) {
         Button button = createApproveButton("approveDayBtn-" + day, ButtonVariant.TERTIARY, ButtonVariant.SUCCESS,
                 ButtonVariant.SMALL);
-        button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveDayBtn.ariaLabel", locale,
-                titles.formatDates(day, day)));
+        String name = messages.formatMessage(ApprovalPersonPanel.class, "approveDayBtn.ariaLabel", locale,
+                titles.formatDates(day, day));
+        button.setAriaLabel(name);
+        if (onBoard) {
+            button.setTooltipText(name);
+        }
         String text = messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale);
         buttons.add(actions, button, ApprovalScope.ofDay(day), count -> text);
     }

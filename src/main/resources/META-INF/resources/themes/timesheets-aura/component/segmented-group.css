@@ -26,8 +26,12 @@
     --_segmented-inner-radius: calc(var(--vaadin-radius-m) - var(--_segmented-border-width));
 }
 
+/* Segments of equal width, each as wide as the longest label needs at least: a grid of equal columns, unlike a row of
+   items that each grow from nothing, also sizes a bar that is as wide as its content so that every label fits */
 .segmented-group::part(group-field) {
-    flex-flow: row nowrap;
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
     gap: 0;
     border: var(--_segmented-border-width) solid var(--vaadin-border-color);
     border-radius: var(--vaadin-radius-m);
@@ -43,7 +47,6 @@
     color: var(--vaadin-text-color);
     position: relative;
     display: flex;
-    flex: 1 1 0;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
@@ -96,9 +99,12 @@
 }
 
 /* A disabled item fades its label, and a read-only group disables its unchecked items:
-   the label colors below mark these states instead */
+   the label colors below mark these states instead.
+   A label never wraps: in a segment narrower than its label, the radio button's own style breaks even a word,
+   as "Mont" over "h" */
 .segmented-group > vaadin-radio-button > label {
     opacity: 1;
+    white-space: nowrap;
 }
 
 .segmented-group > vaadin-radio-button[checked] {

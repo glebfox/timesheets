@@ -345,7 +345,10 @@ public class TimeEntryApprovalActionsUiTest {
 
             assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Approve week · 3");
 
-            // The days on the board's column headers
+            // The days on the board's column headers, which name themselves on hover too, as a narrow column shows
+            // only their icon
+            Button dayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidMonday.getDate());
+            assertThat(dayButton.getTooltip().getText()).isEqualTo("Approve day Oct 5");
             click(view, "approveDayBtn-" + cidMonday.getDate());
             DialogInfo day = confirmation();
             assertThat(textOf(day)).isEqualTo("Approve 2 entries of Cid Cole for Oct 5, 8h?");

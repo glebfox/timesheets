@@ -59,7 +59,7 @@ import java.util.Optional;
  * the month in the selected week, {@code selected}, with the parts {@code number}, {@code hours} (holding a
  * {@code dot}), and {@code line}; and {@code week} cards with the id {@code week-<first day>} and the class
  * {@code selected}. A week card holds a {@code summary}, with the parts {@code hours}, {@code count}, and
- * {@code badges}, which is the button that selects the week, and beside it the {@code actions} of the week, so that
+ * {@code badges}, which is the button that selects the week, and after it the {@code actions} of the week, so that
  * a control placed there works on its own: it is neither inside the button nor named by it, and its clicks and keys
  * do not select the week.
  */
@@ -151,7 +151,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
     }
 
     /**
-     * Returns the part of a week card where the actions of the week go, beside the button that selects the week.
+     * Returns the part of a week card where the actions of the week go, after the button that selects the week.
      *
      * @param weekStart the first day of a row of the grid
      * @return the {@code actions} part, empty until something is put in it
@@ -228,7 +228,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
                 "weekCard.ariaLabel", locale,
                 titles.formatDates(days.getFirst(), days.getLast()), String.join(", ", spoken)));
 
-        // Where the actions of the week go: beside the button, not in it
+        // Where the actions of the week go: after the button, not in it
         Div actions = new Div();
         actions.addClassName("actions");
 
