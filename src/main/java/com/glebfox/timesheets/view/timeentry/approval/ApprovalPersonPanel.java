@@ -22,6 +22,7 @@ import com.glebfox.timesheets.app.util.ApprovalPerson;
 import com.glebfox.timesheets.app.util.ApprovalTotals;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
+import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
@@ -34,10 +35,13 @@ import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.ScrollIntoViewOption;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -58,8 +62,12 @@ import java.util.stream.Collectors;
  * one week below it, grouped by day; a week is a {@link ApprovalWeekBoard}. Only the period's own days count, in the
  * figures, the grid, and the list alike.
  * <p>
- * The panel only shows what it is given. A click on a day or a week of the month grid, and on an entry's ✓ or ✕, is
- * passed on as an event of the panel, whose listener decides what follows, such as {@link #showWeek}.
+ * The panel only shows what it is given. A click on a day or a week of the month grid, on an entry's ✓ or ✕, and on
+ * a button that approves a person, a week, or a day, is passed on as an event of the panel, whose listener decides
+ * what follows, such as {@link #showWeek}. Those buttons are in the {@code actions} of the person, the week card, and
+ * the day, one for each that has waiting entries; which entries a button approves is asked of the function the panel
+ * is created with, so that the count on a button and what the click approves come from one place. The ids of the
+ * buttons are {@code approvePersonBtn}, {@code approveWeekBtn-<first day>}, and {@code approveDayBtn-<day>}.
  * <p>
  * The panel has the class {@code approval-person-panel}. Its parts are the {@code header}, with the {@code avatar},
  * the {@code name}, the {@code details} (the roles and the projects), and the {@code actions} of the person; the
@@ -91,6 +99,9 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
     @Nullable
     private Div entryList;
     private final Map<LocalDate, Div> dayGroups = new HashMap<>();
+    // The buttons of what is drawn with the person, and those of the week listed, which change with the week
+    private final ApprovalBulkApproveButtons drawnButtons;
+    private final ApprovalBulkApproveButtons listedButtons;
 
     /**
      * Creates an empty panel.
@@ -100,14 +111,18 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
      * @param metadataTools    formats the entries' attributes
      * @param locale           the locale of the texts
      * @param titles           formats the dates of a week
+     * @param entriesToApprove gives the entries that a bulk approve of a stretch of the shown period takes
      */
     ApprovalPersonPanel(ComponentSupport componentSupport, Messages messages, MetadataTools metadataTools,
-                        Locale locale, ApprovalPeriodTitle titles) {
+                        Locale locale, ApprovalPeriodTitle titles,
+                        SerializableFunction<ApprovalScope, List<TimeEntry>> entriesToApprove) {
         this.componentSupport = componentSupport;
         this.messages = messages;
         this.metadataTools = metadataTools;
         this.locale = locale;
         this.titles = titles;
+        this.drawnButtons = new ApprovalBulkApproveButtons(entriesToApprove, this::fireApproveScopeClick);
+        this.listedButtons = new ApprovalBulkApproveButtons(entriesToApprove, this::fireApproveScopeClick);
 
         getContent().addClassName(CLASS_NAME);
     }
@@ -152,7 +167,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         List<DayOfWeek> daysOfWeek = componentSupport.getDaysOfWeek();
 
         Div panel = getContent();
-        panel.add(createHeader(person, roleNames, entries), createFigures(ApprovalTotals.of(entries)));
+        panel.add(createHeader(person, roleNames, entries, period), createFigures(ApprovalTotals.of(entries)));
 
         if (selectedWeek != null) {
             monthGrid = new ApprovalMonthGrid(period, daysOfWeek, entriesByDay, componentSupport, messages, locale,
@@ -162,11 +177,19 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
             entryList = new Div();
             entryList.addClassName("entries");
             panel.add(monthGrid, entryList);
+            for (List<LocalDate> row : period.weekRows(daysOfWeek.getFirst())) {
+                addWeekButton(monthGrid.getWeekActions(row.getFirst()), row, period);
+            }
             showWeek(selectedWeek);
         } else {
-            panel.add(new ApprovalWeekBoard(period, daysOfWeek, entriesByDay, entry -> createEntryCard(entry, true),
-                    componentSupport, messages, locale));
+            ApprovalWeekBoard board = new ApprovalWeekBoard(period, daysOfWeek, entriesByDay,
+                    entry -> createEntryCard(entry, true), componentSupport, messages, locale);
+            panel.add(board);
+            for (LocalDate day : period.days()) {
+                addDayButton(drawnButtons, board.getDayActions(day), day);
+            }
         }
+        drawnButtons.refresh();
     }
 
     /**
@@ -179,6 +202,8 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         monthGrid = null;
         entryList = null;
         dayGroups.clear();
+        drawnButtons.clear();
+        listedButtons.clear();
     }
 
     /**
@@ -196,6 +221,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
 
         entryList.removeAll();
         dayGroups.clear();
+        listedButtons.clear();
 
         ApprovalPeriod month = period;
         List<LocalDate> days = weekStart.datesUntil(weekStart.plusDays(DAYS_IN_WEEK)).filter(month::contains).toList();
@@ -225,6 +251,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
                 entryList.add(group);
             }
         }
+        listedButtons.refresh();
     }
 
     /**
@@ -261,6 +288,16 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
     }
 
     /**
+     * Adds a listener of clicks on the buttons that approve the waiting entries of a person's period, a week, or a day.
+     *
+     * @param listener the listener
+     * @return a registration that removes the listener
+     */
+    Registration addApproveScopeClickListener(ComponentEventListener<ApproveScopeClickEvent> listener) {
+        return addListener(ApproveScopeClickEvent.class, listener);
+    }
+
+    /**
      * Adds a listener of clicks on the ✓ of an entry's card.
      *
      * @param listener the listener
@@ -284,7 +321,8 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         return person.entries().stream().filter(entry -> period.contains(entry.getDate())).toList();
     }
 
-    private Div createHeader(ApprovalPerson person, List<String> roleNames, List<TimeEntry> entries) {
+    private Div createHeader(ApprovalPerson person, List<String> roleNames, List<TimeEntry> entries,
+                             ApprovalPeriod period) {
         String name = ApprovalRosterCard.nameOf(person.user());
         Avatar avatar = componentSupport.createAvatar(name, person.user().getAvatar(), "avatar");
 
@@ -305,6 +343,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         // Where the actions of the person go
         Div actions = new Div();
         actions.addClassName("actions");
+        addPersonButton(actions, period);
 
         Div header = new Div(avatar, nameText, details, actions);
         header.addClassName("header");
@@ -379,6 +418,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         // Where the actions of the day go
         Div actions = new Div();
         actions.addClassName("actions");
+        addDayButton(listedButtons, actions, day);
 
         // The spaces take no room in the header's layout, but keep the heading, such as "Mon, Oct 19 · 6h", in words
         // for assistive technology
@@ -399,6 +439,52 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         card.addRejectClickListener(event ->
                 fireEvent(new RejectEntryClickEvent(this, event.isFromClient(), entry)));
         return card;
+    }
+
+    private void addPersonButton(Div actions, ApprovalPeriod period) {
+        String key = period.mode() == ApprovalMode.MONTH ? "approvePersonBtn.month" : "approvePersonBtn.week";
+        Button button = createApproveButton("approvePersonBtn", ButtonVariant.PRIMARY, ButtonVariant.SUCCESS);
+        drawnButtons.add(actions, button, new ApprovalScope(period.start(), period.end()),
+                count -> countText(key, count));
+    }
+
+    /**
+     * Adds the button of a week of the month grid, which approves the week's days of the month.
+     */
+    private void addWeekButton(Div actions, List<LocalDate> row, ApprovalPeriod month) {
+        List<LocalDate> days = row.stream().filter(month::contains).toList();
+        ApprovalScope scope = new ApprovalScope(days.getFirst(), days.getLast());
+
+        Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.PRIMARY,
+                ButtonVariant.SUCCESS, ButtonVariant.SMALL);
+        button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
+                titles.formatDates(scope.from(), scope.to())));
+        String text = messages.getMessage(ApprovalPersonPanel.class, "approveWeekBtn.text", locale);
+        drawnButtons.add(actions, button, scope, count -> text);
+    }
+
+    private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day) {
+        Button button = createApproveButton("approveDayBtn-" + day, ButtonVariant.TERTIARY, ButtonVariant.SUCCESS,
+                ButtonVariant.SMALL);
+        button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveDayBtn.ariaLabel", locale,
+                titles.formatDates(day, day)));
+        String text = messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale);
+        buttons.add(actions, button, ApprovalScope.ofDay(day), count -> text);
+    }
+
+    private static Button createApproveButton(String id, ButtonVariant... variants) {
+        Button button = new Button(GravityUiIcon.CHECK.create());
+        button.setId(id);
+        button.addThemeVariants(variants);
+        return button;
+    }
+
+    private void fireApproveScopeClick(ApprovalScope scope, boolean fromClient) {
+        fireEvent(new ApproveScopeClickEvent(this, fromClient, scope));
+    }
+
+    private String countText(String key, int count) {
+        return messages.formatMessage(ApprovalPersonPanel.class, PluralForms.key(key, count, locale), locale, count);
     }
 
     private String entryCountText(int count) {
@@ -447,6 +533,29 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
          */
         LocalDate getWeekStart() {
             return weekStart;
+        }
+    }
+
+    /**
+     * A click on a button that approves the waiting entries of a stretch of the period: the person's, a week's, or a
+     * day's.
+     */
+    static final class ApproveScopeClickEvent extends ComponentEvent<ApprovalPersonPanel> {
+
+        private final ApprovalScope scope;
+
+        ApproveScopeClickEvent(ApprovalPersonPanel source, boolean fromClient, ApprovalScope scope) {
+            super(source, fromClient);
+            this.scope = scope;
+        }
+
+        /**
+         * Returns the days the clicked button approves.
+         *
+         * @return the scope of the button
+         */
+        ApprovalScope getScope() {
+            return scope;
         }
     }
 

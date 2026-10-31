@@ -150,6 +150,18 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         });
     }
 
+    /**
+     * Returns the part of a week card where the actions of the week go, beside the button that selects the week.
+     *
+     * @param weekStart the first day of a row of the grid
+     * @return the {@code actions} part, empty until something is put in it
+     * @throws IllegalArgumentException if no row of the grid starts on the day
+     */
+    Div getWeekActions(LocalDate weekStart) {
+        Preconditions.checkArgument(weeks.containsKey(weekStart), "No week of %s starts on %s", period, weekStart);
+        return weeks.get(weekStart).actions();
+    }
+
     private static Div createHeading(String text) {
         Div heading = new Div(text);
         heading.addClassName("heading");
@@ -224,7 +236,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         card.setId("week-" + row.getFirst());
         card.addClassName("week");
 
-        return new Week(card, summary, monthDays);
+        return new Week(card, summary, actions, monthDays);
     }
 
     private String entryCountText(int count) {
@@ -237,8 +249,9 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
      *
      * @param card      the week card
      * @param summary   the button of the card that selects the week
+     * @param actions   the part of the card where the actions of the week go
      * @param monthDays the cells of the row's days of the month
      */
-    private record Week(Div card, Div summary, List<Div> monthDays) {
+    private record Week(Div card, Div summary, Div actions, List<Div> monthDays) {
     }
 }

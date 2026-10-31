@@ -30,6 +30,7 @@ import io.jmix.core.Messages;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -47,6 +48,9 @@ import java.util.function.Function;
 final class ApprovalWeekBoard extends Composite<Div> implements HasComponents {
 
     static final String CLASS_NAME = "approval-week-board";
+
+    // The part of each column's header where the actions of the day go, by the day
+    private final Map<LocalDate, Div> dayActions = new LinkedHashMap<>();
 
     /**
      * Creates the board of a week.
@@ -93,6 +97,7 @@ final class ApprovalWeekBoard extends Composite<Div> implements HasComponents {
             Div actions = new Div();
             actions.addClassName("actions");
             header.add(actions);
+            dayActions.put(day, actions);
 
             Div cards = new Div();
             cards.addClassName("entries");
@@ -104,5 +109,17 @@ final class ApprovalWeekBoard extends Composite<Div> implements HasComponents {
             column.setClassName("weekend", dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
             board.add(column);
         }
+    }
+
+    /**
+     * Returns the part of a column's header where the actions of the day go.
+     *
+     * @param day a day of the week shown
+     * @return the {@code actions} part, empty until something is put in it
+     * @throws IllegalArgumentException if the day is not in the week shown
+     */
+    Div getDayActions(LocalDate day) {
+        Preconditions.checkArgument(dayActions.containsKey(day), "%s is not a day of the week shown", day);
+        return dayActions.get(day);
     }
 }

@@ -45,10 +45,14 @@ import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.flowui.Dialogs;
+import io.jmix.flowui.Notifications;
+import io.jmix.flowui.action.DialogAction;
 import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.virtuallist.JmixVirtualList;
+import io.jmix.flowui.kit.action.ActionVariant;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.settings.UserSettingsService;
 import io.jmix.flowui.view.MessageBundle;
@@ -57,6 +61,7 @@ import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.ViewComponent;
 import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
+import jakarta.persistence.OptimisticLockException;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -77,6 +82,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * The screen where the managers and approvers of projects review the time logged on them, person by person.
@@ -84,6 +90,13 @@ import java.util.UUID;
  * It shows the time entries of one period, a week or a month, that the current user may approve: a roster of the
  * people who logged them, one of whom is the selected person, the progress of the whole team, and the selected
  * person's period in a {@link ApprovalPersonPanel}. In a month, one week of the person's is listed in full.
+ * <p>
+ * The selected person's entries are approved from the panel at four levels. A click on an entry's ✓ approves it at
+ * once. A click on the button of a day, a week, or the whole period asks first, naming the count, the hours, the
+ * person, and the period, and then approves the new entries of that scope: {@link #entriesToApprove} is the one place
+ * that says which, for the counts on the buttons, for the question, and for the approval. After an approval the screen
+ * is loaded again and a notification gives the number of entries approved. When an entry changed meanwhile, nothing is
+ * approved: the screen is loaded again, and the framework tells the user.
  */
 @Route(value = "approve-time-entries", layout = MainView.class)
 @ViewController(TimeEntryApprovalView.ID)
@@ -142,6 +155,10 @@ public class TimeEntryApprovalView extends StandardView {
     private Messages messages;
     @Autowired
     private MetadataTools metadataTools;
+    @Autowired
+    private Dialogs dialogs;
+    @Autowired
+    private Notifications notifications;
 
     private Locale locale;
     private DayOfWeek firstDayOfWeek;
@@ -203,13 +220,16 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     private void initPersonPanel() {
-        personPanel = new ApprovalPersonPanel(componentSupport, messages, metadataTools, locale, periodTitles);
+        personPanel = new ApprovalPersonPanel(componentSupport, messages, metadataTools, locale, periodTitles,
+                this::entriesToApprove);
         // A click on the grid goes through the same way as selectWeek from outside
         personPanel.addWeekClickListener(event -> selectWeek(event.getWeekStart()));
         personPanel.addDayClickListener(event -> {
             selectWeek(ApprovalPeriod.weekStartOf(event.getDay(), firstDayOfWeek));
             personPanel.scrollToDay(event.getDay());
         });
+        personPanel.addApproveEntryClickListener(event -> approve(List.of(event.getEntry())));
+        personPanel.addApproveScopeClickListener(event -> confirmApprove(event.getScope()));
         personBox.add(personPanel);
     }
 
@@ -536,6 +556,73 @@ public class TimeEntryApprovalView extends StandardView {
         }
         personPanel.show(person, roleNamesByUser.getOrDefault(person.user().getId(), List.of()), current,
                 selectedWeek);
+    }
+
+    /**
+     * Says which entries a bulk approve of a scope takes: the selected person's new entries dated in the scope. A
+     * rejected entry is left out, as it takes its own approval. The count on each button, the question, and the
+     * approval itself all come from here.
+     */
+    private List<TimeEntry> entriesToApprove(ApprovalScope scope) {
+        if (shownPerson == null) {
+            return List.of();
+        }
+
+        return shownPerson.entries().stream()
+                .filter(entry -> entry.getStatus() == TimeEntryStatus.NEW && scope.contains(entry.getDate()))
+                .toList();
+    }
+
+    private void confirmApprove(ApprovalScope scope) {
+        List<TimeEntry> entries = entriesToApprove(scope);
+        if (shownPerson == null || entries.isEmpty()) {
+            return;
+        }
+
+        int count = entries.size();
+        String text = messageBundle.formatMessage(PluralForms.key("approveConfirmation", count, locale), count,
+                ApprovalRosterCard.nameOf(shownPerson.user()), scopeText(scope),
+                componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time()));
+
+        // The header and the buttons of the standard remove confirmation
+        dialogs.createOptionDialog()
+                .withHeader(messages.getMessage("dialogs.Confirmation"))
+                .withText(text)
+                .withActions(
+                        new DialogAction(DialogAction.Type.YES)
+                                .withHandler(event -> approve(entries))
+                                .withVariant(ActionVariant.PRIMARY),
+                        new DialogAction(DialogAction.Type.NO))
+                .open();
+    }
+
+    /**
+     * Names the days of a scope as the question does: the period's title for the whole period, otherwise the dates.
+     */
+    private String scopeText(ApprovalScope scope) {
+        ApprovalPeriod current = getPeriod();
+        if (scope.from().equals(current.start()) && scope.to().equals(current.end())) {
+            return periodTitles.format(current).stream()
+                    .map(ApprovalPeriodTitle.Part::text)
+                    .collect(Collectors.joining());
+        }
+        return periodTitles.formatDates(scope.from(), scope.to());
+    }
+
+    private void approve(List<TimeEntry> entries) {
+        List<TimeEntry> approved;
+        try {
+            approved = approvalSupport.approve(entries);
+        } catch (OptimisticLockException e) {
+            // Show the entries as they are now, then let the framework's handler tell the user
+            reload();
+            throw e;
+        }
+
+        reload();
+        notifications.create(countText("approveNotification", approved.size()))
+                .withType(Notifications.Type.SUCCESS)
+                .show();
     }
 
     private boolean isWeekOfPeriod(LocalDate weekStart) {

@@ -48,6 +48,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.dom.Element;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
@@ -87,6 +88,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -482,7 +484,7 @@ public class TimeEntryApprovalViewUiTest {
             // The list scrolls to the group of the day's entries
             Component day = entryCardOf(view, cidWaiting).getParent().orElseThrow();
             assertThat(browserCalls(day)).anyMatch(call -> call.contains("scrollIntoView"));
-            assertThat(textOf(descendantOf(day, "day-header"))).isEqualTo("Wed, Oct 14 · 4h");
+            assertThat(headingOf(descendantOf(day, "day-header"))).isEqualTo("Wed, Oct 14 · 4h");
         });
     }
 
@@ -828,6 +830,16 @@ public class TimeEntryApprovalViewUiTest {
 
     private static String textOf(Component component) {
         return component.getElement().getTextRecursively();
+    }
+
+    /**
+     * Reads what a day's header says of the day, without the buttons in its actions.
+     */
+    private static String headingOf(Component dayHeader) {
+        return dayHeader.getElement().getChildren()
+                .filter(part -> !part.getClassList().contains("actions"))
+                .map(Element::getTextRecursively)
+                .collect(Collectors.joining());
     }
 
     private static String periodTitleOf(TimeEntryApprovalView view) {
