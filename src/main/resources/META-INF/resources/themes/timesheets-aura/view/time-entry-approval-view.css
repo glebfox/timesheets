@@ -445,11 +445,13 @@
     margin-inline-start: var(--vaadin-gap-m);
 }
 
-/* Four figures in an even row */
+/* Four figures in an even row, which take their layout from its width */
 .approval-person-panel > .figures {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--vaadin-gap-s);
+    container-name: approval-figures;
+    container-type: inline-size;
 }
 
 .approval-person-panel .figure {
@@ -506,6 +508,20 @@
     margin-block-start: var(--vaadin-gap-xs);
 }
 
+/* Below 48rem a figure is narrower than a value and its details side by side need, such as "186h 30m" and
+   "122 entries" (about 186 pixels with the padding), as at 1280 pixels with the navigation drawer open, where it is
+   about 155: the details go below the value, whole */
+@container approval-figures (width < 48rem) {
+    .approval-person-panel .figure {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "label"
+            "value"
+            "details"
+            "bar";
+    }
+}
+
 /* Month grid: seven days and a week card per row */
 
 .approval-month-grid {
@@ -516,6 +532,9 @@
     overflow: hidden;
     border: 1px solid var(--vaadin-border-color-secondary);
     border-radius: var(--vaadin-radius-l);
+    /* Its days take their layout from its width */
+    container-name: approval-month;
+    container-type: inline-size;
 }
 
 .approval-month-grid > .heading {
@@ -575,6 +594,7 @@
     display: flex;
     align-items: center;
     gap: var(--vaadin-gap-xs);
+    white-space: nowrap;
 
     font-weight: var(--aura-font-weight-semibold);
     font-variant-numeric: tabular-nums;
@@ -582,6 +602,19 @@
 
 .approval-month-grid > .day > .line {
     grid-row: 3;
+}
+
+/* Below 48rem a day is narrower than its dot and a time such as "10h 30m" (about 87 pixels with the usual padding),
+   as at 1280 pixels with the navigation drawer open, where it is about 68: the day keeps the time on one line with a
+   narrower padding and without the dot, as the line below it shows the same status */
+@container approval-month (width < 48rem) {
+    .approval-month-grid > .day {
+        padding-inline: var(--vaadin-padding-xs);
+    }
+
+    .approval-month-grid > .day > .hours > .dot {
+        display: none;
+    }
 }
 
 /* A week card: the button that selects the week fills it, and the week's actions sit below the button, not in it, on
@@ -735,6 +768,9 @@
     align-items: start;
     gap: var(--vaadin-gap-s);
     overflow-x: auto;
+    /* As tall as its cards, so that the panel scrolls, not the board: a box that scrolls could otherwise shrink to the
+       height the panel has left, as a flex item, and scroll on its own */
+    flex-shrink: 0;
 }
 
 /* The header and the cards of a column take their layout from the column's width */
@@ -943,6 +979,15 @@
 .approval-entry-card.compact > .actions:not(:empty) {
     justify-self: end;
     margin-inline-start: 0;
+}
+
+/* A card without buttons, such as a Closed one, has no row for them, so no gap above it either */
+@container approval-day (width < 10rem) {
+    .approval-entry-card.compact:has(> .actions:empty) {
+        grid-template-areas:
+            "time"
+            "content";
+    }
 }
 
 /* A column wide enough for the time and both buttons side by side has them on one row, over the rest */
