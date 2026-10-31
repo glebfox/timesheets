@@ -60,7 +60,7 @@ A header with the avatar, the name, the roles, and the projects of their entries
 
 After an approval the screen is loaded again, the person and the week stay, and a notification gives the number approved. Nothing records who approved or rejected an entry, or when: only the status and the rejection reason change ([decision 0009](../../decisions/0009-approving-and-rejecting-keep-no-record-of-who-did-it-or-when.md)).
 
-An approval is all or nothing. When any entry was changed, deleted, or moved out of the approver's reach after the screen loaded it, or its task or project was deleted, nothing is approved: the question closes, the screen is loaded again with the entries as they are now, and the framework shows its message that the entry changed. The operations never approve what the approver has not seen. An entry that is outside the rule, Closed, or already Approved is refused by the operation, though the screen cannot send one except through such a change.
+An approval is all or nothing. When any entry was changed, deleted, or moved to a task of another project after the screen loaded it, or its task or project was deleted, nothing is approved: the question closes, the screen is loaded again with the entries as they are now, and the framework shows its message that the entry changed. The operations never approve what the approver has not seen. An entry that is outside the rule, Closed, or already Approved is refused by the operation, though the screen cannot send one except through such a change.
 
 Approving and rejecting tell the entry's user as any change of status does ([time entry](../data-model/time-entry.md#status)).
 

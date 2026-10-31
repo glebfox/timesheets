@@ -17,7 +17,7 @@ One user's time spent on one task on one day. Any number of entries may share a 
 
 Nothing in the application moves an entry between statuses on its own. Two paths change a status:
 
-- The editor: whoever can edit an entry can set any status there, except that a holder of [Edit active time entries](../roles/edit-active-time-entries.md) cannot save an entry as Approved or Closed. No transition is forbidden, so an author can set their own entry to Approved.
+- The editor: whoever can edit an entry can set any status there, except that a holder of [Edit active time entries](../roles/edit-active-time-entries.md) cannot save an update that makes or leaves an entry Approved or Closed. No transition is forbidden, so an author can set their own entry to Approved.
 - The [approval screen](../views/approval.md): a Manager or Approver of the entry's project, by the rule that decides whose entries they approve, sets a New or Rejected entry to Approved, and a New, Approved, or Rejected entry to Rejected with a reason, which replaces an earlier one. An approved entry keeps its rejection reason. The screen never sets New or Closed and never changes a Closed entry.
 
 Neither path records who changed the status, or when ([decision 0009](../../decisions/0009-approving-and-rejecting-keep-no-record-of-who-did-it-or-when.md)).

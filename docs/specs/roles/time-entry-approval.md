@@ -20,7 +20,7 @@ The role only lets a holder open the screen and change the status and the reject
 
 ## With Edit active time entries
 
-A holder of the row-level role [Edit active time entries](edit-active-time-entries.md) can reject but not approve. The data store checks that role's rule against the entry as it is saved, with the change applied, so an entry saved as Approved is refused with an access-denied exception, and approving fails for such a holder. Rejecting works for any entry, an Approved one included, as the entry is saved as Rejected.
+A holder of the row-level role [Edit active time entries](edit-active-time-entries.md) can reject but not approve. The data store checks that role's rule against the entry as it is saved, with the change applied, so an update that saves an entry as Approved is refused with an access-denied exception, and approving fails for such a holder. Rejecting works for every entry the screen lets be rejected, New, Approved, and Rejected, an Approved one included, as the entry is saved as Rejected; a Closed one is refused, as for every holder.
 
 ## Holders
 
