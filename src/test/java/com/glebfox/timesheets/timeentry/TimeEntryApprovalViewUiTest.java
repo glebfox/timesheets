@@ -209,6 +209,14 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(rosterOf(view)).containsExactly(bob.getUsername());
             searchField.setValue(ann.getUsername().toUpperCase());
             assertThat(rosterOf(view)).containsExactly(ann.getUsername());
+
+            // The full name, as the card shows it, matches across both names, whatever the case
+            searchField.setValue("Bob Birch");
+            assertThat(rosterOf(view)).containsExactly(bob.getUsername());
+            searchField.setValue("cid cole");
+            assertThat(rosterOf(view)).containsExactly(cid.getUsername());
+            searchField.setValue("Ann Birch");
+            assertThat(rosterOf(view)).isEmpty();
         });
     }
 

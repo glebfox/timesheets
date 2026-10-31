@@ -59,7 +59,9 @@ import java.util.stream.Stream;
  * <p>
  * The buttons do nothing of their own: whoever shows the card attaches what they do with
  * {@link #addApproveClickListener}, {@link #addRejectClickListener}, and {@link #addUnrejectClickListener}, at any
- * time after the card is created. A button that the card does not show is not in the card.
+ * time after the card is created. A button that the card does not show is not in the card. A click from the browser on
+ * ✕ or ↺ moves the focus to the button that takes its place, which the card swaps in when {@link #setInBasket} is
+ * called after the click.
  * <p>
  * The card's classes are {@code approval-entry-card}, the class of the entry's status ({@code new}, {@code approved},
  * {@code rejected}, or {@code closed}), {@code compact} on the week board, where the description is cut after three
@@ -150,6 +152,11 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
                 ? createButton("unrejectEntryBtn-", GravityUiIcon.ARROW_ROTATE_LEFT.create(), null,
                 messages.getMessage(ApprovalEntryCard.class, "entryCard.unreject", locale))
                 : null;
+        // The clicked button leaves the card as the other takes its place, and the focus would fall to the page, so
+        // that a keyboard user would have to tab from the top again. Registered before the owner's listeners, so
+        // that the button is queued for the focus before the owner swaps the buttons
+        focusInsteadOnClick(rejectButton, unrejectButton);
+        focusInsteadOnClick(unrejectButton, rejectButton);
         showButtons();
 
         card.add(stripe, time, content, actions);
@@ -288,6 +295,20 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         Stream.of(inBasket ? unrejectButton : approveButton, inBasket ? null : rejectButton)
                 .filter(Objects::nonNull)
                 .forEach(actions::add);
+    }
+
+    /**
+     * Makes a click from the browser on a button move the focus to the button that replaces it. A click that the
+     * server makes moves no focus. Does nothing for an entry without these buttons, a closed one.
+     */
+    private static void focusInsteadOnClick(@Nullable Button clicked, @Nullable Button replacement) {
+        if (clicked != null && replacement != null) {
+            clicked.addClickListener(event -> {
+                if (event.isFromClient()) {
+                    replacement.focus();
+                }
+            });
+        }
     }
 
     private Button createButton(String idPrefix, Icon icon, @Nullable ButtonVariant color, String text) {

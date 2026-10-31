@@ -698,9 +698,9 @@ public class TimeEntryApprovalView extends StandardView {
             return true;
         }
 
+        // The name as the card shows it, so that a full name typed across both names matches, and the username
         User user = person.user();
-        return Strings.CI.contains(user.getFirstName(), search)
-                || Strings.CI.contains(user.getLastName(), search)
+        return Strings.CI.contains(ApprovalRosterCard.nameOf(user), search)
                 || Strings.CI.contains(user.getUsername(), search);
     }
 

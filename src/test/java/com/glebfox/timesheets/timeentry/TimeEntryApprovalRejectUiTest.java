@@ -372,6 +372,28 @@ public class TimeEntryApprovalRejectUiTest {
     }
 
     @Test
+    void theButtonThatTakesTheClickedOnesPlaceHasTheFocus() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openOnCidsWeek();
+            lastFocused();
+
+            // A click from the browser removes the clicked button, so the focus goes to the one that replaces it
+            clickFromBrowser(view, "rejectEntryBtn-" + cidMonday.getId());
+            assertThat(lastFocused()).isSameAs(nodeOf(view, "unrejectEntryBtn-" + cidMonday.getId()));
+
+            clickFromBrowser(view, "unrejectEntryBtn-" + cidMonday.getId());
+            assertThat(lastFocused()).isSameAs(nodeOf(view, "rejectEntryBtn-" + cidMonday.getId()));
+
+            // What the server does moves no focus: a click it makes, or the buttons changing without a click
+            click(view, "rejectEntryBtn-" + cidMonday.getId());
+            assertThat(lastFocused()).isNull();
+            click(view, "clearBasketBtn");
+            assertThat(buttonsOf(view, cidMonday)).containsExactly("approve", "reject");
+            assertThat(lastFocused()).isNull();
+        });
+    }
+
+    @Test
     void changingThePersonAsksBeforeDiscardingTheBasket() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openOnCidsWeek();
@@ -762,6 +784,22 @@ public class TimeEntryApprovalRejectUiTest {
         assertThat(((HasEnabled) button).isEnabled()).as("%s is enabled", button.getId().orElse("the button"))
                 .isTrue();
         ComponentUtil.fireEvent(button, new ClickEvent<>(button));
+    }
+
+    /**
+     * Clicks the button as the browser reports a click, unlike {@link #click(TimeEntryApprovalView, String)}, which
+     * the server makes.
+     */
+    private static void clickFromBrowser(TimeEntryApprovalView view, String id) {
+        Component button = UiTestUtils.getComponent(view, id);
+        assertThat(button.isVisible()).as("%s is visible", id).isTrue();
+        assertThat(((HasEnabled) button).isEnabled()).as("%s is enabled", id).isTrue();
+        ComponentUtil.fireEvent(button,
+                new ClickEvent<>(button, true, 0, 0, 0, 0, 1, 0, false, false, false, false));
+    }
+
+    private static StateNode nodeOf(TimeEntryApprovalView view, String id) {
+        return UiTestUtils.<Component>getComponent(view, id).getElement().getNode();
     }
 
     private static String textOf(TimeEntryApprovalView view, String id) {
