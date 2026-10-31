@@ -45,7 +45,7 @@ Fix: delete the stale file, or the `.class`, under `.jmix/conf/`; Studio writes 
 Start the application with the `dev` profile for demo data (the users are in `demo/DemoDataLoader.java`, and each one's password is their username); the render walk is described in the `jmix-verify-bootrun` skill. Only a live check can verify:
 
 - server-push updates, such as the rejected-entries badge refreshing in another user's open session;
-- how screens look: badge colors, icons, card layouts, and columns fitting their content after rows change;
+- how screens look: badge colors, icons, card layouts, columns fitting their content after rows change, and where the focus and the scroll land after the server asks for them;
 - file uploads: the file picker, drag and drop, and the transfer itself; UI tests run without a browser, so they reach an upload field only through its server side.
 
 A running app picks up Java changes only after a restart; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.

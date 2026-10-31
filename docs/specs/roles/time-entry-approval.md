@@ -10,6 +10,8 @@ Resource role `time-entry-approval`, named "Time entries: approval". It includes
 - Reading what the approval screen shows of an entry, every attribute view-only: [tasks](../data-model/task.md), [projects](../data-model/project.md), [project participants](../data-model/project-participant.md), [project roles](../data-model/project-role.md), [tags](../data-model/tag-group.md), and tag groups. Users come from User: read only.
 - The [approval screen](../views/approval.md) and its menu item, and, from User: read only, the user list and the user editor with their menu item.
 
+The attribute policies bind the screens, not the data layer, so only the screens limit a holder to changing those two attributes: code running as a holder could save other attributes of an entry it may update.
+
 It grants no signing in: a holder also needs a role that does, such as [UI: minimal access](ui-minimal.md).
 
 ## What it does not decide
@@ -28,6 +30,7 @@ Holders of [Full access](system-full-access.md) can open the screen without it, 
 
 ## Not covered
 
-- The screen rendered for a holder: the UI test checks that a holder opens it and switches its mode, and the role test that a holder loads and changes what it needs; how its cards, avatars, and badges look under the role was not checked by a test.
+- The screen rendered for a holder: the UI test checks that a holder opens it and switches its mode, and the role test that a holder loads and changes what it needs; no test sees the cards, avatars, and badges under the role. A live check as `mossman`, who has only granular roles, saw Project Management → Approve time entries, only the people of Borealis Recovery with their avatars and tag badges, and approving and rejecting working.
 - A holder who lacks UI: minimal access: not checked.
+- A change of another attribute of an entry by code running as a holder: no test.
 - The combination with Edit active time entries: no test in the suite; confirmed with a throwaway test on 2026-10-31 through the approve and reject operations. What the screen shows a holder whose approval is refused was not checked.
