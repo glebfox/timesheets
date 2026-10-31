@@ -9,7 +9,7 @@ Access control is Jmix security roles only. The code defines five resource roles
 - [User: read only](user-read-only.md) — reading users in the user list and the user editor.
 - [Work schedule management](work-schedule-management.md) — work schedules, holiday calendars, and who works to which schedule from which date; it includes User: read only.
 - [Time entries: approval](time-entry-approval.md) — the approval screen and changing the status and rejection reason of time entries; it includes User: read only.
-- [Edit active time entries](edit-active-time-entries.md) — a row-level role that forbids changing Approved and Closed time entries.
+- [Edit active time entries](edit-active-time-entries.md) — a row-level role that forbids saving a time entry as Approved or Closed.
 
 Apart from Full access, the roles are granular and meant to be combined: UI: minimal access to sign in, plus the roles for the data and screens a user works with (`docs/conventions.md`).
 

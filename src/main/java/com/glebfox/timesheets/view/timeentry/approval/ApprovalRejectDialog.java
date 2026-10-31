@@ -63,9 +63,10 @@ import java.util.Objects;
  * {@code approval-reject-dialog-content}. The content holds two {@code section}s, each with a {@code section-label}:
  * the {@code entries-section}, whose {@code entries} have a {@code basket-entry} for each entry with its
  * {@code title}, {@code details}, and {@code remove} button, and the {@code quick-reasons-section}, whose
- * {@code quick-reasons} are the buttons; then the {@code reason}. The ids are {@code basketEntry-<id>} and {@code removeBasketEntryBtn-<id>} with the id of the
- * entry, {@code quickReason-<name>} with the name of a quick reason ({@code description}, {@code wrongTask},
- * {@code tooMuchTime}, or {@code duplicate}), {@code reasonField}, {@code rejectBtn}, and {@code cancelBtn}.
+ * {@code quick-reasons} are the buttons; then the {@code reason}. The ids are {@code basketEntry-<id>} and
+ * {@code removeBasketEntryBtn-<id>} with the id of the entry, {@code quickReason-<name>} with the name of a quick
+ * reason ({@code description}, {@code wrongTask}, {@code tooMuchTime}, or {@code duplicate}), {@code reasonField},
+ * {@code rejectBtn}, and {@code cancelBtn}.
  */
 final class ApprovalRejectDialog {
 

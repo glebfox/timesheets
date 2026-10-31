@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-The approval screen shows a person's period in one of two layouts: a month as a grid of weeks in the layout of the Calendar, with a card of each week beside its row, and a week as a board of seven columns. The Calendar draws its month with FullCalendar. On the approval screen a day shows its time and the status of its entries, a week card, a column of the board, and a day heading in the list below the grid carry their own Approve buttons, a week card selects the week whose entries are listed below the grid, and the days of the neighboring months show nothing and count nowhere.
+The approval screen shows a person's period in one of two layouts: a month as a grid of weeks in the layout of the Calendar, with a card of each week beside its row, and a week as a board of seven columns. The Calendar draws its month with FullCalendar. On the approval screen a day shows its time and the status of its entries. A week card, a column of the board, and a day heading in the list below the grid carry their own Approve buttons, a week card selects the week whose entries are listed below the grid, and the days of the neighboring months show nothing and count nowhere.
 
 Alternatives considered and rejected:
 

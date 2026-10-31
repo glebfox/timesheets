@@ -779,9 +779,10 @@ public class TimeEntryApprovalView extends StandardView {
                 .withActions(
                         new DialogAction(DialogAction.Type.YES)
                                 .withHandler(event -> {
-                                    // The button closes the dialog only after this handler returns, and a stale
-                                    // entry makes the approval throw: closed first, the question does not stay open
-                                    // over the reloaded screen to be answered again with the stale entries
+                                    // The framework closes the dialog only after this handler returns
+                                    // (DialogsImpl.createButton, jmix-flowui 3.1.0), and a stale entry makes the
+                                    // approval throw: closed first, the question does not stay open over the
+                                    // reloaded screen to be answered again with the stale entries
                                     if (event.getComponent() instanceof Dialog dialog) {
                                         dialog.close();
                                     }

@@ -75,8 +75,15 @@ public class TimeEntryApprovalSupport {
      * An entry's user is compared by the foreign key, never through the user's own attributes: a condition
      * that navigates {@code e.user}, such as {@code m.user = e.user}, or {@code e.user.id} inside a subquery, joins
      * the user table with the soft deletion filter, and the entries of a deleted user drop out of the result. They
-     * still wait for approval. So {@code e.user.id} stands outside the subqueries, and the managers are matched
-     * with {@code e.user in (select m.user ...)}.
+     * still wait for approval. So {@code e.user.id} stands outside the subqueries, and the managers are left out
+     * with {@code e.user not in (select m.user ...)}.
+     * <p>
+     * Soft deletion stays on for the whole query, as it cannot be switched off for part of one: with the
+     * {@code PersistenceHints.SOFT_DELETION} hint off, a written {@code x.deletedDate is null} is printed as
+     * {@code (0=0)}, so the deleted participants, roles, tasks, and projects would no longer be dropped.
+     * <p>
+     * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, so a change to the
+     * rule touches both.
      */
     private static final String APPROVABLE_ENTRY = """
             (exists (select p from ts_ProjectParticipant p
