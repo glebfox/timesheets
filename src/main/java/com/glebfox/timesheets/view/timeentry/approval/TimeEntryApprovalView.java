@@ -35,6 +35,7 @@ import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -590,7 +591,15 @@ public class TimeEntryApprovalView extends StandardView {
                 .withText(text)
                 .withActions(
                         new DialogAction(DialogAction.Type.YES)
-                                .withHandler(event -> approve(entries))
+                                .withHandler(event -> {
+                                    // The button closes the dialog only after this handler returns, and a stale
+                                    // entry makes the approval throw: closed first, the question does not stay open
+                                    // over the reloaded screen to be answered again with the stale entries
+                                    if (event.getComponent() instanceof Dialog dialog) {
+                                        dialog.close();
+                                    }
+                                    approve(entries);
+                                })
                                 .withVariant(ActionVariant.PRIMARY),
                         new DialogAction(DialogAction.Type.NO))
                 .open();

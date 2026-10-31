@@ -429,6 +429,9 @@ public class TimeEntryApprovalActionsUiTest {
             assertThatThrownBy(() -> dialogButton(confirmation, "yes").click())
                     .isInstanceOf(OptimisticLockException.class);
 
+            // The question is gone: left open, it would stand over the reloaded screen and ask again for the stale set
+            assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+
             // Nothing is saved, not even the entries that did not change
             assertThat(statusesOfCid()).containsExactly(
                     TimeEntryStatus.NEW, TimeEntryStatus.NEW, TimeEntryStatus.NEW, TimeEntryStatus.NEW,
