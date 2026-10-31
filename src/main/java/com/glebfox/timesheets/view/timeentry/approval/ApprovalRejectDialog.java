@@ -56,7 +56,8 @@ import java.util.Objects;
  * its sentence to the reason; the reason itself, required and edited as Markdown; Reject; and Cancel. The dialog does
  * not change the basket or save anything itself: it tells its owner which entry to take out and the reason to reject
  * with, and the owner gives it the entries again with {@link #setEntries}, or closes it. Cancel, Esc, and a
- * click outside the dialog close it, asking first when the reason differs from how the dialog opened.
+ * click outside the dialog close it, asking first when the reason differs from how the dialog opened. The dialog opens
+ * with the focus in the reason, and No to that question puts it back there.
  * <p>
  * The dialog has the class {@code approval-reject-dialog}; its content has the class
  * {@code approval-reject-dialog-content}. The content holds two {@code section}s, each with a {@code section-label}:
@@ -226,6 +227,10 @@ final class ApprovalRejectDialog {
 
             setEntries(entries);
             sideDialog.open();
+            // On the reason, not on the dialog itself: as a view's focus component is focused, with the autofocus
+            // property too, so the field takes the focus once it is rendered, before the dialog's own focus lands
+            reasonField.setAutofocus(true);
+            reasonField.focus();
         }
 
         void setEntries(List<TimeEntry> entries) {
@@ -292,19 +297,26 @@ final class ApprovalRejectDialog {
             field.setId("reasonField");
             field.addClassName("reason");
             field.setLabel(message("reasonField.label"));
-            field.setRequired(true);
             field.setRequiredMessage(message("reasonField.requiredMessage"));
             field.setWidthFull();
+            // Jmix checks a field the moment it becomes required (jmix.ui.component.immediate-required-validation-
+            // enabled), so an empty reason would show its error before anything was tried. The check passes over a
+            // hidden field: made required and given its first value while hidden, the field shows the error only
+            // once a change or Reject checks it
+            field.setVisible(false);
+            field.setRequired(true);
             field.setValue(reason);
+            field.setVisible(true);
             return field;
         }
 
         /**
-         * Appends a sentence to the reason, on a line of its own after any text written before.
+         * Appends a sentence to the reason as a paragraph of its own after any text written before: Markdown joins
+         * lines that only a line break separates.
          */
         private void appendReason(String sentence) {
             String current = StringUtils.stripEnd(Objects.toString(reasonField.getValue(), ""), null);
-            reasonField.setValue(current.isEmpty() ? sentence : current + "\n" + sentence);
+            reasonField.setValue(current.isEmpty() ? sentence : current + "\n\n" + sentence);
             reasonField.focus();
         }
 
@@ -326,7 +338,7 @@ final class ApprovalRejectDialog {
 
         private void askBeforeClosing() {
             unsavedInputSupport.askBeforeClosing(sideDialog, owner,
-                    !Objects.toString(reasonField.getValue(), "").equals(openedReason));
+                    !Objects.toString(reasonField.getValue(), "").equals(openedReason), reasonField);
         }
     }
 

@@ -35,9 +35,13 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HasEnabled;
 import com.vaadin.flow.component.ModalityMode;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.internal.StateNode;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
@@ -210,13 +214,13 @@ public class TimeEntryApprovalRejectUiTest {
             assertThat(findPart(dialog, "basketEntry-" + cidRejected.getId())).isNotNull();
             assertThat(this.<Button>partOf(dialog, "rejectBtn").getText()).isEqualTo("Reject 2 entries");
 
-            // Quick reasons append their sentences
+            // Quick reasons append their sentences, each a paragraph of its own once the Markdown is rendered
             MarkdownEditor reasonField = partOf(dialog, "reasonField");
             assertThat(reasonField.getValue()).isEmpty();
             click(partOf(dialog, "quickReason-description"));
             assertThat(reasonField.getValue()).isEqualTo(DESCRIPTION_REASON);
             click(partOf(dialog, "quickReason-wrongTask"));
-            assertThat(reasonField.getValue()).isEqualTo(DESCRIPTION_REASON + "\n" + WRONG_TASK_REASON);
+            assertThat(reasonField.getValue()).isEqualTo(DESCRIPTION_REASON + "\n\n" + WRONG_TASK_REASON);
             reasonField.setValue(DESCRIPTION_REASON);
 
             click(partOf(dialog, "rejectBtn"));
@@ -249,6 +253,10 @@ public class TimeEntryApprovalRejectUiTest {
             click(view, "writeReasonBtn");
             SideDialog dialog = rejectDialogOf(view);
             MarkdownEditor reasonField = partOf(dialog, "reasonField");
+
+            // Marked as required, but not as missing before anything was tried
+            assertThat(reasonField.isRequiredIndicatorVisible()).isTrue();
+            assertThat(reasonField.isInvalid()).isFalse();
 
             click(partOf(dialog, "rejectBtn"));
 
@@ -336,6 +344,29 @@ public class TimeEntryApprovalRejectUiTest {
             click(partOf(again, "cancelBtn"));
             assertThat(again.isOpened()).isFalse();
             assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
+        });
+    }
+
+    @Test
+    void theReasonHasTheFocus() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openOnCidsWeek();
+            click(view, "rejectEntryBtn-" + cidMonday.getId());
+            lastFocused();
+
+            click(view, "writeReasonBtn");
+            SideDialog dialog = rejectDialogOf(view);
+            MarkdownEditor reasonField = partOf(dialog, "reasonField");
+
+            // The dialog opens on the reason, not on itself
+            assertThat(lastFocused()).isSameAs(reasonField.getElement().getNode());
+
+            // No to the question puts the focus back in the reason, not on the screen behind the dialog
+            reasonField.setValue(EARLIER_REASON);
+            click(partOf(dialog, "cancelBtn"));
+            lastFocused();
+            dialogButton(unsavedQuestion(), "no").click();
+            assertThat(lastFocused()).isSameAs(reasonField.getElement().getNode());
         });
     }
 
@@ -605,6 +636,20 @@ public class TimeEntryApprovalRejectUiTest {
                 .flatMap(root -> Stream.concat(Stream.of(root), descendantsOf(root)))
                 .filter(component -> id.equals(component.getId().orElse(null)))
                 .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Returns the node of the component that the server last asked the browser to focus since the previous call, and
+     * forgets the calls: a UI test sees a focus only as the call queued for the browser.
+     */
+    private static StateNode lastFocused() {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getInvocation().getExpression().contains("this.focus()"))
+                .map(PendingJavaScriptInvocation::getOwner)
+                .reduce((first, second) -> second)
                 .orElse(null);
     }
 

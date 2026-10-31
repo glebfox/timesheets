@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
+import com.vaadin.flow.component.Focusable;
 import io.jmix.flowui.component.sidedialog.SideDialog;
 import io.jmix.flowui.util.UnknownOperationResult;
 import io.jmix.flowui.view.ChangeTrackerCloseAction;
@@ -65,21 +66,25 @@ public class UnsavedInputSupport {
 
     /**
      * Closes a side dialog that collects input, asking the framework's unsaved-changes question first while its input
-     * differs from how it opened: Yes closes the dialog, No keeps it open. Called for every way the dialog closes
-     * without taking its input: its own cancel button and, from its close-action listener, Esc and a click outside
-     * it. A side dialog is a component, not a view, so the question belongs to the view it was opened from.
+     * differs from how it opened: Yes closes the dialog, No keeps it open and puts the focus back in it. Called for
+     * every way the dialog closes without taking its input: its own cancel button and, from its close-action listener,
+     * Esc and a click outside it. A side dialog is a component, not a view, so the question belongs to the view it was
+     * opened from; and the framework's No focuses the first focusable component of that view, behind the dialog, so
+     * the component to focus again in the dialog comes after it.
      *
      * @param dialog       the dialog to close
      * @param owner        the view the dialog was opened from
      * @param inputChanged whether any of the dialog's input differs from how the dialog opened
+     * @param focusOnKeep  the component of the dialog that takes the focus when No keeps the dialog open
      */
-    public void askBeforeClosing(SideDialog dialog, View<?> owner, boolean inputChanged) {
+    public void askBeforeClosing(SideDialog dialog, View<?> owner, boolean inputChanged, Focusable<?> focusOnKeep) {
         if (!inputChanged) {
             dialog.close();
             return;
         }
 
         viewValidation.showUnsavedChangesDialog(owner)
-                .onDiscard(dialog::close);
+                .onDiscard(dialog::close)
+                .onCancel(focusOnKeep::focus);
     }
 }
