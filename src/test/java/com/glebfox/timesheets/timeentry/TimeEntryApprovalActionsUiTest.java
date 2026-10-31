@@ -20,17 +20,14 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.datatype.WorkTime;
-import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
-import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.project.ProjectRole;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
-import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
 import com.vaadin.flow.component.ClickEvent;
@@ -41,11 +38,9 @@ import com.vaadin.flow.component.markdown.Markdown;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
-import io.jmix.core.SaveContext;
 import io.jmix.core.security.ClientDetails;
 import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
-import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
@@ -67,12 +62,10 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,13 +104,7 @@ public class TimeEntryApprovalActionsUiTest {
     @Autowired
     Messages messages;
 
-    String prefix;
-    Client client;
-    TaskType taskType;
-    ProjectRole managerRole;
-    ProjectRole memberRole;
-    Project project;
-    Task task;
+    ApprovalTestData data;
     User ann;
     User bob;
     User cid;
@@ -132,45 +119,33 @@ public class TimeEntryApprovalActionsUiTest {
     TimeEntry cidApproved;
     TimeEntry cidInSeptember;
 
-    List<Id<?>> createdIds = new ArrayList<>();
-
     @BeforeEach
     void setUp() {
-        prefix = "approval-actions-" + UUID.randomUUID().toString().substring(0, 8);
+        data = new ApprovalTestData(dataManager, "approval-actions-" + UUID.randomUUID().toString().substring(0, 8));
 
-        client = save(dataManager.create(Client.class), c -> c.setName(prefix + " client"));
-        taskType = save(dataManager.create(TaskType.class), t -> t.setName(prefix + " task type"));
-        managerRole = saveRole(ProjectRoleType.MANAGER);
-        memberRole = saveRole(ProjectRoleType.MEMBER);
+        ProjectRole managerRole = data.saveRole(ProjectRoleType.MANAGER);
+        ProjectRole memberRole = data.saveRole(ProjectRoleType.MEMBER);
+        Project project = data.saveProject("P", data.saveClient());
+        Task task = data.saveTask(project, data.saveTaskType());
+        data.saveParticipant(project, data.loadUser(ADMIN), managerRole);
 
-        project = save(dataManager.create(Project.class), p -> {
-            p.setName(prefix + " P");
-            p.setClient(client);
-        });
-        task = save(dataManager.create(Task.class), t -> {
-            t.setName(prefix + " task");
-            t.setProject(project);
-            t.setType(taskType);
-        });
-        saveParticipant(loadAdmin(), managerRole);
+        ann = data.saveUser("ann", "Ann", "Ash");
+        bob = data.saveUser("bob", "Bob", "Birch");
+        cid = data.saveUser("cid", "Cid", "Cole");
+        data.saveParticipant(project, ann, memberRole);
+        data.saveParticipant(project, bob, memberRole);
+        data.saveParticipant(project, cid, memberRole);
 
-        ann = saveUser("ann", "Ann", "Ash");
-        bob = saveUser("bob", "Bob", "Birch");
-        cid = saveUser("cid", "Cid", "Cole");
-        saveParticipant(ann, memberRole);
-        saveParticipant(bob, memberRole);
-        saveParticipant(cid, memberRole);
-
-        annWaiting = saveEntry(ann, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
-        bobApproved = saveEntry(bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED, null);
-        cidFriday = saveEntry(cid, OCTOBER.atDay(2), TimeEntryStatus.NEW, null);
-        cidMonday = saveEntry(cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
-        cidMondayToo = saveEntry(cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
-        cidTuesday = saveEntry(cid, OCTOBER.atDay(6), TimeEntryStatus.NEW, null);
-        cidRejected = saveEntry(cid, OCTOBER.atDay(8), TimeEntryStatus.REJECTED, REJECTION_REASON);
-        cidWednesday = saveEntry(cid, OCTOBER.atDay(14), TimeEntryStatus.NEW, null);
-        cidApproved = saveEntry(cid, OCTOBER.atDay(15), TimeEntryStatus.APPROVED, null);
-        cidInSeptember = saveEntry(cid, LocalDate.of(2026, 9, 30), TimeEntryStatus.NEW, null);
+        annWaiting = data.saveEntry(task, ann, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
+        bobApproved = data.saveEntry(task, bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED, null);
+        cidFriday = data.saveEntry(task, cid, OCTOBER.atDay(2), TimeEntryStatus.NEW, null);
+        cidMonday = data.saveEntry(task, cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
+        cidMondayToo = data.saveEntry(task, cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
+        cidTuesday = data.saveEntry(task, cid, OCTOBER.atDay(6), TimeEntryStatus.NEW, null);
+        cidRejected = data.saveEntry(task, cid, OCTOBER.atDay(8), TimeEntryStatus.REJECTED, REJECTION_REASON);
+        cidWednesday = data.saveEntry(task, cid, OCTOBER.atDay(14), TimeEntryStatus.NEW, null);
+        cidApproved = data.saveEntry(task, cid, OCTOBER.atDay(15), TimeEntryStatus.APPROVED, null);
+        cidInSeptember = data.saveEntry(task, cid, LocalDate.of(2026, 9, 30), TimeEntryStatus.NEW, null);
     }
 
     @Test
@@ -481,11 +456,7 @@ public class TimeEntryApprovalActionsUiTest {
     @AfterEach
     void tearDown() {
         try {
-            // Soft-deleted rows are removed for good, children before parents
-            for (Id<?> id : createdIds.reversed()) {
-                removeForGood(id);
-            }
-            createdIds.clear();
+            data.removeAll();
         } finally {
             // The screen opens in Month again for the next test, whatever this one switched or how it ended
             systemAuthenticator.runWithUser(ADMIN, () -> userSettingsService.delete(MODE_SETTING));
@@ -627,62 +598,4 @@ public class TimeEntryApprovalActionsUiTest {
                 .toList();
     }
 
-    /**
-     * Removes the entity, reloaded by id with soft deletion off, for good; an entity already gone is skipped.
-     */
-    private void removeForGood(Id<?> id) {
-        dataManager.load(id)
-                .hint(PersistenceHints.SOFT_DELETION, false)
-                .optional()
-                .ifPresent(current -> dataManager.save(new SaveContext()
-                        .removing(current)
-                        .setHint(PersistenceHints.SOFT_DELETION, false)));
-    }
-
-    private <E> E save(E entity, Consumer<E> init) {
-        init.accept(entity);
-        E saved = dataManager.save(entity);
-        createdIds.add(Id.of(saved));
-        return saved;
-    }
-
-    private ProjectRole saveRole(ProjectRoleType type) {
-        return save(dataManager.create(ProjectRole.class), r -> {
-            r.setName(prefix + " " + type.getId() + " role");
-            r.setType(type);
-        });
-    }
-
-    private User saveUser(String name, String firstName, String lastName) {
-        return save(dataManager.create(User.class), u -> {
-            u.setUsername(prefix + "-" + name);
-            u.setFirstName(firstName);
-            u.setLastName(lastName);
-        });
-    }
-
-    private void saveParticipant(User user, ProjectRole role) {
-        save(dataManager.create(ProjectParticipant.class), p -> {
-            p.setProject(project);
-            p.setUser(user);
-            p.setRole(role);
-        });
-    }
-
-    private TimeEntry saveEntry(User user, LocalDate date, TimeEntryStatus status, String rejectionReason) {
-        return save(dataManager.create(TimeEntry.class), e -> {
-            e.setTask(task);
-            e.setUser(user);
-            e.setDate(date);
-            e.setSpentTime(WorkTime.ofHours(4));
-            e.setStatus(status);
-            e.setRejectionReason(rejectionReason);
-        });
-    }
-
-    private User loadAdmin() {
-        return dataManager.load(User.class)
-                .query("e.username = ?1", ADMIN)
-                .one();
-    }
 }

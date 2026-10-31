@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
+import io.jmix.flowui.component.sidedialog.SideDialog;
 import io.jmix.flowui.util.UnknownOperationResult;
 import io.jmix.flowui.view.ChangeTrackerCloseAction;
 import io.jmix.flowui.view.StandardOutcome;
@@ -24,7 +25,8 @@ import io.jmix.flowui.view.ViewValidation;
 import org.springframework.stereotype.Component;
 
 /**
- * Asks before a dialog that collects input, but is not a detail view, discards that input on close.
+ * Asks before a dialog that collects input, but is not a detail view, discards that input on close: a view opened as
+ * a dialog, or a side dialog.
  */
 @Component("ts_UnsavedInputSupport")
 public class UnsavedInputSupport {
@@ -59,5 +61,25 @@ public class UnsavedInputSupport {
                 .onDiscard(() -> result.resume(view.close(StandardOutcome.DISCARD)))
                 .onCancel(result::fail);
         event.preventClose(result);
+    }
+
+    /**
+     * Closes a side dialog that collects input, asking the framework's unsaved-changes question first while its input
+     * differs from how it opened: Yes closes the dialog, No keeps it open. Called for every way the dialog closes
+     * without taking its input: its own cancel button and, from its close-action listener, Esc and a click outside
+     * it. A side dialog is a component, not a view, so the question belongs to the view it was opened from.
+     *
+     * @param dialog       the dialog to close
+     * @param owner        the view the dialog was opened from
+     * @param inputChanged whether any of the dialog's input differs from how the dialog opened
+     */
+    public void askBeforeClosing(SideDialog dialog, View<?> owner, boolean inputChanged) {
+        if (!inputChanged) {
+            dialog.close();
+            return;
+        }
+
+        viewValidation.showUnsavedChangesDialog(owner)
+                .onDiscard(dialog::close);
     }
 }

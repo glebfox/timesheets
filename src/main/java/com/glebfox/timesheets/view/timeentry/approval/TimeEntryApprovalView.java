@@ -24,6 +24,7 @@ import com.glebfox.timesheets.app.util.ApprovalPerson;
 import com.glebfox.timesheets.app.util.ApprovalTotals;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
+import com.glebfox.timesheets.app.util.UnsavedInputSupport;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -48,9 +49,11 @@ import io.jmix.core.MetadataTools;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.Dialogs;
 import io.jmix.flowui.Notifications;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.action.DialogAction;
 import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
+import io.jmix.flowui.component.sidedialog.SideDialog;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.virtuallist.JmixVirtualList;
 import io.jmix.flowui.kit.action.ActionVariant;
@@ -62,6 +65,7 @@ import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.ViewComponent;
 import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
+import io.jmix.flowui.view.ViewValidation;
 import jakarta.persistence.OptimisticLockException;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -71,9 +75,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -83,6 +89,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +105,14 @@ import java.util.stream.Collectors;
  * that says which, for the counts on the buttons, for the question, and for the approval. After an approval the screen
  * is loaded again and a notification gives the number of entries approved. When an entry changed meanwhile, nothing is
  * approved: the screen is loaded again, and the framework tells the user.
+ * <p>
+ * Rejecting goes through the reject basket, which holds entries of the selected person: an entry's ✕ puts it there and
+ * its ↺ takes it out, and a bulk approve leaves the basket's entries out. While the basket has entries, a
+ * {@link ApprovalBasketBar} shows them, and its Write a reason opens the {@link ApprovalRejectDialog}, where they are
+ * rejected together with one reason. A change that would leave the basket behind, of the person, the period, the
+ * mode, the project, or a roster's filter that hides the person, asks first whether to discard it; No keeps
+ * everything as it was. A rejection, like an approval, fails as a whole for an entry changed meanwhile; the basket then
+ * keeps its entries as they are now, and the dialog opens again on the reason written.
  */
 @Route(value = "approve-time-entries", layout = MainView.class)
 @ViewController(TimeEntryApprovalView.ID)
@@ -160,12 +175,20 @@ public class TimeEntryApprovalView extends StandardView {
     private Dialogs dialogs;
     @Autowired
     private Notifications notifications;
+    @Autowired
+    private UiComponents uiComponents;
+    @Autowired
+    private ViewValidation viewValidation;
+    @Autowired
+    private UnsavedInputSupport unsavedInputSupport;
 
     private Locale locale;
     private DayOfWeek firstDayOfWeek;
     private ApprovalPeriodTitle periodTitles;
     private ApprovalStatusBar teamProgressBar;
     private ApprovalPersonPanel personPanel;
+    private ApprovalBasketBar basketBar;
+    private ApprovalRejectDialog rejectDialog;
 
     private List<Project> projectsToApprove = List.of();
     // Null until the view is shown
@@ -182,6 +205,12 @@ public class TimeEntryApprovalView extends StandardView {
     // In a month, the first day of the week listed; null in a week, or with nobody selected
     @Nullable
     private LocalDate selectedWeek;
+    // The reject basket: entries of the person shown, by id, in the order they were put in, each as last loaded
+    private final Map<UUID, TimeEntry> basket = new LinkedHashMap<>();
+    // The reason of a rejection that failed, which the dialog opens on again; empty for none
+    private String draftReason = "";
+    // Set while a field is put back after the question about the basket was answered No
+    private boolean revertingField;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -193,6 +222,7 @@ public class TimeEntryApprovalView extends StandardView {
         initRoster();
         initTeamProgressBar();
         initPersonPanel();
+        initBasket();
 
         projectsToApprove = approvalSupport.loadProjectsToApprove();
         projectField.setItems(projectsToApprove);
@@ -222,7 +252,7 @@ public class TimeEntryApprovalView extends StandardView {
 
     private void initPersonPanel() {
         personPanel = new ApprovalPersonPanel(componentSupport, messages, metadataTools, locale, periodTitles,
-                this::entriesToApprove);
+                this::entriesToApprove, entry -> basket.containsKey(entry.getId()));
         // A click on the grid goes through the same way as selectWeek from outside
         personPanel.addWeekClickListener(event -> selectWeek(event.getWeekStart()));
         personPanel.addDayClickListener(event -> {
@@ -231,7 +261,20 @@ public class TimeEntryApprovalView extends StandardView {
         });
         personPanel.addApproveEntryClickListener(event -> approve(List.of(event.getEntry())));
         personPanel.addApproveScopeClickListener(event -> confirmApprove(event.getScope()));
+        personPanel.addRejectEntryClickListener(event -> addToBasket(event.getEntry()));
+        personPanel.addUnrejectEntryClickListener(event -> removeFromBasket(event.getEntry()));
         personBox.add(personPanel);
+    }
+
+    private void initBasket() {
+        // Over the selected person's part, so it is hidden with it
+        basketBar = new ApprovalBasketBar(componentSupport, messages, locale, periodTitles);
+        basketBar.addClearClickListener(event -> emptyBasket());
+        basketBar.addWriteReasonClickListener(event -> openRejectDialog());
+        personBox.add(basketBar);
+
+        rejectDialog = new ApprovalRejectDialog(dialogs, uiComponents, viewValidation, unsavedInputSupport,
+                componentSupport, messages, metadataTools, locale);
     }
 
     /**
@@ -245,7 +288,8 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
-     * Shows another period, of the mode the switch is set to, and selects the first person shown.
+     * Shows another period, of the mode the switch is set to, and selects the first person shown. Unlike the period's
+     * buttons, it does not ask about the reject basket: the entries the period does not show leave it.
      *
      * @param period the period to show
      * @throws IllegalArgumentException if the period is not of the mode the switch is set to
@@ -307,7 +351,8 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
-     * Selects a person the roster shows.
+     * Selects a person the roster shows, as a click on their card does. Choosing another person while the reject
+     * basket has entries asks first whether to discard them, and selects the person only on yes.
      *
      * @param user the person's user
      * @throws IllegalArgumentException if the roster does not show the person
@@ -315,6 +360,35 @@ public class TimeEntryApprovalView extends StandardView {
     public void selectPerson(User user) {
         ApprovalPerson person = findShown(user.getId()).orElseThrow(() -> new IllegalArgumentException(
                 "The roster does not show user %s".formatted(user.getId())));
+        if (isSelected(person)) {
+            selectShown(person);
+        } else {
+            changeDiscardingBasket(() -> selectShown(person), () -> {
+            });
+        }
+    }
+
+    /**
+     * Returns the reject basket: the entries of the selected person that their ✕ put there, to be rejected together
+     * with one reason.
+     *
+     * @return the entries, in the order they were put in the basket
+     */
+    public Set<TimeEntry> getBasket() {
+        return Collections.unmodifiableSequencedSet(new LinkedHashSet<>(basket.values()));
+    }
+
+    /**
+     * Returns the dialog where the entries of the reject basket are rejected, while it is open.
+     *
+     * @return the dialog, {@code null} while it is closed
+     */
+    @Nullable
+    public SideDialog getRejectDialog() {
+        return rejectDialog.getSideDialog();
+    }
+
+    private void selectShown(ApprovalPerson person) {
         Optional<ApprovalPerson> previous = selectedPerson != null
                 ? findShown(selectedPerson.getId())
                 : Optional.empty();
@@ -341,48 +415,122 @@ public class TimeEntryApprovalView extends StandardView {
     public void onModeFieldComponentValueChange(
             final ComponentValueChangeEvent<JmixRadioButtonGroup<ApprovalMode>, ApprovalMode> event) {
         ApprovalMode mode = event.getValue();
-        // The mode set when the view opens, before any period, is the remembered one
+        // The mode set when the view opens, before any period, is the remembered one; the mode put back after a No
+        // is the period's own
         if (period == null || mode == null || mode == period.mode()) {
             return;
         }
 
-        userSettingsService.save(MODE_SETTING, mode.name());
-        setPeriod(defaultPeriod(mode));
+        ApprovalMode shownMode = period.mode();
+        // Remembered only once the change is made
+        changeDiscardingBasket(() -> {
+            userSettingsService.save(MODE_SETTING, mode.name());
+            setPeriod(defaultPeriod(mode));
+        }, () -> modeField.setValue(shownMode));
     }
 
     @Subscribe(id = "previousBtn", subject = "clickListener")
     public void onPreviousBtnClick(final ClickEvent<JmixButton> event) {
-        setPeriod(getPeriod().previous());
+        showPeriod(getPeriod().previous());
     }
 
     @Subscribe(id = "nextBtn", subject = "clickListener")
     public void onNextBtnClick(final ClickEvent<JmixButton> event) {
-        setPeriod(getPeriod().next());
+        showPeriod(getPeriod().next());
     }
 
     @Subscribe(id = "defaultPeriodBtn", subject = "clickListener")
     public void onDefaultPeriodBtnClick(final ClickEvent<JmixButton> event) {
-        setPeriod(defaultPeriod(getPeriod().mode()));
+        showPeriod(defaultPeriod(getPeriod().mode()));
     }
 
     @Subscribe("projectField")
     public void onProjectFieldComponentValueChange(
             final ComponentValueChangeEvent<JmixComboBox<Project>, Project> event) {
-        if (period != null) {
-            load(false);
+        if (period == null || revertingField) {
+            return;
         }
+
+        Project shownProject = event.getOldValue();
+        changeDiscardingBasket(() -> load(false), () -> revert(() -> projectField.setValue(shownProject)));
     }
 
     @Subscribe("rosterSearchField")
     public void onRosterSearchFieldComponentValueChange(
             final ComponentValueChangeEvent<TypedTextField<String>, String> event) {
-        showRoster(true);
+        if (!revertingField) {
+            String shownSearch = event.getOldValue();
+            changeRoster(() -> revert(() -> rosterSearchField.setValue(shownSearch)));
+        }
     }
 
     @Subscribe("rosterScopeField")
     public void onRosterScopeFieldComponentValueChange(
             final ComponentValueChangeEvent<JmixRadioButtonGroup<ApprovalRosterScope>, ApprovalRosterScope> event) {
-        showRoster(true);
+        if (!revertingField) {
+            ApprovalRosterScope shownScope = event.getOldValue();
+            changeRoster(() -> revert(() -> rosterScopeField.setValue(shownScope)));
+        }
+    }
+
+    /**
+     * Shows another period, as the period's buttons do: asking first while the reject basket has entries.
+     */
+    private void showPeriod(ApprovalPeriod other) {
+        changeDiscardingBasket(() -> setPeriod(other), () -> {
+        });
+    }
+
+    /**
+     * Shows the roster after its switch or its search changed. A change that hides the selected person selects
+     * another one, so it asks first while the reject basket has entries; keep puts the field back on No.
+     */
+    private void changeRoster(Runnable keep) {
+        if (shownPerson != null && !isInRoster(shownPerson)) {
+            changeDiscardingBasket(() -> showRoster(true), keep);
+        } else {
+            showRoster(true);
+        }
+    }
+
+    /**
+     * Makes a change that would leave the reject basket's entries behind, such as showing another person or another
+     * period: at once while the basket is empty, otherwise after asking whether to discard them. Yes empties the
+     * basket and makes the change; No calls keep, which puts back a field the user has already changed, so that
+     * everything stays as it was.
+     */
+    private void changeDiscardingBasket(Runnable change, Runnable keep) {
+        if (basket.isEmpty()) {
+            change.run();
+            return;
+        }
+
+        dialogs.createOptionDialog()
+                .withHeader(messages.getMessage("dialogs.Confirmation"))
+                .withText(countText("discardBasketConfirmation", basket.size()))
+                .withActions(
+                        new DialogAction(DialogAction.Type.YES)
+                                .withHandler(event -> {
+                                    emptyBasket();
+                                    change.run();
+                                }),
+                        // Keeping the basket is the safe answer, as in the framework's question on unsaved changes
+                        new DialogAction(DialogAction.Type.NO)
+                                .withHandler(event -> keep.run())
+                                .withVariant(ActionVariant.PRIMARY))
+                .open();
+    }
+
+    /**
+     * Puts back the value of a field without acting on the change, as after a No to the question about the basket.
+     */
+    private void revert(Runnable putBack) {
+        revertingField = true;
+        try {
+            putBack.run();
+        } finally {
+            revertingField = false;
+        }
     }
 
     private ApprovalMode loadMode() {
@@ -542,6 +690,7 @@ public class TimeEntryApprovalView extends StandardView {
             return;
         }
         shownPerson = person;
+        keepBasketOf(person);
 
         if (person == null) {
             selectedWeek = null;
@@ -560,9 +709,9 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     /**
-     * Says which entries a bulk approve of a scope takes: the selected person's new entries dated in the scope. A
-     * rejected entry is left out, as it takes its own approval. The count on each button, the question, and the
-     * approval itself all come from here.
+     * Says which entries a bulk approve of a scope takes: the selected person's new entries dated in the scope, except
+     * those in the reject basket. A rejected entry is left out, as it takes its own approval. The count on each
+     * button, the question, and the approval itself all come from here.
      */
     private List<TimeEntry> entriesToApprove(ApprovalScope scope) {
         if (shownPerson == null) {
@@ -571,6 +720,7 @@ public class TimeEntryApprovalView extends StandardView {
 
         return shownPerson.entries().stream()
                 .filter(entry -> entry.getStatus() == TimeEntryStatus.NEW && scope.contains(entry.getDate()))
+                .filter(entry -> !basket.containsKey(entry.getId()))
                 .toList();
     }
 
@@ -630,6 +780,94 @@ public class TimeEntryApprovalView extends StandardView {
 
         reload();
         notifications.create(countText("approveNotification", approved.size()))
+                .withType(Notifications.Type.SUCCESS)
+                .show();
+    }
+
+    private void addToBasket(TimeEntry entry) {
+        basket.put(entry.getId(), entry);
+        basketChanged();
+    }
+
+    private void removeFromBasket(TimeEntry entry) {
+        basket.remove(entry.getId());
+        basketChanged();
+    }
+
+    private void emptyBasket() {
+        basket.clear();
+        basketChanged();
+    }
+
+    /**
+     * Brings what shows the reject basket up to date with it: the entries' cards and the counts of the bulk approve,
+     * the bar, and the dialog, which closes once nothing is left in the basket.
+     */
+    private void basketChanged() {
+        personPanel.updateBasket();
+        basketBar.setEntries(basket.values());
+        if (basket.isEmpty()) {
+            draftReason = "";
+            rejectDialog.close();
+        } else {
+            rejectDialog.setEntries(List.copyOf(basket.values()));
+        }
+    }
+
+    /**
+     * Keeps in the reject basket the entries that the person shown now has and that can still be rejected, as they
+     * were loaded now: the basket holds the shown person's entries only, so another person, or nobody, empties it.
+     */
+    private void keepBasketOf(@Nullable ApprovalPerson person) {
+        if (!basket.isEmpty()) {
+            ApprovalPeriod current = getPeriod();
+            Map<UUID, TimeEntry> loaded = person == null
+                    ? Map.of()
+                    : person.entries().stream()
+                    .filter(entry -> current.contains(entry.getDate()) && ApprovalEntryCard.canBeRejected(entry))
+                    .collect(Collectors.toMap(TimeEntry::getId, Function.identity()));
+
+            List<UUID> kept = basket.keySet().stream().filter(loaded::containsKey).toList();
+            basket.clear();
+            kept.forEach(id -> basket.put(id, loaded.get(id)));
+            if (basket.isEmpty()) {
+                draftReason = "";
+            }
+        }
+        basketBar.setEntries(basket.values());
+    }
+
+    private void openRejectDialog() {
+        if (shownPerson == null || basket.isEmpty()) {
+            return;
+        }
+
+        rejectDialog.open(this, ApprovalRosterCard.nameOf(shownPerson.user()), List.copyOf(basket.values()),
+                draftReason, this::removeFromBasket, this::reject);
+    }
+
+    private void reject(String reason) {
+        // Closed first: a stale entry makes the rejection throw, and the dialog must not stay open over the reloaded
+        // screen, to reject the stale entries again
+        rejectDialog.close();
+
+        List<TimeEntry> rejected;
+        try {
+            rejected = approvalSupport.reject(List.copyOf(basket.values()), reason);
+        } catch (OptimisticLockException e) {
+            // The basket keeps its entries as they are now, and the dialog opens again on the reason; then the
+            // framework's handler tells the user
+            reload();
+            if (!basket.isEmpty()) {
+                draftReason = reason;
+            }
+            throw e;
+        }
+
+        basket.clear();
+        draftReason = "";
+        reload();
+        notifications.create(countText("rejectNotification", rejected.size()))
                 .withType(Notifications.Type.SUCCESS)
                 .show();
     }

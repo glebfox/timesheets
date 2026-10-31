@@ -22,6 +22,7 @@ import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
+import com.google.common.base.Preconditions;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Composite;
@@ -43,7 +44,9 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * A time entry's card on the approval screen: a stripe in the color of the entry's status, the time, the task with
@@ -51,15 +54,20 @@ import java.util.Set;
  * a rejected entry, and the buttons for what can be done with it: ✓ for a new or a rejected entry, ✕ for a new, an
  * approved, or a rejected one, and none for a closed one. The description and the reason are rendered from Markdown.
  * <p>
+ * An entry that can be rejected may be put in the reject basket, which {@link #setInBasket} tells the card: the card
+ * is then marked "in reject basket", and its only button is ↺, which takes the entry out again.
+ * <p>
  * The buttons do nothing of their own: whoever shows the card attaches what they do with
- * {@link #addApproveClickListener} and {@link #addRejectClickListener}, at any time after the card is created.
+ * {@link #addApproveClickListener}, {@link #addRejectClickListener}, and {@link #addUnrejectClickListener}, at any
+ * time after the card is created. A button that the card does not show is not in the card.
  * <p>
  * The card's classes are {@code approval-entry-card}, the class of the entry's status ({@code new}, {@code approved},
- * {@code rejected}, or {@code closed}), and {@code compact} on the week board, where the description is cut after
- * three lines. Its parts have the classes {@code stripe}, {@code time}, {@code content}, which holds {@code task}
- * (with {@code task-name} and {@code project}), {@code description}, {@code tags}, and {@code reason}, and
- * {@code actions}. The card's id is {@code entry-<id>}, and its buttons' are {@code approveEntryBtn-<id>} and
- * {@code rejectEntryBtn-<id>}, with the id of the entry.
+ * {@code rejected}, or {@code closed}), {@code compact} on the week board, where the description is cut after three
+ * lines, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe},
+ * {@code time}, {@code content}, which holds {@code task} (with {@code task-name}, {@code project}, and the
+ * {@code basket-mark}), {@code description}, {@code tags}, and {@code reason}, and {@code actions}. The card's id is
+ * {@code entry-<id>}, and its buttons' are {@code approveEntryBtn-<id>}, {@code rejectEntryBtn-<id>}, and
+ * {@code unrejectEntryBtn-<id>}, with the id of the entry.
  * <p>
  * The card is a container so that a lookup of components by id, as Jmix does it, reaches its buttons.
  */
@@ -67,16 +75,23 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
 
     static final String CLASS_NAME = "approval-entry-card";
     static final String COMPACT_CLASS_NAME = "compact";
+    static final String IN_BASKET_CLASS_NAME = "in-basket";
 
     private static final Set<TimeEntryStatus> APPROVABLE = EnumSet.of(TimeEntryStatus.NEW, TimeEntryStatus.REJECTED);
     private static final Set<TimeEntryStatus> REJECTABLE =
             EnumSet.of(TimeEntryStatus.NEW, TimeEntryStatus.APPROVED, TimeEntryStatus.REJECTED);
 
     private final TimeEntry entry;
+    private final Div task;
+    private final Badge basketMark;
+    private final Div actions;
     @Nullable
     private final Button approveButton;
     @Nullable
     private final Button rejectButton;
+    @Nullable
+    private final Button unrejectButton;
+    private boolean inBasket;
 
     /**
      * Creates the card of an entry.
@@ -106,7 +121,12 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         Div time = new Div(metadataTools.format(entry.getSpentTime()));
         time.addClassName("time");
 
-        Div content = new Div(createTask(componentSupport, metadataTools));
+        task = createTask(componentSupport, metadataTools);
+        basketMark = componentSupport.createBadge(
+                messages.getMessage(ApprovalEntryCard.class, "entryCard.inBasket", locale), BadgeStyle.ERROR);
+        basketMark.addClassName("basket-mark");
+
+        Div content = new Div(task);
         content.addClassName("content");
         createMarkdown(entry.getDescription(), "description", content);
         createTags(componentSupport, metadataTools, content);
@@ -114,18 +134,35 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
             createMarkdown(entry.getRejectionReason(), "reason", content);
         }
 
-        Div actions = new Div();
+        actions = new Div();
         actions.addClassName("actions");
         approveButton = APPROVABLE.contains(status)
                 ? createButton("approveEntryBtn-", GravityUiIcon.CHECK.create(), ButtonVariant.SUCCESS,
-                messages.getMessage(ApprovalEntryCard.class, "entryCard.approve", locale), actions)
+                messages.getMessage(ApprovalEntryCard.class, "entryCard.approve", locale))
                 : null;
-        rejectButton = REJECTABLE.contains(status)
+        boolean rejectable = REJECTABLE.contains(status);
+        rejectButton = rejectable
                 ? createButton("rejectEntryBtn-", GravityUiIcon.XMARK.create(), ButtonVariant.ERROR,
-                messages.getMessage(ApprovalEntryCard.class, "entryCard.reject", locale), actions)
+                messages.getMessage(ApprovalEntryCard.class, "entryCard.reject", locale))
                 : null;
+        // Neutral: it undoes the ✕ and changes nothing saved
+        unrejectButton = rejectable
+                ? createButton("unrejectEntryBtn-", GravityUiIcon.ARROW_ROTATE_LEFT.create(), null,
+                messages.getMessage(ApprovalEntryCard.class, "entryCard.unreject", locale))
+                : null;
+        showButtons();
 
         card.add(stripe, time, content, actions);
+    }
+
+    /**
+     * Tells whether an entry can be rejected, and so put in the reject basket: a new, an approved, or a rejected one.
+     *
+     * @param entry the entry
+     * @return whether the card of the entry has ✕
+     */
+    static boolean canBeRejected(TimeEntry entry) {
+        return REJECTABLE.contains(entry.getStatus());
     }
 
     /**
@@ -138,8 +175,31 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
     }
 
     /**
+     * Tells whether the entry is in the reject basket, which changes the card's mark and buttons.
+     *
+     * @param inBasket whether the entry is in the reject basket
+     * @throws IllegalArgumentException if the entry goes in the basket but cannot be rejected, as a closed entry
+     */
+    public void setInBasket(boolean inBasket) {
+        Preconditions.checkArgument(!inBasket || unrejectButton != null,
+                "A %s entry cannot be rejected", entry.getStatus());
+        if (inBasket == this.inBasket) {
+            return;
+        }
+
+        this.inBasket = inBasket;
+        getContent().setClassName(IN_BASKET_CLASS_NAME, inBasket);
+        if (inBasket) {
+            task.add(basketMark);
+        } else {
+            task.remove(basketMark);
+        }
+        showButtons();
+    }
+
+    /**
      * Adds a listener to the ✓ button. An entry that cannot be approved, an approved or a closed one, has no such
-     * button, and the listener is never called.
+     * button, and the listener is never called. While the entry is in the reject basket, the card does not show it.
      *
      * @param listener the listener to call when ✓ is clicked
      * @return a registration that removes the listener
@@ -149,13 +209,25 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
     }
 
     /**
-     * Adds a listener to the ✕ button. A closed entry has no such button, and the listener is never called.
+     * Adds a listener to the ✕ button, which puts the entry in the reject basket. A closed entry has no such button,
+     * and the listener is never called. While the entry is in the reject basket, the card does not show it.
      *
      * @param listener the listener to call when ✕ is clicked
      * @return a registration that removes the listener
      */
     public Registration addRejectClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
         return addListenerTo(rejectButton, listener);
+    }
+
+    /**
+     * Adds a listener to the ↺ button, which takes the entry out of the reject basket. The card shows it only while
+     * the entry is in the basket; a closed entry has no such button, and the listener is never called.
+     *
+     * @param listener the listener to call when ↺ is clicked
+     * @return a registration that removes the listener
+     */
+    public Registration addUnrejectClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
+        return addListenerTo(unrejectButton, listener);
     }
 
     private static Registration addListenerTo(@Nullable Button button,
@@ -171,13 +243,13 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         Span project = new Span(metadataTools.getInstanceName(entry.getTask().getProject()));
         project.addClassName("project");
 
-        Div task = new Div(taskName, project);
-        task.addClassName("task");
+        Div taskPart = new Div(taskName, project);
+        taskPart.addClassName("task");
         // An entry that waits is the usual case, so only the other statuses name themselves
         if (entry.getStatus() != TimeEntryStatus.NEW) {
-            task.add(componentSupport.createTimeEntryStatusRender().createComponent(entry));
+            taskPart.add(componentSupport.createTimeEntryStatusRender().createComponent(entry));
         }
-        return task;
+        return taskPart;
     }
 
     private static void createMarkdown(@Nullable String text, String className, Div content) {
@@ -207,13 +279,26 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         content.add(tagsPart);
     }
 
-    private Button createButton(String idPrefix, Icon icon, ButtonVariant color, String text, Div actions) {
+    /**
+     * Puts in the actions the buttons for what can be done with the entry now: ↺ alone while it is in the basket,
+     * otherwise ✓ and ✕ where they apply.
+     */
+    private void showButtons() {
+        actions.removeAll();
+        Stream.of(inBasket ? unrejectButton : approveButton, inBasket ? null : rejectButton)
+                .filter(Objects::nonNull)
+                .forEach(actions::add);
+    }
+
+    private Button createButton(String idPrefix, Icon icon, @Nullable ButtonVariant color, String text) {
         Button button = new Button(icon);
         button.setId(idPrefix + entry.getId());
-        button.addThemeVariants(ButtonVariant.TERTIARY, color);
+        button.addThemeVariants(ButtonVariant.TERTIARY);
+        if (color != null) {
+            button.addThemeVariants(color);
+        }
         button.setAriaLabel(text);
         button.setTooltipText(text);
-        actions.add(button);
         return button;
     }
 }

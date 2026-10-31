@@ -140,7 +140,9 @@
     min-height: 0;
 }
 
+/* The reject basket's bar floats over its bottom */
 .time-entry-approval-view-person {
+    position: relative;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -746,6 +748,15 @@
     opacity: 0.6;
 }
 
+/* An entry in the reject basket is outlined in the color of Rejected, and steps forward even when approved */
+.approval-entry-card.in-basket {
+    border-color: var(--ts-danger-color);
+}
+
+.approval-entry-card.approved.in-basket {
+    opacity: 1;
+}
+
 .approval-entry-card > .stripe {
     position: absolute;
     inset-block: 0;
@@ -872,4 +883,128 @@
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
+}
+
+/* Reject basket bar: floats over the bottom of the selected person's part, centred, so it takes no width */
+
+.approval-basket-bar {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: var(--vaadin-padding-m);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    width: fit-content;
+    max-width: calc(100% - var(--vaadin-padding-m) * 2);
+    box-sizing: border-box;
+    margin-inline: auto;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-m);
+    border: 1px solid var(--ts-danger-color);
+    border-radius: var(--vaadin-radius-l);
+    background: var(--aura-surface-color-solid);
+    box-shadow: var(--aura-shadow-m);
+    white-space: nowrap;
+}
+
+.approval-basket-bar > .count {
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-basket-bar > :is(.separator, .dates) {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-basket-bar > .dates {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Room under the last entries, so the bar does not cover them when scrolled to the end: about the bar's height and
+   its offset from the bottom */
+.time-entry-approval-view-person:has(> .approval-basket-bar:not([hidden])) > .approval-person-panel {
+    padding-block-end: calc(var(--aura-line-height-xl) * 2 + var(--vaadin-padding-m));
+}
+
+/* Reject dialog: the entries of the basket, the quick reasons, and the reason */
+
+/* Wide enough for an entry's task and time on one line, and the quick reasons on two */
+.approval-reject-dialog {
+    --jmix-side-dialog-horizontal-size: 28rem;
+}
+
+.approval-reject-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-l);
+}
+
+.approval-reject-dialog-content > .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-reject-dialog-content .section-label {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-reject-dialog-content .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* The task and the time over the day and the description, with the button that takes the entry out beside them */
+.approval-reject-dialog-content .basket-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title remove"
+        "details remove";
+    align-items: center;
+    column-gap: var(--vaadin-gap-s);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-m);
+}
+
+.approval-reject-dialog-content .basket-entry > .title {
+    grid-area: title;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-reject-dialog-content .basket-entry > .details {
+    grid-area: details;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-reject-dialog-content .basket-entry > .remove {
+    grid-area: remove;
+}
+
+.approval-reject-dialog-content .quick-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* As tall as the reason field of the time entry editor */
+.approval-reject-dialog-content > .reason {
+    min-height: 15rem;
 }

@@ -42,6 +42,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.function.SerializableFunction;
+import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -54,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -62,12 +64,15 @@ import java.util.stream.Collectors;
  * one week below it, grouped by day; a week is a {@link ApprovalWeekBoard}. Only the period's own days count, in the
  * figures, the grid, and the list alike.
  * <p>
- * The panel only shows what it is given. A click on a day or a week of the month grid, on an entry's ✓ or ✕, and on
- * a button that approves a person, a week, or a day, is passed on as an event of the panel, whose listener decides
+ * The panel only shows what it is given. A click on a day or a week of the month grid, on an entry's ✓, ✕, or ↺, and
+ * on a button that approves a person, a week, or a day, is passed on as an event of the panel, whose listener decides
  * what follows, such as {@link #showWeek}. Those buttons are in the {@code actions} of the person, the week card, and
  * the day, one for each that has waiting entries; which entries a button approves is asked of the function the panel
  * is created with, so that the count on a button and what the click approves come from one place. The ids of the
  * buttons are {@code approvePersonBtn}, {@code approveWeekBtn-<first day>}, and {@code approveDayBtn-<day>}.
+ * <p>
+ * Which entries are in the reject basket is asked of the predicate the panel is created with, when an entry's card is
+ * drawn and at {@link #updateBasket}, which the owner calls when the basket changes.
  * <p>
  * The panel has the class {@code approval-person-panel}. Its parts are the {@code header}, with the {@code avatar},
  * the {@code name}, the {@code details} (the roles and the projects), and the {@code actions} of the person; the
@@ -99,6 +104,9 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
     @Nullable
     private Div entryList;
     private final Map<LocalDate, Div> dayGroups = new HashMap<>();
+    // The cards drawn, by the id of their entry
+    private final Map<UUID, ApprovalEntryCard> entryCards = new HashMap<>();
+    private final SerializablePredicate<TimeEntry> inBasket;
     // The buttons of what is drawn with the person, and those of the week listed, which change with the week
     private final ApprovalBulkApproveButtons drawnButtons;
     private final ApprovalBulkApproveButtons listedButtons;
@@ -112,15 +120,18 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
      * @param locale           the locale of the texts
      * @param titles           formats the dates of a week
      * @param entriesToApprove gives the entries that a bulk approve of a stretch of the shown period takes
+     * @param inBasket         tells whether an entry is in the reject basket
      */
     ApprovalPersonPanel(ComponentSupport componentSupport, Messages messages, MetadataTools metadataTools,
                         Locale locale, ApprovalPeriodTitle titles,
-                        SerializableFunction<ApprovalScope, List<TimeEntry>> entriesToApprove) {
+                        SerializableFunction<ApprovalScope, List<TimeEntry>> entriesToApprove,
+                        SerializablePredicate<TimeEntry> inBasket) {
         this.componentSupport = componentSupport;
         this.messages = messages;
         this.metadataTools = metadataTools;
         this.locale = locale;
         this.titles = titles;
+        this.inBasket = inBasket;
         this.drawnButtons = new ApprovalBulkApproveButtons(entriesToApprove, this::fireApproveScopeClick);
         this.listedButtons = new ApprovalBulkApproveButtons(entriesToApprove, this::fireApproveScopeClick);
 
@@ -202,6 +213,7 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
         monthGrid = null;
         entryList = null;
         dayGroups.clear();
+        entryCards.clear();
         drawnButtons.clear();
         listedButtons.clear();
     }
@@ -221,6 +233,8 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
 
         entryList.removeAll();
         dayGroups.clear();
+        // In a month, the cards drawn are those of the week listed
+        entryCards.clear();
         listedButtons.clear();
 
         ApprovalPeriod month = period;
@@ -251,6 +265,16 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
                 entryList.add(group);
             }
         }
+        listedButtons.refresh();
+    }
+
+    /**
+     * Brings what shows the reject basket up to date with it: the marks and the buttons of the entries' cards, and the
+     * counts of the buttons that approve in bulk, which leave the basket's entries out.
+     */
+    void updateBasket() {
+        entryCards.values().forEach(card -> card.setInBasket(inBasket.test(card.getEntry())));
+        drawnButtons.refresh();
         listedButtons.refresh();
     }
 
@@ -308,13 +332,23 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
     }
 
     /**
-     * Adds a listener of clicks on the ✕ of an entry's card.
+     * Adds a listener of clicks on the ✕ of an entry's card, which puts the entry in the reject basket.
      *
      * @param listener the listener
      * @return a registration that removes the listener
      */
     Registration addRejectEntryClickListener(ComponentEventListener<RejectEntryClickEvent> listener) {
         return addListener(RejectEntryClickEvent.class, listener);
+    }
+
+    /**
+     * Adds a listener of clicks on the ↺ of an entry's card, which takes the entry out of the reject basket.
+     *
+     * @param listener the listener
+     * @return a registration that removes the listener
+     */
+    Registration addUnrejectEntryClickListener(ComponentEventListener<UnrejectEntryClickEvent> listener) {
+        return addListener(UnrejectEntryClickEvent.class, listener);
     }
 
     private static List<TimeEntry> entriesIn(ApprovalPerson person, ApprovalPeriod period) {
@@ -438,6 +472,10 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
                 fireEvent(new ApproveEntryClickEvent(this, event.isFromClient(), entry)));
         card.addRejectClickListener(event ->
                 fireEvent(new RejectEntryClickEvent(this, event.isFromClient(), entry)));
+        card.addUnrejectClickListener(event ->
+                fireEvent(new UnrejectEntryClickEvent(this, event.isFromClient(), entry)));
+        card.setInBasket(inBasket.test(entry));
+        entryCards.put(entry.getId(), card);
         return card;
     }
 
@@ -597,6 +635,16 @@ final class ApprovalPersonPanel extends Composite<Div> implements HasComponents 
     static final class RejectEntryClickEvent extends EntryClickEvent {
 
         RejectEntryClickEvent(ApprovalPersonPanel source, boolean fromClient, TimeEntry entry) {
+            super(source, fromClient, entry);
+        }
+    }
+
+    /**
+     * A click on the ↺ of an entry's card, which the card shows while the entry is in the reject basket.
+     */
+    static final class UnrejectEntryClickEvent extends EntryClickEvent {
+
+        UnrejectEntryClickEvent(ApprovalPersonPanel source, boolean fromClient, TimeEntry entry) {
             super(source, fromClient, entry);
         }
     }
