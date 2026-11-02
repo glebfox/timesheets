@@ -55,7 +55,7 @@
     grid-area: content;
     display: flex;
     flex-direction: column;
-    gap: var(--vaadin-gap-xs);
+    gap: var(--vaadin-gap-s);
     min-width: 0;
 }
 
@@ -103,7 +103,7 @@
 .approval-entry-card > .content > .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--vaadin-gap-xs);
+    gap: var(--vaadin-gap-s);
 }
 
 /* The reason an entry was rejected, set off by a line in the color of Rejected */
@@ -134,8 +134,7 @@
         "time"
         "content"
         "actions";
-    row-gap: var(--vaadin-gap-xs);
-    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s) var(--vaadin-padding-s);
+    row-gap: var(--vaadin-gap-s);
 }
 
 .approval-entry-card.compact > .time {
