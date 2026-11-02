@@ -24,8 +24,8 @@
     box-sizing: border-box;
     min-height: 0;
     overflow-y: auto;
-    /* Room for the focus rings of the parts along the edges, such as the person's button: a ring reaches as far out as
-       its width and its offset from the part, which Aura sets to 2 pixels for a button */
+    /* Room for the focus rings of the parts along the edges, such as the person's primary button: a ring reaches as far
+       out as its width and its offset from the part, which Aura sets to 2 pixels for a primary button */
     padding: calc(var(--vaadin-focus-ring-width) + 2px);
 }
 
@@ -93,7 +93,7 @@
     margin-inline-start: auto;
 }
 
-/* A button never reaches past the panel: in a panel narrower than its text, its text is cut short */
+/* A button never reaches past the panel: in a panel narrower than its text, its text wraps */
 .approval-person-panel > .header > .actions > vaadin-button {
     flex-shrink: 1;
     min-width: 0;

@@ -133,7 +133,7 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 **Box sizing.** The theme leaves the project's own elements in `content-box`, so their padding and border add to a width set on them. A part given a share of its row, such as an approval figure at `flex-basis: calc(50% - var(--vaadin-gap-s))` for two to a row, sets `box-sizing: border-box`; otherwise its padding and border push the second part onto a row of its own.
 
-**Focus rings at an edge.** A focus ring reaches outside its part by its width, `--vaadin-focus-ring-width`, and by its offset, which Aura sets to 2 pixels for a button and to zero or less for most other parts. A scrolling container clips the ring at its padding, so a container whose parts reach its edge, such as the approval screen's person panel, pads by the ring's width plus 2 pixels.
+**Focus rings at an edge.** A focus ring reaches outside its part by its width, `--vaadin-focus-ring-width`, plus its offset, which Aura sets to 2 pixels for a primary button, to minus the border's width, 1 pixel inward, for any other button, and to zero or less for most other parts. A container that clips its overflow, as one that scrolls does, cuts the ring off at the outer edge of its padding, so a container whose parts reach its edge, such as the approval screen's person panel with the person's primary button, pads by the ring's width plus 2 pixels.
 
 ---
 

@@ -24,7 +24,7 @@ Pick per check; you can switch between them.
 - **Playwright** (`mcp__plugin_playwright_playwright__*`, load them with ToolSearch) — when you need two users logged in at once, such as a server-push update from one session to another: its browser contexts do not share cookies. Its actions return a page snapshot each time, which is large on Jmix screens. Before using it, read the Playwright notes under Live checks in `docs/guidelines/testing.md`.
 - **Claude in Chrome** (`mcp__claude-in-chrome__*`, load them with ToolSearch) — only when the caller says the user asked for it. It is the user's own browser: never sign out or touch other tabs.
 
-Read structure and text with the accessibility tree or page text; take a screenshot when the look itself is what you check.
+Read structure and text with the accessibility tree or page text; take a screenshot when the look itself is what you check. Before measuring a layout, read the measuring notes under Live checks in `docs/guidelines/testing.md`.
 
 ## Report
 

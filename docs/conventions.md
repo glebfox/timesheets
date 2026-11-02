@@ -44,7 +44,7 @@ A component or renderer with its own Java class and its own stylesheet in the th
 
 ## Breakpoints
 
-A media or a container query on width switches at a common screen width, written in pixels, such as 480, 600, 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs, in `rem`. A container query does not switch within a scrollbar's width of a width its container has at a common window, with the navigation drawer open or collapsed, so that a classic or an overlay scrollbar never decides the layout (`docs/guidelines/design-system.md`). Older stylesheets, such as the calendar's, predate the rule.
+A media or a container query on width switches at a common screen width, written in pixels, such as 480, 600, 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs, in `rem`. A container query switches at least a scrollbar's width away from every width its container has at a common window, with the navigation drawer open or collapsed, so that a classic or an overlay scrollbar never decides the layout (`docs/guidelines/design-system.md`). Older stylesheets, such as the calendar's, predate the rule.
 
 ## Commits
 

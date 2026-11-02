@@ -8,7 +8,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 
 - `entity/<area>/` — entities and their enums, one subpackage per domain area, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
 - `datatype/` — custom value types with their Jmix datatypes and JPA converters.
-- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return, the value types a screen computes from what it loads, such as the periods and totals of the approval screen, and the helpers that several views share.
+- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return, the value types a screen loads by or computes from what it loads, such as the periods and totals of the approval screen, and the helpers that several views share.
 - `view/<entity>/` — view controllers, with a subpackage for a screen that has types of its own, such as `view/timeentry/approval/`; each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions and the helpers they share.
 - `data/renderer/` — reusable grid renderers.
