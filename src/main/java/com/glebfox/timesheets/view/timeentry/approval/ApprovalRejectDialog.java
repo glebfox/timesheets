@@ -28,6 +28,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.function.SerializableConsumer;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -62,11 +63,11 @@ import java.util.Objects;
  * The dialog has the class {@code approval-reject-dialog}; its content has the class
  * {@code approval-reject-dialog-content}. The content holds two {@code section}s, each with a {@code section-label}:
  * the {@code entries-section}, whose {@code entries} have a {@code basket-entry} for each entry with its
- * {@code title}, {@code details}, and {@code remove} button, and the {@code quick-reasons-section}, whose
- * {@code quick-reasons} are the buttons; then the {@code reason}. The ids are {@code basketEntry-<id>} and
- * {@code removeBasketEntryBtn-<id>} with the id of the entry, {@code quickReason-<name>} with the name of a quick
- * reason ({@code description}, {@code wrongTask}, {@code tooMuchTime}, or {@code duplicate}), {@code reasonField},
- * {@code rejectBtn}, and {@code cancelBtn}.
+ * {@code title}, {@code date}, {@code description} when it has one, and {@code remove} button, and the
+ * {@code quick-reasons-section}, whose {@code quick-reasons} are the buttons; then the {@code reason}. The ids are
+ * {@code basketEntry-<id>} and {@code removeBasketEntryBtn-<id>} with the id of the entry, {@code quickReason-<name>}
+ * with the name of a quick reason ({@code description}, {@code wrongTask}, {@code tooMuchTime}, or
+ * {@code duplicate}), {@code reasonField}, {@code rejectBtn}, and {@code cancelBtn}.
  */
 final class ApprovalRejectDialog {
 
@@ -200,7 +201,8 @@ final class ApprovalRejectDialog {
             rejectButton.setId("rejectBtn");
             rejectButton.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR);
 
-            Button cancelButton = new Button(messages.getMessage("actions.Cancel", locale), event -> askBeforeClosing());
+            Button cancelButton = new Button(messages.getMessage("actions.Cancel", locale),
+                    event -> askBeforeClosing());
             cancelButton.setId("cancelBtn");
 
             Div content = new Div(
@@ -262,13 +264,10 @@ final class ApprovalRejectDialog {
                 title.add(componentSupport.createTimeEntryStatusRender().createComponent(entry));
             }
 
-            String date = message("entriesDay.title", componentSupport.formatDayOfWeekShort(
+            Span date = new Span(message("entriesDay.title", componentSupport.formatDayOfWeekShort(
                     entry.getDate().getDayOfWeek()), entry.getDate().format(
-                    DateTimeFormatter.ofPattern(message("entriesDay.date"), locale)));
-            Span details = new Span(StringUtils.isBlank(entry.getDescription())
-                    ? date
-                    : message("rejectDialog.entry.details", date, entry.getDescription()));
-            details.addClassName("details");
+                    DateTimeFormatter.ofPattern(message("entriesDay.date"), locale))));
+            date.addClassName("date");
 
             String removeText = message("rejectDialog.removeEntry");
             Button remove = new Button(GravityUiIcon.XMARK.create(), event -> onRemove.accept(entry));
@@ -278,9 +277,15 @@ final class ApprovalRejectDialog {
             remove.setAriaLabel(removeText);
             remove.setTooltipText(removeText);
 
-            Div row = new Div(title, remove, details);
+            Div row = new Div(title, remove, date);
             row.setId("basketEntry-" + entry.getId());
             row.addClassName("basket-entry");
+            // Rendered from Markdown, as on the entry's card
+            if (StringUtils.isNotBlank(entry.getDescription())) {
+                Div description = new Div(new Markdown(entry.getDescription()));
+                description.addClassName("description");
+                row.add(description);
+            }
             return row;
         }
 

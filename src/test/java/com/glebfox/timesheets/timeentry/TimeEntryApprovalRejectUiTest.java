@@ -247,6 +247,31 @@ public class TimeEntryApprovalRejectUiTest {
     }
 
     @Test
+    void theDialogRendersTheDescriptionsFromMarkdown() {
+        String description = "**Calibrated** the equipment:\n\n- zeroed the emitter\n- aligned the mirrors";
+        TimeEntry monday = reload(cidMonday);
+        monday.setDescription(description);
+        dataManager.saveWithoutReload(monday);
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openOnCidsWeek();
+            click(view, "rejectEntryBtn-" + cidMonday.getId());
+            click(view, "rejectEntryBtn-" + cidTuesday.getId());
+            click(view, "writeReasonBtn");
+
+            // Rendered below the day, not shown as its source
+            SideDialog dialog = rejectDialogOf(view);
+            Component mondayRow = partOf(dialog, "basketEntry-" + cidMonday.getId());
+            assertThat(markdownOf(mondayRow)).isEqualTo(description);
+            assertThat(mondayRow.getElement().getTextRecursively()).doesNotContain("**", "- zeroed");
+
+            // An entry without a description shows only its day
+            Component tuesdayRow = partOf(dialog, "basketEntry-" + cidTuesday.getId());
+            assertThat(descendantsOf(tuesdayRow).filter(Markdown.class::isInstance)).isEmpty();
+        });
+    }
+
+    @Test
     void theReasonIsRequired() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openOnCidsWeek();
