@@ -36,7 +36,7 @@ A UI piece that several views show the same way, such as an avatar, a user cell,
 
 ## Components in a view
 
-A component that a view shows, such as a panel, a bar, or a card of a list, is declared in the view's descriptor, with the generic `component` element when it has no element of its own, or created in the controller through `UiComponents`. The view handles its events with `@Subscribe` and gives its handlers with `@Install` wherever the component allows it, not with listeners and setters in code. Inside a component, the parts it builds are created with `new`, which is cheaper. Older views still create some of their components with `new`. How the generic element and the annotations reach a component of the project's own: `docs/guidelines/views.md`.
+A component that a view shows, such as a panel, a bar, or a card of a list, is declared in the view's descriptor, with the generic `component` element when it has no element of its own, or created in the controller through `UiComponents`. The view handles its events with `@Subscribe` and gives its handlers with `@Install` wherever the component allows it, not with listeners and setters in code. Inside a component, the parts it builds are created with `new`, which is cheaper, except a Jmix component that takes beans from the application context, such as the reject dialog's Markdown editor, which comes from `UiComponents`. Older views still create some of their components with `new`. How the generic element and the annotations reach a component of the project's own: `docs/guidelines/views.md`.
 
 ## CSS classes set from Java
 
@@ -44,7 +44,7 @@ A component or renderer with its own Java class and its own stylesheet in the th
 
 ## Breakpoints
 
-A media or a container query switches at a common screen width, written in pixels, such as 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs. Older stylesheets, such as the calendar's, predate the rule.
+A media or a container query on width switches at a common screen width, written in pixels, such as 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs. Older stylesheets, such as the calendar's, predate the rule.
 
 ## Commits
 
