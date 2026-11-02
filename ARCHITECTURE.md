@@ -19,6 +19,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`). See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.
+- `META-INF/resources/assets/brand/` — the SVG and PNG brand collection, its palette and usage guide, and favicon exports, served under `/assets/brand/`. The source and export tools are in `scripts/brand/`.
 
 Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each; `.claude/skills/` and `.agents/skills/` link to them by symlinks, so Claude Code and other agents read the same files. Claude Code subagents are in `.claude/agents/`, and its hooks are in `.claude/hooks/`, wired in `.claude/settings.json`. The hooks need `jq` and `python3` on the PATH, and the skills that touch GitHub need `gh` signed in with the `project` scope.
 
@@ -30,6 +31,7 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 
 ## Commands
 
+- Rebuild brand assets: `uv run scripts/brand/generate.py` (requires a system Cairo library); verify exports: `uv run scripts/brand/verify.py`. The asset collection's `README.md` includes the macOS loader setting.
 - Run with demo data: `SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun`. It needs the local PostgreSQL database.
 - Tests: `SPRING_PROFILES_ACTIVE=test ./gradlew test`. Without the `test` profile the tests try to reach PostgreSQL. CI runs the same in `.github/workflows/tests.yml`.
 - Local CI: `bash .skills/local-ci/scripts/local-ci.sh` runs `spotlessCheck` and the tests on the `test` profile, as CI does, in a throwaway clone of HEAD plus uncommitted and untracked changes, so this checkout's `build/` is left alone. On failure it keeps the clone and prints the failing tasks and test classes.

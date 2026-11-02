@@ -32,6 +32,9 @@ webpack.generated.js
 
 .DS_Store
 
+# Python tooling
+__pycache__/
+
 ### Superpowers working designs and plans ###
 docs/superpowers/
 .superpowers/*

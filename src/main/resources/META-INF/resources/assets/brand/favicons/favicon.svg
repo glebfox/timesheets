@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Timesheets app icon, dark</title>
+  <desc>Timesheets: three time-entry strips form a T, with a folded corner. All lettering is outlined; no external resources are required.</desc>
+  <rect width="512" height="512" rx="100" fill="#0256A9"/><g transform="translate(70 102.25) scale(0.75)" fill="#F9F7F2"><path d="M36 0H416L496 80V108Q496 136 468 136H44L0 92V36Q0 0 36 0Z"/><path d="M136 164H388Q400 164 400 176V236Q400 274 362 274H92V208Z"/><path d="M160 304H378Q390 304 390 316V398Q390 410 378 410H124Q116 410 116 402V350Z"/><path d="M416 0L496 80H438Q416 80 416 58Z" fill="#87F1AC"/></g>
+</svg>
