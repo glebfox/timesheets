@@ -48,6 +48,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.dom.Element;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -68,6 +69,7 @@ import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import io.jmix.tabbedmode.testassist.UiTestUtils;
+import org.jspecify.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.parser.Parser;
@@ -671,6 +673,39 @@ public class TimeEntryApprovalViewUiTest {
         });
     }
 
+    @Test
+    void onlyTheWeekBoardShowsTheWholeDescriptionOnHover() {
+        String description = "Checked:\n\n- the **pump**\n- the valves";
+        TimeEntry described = save(dataManager.create(TimeEntry.class), e -> {
+            e.setTask(task);
+            e.setUser(cid);
+            e.setDate(OCTOBER.atDay(9));
+            e.setSpentTime(WorkTime.of(1, 0));
+            e.setStatus(TimeEntryStatus.NEW);
+            e.setDescription(description);
+        });
+
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(described));
+
+            // A card of the month's week shows the whole description
+            assertThat(tooltipOf(descendantOf(entryCardOf(view, described), "description"))).isNull();
+
+            // The week board cuts it short, so the whole text shows on hover
+            modeField(view).setValue(ApprovalMode.WEEK);
+            view.setPeriod(ApprovalPeriod.weekOf(described.getDate(), firstDayOfWeek()));
+            view.selectPerson(cid);
+            Component weekBoardDescription = descendantOf(entryCardOf(view, described), "description");
+            assertThat(tooltipOf(weekBoardDescription)).isEqualTo(description);
+            // Beside the card rather than below it, where the card's buttons may be
+            assertThat(Tooltip.forComponent(weekBoardDescription).getPosition())
+                    .isEqualTo(Tooltip.TooltipPosition.END_TOP);
+        });
+    }
+
     @AfterEach
     void tearDown() {
         try {
@@ -849,6 +884,14 @@ public class TimeEntryApprovalViewUiTest {
                 .map(markdown -> ((Markdown) markdown).getContent())
                 .findFirst()
                 .orElseThrow();
+    }
+
+    /**
+     * Gives the text of a component's tooltip: {@link Tooltip#forComponent} returns the tooltip the component has, or a
+     * new one without text.
+     */
+    private static @Nullable String tooltipOf(Component component) {
+        return Tooltip.forComponent(component).getText();
     }
 
     private static void click(Component component) {

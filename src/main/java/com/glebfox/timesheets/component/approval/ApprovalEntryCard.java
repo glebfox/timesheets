@@ -34,6 +34,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -65,7 +66,7 @@ import java.util.stream.Stream;
  * <p>
  * The card's classes are {@code approval-entry-card}, the class of the entry's status ({@code new}, {@code approved},
  * {@code rejected}, or {@code closed}), {@code compact} on the week board, where the description is cut after three
- * lines, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe},
+ * lines and shows in full in a tooltip, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe},
  * {@code time}, {@code content}, which holds {@code task} (with {@code task-name}, {@code project}, and the
  * {@code basket-mark}), {@code description}, {@code tags}, and {@code reason}, and {@code actions}. The card's id is
  * {@code entry-<id>}, and its buttons' are {@code approveEntryBtn-<id>}, {@code rejectEntryBtn-<id>}, and
@@ -99,7 +100,8 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
      * Creates the card of an entry.
      *
      * @param entry            the entry with its task, the task's project, and its tags
-     * @param compact          whether the card is shown on the week board, with the description cut short
+     * @param compact          whether the card is shown on the week board, with the description cut short and in full
+     *                         in a tooltip
      * @param componentSupport builds the badges
      * @param messages         gives the texts
      * @param metadataTools    formats the time, the status, and the project
@@ -130,7 +132,14 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
 
         Div content = new Div(task);
         content.addClassName("content");
-        createMarkdown(entry.getDescription(), "description", content);
+        Div description = createMarkdown(entry.getDescription(), "description", content);
+        // The week board cuts the description short, so the whole text shows on hover: beside the card, where it covers
+        // none of the card's buttons, which are below the text or above it
+        if (compact && description != null) {
+            Tooltip tooltip = Tooltip.forComponent(description);
+            tooltip.setMarkdown(entry.getDescription());
+            tooltip.setPosition(Tooltip.TooltipPosition.END_TOP);
+        }
         createTags(componentSupport, metadataTools, content);
         if (status == TimeEntryStatus.REJECTED) {
             createMarkdown(entry.getRejectionReason(), "reason", content);
@@ -259,12 +268,14 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         return taskPart;
     }
 
-    private static void createMarkdown(@Nullable String text, String className, Div content) {
-        if (StringUtils.isNotBlank(text)) {
-            Div part = new Div(new Markdown(text));
-            part.addClassName(className);
-            content.add(part);
+    private static @Nullable Div createMarkdown(@Nullable String text, String className, Div content) {
+        if (StringUtils.isBlank(text)) {
+            return null;
         }
+        Div part = new Div(new Markdown(text));
+        part.addClassName(className);
+        content.add(part);
+        return part;
     }
 
     private void createTags(ComponentSupport componentSupport, MetadataTools metadataTools, Div content) {
