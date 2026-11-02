@@ -38,12 +38,12 @@
                       ariaLabel="msg://projectField.ariaLabel"
                       clearButtonVisible="true"
                       classNames="time-entry-approval-view-project"/>
-            <!-- The controller adds the bar split by status after the label -->
             <div id="teamProgress" classNames="time-entry-approval-view-team-progress">
                 <div classNames="time-entry-approval-view-team-progress-label">
                     <span id="teamProgressText" classNames="time-entry-approval-view-team-progress-text"/>
                     <span id="teamProgressDetails" classNames="time-entry-approval-view-team-progress-details"/>
                 </div>
+                <component id="teamProgressBar" class="com.glebfox.timesheets.component.approval.ApprovalStatusBar"/>
             </div>
         </div>
 
@@ -64,7 +64,11 @@
                                   classNames="segmented-group time-entry-approval-view-roster-scope"/>
                 <virtualList id="rosterList" classNames="time-entry-approval-view-roster-list"/>
             </div>
-            <div id="personBox" classNames="time-entry-approval-view-person"/>
+            <div id="personBox" classNames="time-entry-approval-view-person">
+                <component id="personPanel" class="com.glebfox.timesheets.component.approval.ApprovalPersonPanel"/>
+                <!-- Over the selected person's part, so that it is hidden with it -->
+                <component id="basketBar" class="com.glebfox.timesheets.component.approval.ApprovalBasketBar"/>
+            </div>
             <div id="emptyStateBox" classNames="time-entry-approval-view-empty-state" visible="false">
                 <h3 id="emptyStateHeader"/>
                 <span id="emptyStateText"/>

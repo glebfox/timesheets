@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ApprovalPeriodTitleTest {
 
     static final Locale RUSSIAN = Locale.of("ru", "RU");
-    static final String KEY_PREFIX = "com.glebfox.timesheets.view.timeentry.approval/";
+    static final String KEY_PREFIX = "com.glebfox.timesheets.component.approval/";
 
     @Test
     void monthReadsItsNameAndYear() {

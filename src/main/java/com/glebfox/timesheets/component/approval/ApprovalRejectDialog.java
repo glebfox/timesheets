@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
@@ -69,7 +69,7 @@ import java.util.Objects;
  * with the name of a quick reason ({@code description}, {@code wrongTask}, {@code tooMuchTime}, or
  * {@code duplicate}), {@code reasonField}, {@code rejectBtn}, and {@code cancelBtn}.
  */
-final class ApprovalRejectDialog {
+public final class ApprovalRejectDialog {
 
     static final String CLASS_NAME = "approval-reject-dialog";
 
@@ -104,9 +104,9 @@ final class ApprovalRejectDialog {
      * @param metadataTools       formats the entries' time
      * @param locale              the locale of the texts
      */
-    ApprovalRejectDialog(Dialogs dialogs, UiComponents uiComponents, ViewValidation viewValidation,
-                         UnsavedInputSupport unsavedInputSupport, ComponentSupport componentSupport,
-                         Messages messages, MetadataTools metadataTools, Locale locale) {
+    public ApprovalRejectDialog(Dialogs dialogs, UiComponents uiComponents, ViewValidation viewValidation,
+                                UnsavedInputSupport unsavedInputSupport, ComponentSupport componentSupport,
+                                Messages messages, MetadataTools metadataTools, Locale locale) {
         this.dialogs = dialogs;
         this.uiComponents = uiComponents;
         this.viewValidation = viewValidation;
@@ -130,8 +130,8 @@ final class ApprovalRejectDialog {
      * @throws IllegalStateException    if the dialog is open already
      * @throws IllegalArgumentException if there are no entries
      */
-    void open(View<?> owner, String personName, List<TimeEntry> entries, String reason,
-              SerializableConsumer<TimeEntry> onRemove, SerializableConsumer<String> onReject) {
+    public void open(View<?> owner, String personName, List<TimeEntry> entries, String reason,
+                     SerializableConsumer<TimeEntry> onRemove, SerializableConsumer<String> onReject) {
         Preconditions.checkState(opened == null, "The reject dialog is open already");
         Preconditions.checkArgument(!entries.isEmpty(), "There is nothing to reject");
         opened = new Opened(owner, personName, entries, reason, onRemove, onReject);
@@ -143,7 +143,7 @@ final class ApprovalRejectDialog {
      * @return the side dialog, {@code null} while the dialog is closed
      */
     @Nullable
-    SideDialog getSideDialog() {
+    public SideDialog getSideDialog() {
         return opened != null ? opened.sideDialog : null;
     }
 
@@ -152,7 +152,7 @@ final class ApprovalRejectDialog {
      *
      * @param entries the entries of the basket, not empty
      */
-    void setEntries(List<TimeEntry> entries) {
+    public void setEntries(List<TimeEntry> entries) {
         if (opened != null) {
             opened.setEntries(entries);
         }
@@ -161,7 +161,7 @@ final class ApprovalRejectDialog {
     /**
      * Closes the dialog without asking. Does nothing while it is closed.
      */
-    void close() {
+    public void close() {
         if (opened != null) {
             opened.sideDialog.close();
         }

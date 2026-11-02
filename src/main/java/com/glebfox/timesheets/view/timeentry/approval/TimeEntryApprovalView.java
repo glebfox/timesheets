@@ -25,6 +25,14 @@ import com.glebfox.timesheets.app.util.ApprovalTotals;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.UnsavedInputSupport;
+import com.glebfox.timesheets.component.approval.ApprovalBasketBar;
+import com.glebfox.timesheets.component.approval.ApprovalEntryCard;
+import com.glebfox.timesheets.component.approval.ApprovalPeriodTitle;
+import com.glebfox.timesheets.component.approval.ApprovalPersonPanel;
+import com.glebfox.timesheets.component.approval.ApprovalRejectDialog;
+import com.glebfox.timesheets.component.approval.ApprovalRosterCard;
+import com.glebfox.timesheets.component.approval.ApprovalScope;
+import com.glebfox.timesheets.component.approval.ApprovalStatusBar;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -36,6 +44,7 @@ import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -43,6 +52,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -59,9 +69,11 @@ import io.jmix.flowui.component.virtuallist.JmixVirtualList;
 import io.jmix.flowui.kit.action.ActionVariant;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.settings.UserSettingsService;
+import io.jmix.flowui.view.Install;
 import io.jmix.flowui.view.MessageBundle;
 import io.jmix.flowui.view.StandardView;
 import io.jmix.flowui.view.Subscribe;
+import io.jmix.flowui.view.Supply;
 import io.jmix.flowui.view.ViewComponent;
 import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
@@ -142,6 +154,8 @@ public class TimeEntryApprovalView extends StandardView {
     @ViewComponent
     private Span teamProgressDetails;
     @ViewComponent
+    private ApprovalStatusBar teamProgressBar;
+    @ViewComponent
     private Div rosterBox;
     @ViewComponent
     private TypedTextField<String> rosterSearchField;
@@ -151,6 +165,10 @@ public class TimeEntryApprovalView extends StandardView {
     private JmixVirtualList<ApprovalPerson> rosterList;
     @ViewComponent
     private Div personBox;
+    @ViewComponent
+    private ApprovalPersonPanel personPanel;
+    @ViewComponent
+    private ApprovalBasketBar basketBar;
     @ViewComponent
     private Div emptyStateBox;
     @ViewComponent
@@ -186,9 +204,6 @@ public class TimeEntryApprovalView extends StandardView {
     private Locale locale;
     private DayOfWeek firstDayOfWeek;
     private ApprovalPeriodTitle periodTitles;
-    private ApprovalStatusBar teamProgressBar;
-    private ApprovalPersonPanel personPanel;
-    private ApprovalBasketBar basketBar;
     private ApprovalRejectDialog rejectDialog;
 
     private List<Project> projectsToApprove = List.of();
@@ -222,11 +237,10 @@ public class TimeEntryApprovalView extends StandardView {
         // Weeks start as in the Calendar
         firstDayOfWeek = componentSupport.getDaysOfWeek().getFirst();
 
-        periodTitles = new ApprovalPeriodTitle(messageBundle::getMessage, locale);
+        periodTitles = new ApprovalPeriodTitle(messages, locale);
         initRoster();
-        initTeamProgressBar();
-        initPersonPanel();
-        initBasket();
+        rejectDialog = new ApprovalRejectDialog(dialogs, uiComponents, viewValidation, unsavedInputSupport,
+                componentSupport, messages, metadataTools, locale);
 
         projectsToApprove = approvalSupport.loadProjectsToApprove();
         projectField.setItems(projectsToApprove);
@@ -244,41 +258,63 @@ public class TimeEntryApprovalView extends StandardView {
     private void initRoster() {
         rosterScopeField.setItems(List.of(ApprovalRosterScope.values()));
         rosterScopeField.setValue(ApprovalRosterScope.NEEDS_REVIEW);
-        rosterList.setRenderer(new ComponentRenderer<>(this::createRosterCard, this::updateRosterCard));
-        rosterList.setItemAccessibleNameGenerator(person -> ApprovalRosterCard.nameOf(person.user()));
     }
 
-    private void initTeamProgressBar() {
-        teamProgressBar = new ApprovalStatusBar();
-        teamProgressBar.addClassName("time-entry-approval-view-team-progress-bar");
-        teamProgress.add(teamProgressBar);
+    @Supply(to = "rosterList", subject = "renderer")
+    private Renderer<ApprovalPerson> rosterListRenderer() {
+        return new ComponentRenderer<>(this::createRosterCard, this::updateRosterCard);
     }
 
-    private void initPersonPanel() {
-        personPanel = new ApprovalPersonPanel(componentSupport, messages, metadataTools, locale, periodTitles,
-                this::entriesToApprove, entry -> basket.containsKey(entry.getId()));
-        // A click on the grid goes through the same way as selectWeek from outside
-        personPanel.addWeekClickListener(event -> selectWeek(event.getWeekStart()));
-        personPanel.addDayClickListener(event -> {
-            selectWeek(ApprovalPeriod.weekStartOf(event.getDay(), firstDayOfWeek));
-            personPanel.scrollToDay(event.getDay());
-        });
-        personPanel.addApproveEntryClickListener(event -> approve(List.of(event.getEntry())));
-        personPanel.addApproveScopeClickListener(event -> confirmApprove(event.getScope()));
-        personPanel.addRejectEntryClickListener(event -> addToBasket(event.getEntry()));
-        personPanel.addUnrejectEntryClickListener(event -> removeFromBasket(event.getEntry()));
-        personBox.add(personPanel);
+    @Install(to = "rosterList", subject = "itemAccessibleNameGenerator")
+    private String rosterListItemAccessibleNameGenerator(final ApprovalPerson person) {
+        return ApprovalRosterCard.nameOf(person.user());
     }
 
-    private void initBasket() {
-        // Over the selected person's part, so it is hidden with it
-        basketBar = new ApprovalBasketBar(componentSupport, messages, locale, periodTitles);
-        basketBar.addClearClickListener(event -> emptyBasket());
-        basketBar.addWriteReasonClickListener(event -> openRejectDialog());
-        personBox.add(basketBar);
+    // A click on the grid goes through the same way as selectWeek from outside
+    @Subscribe("personPanel")
+    public void onPersonPanelWeekClick(final ApprovalPersonPanel.WeekClickEvent event) {
+        selectWeek(event.getWeekStart());
+    }
 
-        rejectDialog = new ApprovalRejectDialog(dialogs, uiComponents, viewValidation, unsavedInputSupport,
-                componentSupport, messages, metadataTools, locale);
+    @Subscribe("personPanel")
+    public void onPersonPanelDayClick(final ApprovalPersonPanel.DayClickEvent event) {
+        selectWeek(ApprovalPeriod.weekStartOf(event.getDay(), firstDayOfWeek));
+        personPanel.scrollToDay(event.getDay());
+    }
+
+    @Subscribe("personPanel")
+    public void onPersonPanelApproveEntryClick(final ApprovalPersonPanel.ApproveEntryClickEvent event) {
+        approve(List.of(event.getEntry()));
+    }
+
+    @Subscribe("personPanel")
+    public void onPersonPanelApproveScopeClick(final ApprovalPersonPanel.ApproveScopeClickEvent event) {
+        confirmApprove(event.getScope());
+    }
+
+    @Subscribe("personPanel")
+    public void onPersonPanelRejectEntryClick(final ApprovalPersonPanel.RejectEntryClickEvent event) {
+        addToBasket(event.getEntry());
+    }
+
+    @Subscribe("personPanel")
+    public void onPersonPanelUnrejectEntryClick(final ApprovalPersonPanel.UnrejectEntryClickEvent event) {
+        removeFromBasket(event.getEntry());
+    }
+
+    @Install(to = "personPanel", subject = "inBasketPredicate")
+    private boolean personPanelInBasketPredicate(final TimeEntry entry) {
+        return basket.containsKey(entry.getId());
+    }
+
+    @Subscribe(id = "basketBar", subject = "clearClickListener")
+    public void onBasketBarClearClick(final ClickEvent<Button> event) {
+        emptyBasket();
+    }
+
+    @Subscribe(id = "basketBar", subject = "writeReasonClickListener")
+    public void onBasketBarWriteReasonClick(final ClickEvent<Button> event) {
+        openRejectDialog();
     }
 
     /**
@@ -608,10 +644,12 @@ public class TimeEntryApprovalView extends StandardView {
         // Text nodes between the parts keep the title, such as "October 2026", whole for assistive technology
         for (ApprovalPeriodTitle.Part part : periodTitles.format(current)) {
             if (part.year()) {
-                Span year = new Span(part.text());
+                Span year = uiComponents.create(Span.class);
+                year.setText(part.text());
                 year.setClassName("time-entry-approval-view-period-year");
                 periodTitle.add(year);
             } else {
+                // A text node, which UiComponents cannot create: its only constructor takes the text
                 periodTitle.add(new Text(part.text()));
             }
         }
@@ -750,7 +788,8 @@ public class TimeEntryApprovalView extends StandardView {
      * those in the reject basket. A rejected entry is left out, as it takes its own approval. The count on each
      * button, the question, and the approval itself all come from here.
      */
-    private List<TimeEntry> entriesToApprove(ApprovalScope scope) {
+    @Install(to = "personPanel", subject = "entriesToApproveProvider")
+    private List<TimeEntry> entriesToApprove(final ApprovalScope scope) {
         if (shownPerson == null) {
             return List.of();
         }
@@ -941,9 +980,8 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     private ApprovalRosterCard createRosterCard(ApprovalPerson person) {
-        ApprovalRosterCard card = new ApprovalRosterCard(person,
-                roleNamesByUser.getOrDefault(person.user().getId(), List.of()), getPeriod(),
-                componentSupport, messages, locale);
+        ApprovalRosterCard card = uiComponents.create(ApprovalRosterCard.class);
+        card.setPerson(person, roleNamesByUser.getOrDefault(person.user().getId(), List.of()), getPeriod());
         card.setSelected(isSelected(person));
         // A card drawn before the roster changed may be clicked after it; a person no longer shown is not selected
         card.addClickListener(event -> findShown(person.user().getId()).ifPresent(shown -> selectPerson(shown.user())));

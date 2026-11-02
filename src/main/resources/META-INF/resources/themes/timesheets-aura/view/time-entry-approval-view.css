@@ -100,7 +100,7 @@
     line-height: var(--aura-line-height-xs);
 }
 
-.time-entry-approval-view-team-progress > .time-entry-approval-view-team-progress-bar {
+.time-entry-approval-view-team-progress > .approval-status-bar {
     width: 12rem;
 }
 
@@ -126,7 +126,7 @@
         flex-shrink: 0.01;
     }
 
-    .time-entry-approval-view-team-progress > .time-entry-approval-view-team-progress-bar {
+    .time-entry-approval-view-team-progress > .approval-status-bar {
         flex: 0 1 12rem;
         width: auto;
         min-width: 3rem;

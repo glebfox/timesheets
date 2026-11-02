@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ApprovalPerson;
@@ -29,6 +29,11 @@ import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.html.Div;
 import io.jmix.core.Messages;
+import io.jmix.core.security.CurrentAuthentication;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,29 +46,27 @@ import java.util.stream.Collectors;
  * the fingerprint of the period, and the time logged in it. A click on the card, or Enter or Space on it, fires a
  * {@link ClickEvent}; whether the card shows as selected is set through {@link #setSelected}.
  * <p>
+ * The card is created by {@code UiComponents}, since it takes the beans it needs from the application context, and
+ * shows the person given to {@link #setPerson}.
+ * <p>
  * The card's own classes are {@code approval-roster-card} and, while selected, {@code selected}; its parts have the
  * classes {@code avatar}, {@code name}, {@code role}, {@code badges}, {@code fingerprint}, and {@code logged}.
  */
-public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<ApprovalRosterCard> {
+public class ApprovalRosterCard extends Composite<Div>
+        implements ClickNotifier<ApprovalRosterCard>, ApplicationContextAware, InitializingBean {
 
     static final String CLASS_NAME = "approval-roster-card";
     static final String SELECTED_CLASS_NAME = "selected";
 
-    /**
-     * Creates the card of a person.
-     *
-     * @param person           the person with their entries in the period
-     * @param roleNames        the names of the person's roles on the projects of their entries, none for a person who
-     *                         is not a participant of them
-     * @param period           the period of the entries
-     * @param componentSupport builds the avatar and the badges, and formats the time
-     * @param messages         gives the texts
-     * @param locale           the locale of the texts
-     */
-    public ApprovalRosterCard(ApprovalPerson person, List<String> roleNames, ApprovalPeriod period,
-                              ComponentSupport componentSupport, Messages messages, Locale locale) {
-        String name = nameOf(person.user());
+    private ApplicationContext applicationContext;
+    private ComponentSupport componentSupport;
+    private Messages messages;
+    private Locale locale;
 
+    /**
+     * Creates an empty card.
+     */
+    public ApprovalRosterCard() {
         Div content = getContent();
         content.addClassName(CLASS_NAME);
         // A card is chosen as a button is: by a click, or by Enter or Space while it has the focus, which click it
@@ -74,6 +77,35 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
                 .addEventListener("keydown", event -> ComponentUtil.fireEvent(this, new ClickEvent<>(this)))
                 .setFilter("event.key === 'Enter' || event.key === ' '")
                 .preventDefault();
+
+        setSelected(false);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        componentSupport = applicationContext.getBean(ComponentSupport.class);
+        messages = applicationContext.getBean(Messages.class);
+        locale = applicationContext.getBean(CurrentAuthentication.class).getLocale();
+    }
+
+    /**
+     * Shows a person on the card, in place of what it showed.
+     *
+     * @param person    the person with their entries in the period
+     * @param roleNames the names of the person's roles on the projects of their entries, none for a person who is not
+     *                  a participant of them
+     * @param period    the period of the entries
+     */
+    public void setPerson(ApprovalPerson person, List<String> roleNames, ApprovalPeriod period) {
+        String name = nameOf(person.user());
+
+        Div content = getContent();
+        content.removeAll();
 
         Avatar avatar = componentSupport.createAvatar(name, person.user().getAvatar(), "avatar");
 
@@ -103,8 +135,6 @@ public class ApprovalRosterCard extends Composite<Div> implements ClickNotifier<
         logged.addClassName("logged");
 
         content.add(fingerprint, logged);
-
-        setSelected(false);
     }
 
     /**

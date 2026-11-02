@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
@@ -34,6 +34,11 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
+import io.jmix.core.security.CurrentAuthentication;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -47,43 +52,54 @@ import java.util.Locale;
  * empty.
  * <p>
  * The bar only shows what it is given with {@link #setEntries}; its buttons do nothing of their own, and whoever shows
- * the bar attaches what they do.
+ * the bar attaches what they do. It is created by {@code UiComponents}, as a descriptor's {@code component} element
+ * creates it, since it takes the beans it needs from the application context.
  * <p>
- * The bar has the id {@code basketBar} and the class {@code approval-basket-bar}. Its parts are the {@code count}
- * badge, the {@code label}, the {@code separator}, the {@code dates}, and the buttons; the count, the dates, and the
- * buttons have the ids {@code basketCountText}, {@code basketDatesText}, {@code clearBasketBtn}, and
- * {@code writeReasonBtn}.
+ * The bar has the class {@code approval-basket-bar}. Its parts are the {@code count} badge, the {@code label}, the
+ * {@code separator}, the {@code dates}, and the buttons; the count, the dates, and the buttons have the ids
+ * {@code basketCountText}, {@code basketDatesText}, {@code clearBasketBtn}, and {@code writeReasonBtn}.
  * <p>
  * The bar is a container so that a lookup of components by id, as Jmix does it, reaches its parts.
  */
-final class ApprovalBasketBar extends Composite<Div> implements HasComponents {
+public final class ApprovalBasketBar extends Composite<Div>
+        implements HasComponents, ApplicationContextAware, InitializingBean {
 
     static final String CLASS_NAME = "approval-basket-bar";
 
-    private final Messages messages;
-    private final Locale locale;
-    private final ApprovalPeriodTitle titles;
+    private ApplicationContext applicationContext;
+    private Messages messages;
+    private Locale locale;
+    private ApprovalPeriodTitle titles;
 
-    private final Badge count;
-    private final Span label;
-    private final Span dates;
-    private final Button clearButton;
-    private final Button writeReasonButton;
+    private Badge count;
+    private Span label;
+    private Span dates;
+    // Before the bar is built, so that listeners can be added at any time
+    private final Button clearButton = new Button();
+    private final Button writeReasonButton = new Button();
 
     /**
      * Creates the bar, hidden until it is given entries.
-     *
-     * @param componentSupport builds the count badge
-     * @param messages         gives the texts
-     * @param locale           the locale of the texts
-     * @param titles           formats the dates of the entries
      */
-    ApprovalBasketBar(ComponentSupport componentSupport, Messages messages, Locale locale,
-                      ApprovalPeriodTitle titles) {
-        this.messages = messages;
-        this.locale = locale;
-        this.titles = titles;
+    public ApprovalBasketBar() {
+        getContent().addClassName(CLASS_NAME);
+        setVisible(false);
+    }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        messages = applicationContext.getBean(Messages.class);
+        locale = applicationContext.getBean(CurrentAuthentication.class).getLocale();
+        titles = new ApprovalPeriodTitle(messages, locale);
+        initParts(applicationContext.getBean(ComponentSupport.class));
+    }
+
+    private void initParts(ComponentSupport componentSupport) {
         count = componentSupport.createBadge("", BadgeStyle.ERROR);
         count.addThemeVariants(BadgeVariant.FILLED);
         count.setId("basketCountText");
@@ -99,23 +115,19 @@ final class ApprovalBasketBar extends Composite<Div> implements HasComponents {
         dates.setId("basketDatesText");
         dates.addClassName("dates");
 
-        clearButton = new Button(messages.getMessage(ApprovalBasketBar.class, "clearBasketBtn.text", locale));
+        clearButton.setText(messages.getMessage(ApprovalBasketBar.class, "clearBasketBtn.text", locale));
         clearButton.setId("clearBasketBtn");
         clearButton.addThemeVariants(ButtonVariant.TERTIARY, ButtonVariant.SMALL);
 
-        writeReasonButton = new Button(messages.getMessage(ApprovalBasketBar.class, "writeReasonBtn.text", locale),
-                GravityUiIcon.ARROW_RIGHT.create());
+        writeReasonButton.setText(messages.getMessage(ApprovalBasketBar.class, "writeReasonBtn.text", locale));
+        writeReasonButton.setIcon(GravityUiIcon.ARROW_RIGHT.create());
         writeReasonButton.setId("writeReasonBtn");
         writeReasonButton.setIconAfterText(true);
         writeReasonButton.addThemeVariants(ButtonVariant.PRIMARY, ButtonVariant.ERROR, ButtonVariant.SMALL);
 
-        Div bar = getContent();
-        bar.setId("basketBar");
-        bar.addClassName(CLASS_NAME);
         // The spaces keep the bar's text, such as "2 entries to reject · Oct 5 – 6", in words for assistive technology
-        bar.add(count, new Text(" "), label, new Text(" "),
+        getContent().add(count, new Text(" "), label, new Text(" "),
                 separator, new Text(" "), dates, clearButton, writeReasonButton);
-        setVisible(false);
     }
 
     /**
@@ -123,7 +135,7 @@ final class ApprovalBasketBar extends Composite<Div> implements HasComponents {
      *
      * @param entries the entries in the basket
      */
-    void setEntries(Collection<TimeEntry> entries) {
+    public void setEntries(Collection<TimeEntry> entries) {
         setVisible(!entries.isEmpty());
         if (entries.isEmpty()) {
             return;
@@ -142,7 +154,7 @@ final class ApprovalBasketBar extends Composite<Div> implements HasComponents {
      * @param listener the listener
      * @return a registration that removes the listener
      */
-    Registration addClearClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
+    public Registration addClearClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
         return clearButton.addClickListener(listener);
     }
 
@@ -152,7 +164,7 @@ final class ApprovalBasketBar extends Composite<Div> implements HasComponents {
      * @param listener the listener
      * @return a registration that removes the listener
      */
-    Registration addWriteReasonClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
+    public Registration addWriteReasonClickListener(ComponentEventListener<ClickEvent<Button>> listener) {
         return writeReasonButton.addClickListener(listener);
     }
 

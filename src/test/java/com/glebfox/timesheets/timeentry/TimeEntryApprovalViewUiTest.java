@@ -21,6 +21,8 @@ import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ApprovalPerson;
 import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.component.approval.ApprovalEntryCard;
+import com.glebfox.timesheets.component.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
@@ -32,8 +34,6 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
-import com.glebfox.timesheets.view.timeentry.approval.ApprovalEntryCard;
-import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.view.timeentry.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
 import com.vaadin.flow.component.ClickEvent;
@@ -51,12 +51,12 @@ import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.dom.Element;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
-import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.ClientDetails;
 import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.UiComponentUtils;
 import io.jmix.flowui.component.combobox.JmixComboBox;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
@@ -119,7 +119,7 @@ public class TimeEntryApprovalViewUiTest {
     @Autowired
     ComponentSupport componentSupport;
     @Autowired
-    Messages messages;
+    UiComponents uiComponents;
 
     String prefix;
     Client client;
@@ -727,7 +727,9 @@ public class TimeEntryApprovalViewUiTest {
                 .filter(shown -> shown.user().getId().equals(user.getId()))
                 .findFirst()
                 .orElseThrow();
-        return new ApprovalRosterCard(person, roleNames, view.getPeriod(), componentSupport, messages, Locale.ENGLISH);
+        ApprovalRosterCard card = uiComponents.create(ApprovalRosterCard.class);
+        card.setPerson(person, roleNames, view.getPeriod());
+        return card;
     }
 
     private static List<String> partsOf(ApprovalRosterCard card) {

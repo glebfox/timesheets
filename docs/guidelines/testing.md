@@ -30,6 +30,8 @@ Project-specific mechanics of the test harness and of the IDE's static checks. H
 
 The IDE's Jmix inspection does not resolve the actions of the project's own `@ActionType`s. On an `@Install` to such an action, such as `assignmentsDataGrid.create` in the user editor, it reports "Unable to find installation point for delegate" and "Unable to find specified ui component" as errors, and the method as never used. These are false: the delegate binds at runtime, and a UI test that opens the view and relies on the delegate proves it.
 
+It does not resolve the class of a component that a descriptor declares with the generic `component` element either. On an `@Install` to such a component, such as `personPanel` on the approval screen, it reports "Unable to find installation point for delegate" as an error and the method as never used, and it reports the component's own `add…Listener` and `set…` methods that `@Subscribe` and `@Install` reach as never used. These are false in the same way.
+
 ## Local overrides in `.jmix/conf`
 
 Jmix reads a resource from `jmix.core.conf-dir` (`.jmix/conf/` in the project directory by default) before the classpath, both at runtime and in tests. While Jmix Studio is open, its hot deploy writes changed resources there, and compiled classes too; the directory is gitignored. A copy there wins over the checked-out file even when it is stale: after a branch switch, or after an edit the copy does not have yet. Typical symptoms:

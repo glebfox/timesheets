@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
@@ -168,7 +168,7 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
      * @param entry the entry
      * @return whether the card of the entry has ✕
      */
-    static boolean canBeRejected(TimeEntry entry) {
+    public static boolean canBeRejected(TimeEntry entry) {
         return REJECTABLE.contains(entry.getStatus());
     }
 

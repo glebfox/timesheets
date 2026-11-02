@@ -50,3 +50,9 @@ In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on 
 ## Generic filters for users who may not configure them
 
 A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles only Full access grants. Anyone else can use only the configurations the descriptor declares, so a generic filter that other roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).
+
+## Components declared with the generic element
+
+A component of the project's own that has no element of its own in the descriptors, such as the approval screen's person panel and basket bar, is declared with the generic `<component id="…" class="…"/>` element. The loader creates it through `UiComponents`, and so through Spring: the component has a constructor without arguments and takes its beans as `AvatarUpload` does, as `ApplicationContextAware` and `InitializingBean`, building the parts that need them in `afterPropertiesSet`. What it shows comes through its setters. The loader sets the `id`, `visible`, and `css` attributes and the `properties` element, not `classNames`, so the view's stylesheet reaches such a component by its own class.
+
+The view wires it as it wires a framework component. `@Subscribe("<id>")` finds the public `addXxxListener(ComponentEventListener<E>)` that returns a `Registration` by the event type of the method's parameter alone. When two such methods take the same event type, `subject` must name one by its full method name, `addXxxListener`; only for a `ClickEvent` does the framework add the `add` itself, so there the subject is `xxxListener`, as with a button's `clickListener`. `@Install(to = "<id>", subject = "xxx")` reaches a public `setXxx` that takes one functional interface.

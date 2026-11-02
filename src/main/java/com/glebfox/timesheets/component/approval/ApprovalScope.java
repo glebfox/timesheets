@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.google.common.base.Preconditions;
 
@@ -27,9 +27,9 @@ import java.time.LocalDate;
  * @param from the first day
  * @param to   the last day, not before the first
  */
-record ApprovalScope(LocalDate from, LocalDate to) {
+public record ApprovalScope(LocalDate from, LocalDate to) {
 
-    ApprovalScope {
+    public ApprovalScope {
         Preconditions.checkNotNull(from);
         Preconditions.checkNotNull(to);
         Preconditions.checkArgument(!to.isBefore(from), "The last day must not be before the first");
@@ -51,7 +51,7 @@ record ApprovalScope(LocalDate from, LocalDate to) {
      * @param day the day to check
      * @return {@code true} if the day is from the first to the last day of the scope, inclusive
      */
-    boolean contains(LocalDate day) {
+    public boolean contains(LocalDate day) {
         return !day.isBefore(from) && !day.isAfter(to);
     }
 }

@@ -34,6 +34,10 @@ An action of a list component that the framework does not provide, such as Make 
 
 A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.
 
+## Components in a view
+
+A component that a view shows, such as a panel, a bar, or a card of a list, is declared in the view's descriptor, with the generic `component` element when it has no element of its own, or created in the controller through `UiComponents`. The view handles its events with `@Subscribe` and gives its handlers with `@Install` wherever the component allows it, not with listeners and setters in code. Inside a component, the parts it builds are created with `new`, which is cheaper. Older views still create some of their components with `new`. How the generic element and the annotations reach a component of the project's own: `docs/guidelines/views.md`.
+
 ## CSS classes set from Java
 
 A component or renderer with its own Java class and its own stylesheet in the theme, such as the user cell, gives its parts classes that name them, such as `title`, and its stylesheet gives their look; it sets no utility classes, ones that each carry a single look such as a font size or a color. A piece built in place, with no class or stylesheet of its own, such as a grid renderer in a view, may set the project's utility classes from `app/util.css`. Lumo's utility classes are used nowhere. Aura's classes that `docs/guidelines/design-system.md` prescribes, such as `aura-accent-neutral` on a badge, are not utility classes. Why: [decision 0006](decisions/0006-a-component-with-its-own-stylesheet-sets-no-utility-classes.md).

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.google.common.base.Preconditions;
+import io.jmix.core.Messages;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
@@ -33,12 +34,12 @@ import java.util.stream.Collectors;
 
 /**
  * Formats the titles of approval periods, such as "October 2026", "Oct 18 – 24 2026", or "Oct 25 – Nov 1 2026", with
- * the date patterns of the screen's message bundle.
+ * the date patterns of its message group.
  * <p>
  * A title is a list of parts, so that a year can be shown apart from the dates, as the secondary text it is. A week
  * across two years puts each year beside its own date, as in "Dec 28 2026 – Jan 3 2027".
  */
-final class ApprovalPeriodTitle {
+public final class ApprovalPeriodTitle {
 
     private static final String RANGE_KEY = "periodTitle.range";
     private static final String SAME_MONTH_KEY = "periodTitle.week.sameMonth";
@@ -50,9 +51,19 @@ final class ApprovalPeriodTitle {
     private final Locale locale;
 
     /**
+     * Creates the formatter with the date patterns of the application's message bundle.
+     *
+     * @param messages gives the date patterns
+     * @param locale   the locale of the month names and the dates
+     */
+    public ApprovalPeriodTitle(Messages messages, Locale locale) {
+        this(key -> messages.getMessage(ApprovalPeriodTitle.class, key, locale), locale);
+    }
+
+    /**
      * Creates the formatter.
      *
-     * @param messages gives the text of a key of the screen's message bundle, such as {@code periodTitle.range}
+     * @param messages gives the text of a key of the formatter's message group, such as {@code periodTitle.range}
      * @param locale   the locale of the month names and the dates
      */
     ApprovalPeriodTitle(Function<String, String> messages, Locale locale) {
@@ -66,7 +77,7 @@ final class ApprovalPeriodTitle {
      * @param period a month or a week
      * @return the parts of the title in order; their texts together make the whole title
      */
-    List<Part> format(ApprovalPeriod period) {
+    public List<Part> format(ApprovalPeriod period) {
         LocalDate start = period.start();
         LocalDate end = period.end();
 
@@ -100,7 +111,7 @@ final class ApprovalPeriodTitle {
      * @param period a month or a week
      * @return the period's name, in one text
      */
-    String formatInText(ApprovalPeriod period) {
+    public String formatInText(ApprovalPeriod period) {
         if (period.mode() == ApprovalMode.MONTH) {
             LocalDate start = period.start();
             return start.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale) + SPACE.text()
@@ -117,7 +128,7 @@ final class ApprovalPeriodTitle {
      * @param end   the last day, not before the first one
      * @return the dates as a week's title shows them
      */
-    String formatDates(LocalDate start, LocalDate end) {
+    public String formatDates(LocalDate start, LocalDate end) {
         Preconditions.checkArgument(!end.isBefore(start), "The end must not be before the start");
         if (start.equals(end)) {
             return formatDate(start, OTHER_MONTH_KEY + ".start");
@@ -148,6 +159,6 @@ final class ApprovalPeriodTitle {
      * @param text the text of the part
      * @param year whether the part is a year, which is shown as secondary text
      */
-    record Part(String text, boolean year) {
+    public record Part(String text, boolean year) {
     }
 }

@@ -1,6 +1,6 @@
 # Approve time entries
 
-Source: `view/timeentry/approval/`, `app/TimeEntryApprovalSupport.java`, `app/util/ApprovalMode.java`, `app/util/ApprovalOverview.java`, `app/util/ApprovalPeriod.java`, `app/util/ApprovalPerson.java`, `app/util/ApprovalTotals.java`, `app/util/ComponentSupport.java`, `app/util/UnsavedInputSupport.java`, `menu.xml`
+Source: `view/timeentry/approval/`, `component/approval/`, `app/TimeEntryApprovalSupport.java`, `app/util/ApprovalMode.java`, `app/util/ApprovalOverview.java`, `app/util/ApprovalPeriod.java`, `app/util/ApprovalPerson.java`, `app/util/ApprovalTotals.java`, `app/util/ComponentSupport.java`, `app/util/UnsavedInputSupport.java`, `menu.xml`
 
 `approve-time-entries`, in menu Project Management after Time entries. The screen where the managers and approvers of projects review the [time entries](../data-model/time-entry.md) logged on them, person by person, in a week or a month, and approve or reject them. Who may open it: [Time entries: approval](../roles/time-entry-approval.md). Which entries a user sees on it is decided by their project roles, not by the security role. The screen is laid out for a desktop width and has no layout for a phone.
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalTotals;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
@@ -32,7 +32,7 @@ import java.util.List;
  * The bar has the class {@code approval-status-bar}, and each segment the class of its status, by which it takes the
  * status color from the theme. The bar is hidden from assistive technology: the texts beside it tell the same.
  */
-class ApprovalStatusBar extends Composite<Div> implements HasStyle {
+public class ApprovalStatusBar extends Composite<Div> implements HasStyle {
 
     static final String CLASS_NAME = "approval-status-bar";
 
@@ -42,7 +42,7 @@ class ApprovalStatusBar extends Composite<Div> implements HasStyle {
     /**
      * Creates an empty bar.
      */
-    ApprovalStatusBar() {
+    public ApprovalStatusBar() {
         getContent().addClassName(CLASS_NAME);
         getContent().getElement().setAttribute("aria-hidden", "true");
     }
@@ -52,7 +52,7 @@ class ApprovalStatusBar extends Composite<Div> implements HasStyle {
      *
      * @param totals the totals of the entries; with none, the bar is empty
      */
-    void setTotals(ApprovalTotals totals) {
+    public void setTotals(ApprovalTotals totals) {
         Div bar = getContent();
         bar.removeAll();
         for (TimeEntryStatus status : ORDER) {

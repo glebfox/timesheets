@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.component.approval;
 
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
@@ -77,38 +77,54 @@ final class ApprovalWeekBoard extends Composite<Div> implements HasComponents {
                     .findFirst()
                     .orElseThrow();
             List<TimeEntry> entries = entriesByDay.getOrDefault(day, List.of());
-
-            Span dayName = new Span(messages.formatMessage(ApprovalWeekBoard.class, "weekBoard.day", locale,
-                    componentSupport.formatDayOfWeekShort(dayOfWeek), day.getDayOfMonth()));
-            dayName.addClassName("day");
-
-            Div header = new Div(dayName);
-            header.addClassName("header");
-            // A day with entries has a status
-            ApprovalTotals.dayStatus(entries).ifPresent(status -> {
-                Span hours = new Span(componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time()));
-                hours.addClassName("hours");
-
-                Div line = new Div();
-                line.addClassNames("line", ApprovalStatusClassNames.of(status));
-                header.add(hours, line);
-            });
-            // Where the actions of the day go
-            Div actions = new Div();
-            actions.addClassName("actions");
-            header.add(actions);
-            dayActions.put(day, actions);
-
-            Div cards = new Div();
-            cards.addClassName("entries");
-            entries.forEach(entry -> cards.add(cardFactory.apply(entry)));
-
-            Div column = new Div(header, cards);
-            column.setId("column-" + day);
-            column.addClassName("column");
-            column.setClassName("weekend", dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
-            board.add(column);
+            board.add(createColumn(day, entries, cardFactory, componentSupport, messages, locale));
         }
+    }
+
+    /**
+     * Creates the column of a day: its header over the cards of its entries.
+     */
+    private Div createColumn(LocalDate day, List<TimeEntry> entries, Function<TimeEntry, ApprovalEntryCard> cardFactory,
+                             ComponentSupport componentSupport, Messages messages, Locale locale) {
+        Div cards = new Div();
+        cards.addClassName("entries");
+        entries.forEach(entry -> cards.add(cardFactory.apply(entry)));
+
+        Div column = new Div(createHeader(day, entries, componentSupport, messages, locale), cards);
+        column.setId("column-" + day);
+        column.addClassName("column");
+        DayOfWeek dayOfWeek = day.getDayOfWeek();
+        column.setClassName("weekend", dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
+        return column;
+    }
+
+    /**
+     * Creates the header of a day's column: the day, its time and the line of its status when it has entries, and the
+     * part where its actions go.
+     */
+    private Div createHeader(LocalDate day, List<TimeEntry> entries, ComponentSupport componentSupport,
+                             Messages messages, Locale locale) {
+        Span dayName = new Span(messages.formatMessage(ApprovalWeekBoard.class, "weekBoard.day", locale,
+                componentSupport.formatDayOfWeekShort(day.getDayOfWeek()), day.getDayOfMonth()));
+        dayName.addClassName("day");
+
+        Div header = new Div(dayName);
+        header.addClassName("header");
+        // A day with entries has a status
+        ApprovalTotals.dayStatus(entries).ifPresent(status -> {
+            Span hours = new Span(componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time()));
+            hours.addClassName("hours");
+
+            Div line = new Div();
+            line.addClassNames("line", ApprovalStatusClassNames.of(status));
+            header.add(hours, line);
+        });
+        // Where the actions of the day go
+        Div actions = new Div();
+        actions.addClassName("actions");
+        header.add(actions);
+        dayActions.put(day, actions);
+        return header;
     }
 
     /**
