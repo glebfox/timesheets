@@ -93,6 +93,13 @@
     margin-block-end: 0;
 }
 
+/* In the cut of a compact card, the blocks and the list items follow one another without a gap, so that the cut
+   falls between whole lines of text: a list right after the line that leads into it shows its first items rather than
+   the gap above them */
+.approval-entry-card.compact > .content > .description vaadin-markdown * {
+    margin-block: 0;
+}
+
 .approval-entry-card > .content > .tags {
     display: flex;
     flex-wrap: wrap;

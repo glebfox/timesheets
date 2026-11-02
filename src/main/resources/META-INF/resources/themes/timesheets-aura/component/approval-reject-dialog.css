@@ -100,17 +100,14 @@
     line-height: var(--aura-line-height-s);
 }
 
-/* The rendered Markdown sits flush with the parts around it, in their line height, as on an entry card */
+/* The rendered Markdown sits flush with the parts around it, in their line height, and its blocks and list items
+   follow one another without a gap, as in the cut of a compact entry card, so that the cut falls between whole lines */
 .approval-reject-dialog-content .basket-entry > .description vaadin-markdown {
     line-height: inherit;
 }
 
-.approval-reject-dialog-content .basket-entry > .description vaadin-markdown > :first-child {
-    margin-block-start: 0;
-}
-
-.approval-reject-dialog-content .basket-entry > .description vaadin-markdown > :last-child {
-    margin-block-end: 0;
+.approval-reject-dialog-content .basket-entry > .description vaadin-markdown * {
+    margin-block: 0;
 }
 
 .approval-reject-dialog-content .basket-entry > .remove {
