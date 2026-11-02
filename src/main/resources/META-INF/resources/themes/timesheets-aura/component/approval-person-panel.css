@@ -24,8 +24,9 @@
     box-sizing: border-box;
     min-height: 0;
     overflow-y: auto;
-    /* Room for the focus rings of the parts along the edges */
-    padding: var(--vaadin-focus-ring-width);
+    /* Room for the focus rings of the parts along the edges, such as the person's button: a ring reaches as far out as
+       its width and its offset from the part, which Aura sets to 2 pixels for a button */
+    padding: calc(var(--vaadin-focus-ring-width) + 2px);
 }
 
 /* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
@@ -34,22 +35,34 @@
     display: none;
 }
 
+/* The person and their actions on one row, the actions at the end; where the panel leaves the person less than
+   16rem beside the actions, such as a long "Approve N waiting" in a narrow panel, the actions go on a row of their
+   own below, still at the end */
 .approval-person-panel > .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-s) var(--vaadin-gap-m);
+}
+
+.approval-person-panel > .header > .person {
+    flex: 1 1 16rem;
+    min-width: 0;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
-        "avatar name actions"
-        "avatar details actions";
+        "avatar name"
+        "avatar details";
     align-items: center;
     row-gap: var(--vaadin-gap-xs);
 }
 
-.approval-person-panel > .header > .avatar {
+.approval-person-panel > .header > .person > .avatar {
     grid-area: avatar;
     margin-inline-end: var(--vaadin-gap-m);
 }
 
-.approval-person-panel > .header > .name {
+.approval-person-panel > .header > .person > .name {
     grid-area: name;
     margin: 0;
     overflow: hidden;
@@ -61,7 +74,7 @@
     line-height: var(--aura-line-height-l);
 }
 
-.approval-person-panel > .header > .details {
+.approval-person-panel > .header > .person > .details {
     grid-area: details;
     display: flex;
     flex-wrap: wrap;
@@ -73,14 +86,17 @@
     line-height: var(--aura-line-height-s);
 }
 
-.approval-person-panel > .header > .actions {
-    grid-area: actions;
-}
-
 .approval-person-panel > .header > .actions:not(:empty) {
     display: flex;
     gap: var(--vaadin-gap-s);
-    margin-inline-start: var(--vaadin-gap-m);
+    min-width: 0;
+    margin-inline-start: auto;
+}
+
+/* A button never reaches past the panel: in a panel narrower than its text, its text is cut short */
+.approval-person-panel > .header > .actions > vaadin-button {
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 /* Four figures in an even row, or in two rows of two where the row is narrow, which take their layout from its
@@ -159,9 +175,9 @@
     margin-block-start: var(--vaadin-gap-xs);
 }
 
-/* Below 640 pixels four figures in a row would cut their labels and details short, such as "Утверждено" and
+/* Below 600 pixels four figures in a row would cut their labels and details short, such as "Утверждено" and
    "записей · 186ч 30м" in Russian: two rows of two */
-@container approval-figures (width < 640px) {
+@container approval-figures (width < 600px) {
     .approval-person-panel .figure {
         flex-basis: calc(50% - var(--vaadin-gap-s));
     }
@@ -170,7 +186,7 @@
 /* A figure narrower than a value and its details side by side need, such as "186h 30m" and "122 entries" (about 190
    pixels with the padding), has the details below the value, whole: four in a row below 768 pixels, as at 1280 pixels
    with the navigation drawer open, where a figure is about 155, and two in a row below 480 */
-@container approval-figures (640px <= width < 768px) or (width < 480px) {
+@container approval-figures (600px <= width < 768px) or (width < 480px) {
     .approval-person-panel .figure {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas:

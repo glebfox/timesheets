@@ -83,8 +83,9 @@ import java.util.stream.Collectors;
  * The panel is created by {@code UiComponents}, as a descriptor's {@code component} element creates it, since it takes
  * the beans it needs from the application context.
  * <p>
- * The panel has the class {@code approval-person-panel}. Its parts are the {@code header}, with the {@code avatar},
- * the {@code name}, the {@code details} (the roles and the projects), and the {@code actions} of the person; the
+ * The panel has the class {@code approval-person-panel}. Its parts are the {@code header}, with the {@code person}
+ * (the {@code avatar}, the {@code name}, and the {@code details}: the roles and the projects) and the {@code actions}
+ * of the person; the
  * {@code figures}, each a {@code figure} with the id {@code figure-logged}, {@code figure-waiting},
  * {@code figure-approved}, or {@code figure-rejected} and the parts {@code label} (with the {@code dot} of a status and
  * the {@code text}), {@code value}, and {@code details};
@@ -409,7 +410,11 @@ public final class ApprovalPersonPanel extends Composite<Div>
         actions.addClassName("actions");
         addPersonButton(actions, period);
 
-        Div header = new Div(avatar, nameText, details, actions);
+        // A part of its own, so that the actions can go below it where the panel has no room for both on one row
+        Div personPart = new Div(avatar, nameText, details);
+        personPart.addClassName("person");
+
+        Div header = new Div(personPart, actions);
         header.addClassName("header");
         return header;
     }
