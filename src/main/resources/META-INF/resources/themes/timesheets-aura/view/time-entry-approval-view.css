@@ -685,10 +685,11 @@
     gap: var(--vaadin-gap-xs);
 }
 
-/* Under the badges, in line with the summary's content */
+/* Under the badges, at the end, as the actions of an entry card */
 .approval-month-grid > .week > .actions:not(:empty) {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--vaadin-gap-xs);
     padding: 0 var(--vaadin-padding-s) var(--vaadin-padding-xs);
 }
@@ -784,7 +785,7 @@
 }
 
 /* The day and its hours on the first row, the hours below the day where both do not fit; the line and the actions,
-   when there are any, each on a row of its own */
+   when there are any, each on a row of its own, the actions at the end, as those of an entry card */
 .approval-week-board > .column > .header {
     display: flex;
     flex-wrap: wrap;
@@ -822,6 +823,7 @@
 .approval-week-board > .column > .header > .actions:not(:empty) {
     display: flex;
     flex-basis: 100%;
+    justify-content: flex-end;
     gap: var(--vaadin-gap-xs);
     min-width: 0;
 }
@@ -861,18 +863,9 @@
     border-radius: var(--vaadin-radius-l);
 }
 
-/* Approved entries stay, so the period reads complete, but step back */
-.approval-entry-card.approved {
-    opacity: 0.6;
-}
-
-/* An entry in the reject basket is outlined in the color of Rejected, and steps forward even when approved */
+/* An entry in the reject basket is outlined in the color of Rejected */
 .approval-entry-card.in-basket {
     border-color: var(--ts-danger-color);
-}
-
-.approval-entry-card.approved.in-basket {
-    opacity: 1;
 }
 
 .approval-entry-card > .stripe {
@@ -1022,6 +1015,13 @@
     line-height: var(--aura-line-height-s);
 }
 
+/* Below the task, the project reads as its caption, a size smaller than the description, so that the two never read as
+   one text */
+.approval-entry-card.compact > .content > .task > .project {
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
 .approval-entry-card.compact > .content > .description {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -1031,7 +1031,6 @@
     max-height: calc(var(--aura-line-height-s) * 3);
     overflow: hidden;
 
-    color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
 }
