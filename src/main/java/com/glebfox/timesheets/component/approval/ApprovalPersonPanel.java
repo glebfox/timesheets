@@ -86,7 +86,8 @@ import java.util.stream.Collectors;
  * The panel has the class {@code approval-person-panel}. Its parts are the {@code header}, with the {@code avatar},
  * the {@code name}, the {@code details} (the roles and the projects), and the {@code actions} of the person; the
  * {@code figures}, each a {@code figure} with the id {@code figure-logged}, {@code figure-waiting},
- * {@code figure-approved}, or {@code figure-rejected} and the parts {@code label}, {@code value}, and {@code details};
+ * {@code figure-approved}, or {@code figure-rejected} and the parts {@code label} (with the {@code dot} of a status and
+ * the {@code text}), {@code value}, and {@code details};
  * and, for a month, the {@code entries} of a week, with an {@code entries-header} and an {@code entries-day} for each
  * day with entries, whose {@code day-header} has the {@code date}, a {@code separator}, the {@code hours}, and the
  * {@code actions} of the day.
@@ -449,7 +450,10 @@ public final class ApprovalPersonPanel extends Composite<Div>
             dot.addClassNames("dot", ApprovalStatusClassNames.of(status));
             label.add(dot);
         }
-        label.add(new Text(messages.getMessage(ApprovalPersonPanel.class, "figure." + name + ".label", locale)));
+        // A part of its own, so that it can be cut short with an ellipsis beside the dot
+        Span text = new Span(messages.getMessage(ApprovalPersonPanel.class, "figure." + name + ".label", locale));
+        text.addClassName("text");
+        label.add(text);
 
         Div valueText = new Div(value);
         valueText.addClassName("value");

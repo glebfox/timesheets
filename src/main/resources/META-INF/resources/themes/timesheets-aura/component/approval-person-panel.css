@@ -83,16 +83,20 @@
     margin-inline-start: var(--vaadin-gap-m);
 }
 
-/* Four figures in an even row, which take their layout from its width */
+/* Four figures in an even row, or in two rows of two where the row is narrow, which take their layout from its
+   width */
 .approval-person-panel > .figures {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--vaadin-gap-s);
     container-name: approval-figures;
     container-type: inline-size;
 }
 
 .approval-person-panel .figure {
+    flex: 1 1 0;
+    box-sizing: border-box;
+    min-width: 0;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
@@ -111,6 +115,7 @@
     display: flex;
     align-items: center;
     gap: var(--vaadin-gap-xs);
+    min-width: 0;
 
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
@@ -124,6 +129,14 @@
     font-weight: var(--aura-font-weight-semibold);
     line-height: var(--aura-line-height-xl);
     font-variant-numeric: tabular-nums;
+}
+
+/* A label longer than its figure is cut short with an ellipsis, as the details are */
+.approval-person-panel .figure > .label > .text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .approval-person-panel .figure.empty > .value {
@@ -146,10 +159,18 @@
     margin-block-start: var(--vaadin-gap-xs);
 }
 
-/* Below 768 pixels a figure is narrower than a value and its details side by side need, such as "186h 30m" and
-   "122 entries" (about 186 pixels with the padding), as at 1280 pixels with the navigation drawer open, where it is
-   about 155: the details go below the value, whole */
-@container approval-figures (width < 768px) {
+/* Below 640 pixels four figures in a row would cut their labels and details short, such as "Утверждено" and
+   "записей · 186ч 30м" in Russian: two rows of two */
+@container approval-figures (width < 640px) {
+    .approval-person-panel .figure {
+        flex-basis: calc(50% - var(--vaadin-gap-s));
+    }
+}
+
+/* A figure narrower than a value and its details side by side need, such as "186h 30m" and "122 entries" (about 190
+   pixels with the padding), has the details below the value, whole: four in a row below 768 pixels, as at 1280 pixels
+   with the navigation drawer open, where a figure is about 155, and two in a row below 480 */
+@container approval-figures (640px <= width < 768px) or (width < 480px) {
     .approval-person-panel .figure {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas:
