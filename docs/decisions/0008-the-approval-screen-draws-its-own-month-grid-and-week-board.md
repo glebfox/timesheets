@@ -12,7 +12,7 @@ Alternatives considered and rejected:
 
 ## Decision
 
-The month grid and the week board are components of the approval screen, in `view/timeentry/approval/`, built from the project's own markup and styled by the screen's stylesheet. They take the first day of the week from `ComponentSupport`, which reads it from the user's locale; the Calendar takes it from FullCalendar's own messages. The Calendar keeps FullCalendar. Decided in the design of the approval screen (issue #20).
+The month grid and the week board are components of the approval screen, in `component/approval/`, built from the project's own markup and styled by stylesheets of their own in the theme's `component/`. They take the first day of the week from `ComponentSupport`, which reads it from the user's locale; the Calendar takes it from FullCalendar's own messages. The Calendar keeps FullCalendar. Decided in the design of the approval screen (issue #20).
 
 ## Consequences
 

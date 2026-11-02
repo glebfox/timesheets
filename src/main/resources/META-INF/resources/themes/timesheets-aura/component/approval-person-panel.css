@@ -175,8 +175,9 @@
     margin-block-start: var(--vaadin-gap-xs);
 }
 
-/* Below 600 pixels four figures in a row would cut their labels and details short, such as "Утверждено" and
-   "записей · 186ч 30м" in Russian: two rows of two */
+/* Below 600 pixels, two rows of two: four figures in a row still show their longest labels and details whole at 600,
+   such as "Утверждено" and "записей · 186ч 30м" in Russian, and the switch stays clear of the panel's width at 1280
+   pixels with the navigation drawer open, about 640 */
 @container approval-figures (width < 600px) {
     .approval-person-panel .figure {
         flex-basis: calc(50% - var(--vaadin-gap-s));

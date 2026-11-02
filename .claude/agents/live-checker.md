@@ -21,7 +21,7 @@ You check a change in the running Timesheets app through a browser and report wh
 Pick per check; you can switch between them.
 
 - **Built-in browser** (`mcp__Claude_Browser__*`) — the default. The user can watch it in the app's pane. `find` and `read_page` return only what you ask for, and `browser_batch` runs several steps in one call, so it costs the least. Its tabs share one session, so it holds one logged-in user at a time.
-- **Playwright** (`mcp__plugin_playwright_playwright__*`, load them with ToolSearch) — when you need two users logged in at once, such as a server-push update from one session to another: its browser contexts do not share cookies. Its actions return a page snapshot each time, which is large on Jmix screens.
+- **Playwright** (`mcp__plugin_playwright_playwright__*`, load them with ToolSearch) — when you need two users logged in at once, such as a server-push update from one session to another: its browser contexts do not share cookies. Its actions return a page snapshot each time, which is large on Jmix screens. Before using it, read the Playwright notes under Live checks in `docs/guidelines/testing.md`.
 - **Claude in Chrome** (`mcp__claude-in-chrome__*`, load them with ToolSearch) — only when the caller says the user asked for it. It is the user's own browser: never sign out or touch other tabs.
 
 Read structure and text with the accessibility tree or page text; take a screenshot when the look itself is what you check.

@@ -131,6 +131,10 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 **Layout approach:** Use `vbox` / `hbox` in view descriptors (Vaadin `VerticalLayout` / `HorizontalLayout`), or flexbox/grid in CSS, with `--vaadin-gap-*` / `--vaadin-padding-*` tokens. No hard-coded spacing values.
 
+**Box sizing.** The theme leaves the project's own elements in `content-box`, so their padding and border add to a width set on them. A part given a share of its row, such as an approval figure at `flex-basis: calc(50% - var(--vaadin-gap-s))` for two to a row, sets `box-sizing: border-box`; otherwise its padding and border push the second part onto a row of its own.
+
+**Focus rings at an edge.** A focus ring reaches outside its part by its width, `--vaadin-focus-ring-width`, and by its offset, which Aura sets to 2 pixels for a button and to zero or less for most other parts. A scrolling container clips the ring at its padding, so a container whose parts reach its edge, such as the approval screen's person panel, pads by the ring's width plus 2 pixels.
+
 ---
 
 ## 5. Responsive Behavior
@@ -138,3 +142,7 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 - **Mobile** (< 640px): Single column, stacked layouts, full-width cards
 - **Tablet** (640–1024px): Two-column grid, side-by-side content
 - **Desktop** (> 1024px): Multi-column grid
+
+A container query styles the descendants of its container, never the container itself, so what changes under the query sits inside the container. As the approval figures go from four in a row to two, their row is the container, a wrapping flex container, and each figure changes its `flex-basis`; a grid that is itself the container cannot change its own columns.
+
+A container's width at a common window is not the screen's. With the navigation drawer open at 1280 pixels, the approval screen's person panel is about 640 pixels wide, and a classic scrollbar, as on Windows or in Playwright's Chromium, takes 15 pixels of it where a Mac's overlay scrollbar takes none. A switch within a scrollbar's width of such a width puts the same window on either side of it, depending on the scrollbar.
