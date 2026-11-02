@@ -1,0 +1,129 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Reject dialog: the entries of the basket, the quick reasons, and the reason */
+
+/* Wide enough for an entry's task and time on one line, and the quick reasons on two */
+.approval-reject-dialog {
+    --jmix-side-dialog-horizontal-size: 28rem;
+}
+
+.approval-reject-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-l);
+}
+
+.approval-reject-dialog-content > .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-reject-dialog-content .section-label {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-reject-dialog-content .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* The task and the time over the day and the description, with the button that takes the entry out beside them */
+.approval-reject-dialog-content .basket-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title remove"
+        "date remove"
+        "description remove";
+    align-items: center;
+    column-gap: var(--vaadin-gap-s);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-m);
+}
+
+.approval-reject-dialog-content .basket-entry > .title {
+    grid-area: title;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-reject-dialog-content .basket-entry > .date {
+    grid-area: date;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* Enough to tell the entries apart: cut after two lines, as the week board cuts a card's description after three */
+.approval-reject-dialog-content .basket-entry > .description {
+    grid-area: description;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    /* Also where line clamping does not reach into the rendered Markdown */
+    max-height: calc(var(--aura-line-height-s) * 2);
+    overflow: hidden;
+    overflow-wrap: anywhere;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* The rendered Markdown sits flush with the parts around it, in their line height, as on an entry card */
+.approval-reject-dialog-content .basket-entry > .description vaadin-markdown {
+    line-height: inherit;
+}
+
+.approval-reject-dialog-content .basket-entry > .description vaadin-markdown > :first-child {
+    margin-block-start: 0;
+}
+
+.approval-reject-dialog-content .basket-entry > .description vaadin-markdown > :last-child {
+    margin-block-end: 0;
+}
+
+.approval-reject-dialog-content .basket-entry > .remove {
+    grid-area: remove;
+}
+
+.approval-reject-dialog-content .quick-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* As tall as the reason field of the time entry editor */
+.approval-reject-dialog-content > .reason {
+    min-height: 15rem;
+}

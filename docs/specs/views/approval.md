@@ -24,7 +24,7 @@ A user who approves nowhere, Full access included, sees an empty screen that say
 - **Project** — "All my projects" or one of the projects the user approves on, sorted by name; it can be cleared.
 - **Team progress** — "N of M people fully approved", the number of entries waiting and rejected, and a bar split by status. A person is fully approved when they have entries and none is New or Rejected. It counts everyone with entries in the period and the chosen project, whatever the roster's switch and search show, and is hidden when nobody has entries, keeping its place.
 
-On a narrower desktop, such as 1280 pixels wide with the navigation drawer open, the team progress always has a row of its own below the other parts of the toolbar. Which of the two layouts shows depends only on the width of the screen's own area, which an open navigation drawer narrows, never on the texts, so changing the mode, the period, or the language never moves the roster.
+On a screen narrower than 1440 pixels, the team progress always has a row of its own below the other parts of the toolbar; from 1440 pixels, with the navigation drawer open or not, all of it is on one row. Which of the two layouts shows depends only on the width of the screen, never on the texts, so changing the mode, the period, or the language never moves the roster.
 
 "Waiting" means status New throughout the screen.
 

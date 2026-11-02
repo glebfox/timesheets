@@ -38,6 +38,10 @@ A UI piece that several views show the same way, such as an avatar, a user cell,
 
 A component or renderer with its own Java class and its own stylesheet in the theme, such as the user cell, gives its parts classes that name them, such as `title`, and its stylesheet gives their look; it sets no utility classes, ones that each carry a single look such as a font size or a color. A piece built in place, with no class or stylesheet of its own, such as a grid renderer in a view, may set the project's utility classes from `app/util.css`. Lumo's utility classes are used nowhere. Aura's classes that `docs/guidelines/design-system.md` prescribes, such as `aura-accent-neutral` on a badge, are not utility classes. Why: [decision 0006](decisions/0006-a-component-with-its-own-stylesheet-sets-no-utility-classes.md).
 
+## Breakpoints
+
+A media or a container query switches at a common screen width, written in pixels, such as 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs. Older stylesheets, such as the calendar's, predate the rule.
+
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>: <short description>` — imperative, one subject line, no scope and no prose body. Types in use: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
