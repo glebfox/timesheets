@@ -268,13 +268,10 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @SuppressWarnings("unchecked")
     private Collection<Tag> collectTagsFromFields() {
         Stream<List<Tag>> stream = tagsForm.getOwnComponents().stream()
-                .filter(component ->
-                        component instanceof JmixMultiSelectComboBox<?> comboBox
-                                && CollectionUtils.isNotEmpty(comboBox.getTypedValue()))
-                .map(component -> {
-                    Collection<Tag> tags = ((JmixMultiSelectComboBox<Tag>) component).getTypedValue();
-                    return ImmutableList.copyOf(tags);
-                });
+                .filter(component -> component instanceof JmixMultiSelectComboBox<?>)
+                .map(component -> ((JmixMultiSelectComboBox<Tag>) component).getTypedValue())
+                .filter(CollectionUtils::isNotEmpty)
+                .map(ImmutableList::copyOf);
         return tagsSupport.mergeTags(stream);
     }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
-# Runs the checks of .github/workflows/tests.yml (spotlessCheck, then the tests on the test profile) against this
-# checkout's current state: HEAD plus uncommitted and untracked changes. They run in a throwaway clone, so the app
+# Runs the checks of .github/workflows/tests.yml (spotlessCheck, SpotBugs, then the tests on the test profile) against
+# this checkout's current state: HEAD plus uncommitted and untracked changes. They run in a throwaway clone, so the app
 # the developer runs from this checkout's build/ is never cleaned or rebuilt.
 set -uo pipefail
 root=$(git rev-parse --show-toplevel) || exit 1
@@ -18,14 +18,15 @@ fi
 rm -f "$work/.local-ci.patch"
 git -C "$root" ls-files --others --exclude-standard -z | tar -C "$root" --null -T - -cf - | tar -C "$work" -xf -
 
-echo "Running spotlessCheck and test in $work"
+echo "Running spotlessCheck, SpotBugs, and test in $work"
 cd "$work" || exit 1
-SPRING_PROFILES_ACTIVE=test ./gradlew --continue --console=plain spotlessCheck test >"$work/local-ci.log" 2>&1
+SPRING_PROFILES_ACTIVE=test ./gradlew --continue --console=plain spotlessCheck spotbugsMain spotbugsTest test \
+  >"$work/local-ci.log" 2>&1
 status=$?
 
 if [ $status -eq 0 ]; then
   tests=$(cat build/test-results/test/TEST-*.xml 2>/dev/null | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*' | paste -sd+ - | bc)
-  echo "PASSED: spotlessCheck and ${tests:-all} tests."
+  echo "PASSED: spotlessCheck, SpotBugs, and ${tests:-all} tests."
   rm -rf "$work"
   exit 0
 fi
@@ -34,6 +35,10 @@ echo "FAILED (gradle exit $status). Clone kept at $work"
 grep -E '^> Task .*FAILED|^      [^ @][^[:space:]]*$|FAILED$|There were failing tests' "$work/local-ci.log" | head -40
 failed=$(grep -l -E '<(failure|error)' build/test-results/test/TEST-*.xml 2>/dev/null)
 [ -n "$failed" ] && echo "Failing test classes:" && echo "$failed" | sed 's|.*/TEST-||; s|\.xml$||'
+grep -q '^> Task :spotbugsMain FAILED' "$work/local-ci.log" &&
+  echo "SpotBugs report: $work/build/reports/spotbugs/main.html"
+grep -q '^> Task :spotbugsTest FAILED' "$work/local-ci.log" &&
+  echo "SpotBugs report: $work/build/reports/spotbugs/test.html"
 [ -f build/reports/tests/test/index.html ] && echo "Report: $work/build/reports/tests/test/index.html"
 echo "Full log: $work/local-ci.log"
 exit $status

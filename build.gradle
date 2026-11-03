@@ -19,6 +19,7 @@ plugins {
     id 'java'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
     id 'com.diffplug.spotless' version '8.6.0'
+    id 'com.github.spotbugs' version '6.5.13'
 }
 
 apply plugin: 'org.springframework.boot'
@@ -101,6 +102,28 @@ idea {
 
 test {
     useJUnitPlatform()
+}
+
+spotbugs {
+    // The plugin's enums are Kotlin's, which Groovy reaches only through valueOf
+    effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
+    excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+// The Jmix enhancer adds persistence methods to the entities, which no source line holds and SpotBugs reports by the
+// hundred, so SpotBugs reads the classes as compiled, before the enhancer
+tasks.named('spotbugsMain') {
+    classDirs = files(tasks.named('compileJava').flatMap { it.destinationDirectory })
+}
+tasks.named('spotbugsTest') {
+    classDirs = files(tasks.named('compileTestJava').flatMap { it.destinationDirectory })
+}
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    reports {
+        html {
+            required = true
+        }
+    }
 }
 
 def licenseLines = '''\

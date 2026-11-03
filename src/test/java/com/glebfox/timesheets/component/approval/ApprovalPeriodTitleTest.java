@@ -20,8 +20,8 @@ import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
@@ -114,9 +114,9 @@ class ApprovalPeriodTitleTest {
 
     private static Properties loadBundle(String fileName) {
         Properties properties = new Properties();
-        try (InputStream stream = Objects.requireNonNull(ApprovalPeriodTitleTest.class.getResourceAsStream(
-                "/com/glebfox/timesheets/" + fileName), fileName)) {
-            properties.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        try (Reader reader = new InputStreamReader(Objects.requireNonNull(ApprovalPeriodTitleTest.class
+                .getResourceAsStream("/com/glebfox/timesheets/" + fileName), fileName), StandardCharsets.UTF_8)) {
+            properties.load(reader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

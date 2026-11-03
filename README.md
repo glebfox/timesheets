@@ -71,6 +71,12 @@ Every source file of the project's own starts with the Apache License header, an
 ./gradlew spotlessApply
 ```
 
+CI also runs SpotBugs and fails on any finding. Run it before a pull request; the reports are in `build/reports/spotbugs/`:
+
+```bash
+./gradlew spotbugsMain spotbugsTest
+```
+
 [ARCHITECTURE.md](ARCHITECTURE.md) shows where things live, and [docs/](docs/) holds the specs of the entities, roles, and screens.
 
 ## License
