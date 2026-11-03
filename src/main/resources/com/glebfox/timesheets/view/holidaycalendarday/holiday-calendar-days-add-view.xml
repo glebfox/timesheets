@@ -39,7 +39,7 @@
                        requiredMessage="msg://nameField.requiredMessage"
                        maxLength="255">
                 <prefix>
-                    <icon icon="fontawesome-regular:address-card"/>
+                    <icon icon="gravity-ui:office-badge"/>
                 </prefix>
             </textField>
             <!-- Two date pickers joined by a dash read as one field, with the range summary as its helper -->

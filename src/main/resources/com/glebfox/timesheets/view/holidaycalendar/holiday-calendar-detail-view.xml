@@ -42,7 +42,7 @@
             <formLayout id="form" dataContainer="holidayCalendarDc">
                 <textField id="nameField" property="name">
                     <prefix>
-                        <icon icon="fontawesome-regular:address-card"/>
+                        <icon icon="gravity-ui:office-badge"/>
                     </prefix>
                 </textField>
                 <textArea id="descriptionField" property="description"

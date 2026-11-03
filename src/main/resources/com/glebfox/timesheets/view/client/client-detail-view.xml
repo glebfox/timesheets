@@ -49,7 +49,7 @@
                        label="msg://com.glebfox.timesheets.entity.client/Client.name"
                        width="100%" maxWidth="30em">
                 <prefix>
-                    <icon icon="fontawesome-regular:address-card"/>
+                    <icon icon="gravity-ui:office-badge"/>
                 </prefix>
             </textField>
 

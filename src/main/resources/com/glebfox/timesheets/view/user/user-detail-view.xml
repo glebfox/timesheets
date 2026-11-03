@@ -64,7 +64,7 @@
                         dataContainer="userDc">
                 <textField id="usernameField" property="username" readOnly="true">
                     <prefix>
-                        <icon icon="fontawesome-regular:address-card"/>
+                        <icon icon="gravity-ui:office-badge"/>
                     </prefix>
                 </textField>
                 <passwordField id="passwordField"
@@ -85,12 +85,12 @@
                 </passwordField>
                 <textField id="firstNameField" property="firstName">
                     <prefix>
-                        <icon icon="fontawesome-regular:address-card"/>
+                        <icon icon="gravity-ui:office-badge"/>
                     </prefix>
                 </textField>
                 <textField id="lastNameField" property="lastName">
                     <prefix>
-                        <icon icon="fontawesome-regular:address-card"/>
+                        <icon icon="gravity-ui:office-badge"/>
                     </prefix>
                 </textField>
                 <textField id="emailField" property="email">

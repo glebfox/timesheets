@@ -15,7 +15,6 @@
  */
 
 vaadin-icon[icon^='gravity-ui:'],
-vaadin-icon[icon^='fontawesome-'],
 vaadin-icon[src='themes/timesheets-aura/icons/menu-icons.svg'] {
     --vaadin-icon-visual-size: 80%;
 }

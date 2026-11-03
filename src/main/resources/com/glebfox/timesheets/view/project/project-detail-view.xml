@@ -59,7 +59,7 @@
             <formLayout id="form" dataContainer="projectDc">
                 <textField id="nameField" property="name" colspan="2">
                     <prefix>
-                        <icon icon="fontawesome-regular:address-card"/>
+                        <icon icon="gravity-ui:office-badge"/>
                     </prefix>
                 </textField>
                 <markdownEditor id="descriptionField" property="description"
