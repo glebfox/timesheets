@@ -16,40 +16,44 @@
 
 package com.glebfox.timesheets.menu;
 
-import com.glebfox.timesheets.TimesheetsApplication;
-import com.vaadin.flow.component.icon.SvgIcon;
+import com.glebfox.timesheets.component.icon.MenuIconset;
+import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.icon.Icon;
 import io.jmix.flowui.menu.MenuConfig;
 import io.jmix.flowui.menu.MenuItem;
-import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
-import io.jmix.tabbedmode.testassist.UiTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
-// The menu creates its icon components through the current UI, so it loads only in a UI test
-@UiTest
-@SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
+@SpringBootTest
+@ExtendWith(AuthenticatedAsAdmin.class)
 public class MenuIconsTest {
 
-    static final String SPRITE = "themes/timesheets-aura/icons/menu-icons.svg";
+    static final String ICONSET = "ts-menu";
+    static final String MODULE = "src/component/icon/ts-menu-icons.js";
     static final String STYLE = "fill: none; stroke: var(--vaadin-icon-color, currentColor); "
             + "stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round";
-    static final Map<String, String> SYMBOLS = Map.ofEntries(
+    static final Map<String, String> ICONS = Map.ofEntries(
             entry("timesheets", "timesheets"), entry("ts_CalendarView", "calendar"),
             entry("ts_TimeEntry.my", "my-time-entries"), entry("ts_Task.my", "my-tasks"),
             entry("projects", "project-management"), entry("ts_Client.list", "clients"),
@@ -67,42 +71,43 @@ public class MenuIconsTest {
     MenuConfig menuConfig;
 
     @Test
-    void everyMenuEntryShowsItsOwnSymbolFromTheSprite() {
+    void everyMenuEntryShowsItsOwnIconFromTheMenuSet() {
         Map<String, String> collected = new HashMap<>();
-        collectSymbols(menuConfig.getRootItems(), collected);
+        collectIcons(menuConfig.getRootItems(), collected);
 
-        assertThat(collected).isEqualTo(SYMBOLS);
-        assertThat(new HashSet<>(SYMBOLS.values())).hasSize(SYMBOLS.size());
+        assertThat(collected).isEqualTo(ICONS.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> ICONSET + ":" + e.getValue())));
+        assertThat(new HashSet<>(ICONS.values())).hasSize(ICONS.size());
     }
 
     @Test
-    void spriteDefinesExactlyTheMenuSymbolsOnTheSixteenGrid() throws Exception {
-        List<Element> symbols = loadSymbols();
-
-        assertThat(symbols).extracting(symbol -> symbol.getAttribute("id"))
-                .containsExactlyInAnyOrderElementsOf(SYMBOLS.values());
-        for (Element symbol : symbols) {
-            assertThat(symbol.getAttribute("viewBox")).as(symbol.getAttribute("id")).isEqualTo("0 0 16 16");
-        }
+    void theMenuSetIsBundledWithTheApplication() {
+        assertThat(MenuIconset.class.getAnnotation(JsModule.class).value()).isEqualTo("./" + MODULE);
     }
 
     @Test
-    void everySymbolDrawsWithTheProjectStrokeOnly() throws Exception {
-        for (Element symbol : loadSymbols()) {
-            String id = symbol.getAttribute("id");
-            List<Element> children = childElements(symbol);
+    void iconsetDefinesExactlyTheMenuIconsOnTheSixteenGrid() throws Exception {
+        Element iconset = loadIconset();
 
-            assertThat(children).as(id).hasSize(1);
-            Element group = children.getFirst();
-            assertThat(group.getLocalName()).as(id).isEqualTo("g");
-            assertThat(group.getAttribute("style")).as(id).isEqualTo(STYLE);
+        assertThat(iconset.getTagName()).isEqualTo("vaadin-iconset");
+        assertThat(iconset.getAttribute("name")).isEqualTo(ICONSET);
+        assertThat(iconset.getAttribute("size")).isEqualTo("16");
+        assertThat(icons(iconset)).extracting(icon -> icon.getAttribute("id"))
+                .containsExactlyInAnyOrderElementsOf(ICONS.values().stream().map(id -> ICONSET + ":" + id).toList());
+    }
 
-            NodeList shapes = group.getElementsByTagNameNS("*", "*");
+    @Test
+    void everyIconDrawsWithTheProjectStrokeOnly() throws Exception {
+        for (Element icon : icons(loadIconset())) {
+            String id = icon.getAttribute("id");
+            assertThat(icon.getAttribute("style")).as(id).isEqualTo(STYLE);
+
+            NodeList shapes = icon.getElementsByTagName("*");
             for (int i = 0; i < shapes.getLength(); i++) {
                 Element shape = (Element) shapes.item(i);
                 for (String attribute : List.of("fill", "stroke", "stroke-width", "style")) {
                     assertThat(shape.hasAttribute(attribute))
-                            .as("%s: <%s> has %s", id, shape.getLocalName(), attribute)
+                            .as("%s: <%s> has %s", id, shape.getTagName(), attribute)
                             .isFalse();
                 }
             }
@@ -110,44 +115,53 @@ public class MenuIconsTest {
     }
 
     @Test
-    void everySymbolIsOnePathSoThatTouchingLinesDoNotDarken() throws Exception {
-        // A menu item's text color is translucent, and every element of a symbol is painted on its own,
+    void everyIconIsOnePathSoThatTouchingLinesDoNotDarken() throws Exception {
+        // A menu item's text color is translucent, and every element of an icon is painted on its own,
         // so lines of two elements that touch would be painted twice where they meet
-        for (Element symbol : loadSymbols()) {
-            String id = symbol.getAttribute("id");
-            List<Element> shapes = childElements(childElements(symbol).getFirst());
+        for (Element icon : icons(loadIconset())) {
+            String id = icon.getAttribute("id");
+            List<Element> shapes = childElements(icon);
 
             assertThat(shapes).as(id).hasSize(1);
-            assertThat(shapes.getFirst().getLocalName()).as(id).isEqualTo("path");
+            assertThat(shapes.getFirst().getTagName()).as(id).isEqualTo("path");
         }
     }
 
-    void collectSymbols(List<MenuItem> items, Map<String, String> collected) {
+    void collectIcons(List<MenuItem> items, Map<String, String> collected) {
         for (MenuItem item : items) {
             if (item.isSeparator()) {
                 continue;
             }
-            assertThat(item.getIcon()).as(item.getId()).isInstanceOfSatisfying(SvgIcon.class, icon -> {
-                assertThat(icon.getSrc()).as(item.getId()).isEqualTo(SPRITE);
-                collected.put(item.getId(), icon.getSymbol());
-            });
-            collectSymbols(item.getChildren(), collected);
+            assertThat(item.getIcon()).as(item.getId()).isInstanceOfSatisfying(Icon.class,
+                    icon -> collected.put(item.getId(), icon.getElement().getAttribute("icon")));
+            collectIcons(item.getChildren(), collected);
         }
     }
 
-    List<Element> loadSymbols() throws Exception {
-        try (InputStream stream = getClass().getResourceAsStream("/META-INF/resources/" + SPRITE)) {
-            assertThat(stream).as(SPRITE).isNotNull();
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            Document document = factory.newDocumentBuilder().parse(stream);
-            NodeList nodes = document.getElementsByTagNameNS("http://www.w3.org/2000/svg", "symbol");
-            List<Element> symbols = new ArrayList<>();
-            for (int i = 0; i < nodes.getLength(); i++) {
-                symbols.add((Element) nodes.item(i));
+    /**
+     * Parses the {@code <vaadin-iconset>} markup that the module puts into its template.
+     */
+    Element loadIconset() throws Exception {
+        String module = Files.readString(Path.of("src/main/frontend", MODULE));
+        int start = module.indexOf("<vaadin-iconset");
+        int end = module.indexOf("</vaadin-iconset>") + "</vaadin-iconset>".length();
+        assertThat(start).as(MODULE).isNotNegative();
+        byte[] markup = module.substring(start, end).getBytes(StandardCharsets.UTF_8);
+        return DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                .parse(new ByteArrayInputStream(markup))
+                .getDocumentElement();
+    }
+
+    List<Element> icons(Element iconset) {
+        List<Element> icons = new ArrayList<>();
+        NodeList groups = iconset.getElementsByTagName("g");
+        for (int i = 0; i < groups.getLength(); i++) {
+            Element group = (Element) groups.item(i);
+            if (group.hasAttribute("id")) {
+                icons.add(group);
             }
-            return symbols;
         }
+        return icons;
     }
 
     List<Element> childElements(Element parent) {

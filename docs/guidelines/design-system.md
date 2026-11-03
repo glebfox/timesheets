@@ -151,7 +151,7 @@ A container's width at a common window is not the screen's. With the navigation 
 
 ## 6. Icons
 
-Icons inside screens, on fields, buttons, and grids, come from the Gravity UI set (`gravity-ui:<name>`). The main menu has a set of its own, drawn for it: each group and item has its own icon, and no two are the same. This section is about that set.
+Icons inside screens, on fields, buttons, and grids, come from the Gravity UI set (`gravity-ui:<name>`), except the standard list actions' buttons, which keep Jmix's own icons. The main menu has a set of its own, drawn for it: each group and item has its own icon, and no two are the same. This section is about that set.
 
 **The style.**
 
@@ -163,13 +163,13 @@ Icons inside screens, on fields, buttons, and grids, come from the Gravity UI se
 
 **How the icons reach the menu.**
 
-- All the menu icons are `<symbol>` elements in one sprite, `src/main/resources/META-INF/resources/themes/timesheets-aura/icons/menu-icons.svg`, reached as `themes/timesheets-aura/icons/menu-icons.svg`. `/themes/**` is one of Vaadin's public resource paths; a static file elsewhere, such as under `/icons/`, is refused by the security fallback that [decision 0005](../decisions/0005-addresses-that-open-no-view-stay-forbidden.md) keeps.
-- Each `menu` and `item` in `menu.xml` has a nested `<icon><svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="<id>"/></icon>`, not an `icon` attribute.
-- `vaadin-icon` draws a symbol as `<use href="<file>#<id>">`, and the browser fetches the file once for all the menu's icons. Nothing of the sprite's root element is copied, so each symbol styles itself: its only child is a `<g style="fill: none; stroke: var(--vaadin-icon-color, currentColor); stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round">`, and the shapes inside it set no `fill`, `stroke`, `stroke-width`, or `style` of their own. `MenuIconsTest` checks this.
-- Each symbol draws one `<path>`: its circles and rectangles are written as arcs and joined into it. A menu item's text color is translucent, and every element of an SVG is painted on its own, so where the lines of two elements touch or cross they would be painted twice and show darker in the light theme and brighter in the dark one; one path is painted once.
+- The menu's icons are an iconset, `ts-menu`, in `src/main/frontend/src/component/icon/ts-menu-icons.js`, made as `gravity-ui-icons.js` is. A class in `component/icon/` carries its `@JsModule`, which brings the module into the frontend bundle. So the icons arrive with the bundle, before the menu is shown, and the bundle's file names carry a hash of their content, so a browser never keeps an old copy of the set after a deploy.
+- Each `menu` and `item` in `menu.xml` names its icon with the `icon` attribute: `icon="ts-menu:<id>"`.
+- Each icon is a `<g id="ts-menu:<id>" style="fill: none; stroke: var(--vaadin-icon-color, currentColor); stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round">`, and the shapes inside it set no `fill`, `stroke`, `stroke-width`, or `style` of their own. `vaadin-icon` draws a copy of that `<g>`, its `style` included, in a `0 0 16 16` view box given by the iconset's `size="16"`. `MenuIconsTest` checks the set against the menu.
+- Each icon draws one `<path>`: its circles, ellipses, and rectangles are written as arcs and joined into it. A menu item's text color is translucent, and every element of an SVG is painted on its own, so where the lines of two elements touch or cross they would be painted twice and show darker in the light theme and brighter in the dark one; one path is painted once.
 - The stroke width is the project's own property. Vaadin's `--vaadin-icon-stroke-width`, which Aura sets to 1.75 for every icon, is not set or overridden anywhere in the project, so changing `--ts-menu-icon-stroke-width` changes every menu icon and no other icon.
 - The lines take the color Vaadin gives icons, `--vaadin-icon-color`, falling back to `currentColor`, so a selected or hovered item colors its icon as it colors its text.
-- `component/icon.css` sets `--vaadin-icon-visual-size: 80%` on the sprite's icons as on the Gravity UI icons, which draws them at 16 px inside the item's icon box.
+- `component/icon.css` sets `--vaadin-icon-visual-size: 80%` on the `ts-menu:` icons as on the Gravity UI icons, which draws them at 16 px inside the item's icon box.
 
 **The rules for a new icon.**
 
@@ -179,8 +179,8 @@ Icons inside screens, on fields, buttons, and grids, come from the Gravity UI se
 4. **Meanings are shared with the screens.** The menu never gives an object a meaning that contradicts what the same object means on screens. The meanings in use:
    - briefcase — a project (project fields; Projects);
    - clock — time spent or work time (time fields; My time entries, Time entries, Work schedules);
-   - tag — a project role (the participant editor's Role field; Project roles);
-   - tags — a task type (the task editor's Type field; Task types);
+   - tag — a project role (the participant editor's Role field; Project roles), and a tag's name (the tag editor);
+   - tags — a task type (the task editor's Type field; Task types), and a tag group (the tag editor);
    - shield — security roles (Security, Resource roles, Row-level roles);
    - magnifier — search and inspection (filter fields; Entity inspector);
    - rows — the list of all records of a kind (Time entries, Row-level roles, Entity inspector, Locks);
@@ -190,5 +190,5 @@ Icons inside screens, on fields, buttons, and grids, come from the Gravity UI se
    - person — a person (person fields; Project roles, Users).
 5. **Geometry.** The grid, live area, and stroke of the style above. Between stroke edges keep about 1 unit of clear space, and never less than 0.5, which only parts that sit side by side by design reach, such as the rows and the object of rule 2. A small part that must read on its own, such as the clock of Work schedules, is at least about 6 units across. Avoid shapes where many lines meet at sharp corners, such as a cube: at 16 px the corners blur and the lines seem to run past them.
 6. **One stroke.** When a part is too tight, give it room or remove parts; never draw it with a thinner stroke.
-7. **Naming.** The symbol id is the menu entry's name in kebab case, such as `work-schedules` or `approve-time-entries`.
-8. **Adding and checking.** Draw the icon on the grid, join its elements into one path, add it to the sprite in the symbol's wrapper, reference it from `menu.xml`, and add the pair to `MenuIconsTest`. Check it at 16 px in the menu next to its neighbors, in both themes, on a high-density screen, at strokes from 1.33 to 1.75. In the dev run, a changed sprite reaches the app after `./gradlew processResources` and a page reload, as the theme's CSS does.
+7. **Naming.** The icon's id is the menu entry's name in kebab case, such as `work-schedules` or `approve-time-entries`.
+8. **Adding and checking.** Draw the icon on the grid, join its elements into one path, add it to `ts-menu-icons.js` in the icon's wrapper, name it in `menu.xml`, and add the pair to `MenuIconsTest`. Check it at 16 px in the menu next to its neighbors, in both themes, on a high-density screen, at strokes from 1.33 to 1.75. In the dev run, a changed iconset reaches the app only after a restart, which rebuilds the development bundle because a frontend file changed.
