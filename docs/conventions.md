@@ -46,6 +46,10 @@ A component or renderer with its own Java class and its own stylesheet in the th
 
 A media or a container query on width switches at a common screen width, written in pixels, such as 480, 600, 768, 1024, 1280, or 1440 pixels, rather than at a width worked out from the content. A container query on a part that is a small share of the screen, such as a day's column on the approval screen's week board, may switch at the width its own content needs, in `rem`. A container query switches at least a scrollbar's width away from every width its container has at a common window, with the navigation drawer open or collapsed, so that a classic or an overlay scrollbar never decides the layout (`docs/guidelines/design-system.md`). Older stylesheets, such as the calendar's, predate the rule.
 
+## SpotBugs findings
+
+A SpotBugs finding is fixed in the code, test code included. It is excluded instead only when it is false for this application, such as a pattern the framework requires or a threat the application does not face: in `config/spotbugs/exclude.xml`, matched by the class or method it concerns unless it is false everywhere, with a comment that gives the reason. Findings are not suppressed with `@SuppressFBWarnings`: the filter is the one place exclusions live.
+
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>: <short description>` — imperative, one subject line, no scope and no prose body. Types in use: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.

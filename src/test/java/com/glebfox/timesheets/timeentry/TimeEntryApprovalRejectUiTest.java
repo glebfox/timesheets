@@ -118,7 +118,6 @@ public class TimeEntryApprovalRejectUiTest {
     User ann;
     User bob;
     User cid;
-    TimeEntry annWaiting;
     TimeEntry bobApproved;
     TimeEntry cidMonday;
     TimeEntry cidTuesday;
@@ -141,7 +140,7 @@ public class TimeEntryApprovalRejectUiTest {
         cid = data.saveUser("cid", "Cid", "Cole");
         Stream.of(ann, bob, cid).forEach(user -> data.saveParticipant(project, user, memberRole));
 
-        annWaiting = data.saveEntry(task, ann, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
+        data.saveEntry(task, ann, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
         bobApproved = data.saveEntry(task, bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED, null);
         cidMonday = data.saveEntry(task, cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
         cidTuesday = data.saveEntry(task, cid, OCTOBER.atDay(6), TimeEntryStatus.NEW, null);

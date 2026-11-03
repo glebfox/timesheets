@@ -137,11 +137,11 @@ public class TimeEntryCopyAction extends SecuredListDataComponentAction<TimeEntr
     protected boolean isPermitted() {
         if (target == null
                 || target.getSingleSelectedItem() == null
-                || !(target.getItems() instanceof EntityDataUnit)) {
+                || !(target.getItems() instanceof EntityDataUnit items)) {
             return false;
         }
 
-        MetaClass metaClass = ((EntityDataUnit) target.getItems()).getEntityMetaClass();
+        MetaClass metaClass = items.getEntityMetaClass();
 
         UiEntityContext entityContext = new UiEntityContext(metaClass);
         accessManager.applyRegisteredConstraints(entityContext);
@@ -155,11 +155,11 @@ public class TimeEntryCopyAction extends SecuredListDataComponentAction<TimeEntr
 
     @Override
     public boolean isDisabledWhenViewReadOnly() {
-        if (!(target.getItems() instanceof EntityDataUnit)) {
+        if (!(target.getItems() instanceof EntityDataUnit items)) {
             return true;
         }
 
-        MetaClass metaClass = ((EntityDataUnit) target.getItems()).getEntityMetaClass();
+        MetaClass metaClass = items.getEntityMetaClass();
         // Even though the view is read-only, this edit action may remain active
         // because the related entity cannot be edited and the corresponding detail view
         // will be opened in read-only mode either.
