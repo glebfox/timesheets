@@ -61,19 +61,57 @@ class DemoTimeEntryGenerator {
     private static final int REJECTED_COUNT = 4;
     private static final int BATCH_SIZE = 200;
 
+    // Mostly a short line; some are longer, with the Markdown a description may have, such as lists and bold text
     private static final Map<String, List<String>> DESCRIPTIONS_BY_TASK_TYPE = Map.of(
             "Research", List.of("Reviewed the latest readings", "Compared the results with the previous run",
-                    "Read up on the earlier studies", "Wrote up the findings"),
+                    "Read up on the earlier studies", "Wrote up the findings",
+                    """
+                            Compared the readings of the last three runs:
+
+                            - the drift stays within the expected range
+                            - run 2 shows a spike at **14:20** that needs a second look
+                            - the sensor log of run 3 is incomplete"""),
             "Experiment", List.of("Ran the experiment series", "Prepared the samples",
-                    "Recorded the measurements", "Repeated the failed run"),
+                    "Recorded the measurements", "Repeated the failed run",
+                    """
+                            Ran the series at three power levels. The samples held up at the first two; at the third \
+                            the containment field flickered twice, so the run was stopped early and the samples were \
+                            set aside for inspection."""),
             "Engineering", List.of("Assembled the prototype", "Replaced the worn parts",
-                    "Calibrated the equipment", "Fixed the wiring"),
+                    "Calibrated the equipment", "Fixed the wiring",
+                    """
+                            Calibrated the equipment:
+
+                            1. Zeroed the emitter
+                            2. Aligned the mirrors
+                            3. Ran the **self-test**, which passed"""),
             "Testing", List.of("Walked through the test plan", "Logged the defects found",
-                    "Repeated the test with new settings"),
-            "Analysis", List.of("Analysed the data set", "Prepared the charts for the report", "Checked the numbers"),
-            "Management", List.of("Planning meeting", "Status report", "Reviewed the schedule with the team"),
+                    "Repeated the test with new settings",
+                    """
+                            Repeated the test with new settings. Found:
+
+                            - the valve sticks below 40%
+                            - the readout lags by about a second
+
+                            Both are *logged* for the next build."""),
+            "Analysis", List.of("Analysed the data set", "Prepared the charts for the report", "Checked the numbers",
+                    """
+                            Analysed the data set of the week. The averages match last month's, but the outliers \
+                            cluster on the night shift, which the report should mention."""),
+            "Management", List.of("Planning meeting", "Status report", "Reviewed the schedule with the team",
+                    """
+                            **Planning meeting**
+
+                            - moved the test window to Thursday
+                            - agreed on who covers the night shift
+                            - next review in two weeks"""),
             "Security", List.of("Patrolled the sector", "Checked the access logs", "Escorted the visitors",
-                    "Safety drill"));
+                    "Safety drill",
+                    """
+                            Checked the access logs of the sector:
+
+                            - two badge readers out of sync
+                            - one door left open overnight, reported to **facilities**"""));
 
     private static final List<String> REJECTION_REASONS = List.of(
             "Logged on the wrong task, please move it.",

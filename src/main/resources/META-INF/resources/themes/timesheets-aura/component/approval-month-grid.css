@@ -1,0 +1,193 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Month grid: seven days and a week card per row */
+
+.approval-month-grid {
+    display: grid;
+    /* The week card is wide enough for its hours, its entries, and two badges */
+    grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(10rem, 1.5fr);
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+    /* Its days take their layout from its width */
+    container-name: approval-month;
+    container-type: inline-size;
+}
+
+.approval-month-grid > .heading {
+    padding: var(--vaadin-padding-xs);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
+    text-align: center;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .day {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border-inline-end: 1px solid var(--vaadin-border-color-secondary);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+}
+
+.approval-month-grid > .day:not(.outside) {
+    cursor: pointer;
+}
+
+.approval-month-grid > .day.weekend {
+    background: var(--vaadin-background-container);
+}
+
+/* A neighbouring month's day is dimmed and shows only its number */
+.approval-month-grid > .day.outside {
+    color: var(--vaadin-text-color-disabled);
+}
+
+.approval-month-grid > .day.selected {
+    background: var(--aura-accent-surface);
+}
+
+.approval-month-grid > .day:not(.outside):hover {
+    background: var(--vaadin-background-container-strong);
+}
+
+.approval-month-grid > .day > .number {
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .day:not(.outside) > .number {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-month-grid > .day > .hours {
+    grid-row: 2;
+    align-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+    white-space: nowrap;
+
+    font-weight: var(--aura-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-month-grid > .day > .line {
+    grid-row: 3;
+}
+
+/* Below 768 pixels a day is narrower than its dot and a time such as "10h 30m" (about 87 pixels with the usual
+   padding), as at 1280 pixels with the navigation drawer open, where it is about 68: the day keeps the time on one line
+   with a narrower padding and without the dot, as the line below it shows the same status */
+@container approval-month (width < 768px) {
+    .approval-month-grid > .day {
+        padding-inline: var(--vaadin-padding-xs);
+    }
+
+    .approval-month-grid > .day > .hours > .dot {
+        display: none;
+    }
+}
+
+/* A week card: the button that selects the week fills it, and the week's actions sit below the button, not in it, on
+   a row of their own: beside it they would take the width that the hours, the entries, and the badges need */
+.approval-month-grid > .week {
+    display: flex;
+    flex-direction: column;
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
+    background: var(--vaadin-background-container);
+}
+
+/* The grid's own border closes the last row */
+.approval-month-grid > :is(.day, .week):nth-last-child(-n + 8) {
+    border-block-end: none;
+}
+
+.approval-month-grid > .week:has(> .summary:hover) {
+    background: var(--vaadin-background-container-strong);
+}
+
+/* The selected week: the accent surface, with an accent line along its start edge, as a selected roster card */
+.approval-month-grid > .week.selected {
+    background: var(--aura-accent-surface);
+    box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
+}
+
+.approval-month-grid > .week > .summary {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "hours count"
+        "badges badges";
+    align-content: center;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    row-gap: var(--vaadin-gap-xs);
+    min-width: 0;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    cursor: pointer;
+}
+
+.approval-month-grid > .week > .summary:focus-visible {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+}
+
+.approval-month-grid > .week > .summary > .hours {
+    grid-area: hours;
+    white-space: nowrap;
+
+    font-weight: var(--aura-font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-month-grid > .week > .summary > .count {
+    grid-area: count;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.approval-month-grid > .week > .summary > .badges {
+    grid-area: badges;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* Under the badges, at the end, as the actions of an entry card */
+.approval-month-grid > .week > .actions:not(:empty) {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--vaadin-gap-xs);
+    padding: 0 var(--vaadin-padding-s) var(--vaadin-padding-xs);
+}
+
+/* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
+   the layouts around a slot leave no gap for it */
+.approval-month-grid .actions:empty {
+    display: none;
+}

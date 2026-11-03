@@ -20,15 +20,26 @@
 @import url('view/login-view.css');
 @import url('view/main-view.css');
 @import url('view/project-detail-view.css');
+@import url('view/time-entry-approval-view.css');
 @import url('view/time-entry-detail-view.css');
 @import url('view/work-schedule-list-view.css');
 
+@import url('component/approval-basket-bar.css');
+@import url('component/approval-entry-card.css');
+@import url('component/approval-fingerprint.css');
+@import url('component/approval-month-grid.css');
+@import url('component/approval-person-panel.css');
+@import url('component/approval-reject-dialog.css');
+@import url('component/approval-roster-card.css');
+@import url('component/approval-status.css');
+@import url('component/approval-week-board.css');
 @import url('component/avatar-upload.css');
 @import url('component/details.css');
 @import url('component/full-calendar.css');
 @import url('component/icon.css');
 @import url('component/segmented-group.css');
 @import url('component/toggle-group.css');
+@import url('component/tooltip.css');
 
 @import url('app/popover-renderer.css');
 @import url('app/user-renderer.css');

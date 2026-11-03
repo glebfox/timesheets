@@ -1,0 +1,265 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Selected person: the header, the figures, and the month grid with a week's entries or the week board */
+
+.approval-person-panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--vaadin-gap-m);
+    box-sizing: border-box;
+    min-height: 0;
+    overflow-y: auto;
+    /* Room for the focus rings of the parts along the edges, such as the person's primary button: a ring reaches as far
+       out as its width and its offset from the part, which Aura sets to 2 pixels for a primary button */
+    padding: calc(var(--vaadin-focus-ring-width) + 2px);
+}
+
+/* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
+   the layouts around a slot leave no gap for it */
+.approval-person-panel .actions:empty {
+    display: none;
+}
+
+/* The person and their actions on one row, the actions at the end; where the panel leaves the person less than
+   16rem beside the actions, such as a long "Approve N waiting" in a narrow panel, the actions go on a row of their
+   own below, still at the end */
+.approval-person-panel > .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-s) var(--vaadin-gap-m);
+}
+
+.approval-person-panel > .header > .person {
+    flex: 1 1 16rem;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "avatar name"
+        "avatar details";
+    align-items: center;
+    row-gap: var(--vaadin-gap-xs);
+}
+
+.approval-person-panel > .header > .person > .avatar {
+    grid-area: avatar;
+    margin-inline-end: var(--vaadin-gap-m);
+}
+
+.approval-person-panel > .header > .person > .name {
+    grid-area: name;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-l);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-l);
+}
+
+.approval-person-panel > .header > .person > .details {
+    grid-area: details;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel > .header > .actions:not(:empty) {
+    display: flex;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    margin-inline-start: auto;
+}
+
+/* A button never reaches past the panel: in a panel narrower than its text, its text wraps */
+.approval-person-panel > .header > .actions > vaadin-button {
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* Four figures in an even row, or in two rows of two where the row is narrow, which take their layout from its
+   width */
+.approval-person-panel > .figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--vaadin-gap-s);
+    container-name: approval-figures;
+    container-type: inline-size;
+}
+
+.approval-person-panel .figure {
+    flex: 1 1 0;
+    box-sizing: border-box;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "label label"
+        "value details"
+        "bar bar";
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+}
+
+.approval-person-panel .figure > .label {
+    grid-area: label;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel .figure > .value {
+    grid-area: value;
+
+    font-size: var(--aura-font-size-xl);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-xl);
+    font-variant-numeric: tabular-nums;
+}
+
+/* A label longer than its figure is cut short with an ellipsis, as the details are */
+.approval-person-panel .figure > .label > .text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.approval-person-panel .figure.empty > .value {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-person-panel .figure > .details {
+    grid-area: details;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-person-panel .figure > .approval-status-bar {
+    grid-area: bar;
+    margin-block-start: var(--vaadin-gap-xs);
+}
+
+/* Below 600 pixels, two rows of two: four figures in a row still show their longest labels and details whole at 600,
+   such as "Утверждено" and "записей · 186ч 30м" in Russian, and the switch stays clear of the panel's width at 1280
+   pixels with the navigation drawer open, about 640 */
+@container approval-figures (width < 600px) {
+    .approval-person-panel .figure {
+        flex-basis: calc(50% - var(--vaadin-gap-s));
+    }
+}
+
+/* A figure narrower than a value and its details side by side need, such as "186h 30m" and "122 entries" (about 190
+   pixels with the padding), has the details below the value, whole: four in a row below 768 pixels, as at 1280 pixels
+   with the navigation drawer open, where a figure is about 155, and two in a row below 480 */
+@container approval-figures (600px <= width < 768px) or (width < 480px) {
+    .approval-person-panel .figure {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "label"
+            "value"
+            "details"
+            "bar";
+    }
+}
+
+/* The entries of a week in a month, grouped by day */
+
+.approval-person-panel > .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-m);
+}
+
+.approval-person-panel > .entries > .entries-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+}
+
+.approval-person-panel > .entries > .entries-header > h4 {
+    margin: 0;
+
+    font-size: var(--aura-font-size-m);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-m);
+}
+
+.approval-person-panel > .entries > .empty {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-person-panel > .entries > .entries-day {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-person-panel .day-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* A rule fills the header up to the day's actions */
+.approval-person-panel .day-header::after {
+    content: "";
+    flex: 1 1 auto;
+    order: 1;
+    height: 1px;
+    background: var(--vaadin-border-color-secondary);
+}
+
+.approval-person-panel .day-header > .date {
+    color: var(--vaadin-text-color);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-person-panel .day-header > .hours {
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-person-panel .day-header > .actions:not(:empty) {
+    display: flex;
+    order: 2;
+    gap: var(--vaadin-gap-xs);
+}

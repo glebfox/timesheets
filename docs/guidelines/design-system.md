@@ -64,14 +64,14 @@ Use accent class names (e.g. `.aura-accent-purple`) on `<html>` or individual co
 | Warning | `warning` | `.aura-accent-yellow`, `.v-warning` | `--ts-warning-color` |
 | Info | `info` | `.aura-accent-blue`, `.v-info` | `--ts-primary-color` |
 
-Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange or neutral; such rules use `--aura-orange` and `--aura-neutral`.
+Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange or neutral; such rules use `--aura-orange` and `--aura-neutral`, except a neutral fill shown beside the status colors, such as Closed on the approval screen: `--aura-neutral` is the text color itself, nearly black in the light theme and nearly white in the dark one, so such a fill takes the mid gray of `--vaadin-text-color-secondary`, which Aura derives from it.
 
 **Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these.
 
 **Toggle buttons** are a checkbox group or a radio button group with a class that makes each item read as a button, a checked one filled with the accent color, while the keyboard works as for the group's checkboxes or radio buttons:
 
 - `toggle-group` (`component/toggle-group.css`), on a checkbox group, as the work schedule editor's workdays: a row of separate buttons, each pressed on its own.
-- `segmented-group` (`component/segmented-group.css`), on a radio button group, as a holiday calendar day's type: one bar of joined segments, since only one item can be chosen.
+- `segmented-group` (`component/segmented-group.css`), on a radio button group, as a holiday calendar day's type: one bar of joined segments, since only one item can be chosen. The segments are of equal width, each at least as wide as the longest label, and a label never wraps.
 
 Both show the states of an Aura field. Invalid, the borders take the error color. Read-only, the borders turn dashed and only a checked item keeps a faint accent tint, with a solid outline in the accent text color and a semibold label, so it reads as checked by more than its hue. Disabled, the labels dim and a checked item keeps a stronger fill. Hovered and pressed, an item shades as an Aura button does, an unchecked one as a regular button and a checked one as a primary button; a pressed toggle button also drops its shadow and, on a high-density screen, shrinks slightly, while a segment keeps its size, as Aura's joined menu bar buttons do. A read-only or disabled group shows no hover or press. In forced-colors (high contrast) mode the chosen items use the system's selected-item colors, and a read-only chosen item keeps a doubled solid border and its semibold label.
 
@@ -131,6 +131,10 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 **Layout approach:** Use `vbox` / `hbox` in view descriptors (Vaadin `VerticalLayout` / `HorizontalLayout`), or flexbox/grid in CSS, with `--vaadin-gap-*` / `--vaadin-padding-*` tokens. No hard-coded spacing values.
 
+**Box sizing.** The theme leaves the project's own elements in `content-box`, so their padding and border add to a width set on them. A part given a share of its row, such as an approval figure at `flex-basis: calc(50% - var(--vaadin-gap-s))` for two to a row, sets `box-sizing: border-box`; otherwise its padding and border push the second part onto a row of its own.
+
+**Focus rings at an edge.** A focus ring reaches outside its part by its width, `--vaadin-focus-ring-width`, plus its offset, which Aura sets to 2 pixels for a primary button, to minus the border's width, 1 pixel inward, for any other button, and to zero or less for most other parts. A container that clips its overflow, as one that scrolls does, cuts the ring off at the outer edge of its padding, so a container whose parts reach its edge, such as the approval screen's person panel with the person's primary button, pads by the ring's width plus 2 pixels.
+
 ---
 
 ## 5. Responsive Behavior
@@ -138,3 +142,7 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 - **Mobile** (< 640px): Single column, stacked layouts, full-width cards
 - **Tablet** (640–1024px): Two-column grid, side-by-side content
 - **Desktop** (> 1024px): Multi-column grid
+
+A container query styles the descendants of its container, never the container itself, so what changes under the query sits inside the container. As the approval figures go from four in a row to two, their row is the container, a wrapping flex container, and each figure changes its `flex-basis`; a grid that is itself the container cannot change its own columns.
+
+A container's width at a common window is not the screen's. With the navigation drawer open at 1280 pixels, the approval screen's person panel is about 640 pixels wide, and a classic scrollbar, as on Windows or in Playwright's Chromium, takes 15 pixels of it where a Mac's overlay scrollbar takes none. A switch within a scrollbar's width of such a width puts the same window on either side of it, depending on the scrollbar.

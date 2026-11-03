@@ -1,6 +1,6 @@
 # Project participant
 
-Source: `entity/project/ProjectParticipant.java`
+Source: `entity/project/ProjectParticipant.java`, `app/TimeEntryApprovalSupport.java`
 
 A user's membership in a project, with a role.
 
@@ -12,7 +12,7 @@ A user's membership in a project, with a role.
 
 ## Meaning
 
-Participation is what makes a project's tasks [bookable](task.md#bookable-tasks) for the user and lists them in the user's My tasks. The role is informational: it grants no permissions and changes nothing a participant can do ([security roles](../roles/README.md)).
+Participation is what makes a project's tasks [bookable](task.md#bookable-tasks) for the user and lists them in the user's My tasks. The role grants no security permissions ([security roles](../roles/README.md)). Its type decides which time entries the participant approves on the project: a Manager approves every entry of the project, an Approver all but their own and the Managers', and Member and Observer none ([approval screen](../views/approval.md#which-entries-it-shows)).
 
 ## Deletion
 

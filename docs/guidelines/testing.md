@@ -17,9 +17,12 @@ Project-specific mechanics of the test harness and of the IDE's static checks. H
 - A UI test shows views in another locale by setting `ClientDetails` with that locale as the details of the authentication inside `systemAuthenticator.runWithUser(...)`: views opened in that block take their texts and formats from it, and the change ends with the block. See `WorkScheduleEditorUiTest` and `HolidayCalendarDaysAddUiTest`.
 - Cancel on a detail view with unsaved changes opens the save confirmation dialog, which `jmix.ui.view.use-save-confirmation` turns on by default; a test discards the changes by clicking its button with the id `close` (`ok` saves). `closeWithDiscard()` skips the dialog a user sees. See `UserAssignmentsUiTest`.
 - A test of a resource role gives a test user the role by saving a `RoleAssignmentEntity` row of type `RESOURCE` and runs as that user with `systemAuthenticator.runWithUser(...)`; role assignments are soft-deleted, so the teardown removes the row with soft deletion off. Opening a view checks the current user's view policies, so a test proves a role's view policies only by opening the views inside that block. See `WorkScheduleManagementRoleUiTest`.
+- A constrained `DataManager` checks the entity-level READ only for the entity a load starts from: the entities a screen reaches through a fetch plan load whether or not the role grants them, as removing those grants one at a time and loading as the holder showed. A role test proves the grants of such reference-only entities with an entity context check, `UiEntityContext` after `accessManager.applyRegisteredConstraints(...)`, not with a load. See `TimeEntryApprovalRoleTest`.
+- A component that the `ComponentRenderer` of a virtual list makes, such as the roster cards of the approval screen, never exists in a UI test: without a client viewport the list asks for no items, so its renderer never runs, and `VirtualList` has no getter for it. A test builds such a component directly, as the renderer would, and asserts its parts; what the view gives the component and how it redraws when its item refreshes stay unchecked, and only a live check sees them. See `cardOf` in `TimeEntryApprovalViewUiTest`. A grid column's renderer is reachable: `grid.getColumnByKey(key).getRenderer()` as a `ComponentRenderer`, then `createComponent(item)`. See `renderCell` in `WorkScheduleListUiTest`.
 - A view that exists only for tests, such as one that loads a component with every XML attribute set, lives in `src/test` under the base package, with its descriptor in `src/test/resources`: Jmix finds views on the test classpath too. See `AvatarUploadTestView`.
 - A UI test sees what the server asks the browser to do, such as a grid's `recalculateColumnWidths()`, only as a JavaScript call queued for the browser: it runs the UI's executions before the client response and reads the pending invocations of the component's node. See `browserCalls` in `WorkScheduleListUiTest`.
 - Nothing requests what a component serves through a `DownloadHandler`, such as an avatar's image, in a UI test. A test of what the browser would get calls Vaadin's `StreamRequestHandler` itself, with a mocked `VaadinRequest` whose path info is `/` followed by the URL in the component's attribute, such as an avatar's `img`, and a mocked `VaadinResponse` whose output stream collects the body. The response's `getService()` must return the session's service: a download without a content type takes it from there and fails without it. A refusal, such as the 403 for a component that is disabled, hidden, or not attached, shows only as a `sendError` call, so the test verifies that none was made. See `ComponentSupportUiTest`.
+- A test reads a component's tooltip with `Tooltip.forComponent(component)`, which returns the tooltip the component has or gives it an empty one, whose `getText()` is null. Whether the text renders as Markdown has no getter, so only a live check sees it. See `tooltipOf` in `TimeEntryApprovalViewUiTest`.
 - A value set on a filter condition from the server, such as the name condition of a `propertyFilter` or of a `genericFilter` configuration, does not reload the list by itself; the test then calls the filter's `apply()`. See `WorkScheduleListUiTest`.
 - HSQLDB gets none of the partial unique indexes of soft-deleted entities, which are created for PostgreSQL only (`docs/guidelines/database.md`), so no test can check uniqueness among non-deleted rows, such as a unique name, a holiday calendar's dates, or one assignment per user and start date.
 - The `clean test` gate of the `jmix-verify-bootrun` skill runs through local CI (`ARCHITECTURE.md`), never as `./gradlew clean` in this checkout: `bootRun` and the IDE run the app from this checkout's `build/`, and `clean` deletes the classes under it. A plain `SPRING_PROFILES_ACTIVE=test ./gradlew test` here is fine.
@@ -27,6 +30,8 @@ Project-specific mechanics of the test harness and of the IDE's static checks. H
 ## Static checks
 
 The IDE's Jmix inspection does not resolve the actions of the project's own `@ActionType`s. On an `@Install` to such an action, such as `assignmentsDataGrid.create` in the user editor, it reports "Unable to find installation point for delegate" and "Unable to find specified ui component" as errors, and the method as never used. These are false: the delegate binds at runtime, and a UI test that opens the view and relies on the delegate proves it.
+
+It does not resolve the class of a component that a descriptor declares with the generic `component` element either. On an `@Install` to such a component, such as `personPanel` on the approval screen, it reports "Unable to find installation point for delegate" as an error and the method as never used, and it reports the component's own `add…Listener` and `set…` methods that `@Subscribe` and `@Install` reach as never used. These are false in the same way.
 
 ## Local overrides in `.jmix/conf`
 
@@ -36,14 +41,24 @@ Jmix reads a resource from `jmix.core.conf-dir` (`.jmix/conf/` in the project di
 - a raw message key, or an old text, from a stale copy of a message bundle;
 - `ClassCastException` between a class and itself, or `IllegalAccessError` on a package-private class, from a hot-deployed `.class`: the tests load it through Jmix's own class loader, apart from the application's classes.
 
-Fix: delete the stale file, or the `.class`, under `.jmix/conf/`; Studio writes a class there again on the next save of its source. CI never has this directory.
+Fix: delete the stale file, or the `.class`, under `.jmix/conf/`; Studio writes a class there again on the next save of its source. CI never has this directory. While Studio hot-deploys the classes being edited, which the developer's running app may be using, a test run in the checkout can leave its copies alone and read an empty folder instead: `JMIX_CORE_CONFDIR=<empty folder> SPRING_PROFILES_ACTIVE=test ./gradlew test …`.
 
 ## Live checks
 
 Start the application with the `dev` profile for demo data (the users are in `demo/DemoDataLoader.java`, and each one's password is their username); the render walk is described in the `jmix-verify-bootrun` skill. Only a live check can verify:
 
 - server-push updates, such as the rejected-entries badge refreshing in another user's open session;
-- how screens look: badge colors, icons, card layouts, and columns fitting their content after rows change;
+- how screens look: badge colors, icons, card layouts, columns fitting their content after rows change, and where the focus and the scroll land after the server asks for them;
 - file uploads: the file picker, drag and drop, and the transfer itself; UI tests run without a browser, so they reach an upload field only through its server side.
+
+Measuring in a live check, in any browser:
+
+- a text is cut where its `scrollWidth` exceeds its `clientWidth`, and where a container query switches is found by setting an inline width on the container in steps;
+- a tooltip opens after half a second of hover, Vaadin's default delay.
+
+Driving the app with Playwright:
+
+- its `colorScheme` emulation is lost after a reload or a new login, so a check of a theme sets it again after each;
+- its Chromium draws classic scrollbars, so a scrolling panel measures narrower than on a Mac with overlay scrollbars (`docs/guidelines/design-system.md`).
 
 A running app picks up Java changes only after a restart; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.

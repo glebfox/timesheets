@@ -1,0 +1,90 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The statuses of time entries on the approval screen: the bar split by them, and the color of a status for the other
+   parts that show it */
+
+/* A bar split by the statuses of time entries, one segment per status, as wide as its share */
+.approval-status-bar {
+    display: flex;
+    flex-shrink: 0;
+    /* As tall as a progress bar */
+    height: var(--vaadin-progress-bar-height);
+    overflow: hidden;
+    border-radius: var(--vaadin-radius-s);
+    background: var(--vaadin-background-container-strong);
+}
+
+.approval-status-bar > * {
+    flex-basis: 0;
+}
+
+.approval-status-bar > .new {
+    background: var(--ts-warning-color);
+}
+
+.approval-status-bar > .approved {
+    background: var(--ts-success-color);
+}
+
+.approval-status-bar > .rejected {
+    background: var(--ts-danger-color);
+}
+
+/* Closed is neutral, as its status badge is: the mid gray of secondary text, which Aura derives from the same neutral
+   in either theme, and not the neutral itself, which is nearly black or nearly white */
+.approval-status-bar > .closed {
+    background: var(--vaadin-text-color-secondary);
+}
+
+/* The color of a status, for the parts that show it: a dot, a line, and an entry card's stripe. Each takes it from
+   its own status class, so it shows wherever the part is placed */
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).new,
+.approval-entry-card.new {
+    --_status-color: var(--ts-warning-color);
+}
+
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).approved,
+.approval-entry-card.approved {
+    --_status-color: var(--ts-success-color);
+}
+
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).rejected,
+.approval-entry-card.rejected {
+    --_status-color: var(--ts-danger-color);
+}
+
+/* The neutral of Closed, as in the status bar */
+:is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).closed,
+.approval-entry-card.closed {
+    --_status-color: var(--vaadin-text-color-secondary);
+}
+
+:is(.approval-person-panel, .approval-month-grid) .dot {
+    display: inline-block;
+    flex-shrink: 0;
+    /* As small as the smallest gap, so it reads as a mark beside the text */
+    width: var(--vaadin-gap-s);
+    height: var(--vaadin-gap-s);
+    border-radius: 50%;
+    background: var(--_status-color);
+}
+
+:is(.approval-month-grid, .approval-week-board) .line {
+    height: var(--vaadin-progress-bar-height);
+    border-radius: var(--vaadin-radius-s);
+    background: var(--_status-color);
+}

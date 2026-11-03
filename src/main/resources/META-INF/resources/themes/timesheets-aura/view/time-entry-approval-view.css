@@ -1,0 +1,200 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.time-entry-approval-view {
+    /* Wide enough for a name, two badges, and a month's fingerprint of readable bars */
+    --_roster-width: 20rem;
+}
+
+/* Toolbar: the controls on a row, and the team progress on a row of its own below them; on a wide screen, all on one
+   row. The screen's width alone decides which, never the texts, whose width changes with the mode, the period, and the
+   language: so the toolbar's height, and the roster below it, stay put while they change */
+
+.time-entry-approval-view-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    width: 100%;
+}
+
+/* Wide enough for a project's name of a few words, such as "Anomalous Materials", beside the clear button */
+.time-entry-approval-view-project {
+    width: 14rem;
+}
+
+.time-entry-approval-view-period {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* Wide enough for the longest month and for a week across two months, so the arrows stay put while stepping */
+.time-entry-approval-view-period-title {
+    min-width: 12rem;
+    margin: 0;
+    text-align: center;
+    white-space: nowrap;
+
+    font-size: var(--aura-font-size-l);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-l);
+}
+
+.time-entry-approval-view-period-year {
+    color: var(--vaadin-text-color-secondary);
+    font-weight: var(--aura-font-weight-medium);
+}
+
+.time-entry-approval-view-team-progress {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--vaadin-gap-m);
+    min-width: 0;
+}
+
+/* With nobody's time to count it is hidden, but keeps its place, so that the toolbar is as tall as with it */
+.time-entry-approval-view-team-progress.empty {
+    visibility: hidden;
+}
+
+.time-entry-approval-view-team-progress-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 0;
+    text-align: end;
+}
+
+/* A line each, so that the progress is as tall whatever it says; cut short only where nothing else gives way */
+.time-entry-approval-view-team-progress-label > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.time-entry-approval-view-team-progress-text {
+    font-size: var(--aura-font-size-s);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: var(--aura-line-height-s);
+}
+
+.time-entry-approval-view-team-progress-details {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.time-entry-approval-view-team-progress > .approval-status-bar {
+    width: 12rem;
+}
+
+/* From a screen of 1440 pixels the view is wide enough, even with the navigation drawer open, for the longest controls,
+   those of a week in Russian, and the team progress beside them: about 72rem of the 70rem they need */
+@media (min-width: 1440px) {
+    .time-entry-approval-view-toolbar {
+        flex-wrap: nowrap;
+    }
+
+    /* The controls keep their width; the team progress gives way, its bar first, down to a short one */
+    .time-entry-approval-view-toolbar > * {
+        flex-shrink: 0;
+    }
+
+    .time-entry-approval-view-toolbar > .time-entry-approval-view-team-progress {
+        flex: 0 1 auto;
+        margin-inline-start: auto;
+    }
+
+    /* Shrinks so little beside the bar that the bar gives way first, and the texts only once it is at its shortest */
+    .time-entry-approval-view-team-progress-label {
+        flex-shrink: 0.01;
+    }
+
+    .time-entry-approval-view-team-progress > .approval-status-bar {
+        flex: 0 1 12rem;
+        width: auto;
+        min-width: 3rem;
+    }
+}
+
+/* Work area: the roster on the left, the selected person or the empty state beside it */
+
+.time-entry-approval-view-work {
+    display: flex;
+    flex: 1 1 auto;
+    gap: var(--vaadin-gap-m);
+    width: 100%;
+    min-height: 0;
+}
+
+.time-entry-approval-view-roster {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 var(--_roster-width);
+    gap: var(--vaadin-gap-s);
+    min-height: 0;
+}
+
+.time-entry-approval-view-roster-scope {
+    width: 100%;
+}
+
+.time-entry-approval-view-roster-list {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* The reject basket's bar floats over its bottom */
+.time-entry-approval-view-person {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.time-entry-approval-view-empty-state {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    padding: var(--vaadin-padding-l);
+    text-align: center;
+    color: var(--vaadin-text-color-secondary);
+}
+
+.time-entry-approval-view-empty-state > h3 {
+    margin: 0;
+    color: var(--vaadin-text-color);
+}
+
+/* A readable line length for the explanation */
+.time-entry-approval-view-empty-state > span {
+    max-width: 36rem;
+}
+
+/* Room under the last entries, so the bar does not cover them when scrolled to the end: about the bar's height and
+   its offset from the bottom */
+.time-entry-approval-view-person:has(> .approval-basket-bar:not([hidden])) > .approval-person-panel {
+    padding-block-end: calc(var(--aura-line-height-xl) * 2 + var(--vaadin-padding-m));
+}

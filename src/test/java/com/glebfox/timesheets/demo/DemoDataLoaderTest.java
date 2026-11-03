@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.demo;
 
+import com.glebfox.timesheets.app.TimeEntryApprovalSupport;
 import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.component.avatarupload.AvatarImageFormat;
@@ -67,6 +68,8 @@ public class DemoDataLoaderTest {
     DemoDataLoader demoDataLoader;
     @Autowired
     WorkPlanSupport workPlanSupport;
+    @Autowired
+    TimeEntryApprovalSupport approvalSupport;
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
@@ -152,6 +155,21 @@ public class DemoDataLoaderTest {
                 .isNotEmpty()
                 .allMatch(entry -> entry.getRejectionReason() != null)
                 .anyMatch(entry -> entry.getUser().getUsername().equals("admin")));
+    }
+
+    @Test
+    void mossmanApprovesBorealisRecovery() {
+        List<Project> projects = systemAuthenticator.withUser("mossman", approvalSupport::loadProjectsToApprove);
+        assertThat(projects).extracting(Project::getName).containsExactly("Borealis Recovery");
+
+        // Her own entries are not hers to approve, and the Manager's are not an Approver's
+        List<TimeEntry> entries = systemAuthenticator.withUser("mossman", () ->
+                approvalSupport.loadEntriesToApprove(null, LocalDate.of(2000, 1, 1), timeSource.now().toLocalDate()));
+        assertThat(entries).isNotEmpty();
+        assertThat(entries).extracting(entry -> entry.getTask().getProject().getName())
+                .containsOnly("Borealis Recovery");
+        assertThat(entries).extracting(entry -> entry.getUser().getUsername())
+                .doesNotContain("mossman", "magnusson");
     }
 
     @Test

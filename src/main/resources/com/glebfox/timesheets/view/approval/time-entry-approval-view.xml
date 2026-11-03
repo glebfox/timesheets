@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://timeEntryApprovalView.title"
+      focusComponent="rosterSearchField">
+    <layout classNames="time-entry-approval-view">
+        <div id="toolbar" classNames="time-entry-approval-view-toolbar">
+            <radioButtonGroup id="modeField"
+                              ariaLabel="msg://modeField.ariaLabel"
+                              classNames="segmented-group"/>
+            <div id="periodNavigation" classNames="time-entry-approval-view-period">
+                <button id="previousBtn" icon="gravity-ui:chevron-left" ariaLabel="msg://previousBtn.tooltip">
+                    <tooltip text="msg://previousBtn.tooltip"/>
+                </button>
+                <h2 id="periodTitle" classNames="time-entry-approval-view-period-title"/>
+                <button id="nextBtn" icon="gravity-ui:chevron-right" ariaLabel="msg://nextBtn.tooltip">
+                    <tooltip text="msg://nextBtn.tooltip"/>
+                </button>
+            </div>
+            <button id="defaultPeriodBtn"/>
+            <comboBox id="projectField"
+                      placeholder="msg://projectField.placeholder"
+                      ariaLabel="msg://projectField.ariaLabel"
+                      clearButtonVisible="true"
+                      classNames="time-entry-approval-view-project"/>
+            <div id="teamProgress" classNames="time-entry-approval-view-team-progress">
+                <div classNames="time-entry-approval-view-team-progress-label">
+                    <span id="teamProgressText" classNames="time-entry-approval-view-team-progress-text"/>
+                    <span id="teamProgressDetails" classNames="time-entry-approval-view-team-progress-details"/>
+                </div>
+                <component id="teamProgressBar" class="com.glebfox.timesheets.component.approval.ApprovalStatusBar"/>
+            </div>
+        </div>
+
+        <div id="workArea" classNames="time-entry-approval-view-work">
+            <div id="rosterBox" classNames="time-entry-approval-view-roster">
+                <textField id="rosterSearchField"
+                           placeholder="msg://rosterSearchField.placeholder"
+                           ariaLabel="msg://rosterSearchField.placeholder"
+                           clearButtonVisible="true"
+                           valueChangeMode="LAZY"
+                           width="100%">
+                    <prefix>
+                        <icon icon="gravity-ui:magnifier"/>
+                    </prefix>
+                </textField>
+                <radioButtonGroup id="rosterScopeField"
+                                  ariaLabel="msg://rosterScopeField.ariaLabel"
+                                  classNames="segmented-group time-entry-approval-view-roster-scope"/>
+                <virtualList id="rosterList" classNames="time-entry-approval-view-roster-list"/>
+            </div>
+            <div id="personBox" classNames="time-entry-approval-view-person">
+                <component id="personPanel" class="com.glebfox.timesheets.component.approval.ApprovalPersonPanel"/>
+                <!-- Over the selected person's part, so that it is hidden with it -->
+                <component id="basketBar" class="com.glebfox.timesheets.component.approval.ApprovalBasketBar"/>
+            </div>
+            <div id="emptyStateBox" classNames="time-entry-approval-view-empty-state" visible="false">
+                <h3 id="emptyStateHeader"/>
+                <span id="emptyStateText"/>
+            </div>
+        </div>
+    </layout>
+</view>

@@ -1,0 +1,100 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Roster card */
+
+.approval-roster-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "avatar name badges"
+        "avatar role role"
+        ". fingerprint fingerprint"
+        ". logged logged";
+    column-gap: var(--vaadin-gap-s);
+    row-gap: var(--vaadin-gap-xs);
+    box-sizing: border-box;
+    margin-block-end: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-s);
+    border: 1px solid transparent;
+    border-radius: var(--vaadin-radius-l);
+    cursor: pointer;
+}
+
+.approval-roster-card:hover {
+    background: var(--vaadin-background-container);
+}
+
+.approval-roster-card:focus-visible {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+}
+
+/* The selected card: the accent surface, with an accent line along its start edge */
+.approval-roster-card.selected {
+    border-color: var(--aura-accent-border-color);
+    background: var(--aura-accent-surface);
+    box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
+}
+
+.approval-roster-card > .avatar {
+    grid-area: avatar;
+}
+
+.approval-roster-card > .name {
+    grid-area: name;
+    align-self: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-roster-card > .badges {
+    grid-area: badges;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-xs);
+}
+
+.approval-roster-card > .role {
+    grid-area: role;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-roster-card > .fingerprint {
+    grid-area: fingerprint;
+}
+
+/* The drawing sets its own height and fills the width */
+.approval-roster-card > .fingerprint > svg {
+    display: block;
+}
+
+.approval-roster-card > .logged {
+    grid-area: logged;
+
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}

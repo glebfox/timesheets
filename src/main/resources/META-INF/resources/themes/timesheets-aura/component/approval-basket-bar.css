@@ -1,0 +1,50 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Reject basket bar: floats over the bottom of the selected person's part, centred, so it takes no width */
+
+.approval-basket-bar {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: var(--vaadin-padding-m);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    width: fit-content;
+    max-width: calc(100% - var(--vaadin-padding-m) * 2);
+    box-sizing: border-box;
+    margin-inline: auto;
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-xs) var(--vaadin-padding-m);
+    border: 1px solid var(--ts-danger-color);
+    border-radius: var(--vaadin-radius-l);
+    background: var(--aura-surface-color-solid);
+    box-shadow: var(--aura-shadow-m);
+    white-space: nowrap;
+}
+
+.approval-basket-bar > .count {
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-basket-bar > :is(.separator, .dates) {
+    color: var(--vaadin-text-color-secondary);
+}
+
+.approval-basket-bar > .dates {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

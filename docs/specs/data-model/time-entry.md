@@ -1,6 +1,6 @@
 # Time entry
 
-Source: `entity/timeentry/`, `app/TimeEntrySupport.java`, `listener/TimeEntryEventListener.java`, `event/TimeEntryStatusChangedEvent.java`
+Source: `entity/timeentry/`, `app/TimeEntrySupport.java`, `app/TimeEntryApprovalSupport.java`, `listener/TimeEntryEventListener.java`, `event/TimeEntryStatusChangedEvent.java`
 
 One user's time spent on one task on one day. Any number of entries may share a user, task, and date.
 
@@ -15,9 +15,16 @@ One user's time spent on one task on one day. Any number of entries may share a 
 
 ## Status
 
-Nothing in the application moves an entry between statuses on its own, and no transition is forbidden: whoever can edit an entry can set any status. Project roles take no part in it. Rejected is the only status with behavior attached: the entry's user sees their count of Rejected entries in the main menu ([main view](../views/main.md)), and the editor asks for a rejection reason ([time entries](../views/time-entries.md)).
+Nothing in the application moves an entry between statuses on its own. Two paths change a status:
 
-After an entry is created or deleted, or its status changes, the open sessions of the entry's user are told to refresh that count, whether or not that user is deleted. A change that moves an entry to another user tells only the new user, and only if the status changed too.
+- The editor: whoever can edit an entry can set any status there, except that a holder of [Edit active time entries](../roles/edit-active-time-entries.md) cannot save an update that makes or leaves an entry Approved or Closed. No transition is forbidden, so an author can set their own entry to Approved.
+- The [approval screen](../views/approval.md): a Manager or Approver of the entry's project, by the rule that decides whose entries they approve, sets a New or Rejected entry to Approved, and a New, Approved, or Rejected entry to Rejected with a reason, which replaces an earlier one. An approved entry keeps its rejection reason. The screen never sets New or Closed and never changes a Closed entry.
+
+Neither path records who changed the status, or when ([decision 0009](../../decisions/0009-who-approved-or-rejected-an-entry-is-left-to-the-audit-add-on.md)).
+
+Apart from the approval screen, Rejected is the only status with behavior attached: the entry's user sees their count of Rejected entries in the main menu ([main view](../views/main.md)), and the editor asks for a rejection reason ([time entries](../views/time-entries.md)).
+
+After an entry is created or deleted, or its status changes, by the editor or the approval screen alike, the open sessions of the entry's user are told to refresh that count, whether or not that user is deleted. A change that moves an entry to another user tells only the new user, and only if the status changed too.
 
 ## Rules applied when editing
 
@@ -39,6 +46,6 @@ Deleting an entry soft-deletes it. **Known defect:** it also deletes every tag a
 
 - The editing rules above: no UI test exercises the time-entry editor.
 - The description and rejection reason being carried into a copy: the copy test does not check them.
-- Who is told when an entry is created, when a change moves it to another user, and when a change leaves its status alone: the tests check only an entry of a deleted user, when it is deleted or its status changes; `DemoDataLoaderTest` checks that each entry the demo data creates tells someone once, but not whom.
+- Who is told when an entry is created, when a change moves it to another user, and when a change leaves its status alone: the tests check an entry of a deleted user, when it is deleted or its status changes, and that the approval operations tell the user of a live entry whose status they change; `DemoDataLoaderTest` checks that each entry the demo data creates tells someone once, but not whom.
 - The rejected count refreshing in the open sessions that are told: it needs a live session (`docs/guidelines/testing.md`).
 - The tag deletion defect: no test in the suite.

@@ -1,6 +1,6 @@
 # Views and actions
 
-Mechanics of the framework's views, grids, filters, and list actions that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
+Mechanics of the framework's views, grids, filters, list actions, components declared in descriptors, and tooltips that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
 
 ## Read-only detail views
 
@@ -41,6 +41,8 @@ A replaced item redraws only its own row. A cell computed from other rows as wel
 
 Only a detail view checks for unsaved changes when it closes. A dialog that is a plain `StandardView` and collects input for its opener closes at once on Cancel, Esc, or its close button. The calendar days dialog and the add users dialog ask the framework's unsaved-changes question through `UnsavedInputSupport` in `app/util/`: each compares its fields with how it opened and passes the result from its `BeforeCloseEvent` handler. A close with `StandardOutcome.SAVE`, and a close that does not check for unsaved changes, such as one with `StandardOutcome.DISCARD`, pass without the question.
 
+A side dialog, such as the reject dialog of the approval screen, is a component of the view that opened it, not a view, so it asks through `UnsavedInputSupport.askBeforeClosing(sideDialog, owner, inputChanged, focusOnKeep)`, which closes the dialog at once when nothing changed and otherwise asks the question and closes it on Yes. The framework's No focuses the first focusable component of the owner view, behind the dialog, so the method then focuses `focusOnKeep`, a field of the dialog. Its Cancel button calls it, and so must its close-action listener, set with `withCloseActionListener`: once a listener is set, Esc and a click outside no longer close the dialog on their own, so the listener routes both.
+
 ## URL query parameters in tabbed mode
 
 In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on registers `NoopUrlQueryParametersFacetImpl` in place of the framework's facet, so a list's filter and pagination are not kept in the URL. A reload of the browser page keeps them all the same, since tabbed mode restores the open view; the browser's back and forward buttons create the view again, with an empty filter. The list descriptors keep the facet for when the add-on supports it.
@@ -48,3 +50,13 @@ In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on 
 ## Generic filters for users who may not configure them
 
 A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles only Full access grants. Anyone else can use only the configurations the descriptor declares, so a generic filter that other roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).
+
+## Components declared with the generic element
+
+A component of the project's own that has no element of its own in the descriptors, such as the approval screen's person panel and basket bar, is declared with the generic `<component id="…" class="…"/>` element. The loader creates it through `UiComponents`, and so through Spring: the component has a constructor without arguments and takes its beans as `AvatarUpload` does, as `ApplicationContextAware` and `InitializingBean`, building the parts that need them in `afterPropertiesSet`. What it shows comes through its own methods once it is created, such as the person panel's `show` and the basket bar's `setEntries`, never through a constructor. The loader sets the `id`, `visible`, and `css` attributes and the `properties` element, not `classNames`, so the view's stylesheet reaches such a component by its own class.
+
+The view wires it as it wires a framework component. `@Subscribe("<id>")` finds the public `addXxxListener(ComponentEventListener<E>)` that returns a `Registration` by the event type of the method's parameter alone. When two such methods take the same event type, `subject` must name one by its full method name, `addXxxListener`; only for a `ClickEvent` does the framework add the `add` itself, so there the subject is `xxxListener`, as with a button's `clickListener`. `@Install(to = "<id>", subject = "xxx")` reaches a public `setXxx` that takes one functional interface.
+
+## Tooltips that render Markdown
+
+`Tooltip.forComponent(part).setMarkdown(text)` renders the text as Markdown in a `vaadin-tooltip` that Vaadin attaches to `body`, outside the component, so only a theme-wide rule reaches it: the theme's `component/tooltip.css` trims the browser's margins above its first block and below its last. A tooltip stays open while the pointer is on it and hides what it covers, so one on a part with buttons nearby opens where it covers none of them, as a week board card's description opens beside the card with `TooltipPosition.END_TOP`. A part that takes no focus shows its tooltip on hover only, never to the keyboard. See `ApprovalEntryCard`.

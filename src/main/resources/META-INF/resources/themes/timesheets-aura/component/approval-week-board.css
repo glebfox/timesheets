@@ -1,0 +1,109 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* Week board: a column per day, at least as wide as a compact card needs for the words of a task, a tag, and its two
+   buttons; where seven such columns do not fit, the board scrolls sideways within itself, never the page */
+
+.approval-week-board {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(6.5rem, 1fr));
+    align-items: start;
+    gap: var(--vaadin-gap-s);
+    overflow-x: auto;
+    /* As tall as its cards, so that the panel scrolls, not the board: a box that scrolls could otherwise shrink to the
+       height the panel has left, as a flex item, and scroll on its own */
+    flex-shrink: 0;
+}
+
+/* The header and the cards of a column take their layout from the column's width */
+.approval-week-board > .column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    container-name: approval-day;
+    container-type: inline-size;
+}
+
+/* The day and its hours on the first row, the hours below the day where both do not fit; the line and the actions,
+   when there are any, each on a row of its own, the actions at the end, as those of an entry card */
+.approval-week-board > .column > .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-xs);
+    row-gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.approval-week-board > .column.weekend > .header {
+    background: var(--vaadin-background-container);
+}
+
+.approval-week-board > .column > .header > .day {
+    white-space: nowrap;
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.approval-week-board > .column > .header > .hours {
+    margin-inline-start: auto;
+    white-space: nowrap;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.approval-week-board > .column > .header > .line {
+    flex-basis: 100%;
+}
+
+.approval-week-board > .column > .header > .actions:not(:empty) {
+    display: flex;
+    flex-basis: 100%;
+    justify-content: flex-end;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+}
+
+/* A button never reaches past its column */
+.approval-week-board > .column > .header > .actions > vaadin-button {
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/* A column narrower than the text of Approve day needs, in either language, shows the button's icon alone: the button
+   still names itself to assistive technology, and on hover */
+@container approval-day (width < 10rem) {
+    .approval-week-board > .column > .header > .actions > vaadin-button::part(label) {
+        display: none;
+    }
+}
+
+.approval-week-board > .column > .entries {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
+   the layouts around a slot leave no gap for it */
+.approval-week-board .actions:empty {
+    display: none;
+}
