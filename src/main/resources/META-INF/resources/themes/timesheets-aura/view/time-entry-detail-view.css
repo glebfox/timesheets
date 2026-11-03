@@ -17,3 +17,44 @@
 .time-entry-detail-view .text-divider {
     padding-top: var(--vaadin-padding-m);
 }
+/* Why the entry was rejected: the icon beside the title and the reason, on the surface of the error accent that the
+   notice's aura-accent-red class gives it */
+.time-entry-detail-view .rejection-notice {
+    display: flex;
+    flex-shrink: 0;
+    align-items: flex-start;
+    gap: var(--vaadin-gap-s);
+    padding: var(--vaadin-padding-m);
+    border-radius: var(--vaadin-radius-l);
+    background: var(--aura-accent-surface);
+    color: var(--aura-accent-text-color);
+    overflow-wrap: anywhere;
+}
+
+.time-entry-detail-view .rejection-notice > .icon {
+    flex-shrink: 0;
+}
+
+.time-entry-detail-view .rejection-notice > .body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+}
+
+.time-entry-detail-view .rejection-notice .title {
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+/* The rendered Markdown sits flush with the title, in its line height */
+.time-entry-detail-view .rejection-notice .reason {
+    line-height: inherit;
+}
+
+.time-entry-detail-view .rejection-notice .reason > :first-child {
+    margin-block-start: 0;
+}
+
+.time-entry-detail-view .rejection-notice .reason > :last-child {
+    margin-block-end: 0;
+}
