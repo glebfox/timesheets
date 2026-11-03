@@ -17,13 +17,17 @@
 package com.glebfox.timesheets.app.util;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.entity.timeentry.TimeEntry;
+import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.server.VaadinRequest;
 import com.vaadin.flow.server.VaadinResponse;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.communication.StreamRequestHandler;
+import io.jmix.core.DataManager;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import org.junit.jupiter.api.AfterEach;
@@ -35,6 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -50,6 +55,8 @@ class ComponentSupportUiTest {
 
     @Autowired
     ComponentSupport componentSupport;
+    @Autowired
+    DataManager dataManager;
 
     Div content;
 
@@ -79,5 +86,16 @@ class ComponentSupportUiTest {
 
         verify(response, never()).sendError(anyInt(), anyString());
         assertArrayEquals(PNG, body.toByteArray());
+    }
+
+    // The approval screen shows the reason inline, so its status badge keeps no icon
+    @Test
+    void statusRenderWithoutIconLeavesRejectedBare() {
+        TimeEntry rejected = dataManager.create(TimeEntry.class);
+        rejected.setStatus(TimeEntryStatus.REJECTED);
+
+        Badge badge = componentSupport.createTimeEntryStatusRender().createComponent(rejected);
+
+        assertNull(badge.getIcon());
     }
 }

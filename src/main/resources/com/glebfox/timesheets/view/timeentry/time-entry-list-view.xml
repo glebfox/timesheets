@@ -77,9 +77,6 @@
                         <popoverRenderer markdown="true"/>
                     </column>
                     <column property="tags"/>
-                    <column property="rejectionReason" flexGrow="2">
-                        <popoverRenderer markdown="true"/>
-                    </column>
                 </columns>
             </dataGrid>
         </vbox>
