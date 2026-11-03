@@ -17,82 +17,144 @@
 
 <menu-config xmlns="http://jmix.io/schema/flowui/menu">
     <menu id="timesheets" title="msg://com.glebfox.timesheets/menu.timesheets.title"
-          icon="fontawesome-solid:rectangle-list"
           opened="true">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="timesheets"/>
+        </icon>
         <item view="ts_CalendarView"
-              title="msg://com.glebfox.timesheets.view.calendar/calendarView.title"
-              icon="fontawesome-solid:calendar-days"/>
+              title="msg://com.glebfox.timesheets.view.calendar/calendarView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="calendar"/>
+            </icon>
+        </item>
         <item view="ts_TimeEntry.my"
-              title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title"
-              icon="fontawesome-solid:calendar-day"/>
+              title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="my-time-entries"/>
+            </icon>
+        </item>
         <item view="ts_Task.my"
-              title="msg://com.glebfox.timesheets.view.task/myTaskListView.title"
-              icon="fontawesome-solid:file-lines"/>
+              title="msg://com.glebfox.timesheets.view.task/myTaskListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="my-tasks"/>
+            </icon>
+        </item>
     </menu>
 
     <menu id="projects" title="msg://com.glebfox.timesheets/menu.projects.title"
-          icon="fontawesome-solid:building"
           opened="true">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="project-management"/>
+        </icon>
         <item view="ts_Client.list"
-              title="msg://com.glebfox.timesheets.view.client/clientListView.title"
-              icon="fontawesome-solid:user-tie"/>
+              title="msg://com.glebfox.timesheets.view.client/clientListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="clients"/>
+            </icon>
+        </item>
         <item view="ts_Project.list"
-              title="msg://com.glebfox.timesheets.view.project/projectListView.title"
-              icon="fontawesome-solid:briefcase"/>
+              title="msg://com.glebfox.timesheets.view.project/projectListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="projects"/>
+            </icon>
+        </item>
         <separator/>
         <item view="ts_TimeEntry.list"
-              title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title"
-              icon="fontawesome-solid:calendar-days"/>
+              title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="time-entries"/>
+            </icon>
+        </item>
         <item view="ts_TimeEntry.approval"
-              title="msg://com.glebfox.timesheets.view.approval/timeEntryApprovalView.title"
-              icon="fontawesome-solid:list-check"/>
+              title="msg://com.glebfox.timesheets.view.approval/timeEntryApprovalView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="approve-time-entries"/>
+            </icon>
+        </item>
     </menu>
 
     <menu id="settings" title="msg://com.glebfox.timesheets/menu.settings.title"
-          icon="fontawesome-solid:gear"
           opened="true">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="settings"/>
+        </icon>
         <item view="ts_TaskType.list"
-              title="msg://com.glebfox.timesheets.view.tasktype/taskTypeListView.title"
-              icon="fontawesome-solid:tags"/>
+              title="msg://com.glebfox.timesheets.view.tasktype/taskTypeListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="task-types"/>
+            </icon>
+        </item>
         <item view="ts_ProjectRole.list"
-              title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title"
-              icon="fontawesome-solid:user-tag"/>
+              title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="project-roles"/>
+            </icon>
+        </item>
         <item view="ts_WorkSchedule.list"
-              title="msg://com.glebfox.timesheets.view.workschedule/workScheduleListView.title"
-              icon="fontawesome-solid:business-time"/>
+              title="msg://com.glebfox.timesheets.view.workschedule/workScheduleListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="work-schedules"/>
+            </icon>
+        </item>
         <item view="ts_HolidayCalendar.list"
-              title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title"
-              icon="fontawesome-solid:calendar-check"/>
+              title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="holiday-calendars"/>
+            </icon>
+        </item>
     </menu>
 
     <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"
-          icon="fontawesome-solid:user-gear"
           opened="true">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="administration"/>
+        </icon>
         <item view="ts_User.list"
-              title="msg://com.glebfox.timesheets.view.user/UserListView.title"
-              icon="fontawesome-solid:user-group"/>
+              title="msg://com.glebfox.timesheets.view.user/UserListView.title">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="users"/>
+            </icon>
+        </item>
     </menu>
 
-    <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"
-          icon="fontawesome-solid:shield-halved">
+    <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="security"/>
+        </icon>
         <item view="sec_ResourceRoleModel.list"
-              title="msg://io.jmix.securityflowui.view.resourcerole/resourceRoleModelListView.menu"
-              icon="fontawesome-solid:file-shield"/>
+              title="msg://io.jmix.securityflowui.view.resourcerole/resourceRoleModelListView.menu">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="resource-roles"/>
+            </icon>
+        </item>
         <item view="sec_RowLevelRoleModel.list"
-              title="msg://io.jmix.securityflowui.view.rowlevelrole/rowLevelRoleModelListView.menu"
-              icon="fontawesome-solid:file-shield"/>
+              title="msg://io.jmix.securityflowui.view.rowlevelrole/rowLevelRoleModelListView.menu">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="row-level-roles"/>
+            </icon>
+        </item>
     </menu>
-    <menu id="datatools" title="msg://com.glebfox.timesheets/menu.datatools.title"
-          icon="fontawesome-solid:database">
+    <menu id="datatools" title="msg://com.glebfox.timesheets/menu.datatools.title">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="data-tools"/>
+        </icon>
         <item view="datatl_entityInspectorListView"
-              title="msg://io.jmix.datatoolsflowui.view.entityinspector/listTitle"
-              icon="fontawesome-solid:magnifying-glass"/>
+              title="msg://io.jmix.datatoolsflowui.view.entityinspector/listTitle">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="entity-inspector"/>
+            </icon>
+        </item>
     </menu>
-    <menu id="pessimisticlock" title="msg://com.glebfox.timesheets/menu.pessimisticlock.title"
-          icon="fontawesome-solid:lock">
+    <menu id="pessimisticlock" title="msg://com.glebfox.timesheets/menu.pessimisticlock.title">
+        <icon>
+            <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="pessimistic-locking"/>
+        </icon>
         <item view="pslock_LockInfo.list"
-              title="msg://io.jmix.pessimisticlockflowui/pessimisticLockListView.menu"
-              icon="fontawesome-solid:lock"/>
+              title="msg://io.jmix.pessimisticlockflowui/pessimisticLockListView.menu">
+            <icon>
+                <svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="locks"/>
+            </icon>
+        </item>
     </menu>
 
 </menu-config>

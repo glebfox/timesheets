@@ -46,11 +46,9 @@ import io.jmix.flowui.accesscontext.UiEntityAttributeContext;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.accesscontext.UiMenuContext;
 import io.jmix.flowui.accesscontext.UiShowViewContext;
-import io.jmix.flowui.menu.MenuConfig;
 import io.jmix.flowui.menu.MenuItem;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,8 +83,6 @@ public class TimeEntryApprovalRoleTest {
     AccessManager accessManager;
     @Autowired
     Metadata metadata;
-    @Autowired
-    MenuConfig menuConfig;
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
@@ -310,26 +306,12 @@ public class TimeEntryApprovalRoleTest {
     }
 
     private boolean menuItemPermitted(String menuItemId) {
-        MenuItem menuItem = findMenuItem(menuConfig.getRootItems(), menuItemId);
-        assertThat(menuItem).as("menu item %s", menuItemId).isNotNull();
-        UiMenuContext context = new UiMenuContext(menuItem);
+        // The menu loads its icons only inside a UI, so the item is built by id; MenuIconsTest pins every menu id
+        UiMenuContext context = new UiMenuContext(new MenuItem(menuItemId));
         accessManager.applyRegisteredConstraints(context);
         return context.isPermitted();
     }
 
-    @Nullable
-    private static MenuItem findMenuItem(List<MenuItem> items, String id) {
-        for (MenuItem item : items) {
-            if (id.equals(item.getId())) {
-                return item;
-            }
-            MenuItem child = findMenuItem(item.getChildren(), id);
-            if (child != null) {
-                return child;
-            }
-        }
-        return null;
-    }
 
     private <E> E save(E entity, Consumer<E> init) {
         init.accept(entity);
