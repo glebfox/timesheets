@@ -21,6 +21,9 @@
         <action id="logoutAction" type="logout"
                 text="msg:///actions.logout.text" icon="gravity-ui:arrow-right-from-square"/>
     </actions>
+    <!-- No navigationBar (docs/decisions/0011-the-main-view-has-no-navigation-bar.md). Both main view XSDs declare it
+         as required, so the IDE reports appLayout as incomplete, but the loader adds a navigation bar only when it has
+         components, and the view loads without one. -->
     <appLayout classNames="jmix-main-view-app-layout">
         <drawerLayout>
             <section id="section" classNames="jmix-main-view-section">
