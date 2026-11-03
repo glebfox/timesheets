@@ -13,6 +13,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `action/` — custom list actions and the helpers they share.
 - `data/renderer/` — reusable grid renderers.
 - `component/` — custom UI components and icon sets, a subpackage for each component or for each family of components that one screen is built from, such as `component/approval/`; their stylesheets are in the theme's `component/`. A component with an element of its own in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`, and Jmix Studio learns of it from the package's `@StudioUiKit` holder, with its palette icons under `meta/icon/` in resources; a descriptor declares one without such an element with the generic `component` element. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
+- `icon/` — the replacement of Jmix's `Icons` bean, which draws the icons the framework names by purpose, such as those of its standard actions, from the Gravity UI set. See `docs/guidelines/design-system.md`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
 - `demo/` — the demo data that a `dev` start loads; its images are under the same package in resources.
@@ -32,6 +33,7 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 ## Commands
 
 - Rebuild brand assets: `uv run scripts/brand/generate.py` (requires a system Cairo library); verify exports: `uv run scripts/brand/verify.py`. The asset collection's `README.md` includes the macOS loader setting.
+- Update a third-party icon set: `uv run scripts/icons/generate.py gravity-ui [VERSION]` (requires npm) downloads the set's npm package, the latest version unless one is given, rewrites its iconset module and the constants of its Java enum, which are not edited by hand, and its version in `NOTICE`, and prints the icons the version adds and removes. A new set is a new entry in the script's `SETS`, with an enum written for it first.
 - Run with demo data: `SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun`. It needs the local PostgreSQL database.
 - Tests: `SPRING_PROFILES_ACTIVE=test ./gradlew test`. Without the `test` profile the tests try to reach PostgreSQL. CI runs the same in `.github/workflows/tests.yml`.
 - Local CI: `bash .skills/local-ci/scripts/local-ci.sh` runs `spotlessCheck`, SpotBugs, and the tests on the `test` profile, as CI does, in a throwaway clone of HEAD plus uncommitted and untracked changes, so this checkout's `build/` is left alone. On failure it keeps the clone and prints the failing tasks and test classes.
