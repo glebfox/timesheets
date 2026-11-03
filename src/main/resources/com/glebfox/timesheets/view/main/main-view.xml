@@ -24,20 +24,15 @@
     <appLayout classNames="jmix-main-view-app-layout">
         <drawerLayout>
             <section id="section" classNames="jmix-main-view-section">
-                <header id="drawerHeader" classNames="jmix-main-view-drawer-header">
-                    <drawerToggle id="drawerToggle"
-                                  classNames="jmix-main-view-drawer-toggle"
-                                  ariaLabel="msg://drawerToggle.ariaLabel"/>
-                    <div id="applicationTitle" classNames="jmix-main-view-application-title">
-                        <image id="applicationTitleLightLogo"
-                               resource="assets/brand/logos/logo-no-tagline-light.svg"
-                               alternateText="msg://applicationTitle.text"
-                               classNames="jmix-main-view-application-logo jmix-main-view-application-logo-light"/>
-                        <image id="applicationTitleDarkLogo"
-                               resource="assets/brand/logos/logo-no-tagline-dark.svg"
-                               alternateText="msg://applicationTitle.text"
-                               classNames="jmix-main-view-application-logo jmix-main-view-application-logo-dark"/>
-                    </div>
+                <header id="applicationTitle" classNames="jmix-main-view-application-title">
+                    <image id="applicationTitleLightLogo"
+                           resource="assets/brand/logos/logo-no-tagline-light.svg"
+                           alternateText="msg://applicationTitle.text"
+                           classNames="jmix-main-view-application-logo jmix-main-view-application-logo-light"/>
+                    <image id="applicationTitleDarkLogo"
+                           resource="assets/brand/logos/logo-no-tagline-dark.svg"
+                           alternateText="msg://applicationTitle.text"
+                           classNames="jmix-main-view-application-logo jmix-main-view-application-logo-dark"/>
                 </header>
 
                 <nav id="navigation"

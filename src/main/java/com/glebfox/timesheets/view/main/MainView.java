@@ -65,35 +65,6 @@ public class MainView extends StandardTabbedModeMainView {
     @Subscribe
     public void onInit(final InitEvent event) {
         updateRejectedTimeEntries();
-
-        getContent().addAttachListener(attachEvent -> keepFocusOnDrawerToggle());
-    }
-
-    private void keepFocusOnDrawerToggle() {
-        // A drawer toggle hides once it opens or closes the drawer, so the focus moves on to the toggle shown in its
-        // place: the drawer's own while the drawer is open, the work area's while it is closed. It is picked by the
-        // new state, since a closing drawer stays visible while it slides away. An overlay drawer, when it closes,
-        // gives the focus to the first toggle, which is the drawer's own, so the focus is moved on after every close
-        // of an overlay drawer, whatever had it. Runs on every attach, since Flow can recreate the client element;
-        // the flag keeps a surviving element from getting a second listener.
-        getContent().getElement().executeJs("""
-                if (!this.__drawerToggleFocusBound) {
-                    this.__drawerToggleFocusBound = true;
-                    this.addEventListener('drawer-opened-changed', () => {
-                        const fromToggle = document.activeElement?.matches('vaadin-drawer-toggle');
-                        const overlayClosed = this.overlay && !this.drawerOpened;
-                        if (!fromToggle && !overlayClosed) {
-                            return;
-                        }
-                        requestAnimationFrame(() => {
-                            const toggle = this.drawerOpened
-                                ? this.querySelector('.jmix-main-view-drawer-header vaadin-drawer-toggle')
-                                : [...this.querySelectorAll('.jmix-work-area vaadin-drawer-toggle')]
-                                    .find(workAreaToggle => workAreaToggle.checkVisibility());
-                            toggle?.focus();
-                        });
-                    });
-                }""");
     }
 
     @Install(to = "userMenu", subject = "buttonRenderer")
