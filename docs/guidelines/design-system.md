@@ -146,3 +146,48 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 A container query styles the descendants of its container, never the container itself, so what changes under the query sits inside the container. As the approval figures go from four in a row to two, their row is the container, a wrapping flex container, and each figure changes its `flex-basis`; a grid that is itself the container cannot change its own columns.
 
 A container's width at a common window is not the screen's. With the navigation drawer open at 1280 pixels, the approval screen's person panel is about 640 pixels wide, and a classic scrollbar, as on Windows or in Playwright's Chromium, takes 15 pixels of it where a Mac's overlay scrollbar takes none. A switch within a scrollbar's width of such a width puts the same window on either side of it, depending on the scrollbar.
+
+---
+
+## 6. Icons
+
+Icons inside screens, on fields, buttons, and grids, come from the Gravity UI set (`gravity-ui:<name>`). The main menu has a set of its own, drawn for it: each group and item has its own icon, and no two are the same. This section is about that set.
+
+**The style.**
+
+- Outline only, no fills. Lines have round caps and round joins, and the corners of rectangles are rounded.
+- A 16 × 16 grid, `viewBox="0 0 16 16"`. The live area is 1..15, so the centers of the strokes stay within 1.75..14.25.
+- One stroke width for the whole set, `--ts-menu-icon-stroke-width` in `tokens.css`, 1.5 grid units, never mixed inside an icon or across the set. The menu draws its icons at 16 px, so one grid unit is one CSS pixel.
+- A dot is a zero-length line, `M x y h0`: a round dot of the stroke width.
+- The set reads at 16 px on a high-density screen at strokes from 1.33 to 1.75. A thinner stroke only widens the gaps; a stroke above 1.75 needs the tight spots checked again: Time entries, Locks, and Work schedules.
+
+**How the icons reach the menu.**
+
+- All the menu icons are `<symbol>` elements in one sprite, `src/main/resources/META-INF/resources/themes/timesheets-aura/icons/menu-icons.svg`, reached as `themes/timesheets-aura/icons/menu-icons.svg`. `/themes/**` is one of Vaadin's public resource paths; a static file elsewhere, such as under `/icons/`, is refused by the security fallback that [decision 0005](../decisions/0005-addresses-that-open-no-view-stay-forbidden.md) keeps.
+- Each `menu` and `item` in `menu.xml` has a nested `<icon><svgIcon resource="themes/timesheets-aura/icons/menu-icons.svg" symbol="<id>"/></icon>`, not an `icon` attribute.
+- `vaadin-icon` draws a symbol as `<use href="<file>#<id>">`, and the browser fetches the file once for all the menu's icons. Nothing of the sprite's root element is copied, so each symbol styles itself: its only child is a `<g style="fill: none; stroke: var(--vaadin-icon-color, currentColor); stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round">`, and the shapes inside it set no `fill`, `stroke`, `stroke-width`, or `style` of their own. `MenuIconsTest` checks this.
+- The stroke width is the project's own property. Vaadin's `--vaadin-icon-stroke-width`, which Aura sets to 1.75 for every icon, is not set or overridden anywhere in the project, so changing `--ts-menu-icon-stroke-width` changes every menu icon and no other icon.
+- The lines take the color Vaadin gives icons, `--vaadin-icon-color`, falling back to `currentColor`, so a selected or hovered item colors its icon as it colors its text.
+- `component/icon.css` sets `--vaadin-icon-visual-size: 80%` on the sprite's icons as on the Gravity UI icons, which draws them at 16 px inside the item's icon box.
+
+**The rules for a new icon.**
+
+1. **What an icon shows.** One object per screen: a small preview of what the screen shows, not of what the user does there. Few parts; small details do not survive 16 px.
+2. **Two entries with one object.** When two entries would get the same object, the group, or the narrower or personal entry, gets the plain object, and the wider list gets rows plus the object: three rows on the left, one full and two short, and the object in the bottom right, in about 7..15. Time entries (beside My time entries), Row-level roles (beside the Security shield), Entity inspector (the magnifier alone is the search of filter fields), and Locks (beside Pessimistic locking) follow it.
+3. **A family with a mark.** Entries that share a base object and differ in one aspect take the base object cut open at the bottom right and one mark in that corner, a zone of about 7.5 × 7.5: Work schedules and Holiday calendars on the calendar. A mark is not placed inside the base object: inside the calendar there are about 2.5 units of free height, and a mark drawn there becomes a blot.
+4. **Meanings are shared with the screens.** The menu never gives an object a meaning that contradicts what the same object means on screens. The meanings in use:
+   - briefcase — a project (project fields; Projects);
+   - clock — time spent or work time (time fields; My time entries, Time entries, Work schedules);
+   - tag — a project role (the participant editor's Role field; Project roles);
+   - tags — a task type (the task editor's Type field; Task types);
+   - shield — security roles (Security, Resource roles, Row-level roles);
+   - magnifier — search and inspection (filter fields; Entity inspector);
+   - rows — the list of all records of a kind (Time entries, Row-level roles, Entity inspector, Locks);
+   - calendar — dates and days (date fields; Calendar, Work schedules, Holiday calendars);
+   - star — the default work schedule (the dialog that picks a new default); not available to the menu;
+   - key — a password (the user editor); not available to the menu;
+   - person — a person (person fields; Project roles, Users).
+5. **Geometry.** The grid, live area, and stroke of the style above. Between stroke edges keep about 1 unit of clear space, and never less than 0.5, which only parts that sit side by side by design reach, such as the rows and the object of rule 2. A small part that must read on its own, such as the clock of Work schedules, is at least about 6 units across. Avoid shapes where many lines meet at sharp corners, such as a cube: at 16 px the corners blur and the lines seem to run past them.
+6. **One stroke.** When a part is too tight, give it room or remove parts; never draw it with a thinner stroke.
+7. **Naming.** The symbol id is the menu entry's name in kebab case, such as `work-schedules` or `approve-time-entries`.
+8. **Adding and checking.** Draw the icon on the grid, add it to the sprite in the symbol's wrapper, reference it from `menu.xml`, and add the pair to `MenuIconsTest`. Check it at 16 px in the menu next to its neighbors, in both themes, on a high-density screen, at strokes from 1.33 to 1.75. In the dev run, a changed sprite reaches the app only after a restart or `./gradlew vaadinPrepareFrontend`, because Vaadin serves `/themes/**` from a copy made at start.
