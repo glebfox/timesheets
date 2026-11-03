@@ -120,6 +120,31 @@ public class CalendarUiTest {
     }
 
     @Test
+    void movingRejectedEntrySendsItToNew() {
+        /* Given */
+        TimeEntry timeEntry = createTimeEntry();
+        TimeEntry rejected = dataManager.load(Id.of(timeEntry)).one();
+        rejected.setStatus(TimeEntryStatus.REJECTED);
+        rejected.setRejectionReason("Wrong day");
+        dataManager.save(rejected);
+
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            CalendarView calendarView = openCalendar();
+
+            /* When */
+            moveTimeEntry(calendarView, timeEntry, DAY.plusDays(1));
+
+            /* Then */
+            assertThat(findCalendarEvent(calendarView, timeEntry).getEntity().getStatus())
+                    .isEqualTo(TimeEntryStatus.NEW);
+        });
+
+        TimeEntry saved = dataManager.load(Id.of(timeEntry)).one();
+        assertThat(saved.getDate()).isEqualTo(DAY.plusDays(1));
+        assertThat(saved.getStatus()).isEqualTo(TimeEntryStatus.NEW);
+    }
+
+    @Test
     void removeEditedTimeEntryTest() {
         /* Given */
         TimeEntry timeEntry = createTimeEntry();
