@@ -109,6 +109,19 @@ public class MenuIconsTest {
         }
     }
 
+    @Test
+    void everySymbolIsOnePathSoThatTouchingLinesDoNotDarken() throws Exception {
+        // A menu item's text color is translucent, and every element of a symbol is painted on its own,
+        // so lines of two elements that touch would be painted twice where they meet
+        for (Element symbol : loadSymbols()) {
+            String id = symbol.getAttribute("id");
+            List<Element> shapes = childElements(childElements(symbol).getFirst());
+
+            assertThat(shapes).as(id).hasSize(1);
+            assertThat(shapes.getFirst().getLocalName()).as(id).isEqualTo("path");
+        }
+    }
+
     void collectSymbols(List<MenuItem> items, Map<String, String> collected) {
         for (MenuItem item : items) {
             if (item.isSeparator()) {
