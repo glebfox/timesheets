@@ -143,6 +143,25 @@ public class TimeEntryEventListenerTest {
     }
 
     @Test
+    void contentChangeOfRejectedEntryNotifiesUser() {
+        /* Given */
+        TimeEntry rejected = dataManager.load(Id.of(timeEntry)).one();
+        rejected.setStatus(TimeEntryStatus.REJECTED);
+        dataManager.save(rejected);
+        clearInvocations(uiEventPublisher);
+
+        TimeEntry loaded = dataManager.load(Id.of(timeEntry)).one();
+        loaded.setDescription("Fixed");
+
+        /* When */
+        dataManager.save(loaded);
+
+        /* Then */
+        verify(uiEventPublisher).publishEventForUsers(
+                any(TimeEntryStatusChangedEvent.class), eq(Set.of(user.getUsername())));
+    }
+
+    @Test
     void removingEntryTogetherWithItsUserFailsNothingAfterCommit(CapturedOutput output) {
         /* Given */
         clearInvocations(uiEventPublisher);

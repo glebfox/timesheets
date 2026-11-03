@@ -32,8 +32,10 @@ import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.task.TaskLookupView;
 import com.google.common.collect.ImmutableList;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
@@ -43,7 +45,6 @@ import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.formlayout.JmixFormLayout;
-import io.jmix.flowui.component.markdowneditor.MarkdownEditor;
 import io.jmix.flowui.component.multiselectcombobox.JmixMultiSelectComboBox;
 import io.jmix.flowui.component.select.JmixSelect;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
@@ -51,6 +52,7 @@ import io.jmix.flowui.model.CollectionPropertyContainer;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -75,7 +77,9 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @ViewComponent
     private EntityComboBox<Task> taskField;
     @ViewComponent
-    private MarkdownEditor rejectionReasonField;
+    private Div rejectionNotice;
+    @ViewComponent
+    private Div rejectionNoticeBody;
     @ViewComponent
     private H4 tagsTitle;
     @ViewComponent
@@ -102,6 +106,10 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     private ComponentSupport componentSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
+
+    // Made on the first reason to show: the descriptor's markdown element can neither be declared without content nor
+    // be bound to the reason, https://github.com/jmix-framework/jmix/issues/5938
+    private @Nullable Markdown rejectionNoticeReason;
 
     private boolean ownTimeEntry = false;
     private boolean tagsChanged = false;
@@ -175,15 +183,11 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
 
     @Subscribe(id = "timeEntryDc", target = Target.DATA_CONTAINER)
     public void onTimeEntryDcItemChange(final InstanceContainer.ItemChangeEvent<TimeEntry> event) {
-        updateRejectionReasonField();
+        updateRejectionNotice(event.getItem());
     }
 
     @Subscribe(id = "timeEntryDc", target = Target.DATA_CONTAINER)
     public void onTimeEntryDcItemPropertyChange(final InstanceContainer.ItemPropertyChangeEvent<TimeEntry> event) {
-        if ("status".equals(event.getProperty())) {
-            updateRejectionReasonField();
-        }
-
         if ("user".equals(event.getProperty())) {
             taskField.setReadOnly(getEditedEntity().getUser() == null);
             taskField.getDataProvider().refreshAll();
@@ -240,6 +244,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         field.setItems(tags);
         field.setRequired(required);
         field.setClearButtonVisible(true);
+        field.setReadOnly(isReadOnly());
         if (initialValue != null) {
             field.setTypedValue(initialValue);
         }
@@ -280,8 +285,32 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         tagsChanged = false;
     }
 
-    private void updateRejectionReasonField() {
-        rejectionReasonField.setVisible(TimeEntryStatus.REJECTED == getEditedEntity().getStatus());
+    @Subscribe
+    public void onReadOnlyChange(final ReadOnlyChangeEvent event) {
+        // The view's read-only mode reaches only the fields bound to a property, not the tag fields built here
+        tagsForm.getOwnComponents().stream()
+                .filter(component -> component instanceof JmixMultiSelectComboBox<?>)
+                .forEach(component -> ((JmixMultiSelectComboBox<?>) component).setReadOnly(isReadOnly()));
+    }
+
+    // Tells why the entry, as it was loaded, was rejected; the reason is written on the approval screen.
+    // Changing the status field does not show or hide it
+    private void updateRejectionNotice(@Nullable TimeEntry timeEntry) {
+        boolean rejected = timeEntry != null && TimeEntryStatus.REJECTED == timeEntry.getStatus();
+        rejectionNotice.setVisible(rejected);
+
+        String reason = rejected ? timeEntry.getRejectionReason() : null;
+        boolean hasReason = StringUtils.isNotBlank(reason);
+        if (hasReason && rejectionNoticeReason == null) {
+            rejectionNoticeReason = uiComponents.create(Markdown.class);
+            rejectionNoticeReason.setId("rejectionNoticeReason");
+            rejectionNoticeReason.addClassName("reason");
+            rejectionNoticeBody.add(rejectionNoticeReason);
+        }
+        if (rejectionNoticeReason != null) {
+            rejectionNoticeReason.setContent(hasReason ? reason : "");
+            rejectionNoticeReason.setVisible(hasReason);
+        }
     }
 
     @Subscribe("statusField")

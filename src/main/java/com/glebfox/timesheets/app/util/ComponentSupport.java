@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.app.util;
 
+import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
@@ -23,6 +24,7 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
+import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -50,6 +52,12 @@ import java.util.stream.IntStream;
 
 @Component("ts_ComponentSupport")
 public class ComponentSupport {
+
+    /**
+     * The part of every cell of a rejected time entry's row in a grid, which {@code app/time-entry-grid.css} in the
+     * theme tints.
+     */
+    public static final String REJECTED_TIME_ENTRY_PART = "rejected-entry";
 
     private final UiComponents uiComponents;
     private final Messages messages;
@@ -198,6 +206,18 @@ public class ComponentSupport {
      * and styling.
      */
     public BadgeRender<TimeEntry> createTimeEntryStatusRender() {
+        return createTimeEntryStatusRender(false);
+    }
+
+    /**
+     * Creates a {@link BadgeRender} for the status of {@link TimeEntry} entities, as
+     * {@link #createTimeEntryStatusRender()} does, whose Rejected badge may carry an icon that tells there is a
+     * reason to read, for a screen that shows the reason on demand rather than beside the badge.
+     *
+     * @param rejectedIcon whether the Rejected badge carries an icon
+     * @return a {@link BadgeRender} instance for rendering {@link TimeEntry} status
+     */
+    public BadgeRender<TimeEntry> createTimeEntryStatusRender(boolean rejectedIcon) {
         return new BadgeRender<>(
                 timeEntry -> metadataTools.format(timeEntry.getStatus()),
                 timeEntry -> switch (timeEntry.getStatus()) {
@@ -205,8 +225,37 @@ public class ComponentSupport {
                     case APPROVED -> BadgeStyle.SUCCESS;
                     case REJECTED -> BadgeStyle.ERROR;
                     case CLOSED -> BadgeStyle.NEUTRAL;
-                }
+                },
+                timeEntry -> rejectedIcon && timeEntry.getStatus() == TimeEntryStatus.REJECTED
+                        ? GravityUiIcon.CIRCLE_EXCLAMATION.create()
+                        : null
         );
+    }
+
+    /**
+     * Returns the part of every cell of a {@link TimeEntry}'s row in a grid: {@value #REJECTED_TIME_ENTRY_PART} for a
+     * rejected entry, which the theme tints in the error color, and none for an entry of another status.
+     *
+     * @param timeEntry the entry of the row
+     * @return the part name of the row's cells, or {@code null} for none
+     */
+    public @Nullable String getTimeEntryPartName(TimeEntry timeEntry) {
+        return timeEntry.getStatus() == TimeEntryStatus.REJECTED ? REJECTED_TIME_ENTRY_PART : null;
+    }
+
+    /**
+     * Returns the tooltip of a {@link TimeEntry}'s status cell in a grid: the reason of a rejected entry, and none for
+     * one without a reason or for an entry of another status. The reason is Markdown, which the grid renders once its
+     * tooltips are switched to Markdown.
+     *
+     * @param timeEntry the entry of the row
+     * @return the tooltip of the status cell, or {@code null} for none
+     */
+    public @Nullable String getTimeEntryStatusTooltip(TimeEntry timeEntry) {
+        return timeEntry.getStatus() == TimeEntryStatus.REJECTED
+                && StringUtils.isNotBlank(timeEntry.getRejectionReason())
+                ? timeEntry.getRejectionReason()
+                : null;
     }
 
     /**

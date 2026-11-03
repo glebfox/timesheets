@@ -27,7 +27,10 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.MetadataTools;
+import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
@@ -39,14 +42,42 @@ import java.util.List;
 @DialogMode(width = "1024px", closeOnEsc = true)
 public class TimeEntryListView extends StandardListView<TimeEntry> {
 
+    @ViewComponent
+    private DataGrid<TimeEntry> timeEntriesDataGrid;
+
     @Autowired
     private MetadataTools metadataTools;
     @Autowired
     private ComponentSupport componentSupport;
 
+    @Subscribe
+    public void onInit(final InitEvent event) {
+        // The rejection reason is Markdown; the descriptor has no attribute for this. Vaadin 25.3.0 logs a TypeError in
+        // the browser console once the grid shows and on hover of a header, from its own tooltip generator:
+        // https://github.com/vaadin/flow-components/issues/10247, fixed in later 25.3 releases
+        timeEntriesDataGrid.setTooltipMarkdownEnabled(true);
+    }
+
+    @Subscribe(id = "timeEntriesDc", target = Target.DATA_CONTAINER)
+    public void onTimeEntriesDcCollectionChange(final CollectionContainer.CollectionChangeEvent<TimeEntry> event) {
+        // The browser sizes the auto-width columns to the rows it shows first, while a Rejected badge, the widest
+        // with its icon, may come only with another page, a filter, or a reload
+        timeEntriesDataGrid.recalculateColumnWidths();
+    }
+
     @Supply(to = "timeEntriesDataGrid.status", subject = "renderer")
     private Renderer<TimeEntry> timeEntriesDataGridStatusRenderer() {
-        return componentSupport.createTimeEntryStatusRender();
+        return componentSupport.createTimeEntryStatusRender(true);
+    }
+
+    @Install(to = "timeEntriesDataGrid", subject = "partNameGenerator")
+    private @Nullable String timeEntriesDataGridPartNameGenerator(final TimeEntry timeEntry) {
+        return componentSupport.getTimeEntryPartName(timeEntry);
+    }
+
+    @Install(to = "timeEntriesDataGrid.status", subject = "tooltipGenerator")
+    private @Nullable String timeEntriesDataGridStatusTooltipGenerator(final TimeEntry timeEntry) {
+        return componentSupport.getTimeEntryStatusTooltip(timeEntry);
     }
 
     @Supply(to = "timeEntriesDataGrid.tags", subject = "renderer")

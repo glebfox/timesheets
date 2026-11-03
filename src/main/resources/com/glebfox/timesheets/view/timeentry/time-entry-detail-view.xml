@@ -40,6 +40,13 @@
             alignItems="STRETCH" classNames="time-entry-detail-view"
             expand="contentBox">
         <vbox id="contentBox" classNames="overflow-auto">
+            <div id="rejectionNotice" classNames="rejection-notice aura-accent-red" visible="false">
+                <icon icon="gravity-ui:circle-exclamation" classNames="icon"/>
+                <div id="rejectionNoticeBody" classNames="body">
+                    <span id="rejectionNoticeTitle" classNames="title"
+                          text="msg://com.glebfox.timesheets.entity.timeentry/TimeEntryStatus.REJECTED"/>
+                </div>
+            </div>
             <formLayout id="form"
                         dataContainer="timeEntryDc">
                 <datePicker id="dateField" property="date">
@@ -91,9 +98,6 @@
                 <markdownEditor id="descriptionField" property="description"
                                 minHeight="15rem" maxHeight="15rem"
                                 colspan="2"/>
-                <markdownEditor id="rejectionReasonField" property="rejectionReason"
-                                minHeight="15rem" maxHeight="15rem"
-                                required="true" colspan="2"/>
             </formLayout>
 
             <h4 id="tagsTitle"

@@ -16,8 +16,10 @@
 
 package com.glebfox.timesheets.data.renderer;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -32,9 +34,23 @@ public class BadgeRender<ITEM> extends ComponentRenderer<Badge, ITEM> {
 
     public BadgeRender(Function<ITEM, String> valueProvider,
                        Function<ITEM, BadgeStyle> styleProvider) {
+        this(valueProvider, styleProvider, item -> null);
+    }
+
+    /**
+     * Creates a renderer whose badges may carry an icon before their text.
+     *
+     * @param valueProvider the text of an item's badge
+     * @param styleProvider the style of an item's badge
+     * @param iconProvider  the icon of an item's badge, or {@code null} for none
+     */
+    public BadgeRender(Function<ITEM, String> valueProvider,
+                       Function<ITEM, BadgeStyle> styleProvider,
+                       Function<ITEM, @Nullable Component> iconProvider) {
         super(Badge::new, (badge, item) -> {
             badge.setText(valueProvider.apply(item));
             styleProvider.apply(item).applyTo(badge);
+            badge.setIcon(iconProvider.apply(item));
         });
     }
 }
