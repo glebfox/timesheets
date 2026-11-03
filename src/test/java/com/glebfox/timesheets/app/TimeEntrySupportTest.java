@@ -155,6 +155,30 @@ public class TimeEntrySupportTest {
     }
 
     @Test
+    void copyHasNoRejectionReason() {
+        /* Given */
+        TimeEntry timeEntry = dataManager.create(TimeEntry.class);
+        timeEntry.setDate(zonedDateTime.toLocalDate());
+        timeEntry.setUser(user);
+        timeEntry.setTask(task);
+        timeEntry.setSpentTime(WorkTime.ofHours(1));
+        timeEntry.setStatus(TimeEntryStatus.REJECTED);
+        timeEntry.setRejectionReason("Wrong task");
+        timeEntry.setDescription("Calibration");
+        entities.add(timeEntry);
+
+        dataManager.saveAll(entities);
+
+        /* When */
+        TimeEntry copied = timeEntrySupport.copy(timeEntry);
+
+        /* Then */
+        assertThat(copied.getRejectionReason()).isNull();
+        assertThat(copied.getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(copied.getDescription()).isEqualTo("Calibration");
+    }
+
+    @Test
     void rejectedCountTest() {
         /* Given */
         TimeEntry timeEntry1 = dataManager.create(TimeEntry.class);

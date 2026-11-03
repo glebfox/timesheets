@@ -41,14 +41,14 @@ public class TimeEntrySupport {
     }
 
     /**
-     * Creates a copy of the provided {@link TimeEntry} instance with a new unique identifier
-     * and a status of {@link TimeEntryStatus#NEW}. The method reloads the full state of the
-     * source {@link TimeEntry} object, including related entities like user, task, and tags,
-     * before creating a copy.
+     * Creates a copy of the provided {@link TimeEntry} instance with a new unique identifier,
+     * a status of {@link TimeEntryStatus#NEW}, and no rejection reason, which nothing shows on a new entry.
+     * The method reloads the full state of the source {@link TimeEntry} object, including related
+     * entities like user, task, and tags, before creating a copy.
      *
      * @param source the {@link TimeEntry} instance to be copied
-     * @return a new {@link TimeEntry} instance that is a copy of the source with a new ID and
-     * a status of {@link TimeEntryStatus#NEW}
+     * @return a new {@link TimeEntry} instance that is a copy of the source with a new ID,
+     * a status of {@link TimeEntryStatus#NEW}, and no rejection reason
      */
     public TimeEntry copy(TimeEntry source) {
         Preconditions.checkNotNullArgument(source);
@@ -64,6 +64,7 @@ public class TimeEntrySupport {
         TimeEntry copied = metadataTools.copy(reloaded);
         copied.setId(UuidProvider.createUuid());
         copied.setStatus(TimeEntryStatus.NEW);
+        copied.setRejectionReason(null);
         return copied;
     }
 
