@@ -46,8 +46,8 @@
     display: block;
     height: calc(1lh + 2 * var(--vaadin-padding-block-container) + 2 * var(--vaadin-button-border-width, 1px));
     max-width: 100%;
+    margin-inline: auto;
     object-fit: contain;
-    object-position: left center;
 }
 
 /* The brand has a logo for light surfaces and one for dark surfaces. Jmix marks the active theme on the root
