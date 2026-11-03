@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+/* The drawer header, the tab bar, and the initial layout pad alike, so the drawer toggle has one place whether it
+   is in the drawer or in the work area, and the header is as tall as the tab bar. */
 .jmix-main-view-app-layout {
     --vaadin-app-layout-drawer-width: 256px;
     --aura-app-layout-inset: 0px;
+
+    --_drawer-toggle-padding-block: var(--vaadin-padding-block-container);
+    --_drawer-toggle-padding-inline: var(--vaadin-padding-inline-container);
 }
 
 .jmix-main-view-section {
@@ -27,16 +32,31 @@
     min-height: 100%;
 }
 
-/* Application Title */
+/* Drawer Header */
 
+/* The line is drawn as the tab bar draws its own, inside the box, so the two lines meet. */
+.jmix-main-view-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    padding: var(--_drawer-toggle-padding-block) var(--_drawer-toggle-padding-inline);
+    box-shadow: inset 0 -1px 0 0 var(--vaadin-border-color-secondary);
+}
+
+/* The logo takes the height the toggle gives the header, so it never makes the header taller. */
 .jmix-main-view-application-title {
-    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
+    position: relative;
+    flex-grow: 1;
+    align-self: stretch;
 }
 
 .jmix-main-view-application-logo {
-    display: block;
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: contain;
+    object-position: left center;
 }
 
 /* The brand has a logo for light surfaces and one for dark surfaces. Jmix marks the active theme on the root
@@ -51,6 +71,7 @@ html:not([theme='dark']) .jmix-main-view-application-logo-dark {
     flex-direction: column;
     flex-grow: 1;
     overflow: auto;
+    scrollbar-width: thin;
 }
 
 .jmix-main-view-footer {
@@ -77,6 +98,12 @@ html:not([theme='dark']) .jmix-main-view-application-logo-dark {
 .jmix-main-view-user-menu > vaadin-menu-bar-button.jmix-user-menu-button::part(label) {
     flex-grow: 1;
     min-width: 0;
+}
+
+/* The menu opens at the button's start edge and is at least as wide as the button. */
+.jmix-main-view-user-menu > vaadin-menu-bar-submenu::part(overlay) {
+    box-sizing: border-box;
+    min-width: calc(var(--vaadin-app-layout-drawer-width) - 2 * var(--vaadin-padding-inline-container));
 }
 
 .user-menu-button-content,
@@ -156,27 +183,24 @@ html:not([theme='dark']) .jmix-main-view-application-logo-dark {
     display: none;
 }
 
-/* Main TabSheet */
+/* Work Area */
 
-/* The drawer toggle keeps the place it has in the initial layout, as far from the line under the tabs as from
-   the top. */
-.jmix-main-view-app-layout .jmix-main-tabsheet {
-    --_tabs-container-padding: var(--vaadin-vertical-layout-padding, var(--vaadin-padding-m));
+/* While the drawer is open, its own toggle is the one shown. */
+vaadin-app-layout.jmix-main-view-app-layout[drawer-opened] .jmix-work-area .jmix-main-view-drawer-toggle {
+    display: none;
 }
 
 .jmix-main-view-app-layout .jmix-main-tabsheet::part(tabs-container) {
-    padding-block: var(--_tabs-container-padding);
-    padding-inline-start: var(--_tabs-container-padding);
+    padding: var(--_drawer-toggle-padding-block) var(--_drawer-toggle-padding-inline);
 }
 
 /* The tabs still span the bar's full height, so the selected tab's marker stays on the line. */
 .jmix-main-view-app-layout .jmix-main-tabsheet > vaadin-tabs[slot='tabs'] {
-    margin-block: calc(var(--_tabs-container-padding) * -1);
+    margin-block: calc(var(--_drawer-toggle-padding-block) * -1);
 }
-
-/* Initial Layout */
 
 .jmix-initial-layout {
     width: 100%;
     height: 100%;
+    padding: var(--_drawer-toggle-padding-block) var(--_drawer-toggle-padding-inline);
 }
