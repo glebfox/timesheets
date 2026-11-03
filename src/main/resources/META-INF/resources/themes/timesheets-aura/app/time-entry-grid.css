@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-/* A rejected entry's row in the time entry lists, tinted in the error color so that it stands out while scanning. The
-   grid draws a cell's own background as the bottom layer, under the row's hover and selection */
+/* A rejected entry's row in the time entry lists, tinted in the error color so that it stands out while scanning; the
+   part is ComponentSupport.REJECTED_TIME_ENTRY_PART. The grid draws a cell's own background as the bottom layer, under
+   the row's hover and selection */
 vaadin-grid::part(rejected-entry) {
     --vaadin-grid-cell-background-color: color-mix(in srgb, var(--ts-danger-color) 8%, transparent);
 }

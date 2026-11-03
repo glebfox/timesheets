@@ -19,7 +19,6 @@ package com.glebfox.timesheets.view.timeentry;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
-import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.view.main.MainView;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
@@ -34,7 +33,6 @@ import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.*;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.builder.DetailViewBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -78,14 +76,12 @@ public class MyTimeEntryListView extends StandardView {
 
     @Install(to = "timeEntriesDataGrid", subject = "partNameGenerator")
     private @Nullable String timeEntriesDataGridPartNameGenerator(final TimeEntry timeEntry) {
-        return timeEntry.getStatus() == TimeEntryStatus.REJECTED ? "rejected-entry" : null;
+        return componentSupport.getTimeEntryPartName(timeEntry);
     }
 
     @Install(to = "timeEntriesDataGrid.status", subject = "tooltipGenerator")
     private @Nullable String timeEntriesDataGridStatusTooltipGenerator(final TimeEntry timeEntry) {
-        return timeEntry.getStatus() == TimeEntryStatus.REJECTED && StringUtils.isNotBlank(timeEntry.getRejectionReason())
-                ? timeEntry.getRejectionReason()
-                : null;
+        return componentSupport.getTimeEntryStatusTooltip(timeEntry);
     }
 
     @Supply(to = "timeEntriesDataGrid.tags", subject = "renderer")
