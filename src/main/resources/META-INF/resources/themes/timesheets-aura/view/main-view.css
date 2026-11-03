@@ -36,6 +36,8 @@
 
 /* The line is drawn as the tab bar draws its own, inside the box, so the two lines meet. */
 .jmix-main-view-application-title {
+    display: flex;
+    justify-content: center;
     padding: var(--_bar-padding-block) var(--_bar-padding-inline);
     box-shadow: inset 0 -1px 0 0 var(--vaadin-border-color-secondary);
 }
@@ -43,10 +45,8 @@
 /* As tall as a button, one line between its padding and border, since the drawer toggle sets the tab bar's
    height. */
 .jmix-main-view-application-logo {
-    display: block;
     height: calc(1lh + 2 * var(--vaadin-padding-block-container) + 2 * var(--vaadin-button-border-width, 1px));
     max-width: 100%;
-    margin-inline: auto;
     object-fit: contain;
 }
 
