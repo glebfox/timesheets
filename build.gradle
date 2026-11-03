@@ -124,7 +124,7 @@ def licenseComment = { String open, String prefix, String close ->
 
 def generatedFrontend = ['src/main/frontend/generated/**', 'src/main/bundles/**']
 
-// JavaScript is not covered: the only scripts are third-party icon sets, which keep their own notices (see NOTICE)
+// JavaScript is not covered: third-party scripts keep their own notices (see NOTICE), and the project's own scripts get the header by hand
 spotless {
     java {
         licenseHeader licenseComment('/*', ' * ', ' */')

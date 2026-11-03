@@ -54,11 +54,12 @@ Start the application with the `dev` profile for demo data (the users are in `de
 Measuring in a live check, in any browser:
 
 - a text is cut where its `scrollWidth` exceeds its `clientWidth`, and where a container query switches is found by setting an inline width on the container in steps;
-- a tooltip opens after half a second of hover, Vaadin's default delay.
+- a tooltip opens after half a second of hover, Vaadin's default delay;
+- a sign-in reaches the main view without loading a new document, so the page's navigation timing still describes the login page, and the main view's load is timed from the click on Log in.
 
 Driving the app with Playwright:
 
 - its `colorScheme` emulation is lost after a reload or a new login, so a check of a theme sets it again after each;
 - its Chromium draws classic scrollbars, so a scrolling panel measures narrower than on a Mac with overlay scrollbars (`docs/guidelines/design-system.md`).
 
-A running app picks up Java changes only after a restart; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.
+A running app picks up Java changes only after a restart, and a change under `src/main/frontend/`, such as an iconset, also only after a restart, which rebuilds the development bundle; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.

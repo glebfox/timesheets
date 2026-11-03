@@ -15,6 +15,6 @@
  */
 
 vaadin-icon[icon^='gravity-ui:'],
-vaadin-icon[icon^='fontawesome-'] {
+vaadin-icon[icon^='ts-menu:'] {
     --vaadin-icon-visual-size: 80%;
 }

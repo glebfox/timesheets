@@ -9,7 +9,7 @@ The application frame around every screen, the login page, and the error pages.
 The frame of the signed-in application. Screens open as tabs in its work area; tabs can be dragged, and each offers closing itself, the others, or all.
 
 - **Header** — the menu toggle, the "Timesheets" title, and the user menu. The user menu button shows the user's avatar and full name (the username when both names are empty), and marks a substituted user. Its header shows the name with the username beneath it. Its items are Substitute user, the theme switch, and Log out.
-- **Menu** — Timesheets (Calendar, My time entries, My tasks), Project Management (Clients, Projects, Time entries, Approve time entries), Settings (Task types, Project roles, Work schedules, Holiday calendars), and Administration (Users) start expanded; Security, Data Tools, and Pessimistic locking hold the framework's own screens and start collapsed. A user sees only the items their roles allow.
+- **Menu** — Timesheets (Calendar, My time entries, My tasks), Project Management (Clients, Projects, Time entries, Approve time entries), Settings (Task types, Project roles, Work schedules, Holiday calendars), and Administration (Users) start expanded; Security, Data Tools, and Pessimistic locking hold the framework's own screens and start collapsed. Every group and item shows an icon of its own, and no two are alike. A user sees only the items their roles allow.
 - **Rejected badge** — the My time entries item carries a red badge with the number of the current user's Rejected [time entries](../data-model/time-entry.md#status), hidden when there are none. It refreshes while the user is signed in, whenever one of their entries changes status or is deleted, by anyone and from any session.
 
 ## Login
@@ -26,4 +26,5 @@ A screen the user may not open does not open, whether its address is followed or
 
 - The live refresh of the rejected badge: it needs two live sessions (`docs/guidelines/testing.md`).
 - What an address typed into the browser gets before any screen opens, the 403 and the redirect to the login page: no test sends a request through the security filters.
+- How the menu's icons look: `MenuIconsTest` checks only that each group and item names an icon of its own that the menu's set defines, so only a live check sees them (`docs/guidelines/testing.md`).
 - The rest of these screens: no UI test exists for them.

@@ -17,82 +17,82 @@
 
 <menu-config xmlns="http://jmix.io/schema/flowui/menu">
     <menu id="timesheets" title="msg://com.glebfox.timesheets/menu.timesheets.title"
-          icon="fontawesome-solid:rectangle-list"
+          icon="ts-menu:timesheets"
           opened="true">
         <item view="ts_CalendarView"
               title="msg://com.glebfox.timesheets.view.calendar/calendarView.title"
-              icon="fontawesome-solid:calendar-days"/>
+              icon="ts-menu:calendar"/>
         <item view="ts_TimeEntry.my"
               title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title"
-              icon="fontawesome-solid:calendar-day"/>
+              icon="ts-menu:my-time-entries"/>
         <item view="ts_Task.my"
               title="msg://com.glebfox.timesheets.view.task/myTaskListView.title"
-              icon="fontawesome-solid:file-lines"/>
+              icon="ts-menu:my-tasks"/>
     </menu>
 
     <menu id="projects" title="msg://com.glebfox.timesheets/menu.projects.title"
-          icon="fontawesome-solid:building"
+          icon="ts-menu:project-management"
           opened="true">
         <item view="ts_Client.list"
               title="msg://com.glebfox.timesheets.view.client/clientListView.title"
-              icon="fontawesome-solid:user-tie"/>
+              icon="ts-menu:clients"/>
         <item view="ts_Project.list"
               title="msg://com.glebfox.timesheets.view.project/projectListView.title"
-              icon="fontawesome-solid:briefcase"/>
+              icon="ts-menu:projects"/>
         <separator/>
         <item view="ts_TimeEntry.list"
               title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title"
-              icon="fontawesome-solid:calendar-days"/>
+              icon="ts-menu:time-entries"/>
         <item view="ts_TimeEntry.approval"
               title="msg://com.glebfox.timesheets.view.approval/timeEntryApprovalView.title"
-              icon="fontawesome-solid:list-check"/>
+              icon="ts-menu:approve-time-entries"/>
     </menu>
 
     <menu id="settings" title="msg://com.glebfox.timesheets/menu.settings.title"
-          icon="fontawesome-solid:gear"
+          icon="ts-menu:settings"
           opened="true">
         <item view="ts_TaskType.list"
               title="msg://com.glebfox.timesheets.view.tasktype/taskTypeListView.title"
-              icon="fontawesome-solid:tags"/>
+              icon="ts-menu:task-types"/>
         <item view="ts_ProjectRole.list"
               title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title"
-              icon="fontawesome-solid:user-tag"/>
+              icon="ts-menu:project-roles"/>
         <item view="ts_WorkSchedule.list"
               title="msg://com.glebfox.timesheets.view.workschedule/workScheduleListView.title"
-              icon="fontawesome-solid:business-time"/>
+              icon="ts-menu:work-schedules"/>
         <item view="ts_HolidayCalendar.list"
               title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title"
-              icon="fontawesome-solid:calendar-check"/>
+              icon="ts-menu:holiday-calendars"/>
     </menu>
 
     <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"
-          icon="fontawesome-solid:user-gear"
+          icon="ts-menu:administration"
           opened="true">
         <item view="ts_User.list"
               title="msg://com.glebfox.timesheets.view.user/UserListView.title"
-              icon="fontawesome-solid:user-group"/>
+              icon="ts-menu:users"/>
     </menu>
 
     <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"
-          icon="fontawesome-solid:shield-halved">
+          icon="ts-menu:security">
         <item view="sec_ResourceRoleModel.list"
               title="msg://io.jmix.securityflowui.view.resourcerole/resourceRoleModelListView.menu"
-              icon="fontawesome-solid:file-shield"/>
+              icon="ts-menu:resource-roles"/>
         <item view="sec_RowLevelRoleModel.list"
               title="msg://io.jmix.securityflowui.view.rowlevelrole/rowLevelRoleModelListView.menu"
-              icon="fontawesome-solid:file-shield"/>
+              icon="ts-menu:row-level-roles"/>
     </menu>
     <menu id="datatools" title="msg://com.glebfox.timesheets/menu.datatools.title"
-          icon="fontawesome-solid:database">
+          icon="ts-menu:data-tools">
         <item view="datatl_entityInspectorListView"
               title="msg://io.jmix.datatoolsflowui.view.entityinspector/listTitle"
-              icon="fontawesome-solid:magnifying-glass"/>
+              icon="ts-menu:entity-inspector"/>
     </menu>
     <menu id="pessimisticlock" title="msg://com.glebfox.timesheets/menu.pessimisticlock.title"
-          icon="fontawesome-solid:lock">
+          icon="ts-menu:pessimistic-locking">
         <item view="pslock_LockInfo.list"
               title="msg://io.jmix.pessimisticlockflowui/pessimisticLockListView.menu"
-              icon="fontawesome-solid:lock"/>
+              icon="ts-menu:locks"/>
     </menu>
 
 </menu-config>

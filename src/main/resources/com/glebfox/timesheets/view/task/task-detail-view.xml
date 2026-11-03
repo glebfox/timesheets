@@ -63,7 +63,7 @@
                     classNames="margin-inline-m">
             <textField id="nameField" property="name" colspan="2">
                 <prefix>
-                    <icon icon="fontawesome-regular:address-card"/>
+                    <icon icon="gravity-ui:office-badge"/>
                 </prefix>
             </textField>
             <textArea id="descriptionField" property="description"
