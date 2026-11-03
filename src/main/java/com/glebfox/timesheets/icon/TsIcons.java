@@ -25,10 +25,11 @@ import org.springframework.context.annotation.Primary;
 
 /**
  * Draws the icons Jmix names by purpose from the Gravity UI set: each takes the Gravity UI counterpart of the
- * Vaadin icon it maps to in Jmix's {@code jmix-font-icons.css}. Any other name, such as a glyph's like
- * {@code CLOSE_SMALL}, goes on to Jmix. The buttons of standard dialogs ({@code DialogAction.Type}), pagination,
- * the combo button, the twin column, and the tab close button create their icons without this bean and keep the
- * Vaadin ones.
+ * Vaadin icon it maps to in Jmix's {@code jmix-font-icons.css}, except Save, which takes a floppy disk rather than
+ * Jmix's archive box. Of the names of a glyph, only those of the close and maximize buttons of dialogs and
+ * notifications are drawn here; any other goes on to Jmix. The buttons of standard dialogs
+ * ({@code DialogAction.Type}), pagination, the combo button, the twin column, and the tab close button create their
+ * icons without this bean and keep the Vaadin ones.
  */
 @NullMarked
 @Primary
@@ -60,7 +61,7 @@ public class TsIcons extends IconsImpl {
 
             case "VIEW_CLOSE_ACTION" -> GravityUiIcon.BAN.create();
             case "DETAIL_SAVE_CLOSE_ACTION" -> GravityUiIcon.CHECK.create();
-            case "DETAIL_SAVE_ACTION" -> GravityUiIcon.ARCHIVE.create();
+            case "DETAIL_SAVE_ACTION" -> GravityUiIcon.FLOPPY_DISK.create();
             case "DETAIL_CLOSE_ACTION" -> GravityUiIcon.BAN.create();
             case "DETAIL_DISCARD_ACTION" -> GravityUiIcon.BAN.create();
             case "DETAIL_ENABLE_EDITING_ACTION" -> GravityUiIcon.PENCIL.create();
@@ -88,7 +89,7 @@ public class TsIcons extends IconsImpl {
             case "SHOW_ROLE_ASSIGNMENTS_ACTION" -> GravityUiIcon.SHIELD.create();
             case "ASSIGN_TO_USERS_ACTION" -> GravityUiIcon.PERSONS.create();
 
-            case "GENERIC_FILTER_SAVE_ACTION" -> GravityUiIcon.ARCHIVE.create();
+            case "GENERIC_FILTER_SAVE_ACTION" -> GravityUiIcon.FLOPPY_DISK.create();
             case "GENERIC_FILTER_EDIT_ACTION" -> GravityUiIcon.PENCIL.create();
             case "GENERIC_FILTER_COPY_ACTION" -> GravityUiIcon.COPY.create();
             case "GENERIC_FILTER_REMOVE_ACTION" -> GravityUiIcon.TRASH_BIN.create();
@@ -105,6 +106,11 @@ public class TsIcons extends IconsImpl {
             case "DATA_GRID_HEADER_FILTER_CLEAR" -> GravityUiIcon.ERASER.create();
 
             case "SIDE_PANEL_LAYOUT_CLOSER" -> GravityUiIcon.XMARK.create();
+
+            // Glyph names: the close and maximize buttons of dialog views, notifications, and pickers' dialogs.
+            case "CLOSE_SMALL" -> GravityUiIcon.XMARK.create();
+            case "EXPAND" -> GravityUiIcon.CHEVRONS_EXPAND_UP_RIGHT.create();
+            case "COMPRESS" -> GravityUiIcon.CHEVRONS_COLLAPSE_UP_RIGHT.create();
 
             default -> super.get(iconName);
         };

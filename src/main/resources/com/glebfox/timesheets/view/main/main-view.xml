@@ -19,7 +19,7 @@
           title="msg://MainView.title">
     <actions>
         <action id="logoutAction" type="logout"
-                text="msg:///actions.logout.text" icon="gravity-ui:arrow-right-from-square"/>
+                text="msg:///actions.logout.text"/>
     </actions>
     <!-- No navigationBar (docs/decisions/0011-the-main-view-has-no-navigation-bar.md). Both main view XSDs declare it
          as required, so the IDE reports appLayout as incomplete, but the loader adds a navigation bar only when it has
@@ -52,8 +52,7 @@
                             <separator/>
                             <actionItem id="substituteUserMenuItem"
                                         themeNames="non-checkable">
-                                <action id="substituteUserAction" type="sec_userMenuSubstituteUser"
-                                        icon="gravity-ui:arrow-right-arrow-left"/>
+                                <action id="substituteUserAction" type="sec_userMenuSubstituteUser"/>
                             </actionItem>
                             <separator/>
                             <actionItem id="themeSwitchMenuItem"
