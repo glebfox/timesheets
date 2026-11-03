@@ -92,7 +92,7 @@ A 480px dialog, titled "Calendar days", that adds one or more days at once.
 
 - **Name** — required.
 - **Dates** — required: the first day, a dash, and an optional last day, whose picker offers no day before the first. A line under them names the range as it changes, such as "8 days, Friday to Friday" («8 дней, с пятницы по пятницу»), or "1 day, Friday" («1 день, пятница») for one day; it is empty while the range ends before it starts.
-- **Type** — required, Day off by default: one bar of two joined segments, Day off and Workday, the chosen one filled with the accent color.
+- **Type** — required, Day off by default: one bar of two segments, Day off and Workday, the chosen one a pill filled with the accent color.
 
 An empty name or first day is marked "Name required" or "Dates required" («Заполните поле "Название"», «Заполните поле "Даты"»).
 
@@ -107,7 +107,7 @@ A 480px dialog, titled "Holiday calendar day", that edits one day: **Name**, **D
 ## Not covered
 
 - Task types and project roles: no UI test exists for them.
-- How the work schedule and holiday calendar screens look, in English and Russian, light and dark: the day chips; the workday buttons and the day type bar with their focus ring, keyboard use, hover and press, and read-only and invalid states; the badges and their colors; the counted lines; the refusal listing several dates; and the red Delete. Only a live check saw them. The UI tests check the texts of the counted lines and of the refusal, the workdays line only in English.
+- How the work schedule and holiday calendar screens look, in English and Russian, light and dark: the day chips; the workday buttons with their focus ring, keyboard use, hover and press, and read-only and invalid states; the badges and their colors; the counted lines; the refusal listing several dates; and the red Delete. Only a live check saw them. The day type bar as redrawn after Aura's filled tabs, a track with a pill, was checked live on 2026-11-03, as admin, in the light theme: in both dialogs, in English and Russian, the track, the pill, and the labels whole; in the add days dialog, the arrow keys and the focus ring, on the bar's first, bordered draft. Its hover, focus ring, and read-only, disabled, and invalid states, in the light and the dark theme, were looked at only on the approval screen's mode switch, which has the same style ([approval](approval.md#not-covered)); its press and forced-colors mode were not looked at. The UI tests check the texts of the counted lines and of the refusal, the workdays line only in English.
 - What only a browser shows: the columns fitting their content after their rows change, a Default or Current badge that appears then included; the Current badge moving to another row after an edit; the look of the Make default confirmation; and the last day's picker greying out the days before the first. The UI tests check the server side only: that the browser is asked to measure the columns again, that an edit redraws every row, the confirmation's texts, and the last day's minimum. The look of the Make default confirmation and the greyed days before the first day were checked live.
 - Cancel closing an unchanged work schedule editor without asking to save: checked live only.
 - Saves on PostgreSQL that remove a saved day or assignment and add another with the same date in one editor session: they pass live, but no test can see them, since HSQLDB has no partial unique indexes (`docs/guidelines/testing.md`).

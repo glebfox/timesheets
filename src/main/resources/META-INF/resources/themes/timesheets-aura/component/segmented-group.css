@@ -15,34 +15,35 @@
  */
 
 /* A radio button group that reads as one segmented control, since only one of its items can be chosen:
-   the items are joined into a single bar that carries the border, divided by a shared line,
-   the radio of each item is hidden, its label is the segment, and the checked segment is filled with the accent color.
+   it is drawn as Aura draws its tabs in the filled variant (vaadin-tabs[theme~="filled"]), from the same tokens,
+   so the items sit in a track, the radio of each item is hidden, its label is the segment, sized as a tab,
+   and the checked segment is a pill filled with the accent color.
    The item's native input stretches over the whole segment, so a click anywhere on it chooses the item,
    and the keyboard works as it does for the group's radio buttons. */
 
 .segmented-group {
     --_segmented-border-width: var(--vaadin-input-field-border-width, 1px);
-    /* The segments sit inside the bar's border, so their outer corners follow its inner edge */
-    --_segmented-inner-radius: calc(var(--vaadin-radius-m) - var(--_segmented-border-width));
+    --_segmented-segment-border-width: var(--vaadin-tab-border-width, 1px);
 }
 
 /* Segments of equal width, each as wide as the longest label needs at least: a grid of equal columns, unlike a row of
-   items that each grow from nothing, also sizes a bar that is as wide as its content so that every label fits */
+   items that each grow from nothing, also sizes a track that is as wide as its content so that every label fits.
+   The track has no border, as the tabs have none, so the states below draw theirs inside it, where it takes no room */
 .segmented-group::part(group-field) {
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
-    gap: 0;
-    border: var(--_segmented-border-width) solid var(--vaadin-border-color);
-    border-radius: var(--vaadin-radius-m);
-    background: var(--aura-surface-color);
-    box-shadow: var(--aura-shadow-xs);
+    gap: var(--vaadin-tabs-gap);
+    padding: var(--vaadin-tabs-padding);
+    border-radius: var(--vaadin-tabs-border-radius);
+    background: var(--vaadin-background-container);
 }
 
 .segmented-group > vaadin-radio-button {
     /* The input stretches over the gap between the radio and the label; without the radio there is none */
     --vaadin-radio-button-gap: 0;
-    --vaadin-radio-button-label-color: var(--vaadin-text-color);
+    /* An unchecked label is muted, as an unselected tab's is */
+    --vaadin-radio-button-label-color: var(--vaadin-text-color-secondary);
     /* The hover and press overlay is derived from the text color, as a button's is */
     color: var(--vaadin-text-color);
     position: relative;
@@ -50,22 +51,10 @@
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
-}
-
-/* The line between two segments */
-.segmented-group > vaadin-radio-button + vaadin-radio-button {
-    border-inline-start: var(--_segmented-border-width) solid var(--vaadin-border-color);
-}
-
-.segmented-group > vaadin-radio-button:first-of-type {
-    border-start-start-radius: var(--_segmented-inner-radius);
-    border-end-start-radius: var(--_segmented-inner-radius);
-}
-
-.segmented-group > vaadin-radio-button:last-of-type {
-    border-start-end-radius: var(--_segmented-inner-radius);
-    border-end-end-radius: var(--_segmented-inner-radius);
+    /* Sized as a tab: its padding and its transparent border, which the checked segment's fill covers */
+    padding: var(--vaadin-tab-padding, var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container));
+    border: var(--_segmented-segment-border-width) solid transparent;
+    border-radius: var(--vaadin-tab-border-radius);
 }
 
 .segmented-group > vaadin-radio-button::part(radio) {
@@ -73,11 +62,12 @@
 }
 
 /* The item's baseline guide, which would push the label off center, becomes the overlay that Aura draws
-   over a button (vaadin-button::before): out of the flow, over the whole segment, invisible until hovered or pressed */
+   over a button (vaadin-button::before): out of the flow, over the whole segment and its border,
+   invisible until hovered or pressed */
 .segmented-group > vaadin-radio-button::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: calc(var(--_segmented-segment-border-width) * -1);
     /* The guide is aligned to the baseline's end, which would shrink the overlay to no height */
     align-self: stretch;
     border-radius: inherit;
@@ -107,17 +97,25 @@
     white-space: nowrap;
 }
 
+/* As Aura's selected tab in the filled variant: the fill under the border, lifted off the track */
 .segmented-group > vaadin-radio-button[checked] {
     --vaadin-radio-button-label-color: var(--aura-accent-contrast-color);
     color: var(--aura-accent-contrast-color);
-    background: var(--aura-accent-color);
+    background: var(--aura-accent-color) border-box;
+    border-color: light-dark(transparent, hsl(0deg 100% 100% / 0.03));
+    box-shadow: 0 0 0 1px light-dark(hsl(0deg 100% 0% / 0.02), transparent), var(--aura-shadow-s);
 }
 
 /* Hovered and pressed as Aura shows a button: an unchecked segment as a regular button, the checked one as a primary
    button, which Aura's own radio button does too (its hover does not depend on being checked).
+   A hovered unchecked label also takes the full text color, as an unselected tab's does.
    The segments do not shrink when pressed, as Aura's joined menu bar buttons do not.
    A read-only or disabled group shows neither, as a disabled button does not */
 @media (any-hover: hover) {
+    .segmented-group:not([readonly], [disabled]) > vaadin-radio-button:not([checked], [disabled]):hover {
+        --vaadin-radio-button-label-color: var(--vaadin-text-color);
+    }
+
     .segmented-group:not([readonly], [disabled]) > vaadin-radio-button:not([disabled], [active]):hover::before {
         opacity: 0.03;
     }
@@ -138,31 +136,29 @@
     opacity: 0.16;
 }
 
-/* The radio carried the focus ring. The ring is drawn inside the segment, clear of its edges,
-   so the neighbors do not cover it; on the checked segment it takes the color of the label */
+/* The radio carried the focus ring. As Aura draws it on a tab, an unchecked segment draws it inside its edge;
+   as on the selected tab of Aura's filled tabs, the checked segment draws it outside, apart from the fill,
+   where it stays within the track's padding */
 .segmented-group > vaadin-radio-button[focus-ring] {
     outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
-    outline-offset: calc(var(--vaadin-focus-ring-width) * -2);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
 }
 
 .segmented-group > vaadin-radio-button[focus-ring][checked] {
-    outline-color: var(--aura-accent-contrast-color);
+    outline-offset: 1px;
 }
 
-/* Invalid as Aura shows an invalid field: the bar's border takes the error color */
+/* Invalid as Aura shows an invalid field: a border in the error color, here a line along the track's inner edge */
 .segmented-group[invalid]::part(group-field) {
-    border-color: var(--vaadin-input-field-error-color);
+    box-shadow: inset 0 0 0 var(--_segmented-border-width) var(--vaadin-input-field-error-color);
 }
 
-/* Read-only as Aura shows a read-only field: a dashed border, no fill, no shadow */
+/* Read-only as Aura shows a read-only field: a dashed border, here an outline along the track's inner edge,
+   and no fill */
 .segmented-group[readonly]::part(group-field) {
-    border-style: dashed;
+    outline: var(--_segmented-border-width) dashed var(--vaadin-border-color);
+    outline-offset: calc(var(--_segmented-border-width) * -1);
     background: transparent;
-    box-shadow: none;
-}
-
-.segmented-group[readonly] > vaadin-radio-button + vaadin-radio-button {
-    border-inline-start-style: dashed;
 }
 
 /* The checked segment is told apart by more than the hue of its label:
@@ -171,48 +167,40 @@
     --vaadin-radio-button-label-color: var(--aura-accent-text-color);
     --vaadin-radio-button-label-font-weight: var(--aura-font-weight-semibold);
     background: var(--aura-accent-surface);
+    border-color: transparent;
     box-shadow: inset 0 0 0 var(--_segmented-border-width) var(--aura-accent-text-color);
 }
 
 .segmented-group[readonly] > vaadin-radio-button[focus-ring] {
-    outline-color: var(--vaadin-focus-ring-color);
     outline-style: dashed;
 }
 
-/* Disabled as Aura shows a disabled field: a muted fill, no shadow, dimmed labels,
-   and the checked segment still told apart by a stronger fill */
-.segmented-group[disabled]::part(group-field) {
-    border-color: var(--vaadin-border-color-secondary);
-    background: var(--vaadin-background-container);
-    box-shadow: none;
-}
-
+/* Disabled as Aura shows a disabled field: dimmed labels,
+   and the checked segment still told apart by a stronger fill, flat on the track */
 .segmented-group[disabled] > vaadin-radio-button {
     --vaadin-radio-button-label-color: var(--vaadin-text-color-disabled);
-    border-color: var(--vaadin-border-color-secondary);
 }
 
 .segmented-group[disabled] > vaadin-radio-button[checked] {
     --vaadin-radio-button-label-color: var(--vaadin-text-color-secondary);
     background: var(--vaadin-background-container-strong);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 /* Forced colors (a high contrast mode) replace the theme's colors with the system's, so the states are drawn
-   in system colors, as Vaadin draws a radio button and a button there: the checked segment takes the selected-item
-   colors, the others read as system buttons */
+   in system colors, as Vaadin draws a radio button and a button there: the track gets an outline, as it has no
+   border, the checked segment takes the selected-item colors, the others read as system buttons */
 @media (forced-colors: active) {
     .segmented-group::part(group-field) {
-        border-color: ButtonText;
+        outline: var(--_segmented-border-width) solid ButtonText;
+        outline-offset: calc(var(--_segmented-border-width) * -1);
         background: ButtonFace;
     }
 
     .segmented-group > vaadin-radio-button {
         --vaadin-radio-button-label-color: ButtonText;
         color: ButtonText;
-    }
-
-    .segmented-group > vaadin-radio-button + vaadin-radio-button {
-        border-inline-start-color: ButtonText;
     }
 
     .segmented-group > vaadin-radio-button[checked] {
@@ -222,16 +210,17 @@
         background: SelectedItem;
     }
 
-    .segmented-group > vaadin-radio-button[focus-ring],
-    .segmented-group[readonly] > vaadin-radio-button[focus-ring] {
+    /* The checked segment's ring, outside its fill, takes the same color */
+    .segmented-group > vaadin-radio-button[focus-ring] {
         outline-color: Highlight;
     }
 
-    .segmented-group:not([readonly]) > vaadin-radio-button[focus-ring][checked] {
-        outline-color: SelectedItemText;
+    .segmented-group[readonly]::part(group-field) {
+        outline-style: dashed;
+        background: transparent;
     }
 
-    /* Read-only: no fill; the checked segment keeps a doubled solid outline inside the dashed bar, and its heavier label */
+    /* Read-only: no fill; the checked segment keeps a doubled solid outline inside the dashed track, and its heavier label */
     .segmented-group[readonly] > vaadin-radio-button[checked] {
         --vaadin-radio-button-label-color: CanvasText;
         color: CanvasText;
@@ -240,12 +229,8 @@
     }
 
     .segmented-group[disabled]::part(group-field) {
-        border-color: GrayText;
+        outline-color: GrayText;
         background: transparent;
-    }
-
-    .segmented-group[disabled] > vaadin-radio-button + vaadin-radio-button {
-        border-inline-start-color: GrayText;
     }
 
     .segmented-group[disabled] > vaadin-radio-button {
