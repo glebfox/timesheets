@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="src/main/resources/META-INF/resources/icons/icon.png" alt="Timesheets logo" width="128">
+  <img src="src/main/resources/META-INF/resources/assets/brand/logos/logo-light.png" alt="Timesheets logo" width="512">
 </p>
-
-<h1 align="center">Timesheets</h1>
 
 <p align="center">
   <a href="https://github.com/glebfox/timesheets/actions/workflows/tests.yml"><img src="https://github.com/glebfox/timesheets/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>

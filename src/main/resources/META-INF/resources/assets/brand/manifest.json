@@ -1,0 +1,249 @@
+{
+  "name": "Timesheets",
+  "tagline": "Time, composed.",
+  "colors": {
+    "primary": "#0256A9",
+    "ivory": "#F9F7F2",
+    "mint": "#87F1AC"
+  },
+  "font": "Instrument Sans",
+  "font_source_sha256": "8d93e0761b10a433a72768b15bcf1bd293b7b20b9c74d8299fda3cec0b6e59fc",
+  "files": [
+    {
+      "path": "favicons/apple-touch-icon.png",
+      "sha256": "feb5be53534466b1319c55de727a2079b69766cb893957bdb4ddb83645695274",
+      "width": 180,
+      "height": 180,
+      "mode": "RGB"
+    },
+    {
+      "path": "favicons/favicon-16.png",
+      "sha256": "9c6e22359d12ca555b6f9bb25f7d979bba252658a2df1658b5f2df579ae2f29f",
+      "width": 16,
+      "height": 16,
+      "mode": "RGBA"
+    },
+    {
+      "path": "favicons/favicon-32.png",
+      "sha256": "75e0b56619da98d5d5caa0c674df6129e69519bce45d74399a6e1e8f4381b2ce",
+      "width": 32,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "favicons/favicon-48.png",
+      "sha256": "f1b2b3c8dee57b4182f7bcb40b055192a9dfa05a0833efb168e4688e9a15fad5",
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "favicons/favicon.ico",
+      "sha256": "5281b11095236a82ca99523c819d19f41f7a5ac37532a10141633de670cece9d",
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "favicons/favicon.svg",
+      "sha256": "f524b26d70d3b3bc62f841fe677a9d71be78ffe93b97553a403f2ebfd3d198a5"
+    },
+    {
+      "path": "favicons/maskable-192.png",
+      "sha256": "091204c8d1380720cba385ce51151686757cfdd2b053221ca8120e3ed1c82af0",
+      "width": 192,
+      "height": 192,
+      "mode": "RGB"
+    },
+    {
+      "path": "favicons/maskable-512.png",
+      "sha256": "829066ff22ea9803af33019eea96e98218d3abc87ee980b9b11284333d965a97",
+      "width": 512,
+      "height": 512,
+      "mode": "RGB"
+    },
+    {
+      "path": "icons/icon-dark.png",
+      "sha256": "43235ff46cdc46132b7de9be9f1098ebb46eb654dde867e6d7faad5253b53aaa",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "icons/icon-dark.svg",
+      "sha256": "9be5ffb99825d10a45c8da6616fb14e95f2da1a196fdf9ef705c4ebbffa327f7"
+    },
+    {
+      "path": "icons/icon-light.png",
+      "sha256": "19bec61da65d812200dd2773ea85496b52e978330c4cab2c5ff074ee8569d34a",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "icons/icon-light.svg",
+      "sha256": "0045da56e3b91285c9496016f5e47cafc10dff1e133375b8be25ca43bfb638c8"
+    },
+    {
+      "path": "icons/icon-mono-black.png",
+      "sha256": "aada2745cac9c42b22194c7e7a596c2e10d0e7519bf3cc706133f5c4584ccc74",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "icons/icon-mono-black.svg",
+      "sha256": "4f03d5ed5b5de1ab18e4b663a0a3d6c27a89b5a961ce6a820e6c662bf805b85e"
+    },
+    {
+      "path": "icons/icon-mono-white.png",
+      "sha256": "9f9b86ad1664d02d9726981c396e4a77d9ff7785642b77582afcae6bf92af523",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "icons/icon-mono-white.svg",
+      "sha256": "a72ec80e80402bf01748922b71de64ab82563e85b3f55efd2d54b1b696b86ca2"
+    },
+    {
+      "path": "logos/logo-dark.png",
+      "sha256": "b3882e1ab7bdd244b585d47fc1f6cff7e0aa5c2c5de171b87b87a424aa54036e",
+      "width": 2048,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-dark.svg",
+      "sha256": "6a7ba4fa40846990c0be4fa97d443ba0c08edf0e49986f105d63e9e4caa986b0"
+    },
+    {
+      "path": "logos/logo-light.png",
+      "sha256": "2a395a532d68fc75899fe304078cdbd409d0a48ec4e45f35072e80883a9a3aca",
+      "width": 2048,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-light.svg",
+      "sha256": "896d6fd707845105915fc50b04318021095594eef01ae8623ca29ad3fa4c0419"
+    },
+    {
+      "path": "logos/logo-mono-black.png",
+      "sha256": "767921329d3bb4f7f6fd561e8d5a90018905519121dca26ada0d9383746ba332",
+      "width": 2048,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-mono-black.svg",
+      "sha256": "6bb6a74258fd2fd92f19179c83f5c02620625580888272f55bfd745d3a1e2527"
+    },
+    {
+      "path": "logos/logo-mono-white.png",
+      "sha256": "d6adfbda5bba861d0e59e234f773864e7d264b92e80fcb8139d0bd081a3a4d39",
+      "width": 2048,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-mono-white.svg",
+      "sha256": "ed70a2bd91ee0489ea82d41eb8392e7184178f5c5ea6fffa603fc596f3946914"
+    },
+    {
+      "path": "logos/logo-no-tagline-dark.png",
+      "sha256": "1d386992e1ac9d9b880b7d75a7e01f370c979eba5c79e59eecdea5d5e6a44117",
+      "width": 2048,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-no-tagline-dark.svg",
+      "sha256": "f373ddcfdc590bef658b04b344adf7512eb6e06cd4f1573b82df9d0836bda639"
+    },
+    {
+      "path": "logos/logo-no-tagline-light.png",
+      "sha256": "f6f61cf83c1db78bfcc70fbd2a702811e5bc0bf4361b640358fec52f35468f72",
+      "width": 2048,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-no-tagline-light.svg",
+      "sha256": "563c482f3e12b51e409b38a8b043f801ff54ad5c40fcf357267a16e9cb57bb2f"
+    },
+    {
+      "path": "logos/logo-no-tagline-mono-black.png",
+      "sha256": "c6852408b6ff7914189a22ecf3e1a9b852fc5036b3a6188b8006ada5659dcbf1",
+      "width": 2048,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-no-tagline-mono-black.svg",
+      "sha256": "f84aba8974085c4ca0268585932ff246259b069462f3af1d05da994d8ff177d9"
+    },
+    {
+      "path": "logos/logo-no-tagline-mono-white.png",
+      "sha256": "3efa5446e9f19eae66251ffc565ecf4f41295d146816e916e7dacfeb07c620e4",
+      "width": 2048,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "logos/logo-no-tagline-mono-white.svg",
+      "sha256": "21a4c3f3b214efe93e931b9898c4ac3d9a6c282280a3feb0378a758ad0a5621e"
+    },
+    {
+      "path": "marks/mark-dark.png",
+      "sha256": "997a9e782ec59a3d34cd6d5e05910d7a2028c816cbaa56c15952841f79de28b0",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "marks/mark-dark.svg",
+      "sha256": "5d3b84bdd8ff85257c5bbb180cbfc9dbe30d864f3ee95f014db716babaeabd64"
+    },
+    {
+      "path": "marks/mark-light.png",
+      "sha256": "fd20307d43686435cec253219d3764c86398a60eff6b5fe5e38169086caba1e3",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "marks/mark-light.svg",
+      "sha256": "46ba200c0f4b1a9ddb69f03d3f808cc12cd428a3150f9917748685523d7eda6e"
+    },
+    {
+      "path": "marks/mark-mono-black.png",
+      "sha256": "fecb30d0e7f7bb4998f5b517567c429599c154435e220f503841b09fe192e2e7",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "marks/mark-mono-black.svg",
+      "sha256": "cc17ef7977aba1d0363916c6ce2850d16a151d6a44b7a2a91be4c99dcaff784e"
+    },
+    {
+      "path": "marks/mark-mono-white.png",
+      "sha256": "845d57db2d2ba4199905ccb4291582e970330b3a1cddb8b3cd73a530e710db4e",
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "marks/mark-mono-white.svg",
+      "sha256": "d16b79d17707de89d178bab3dcd939e513a519246f2d29de861b913f708e53d2"
+    },
+    {
+      "path": "overview.png",
+      "sha256": "f727f95d13550fd8f46ad4b2a423cae25a8a1b1c65c569cbaa5e042eb5a44ef9",
+      "width": 1920,
+      "height": 1160,
+      "mode": "RGB"
+    }
+  ]
+}
