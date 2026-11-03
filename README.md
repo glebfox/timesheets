@@ -65,7 +65,7 @@ SPRING_PROFILES_ACTIVE=test ./gradlew test
 
 ## Contributing
 
-Every source file starts with the Apache License header, and CI fails on a file without one. Add the header to new files with:
+Every source file of the project's own starts with the Apache License header, and CI fails on a missing one in every file but JavaScript. Add the header to new files with:
 
 ```bash
 ./gradlew spotlessApply

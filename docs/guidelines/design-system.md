@@ -151,7 +151,7 @@ A container's width at a common window is not the screen's. With the navigation 
 
 ## 6. Icons
 
-Icons inside screens, on fields, buttons, and grids, come from the Gravity UI set (`gravity-ui:<name>`), except the standard list actions' buttons, which keep Jmix's own icons. The main menu has a set of its own, drawn for it: each group and item has its own icon, and no two are the same. This section is about that set.
+Icons inside screens, on fields, buttons, and grids, come from the Gravity UI set (`gravity-ui:<name>`), with three exceptions: the framework's standard actions and components, such as Create, Edit, Remove, OK, and Cancel, the filter, and the pagination, keep Jmix's own icons; the project's own actions and dialog buttons that stand for a standard one, such as Add or a dialog's OK, take the standard one's Jmix icon; and the avatar field's person placeholder is a Lucide drawing. The main menu has a set of its own, drawn for it: each group and item has its own icon, and no two are the same. This section is about that set.
 
 **The style.**
 
@@ -163,7 +163,7 @@ Icons inside screens, on fields, buttons, and grids, come from the Gravity UI se
 
 **How the icons reach the menu.**
 
-- The menu's icons are an iconset, `ts-menu`, in `src/main/frontend/src/component/icon/ts-menu-icons.js`, made as `gravity-ui-icons.js` is. A class in `component/icon/` carries its `@JsModule`, which brings the module into the frontend bundle. So the icons arrive with the bundle, before the menu is shown, and the bundle's file names carry a hash of their content, so a browser never keeps an old copy of the set after a deploy.
+- The menu's icons are an iconset, `ts-menu`, in `src/main/frontend/src/component/icon/ts-menu-icons.js`, made as `gravity-ui-icons.js` is. A class in `component/icon/` carries its `@JsModule`, which brings the module into the frontend bundle. So the icons arrive with the bundle, before the menu is shown, and the bundle's file names carry a hash of their content, so a browser never keeps an old copy of the set after a deploy. Why an iconset of the project's own, and not Font Awesome, Gravity UI, or an SVG sprite: [decision 0010](../decisions/0010-the-main-menu-draws-its-own-icons-from-an-iconset.md).
 - Each `menu` and `item` in `menu.xml` names its icon with the `icon` attribute: `icon="ts-menu:<id>"`.
 - Each icon is a `<g id="ts-menu:<id>" style="fill: none; stroke: var(--vaadin-icon-color, currentColor); stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round">`, and the shapes inside it set no `fill`, `stroke`, `stroke-width`, or `style` of their own. `vaadin-icon` draws a copy of that `<g>`, its `style` included, in a `0 0 16 16` view box given by the iconset's `size="16"`. `MenuIconsTest` checks the set against the menu.
 - Each icon draws one `<path>`: its circles, ellipses, and rectangles are written as arcs and joined into it. A menu item's text color is translucent, and every element of an SVG is painted on its own, so where the lines of two elements touch or cross they would be painted twice and show darker in the light theme and brighter in the dark one; one path is painted once.
