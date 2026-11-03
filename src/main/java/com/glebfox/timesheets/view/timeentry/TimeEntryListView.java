@@ -54,7 +54,9 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
 
     @Subscribe
     public void onInit(final InitEvent event) {
-        // The rejection reason is Markdown; the descriptor has no attribute for this
+        // The rejection reason is Markdown; the descriptor has no attribute for this. Vaadin 25.3.0 logs a TypeError in
+        // the browser console once the grid shows and on hover of a header, from its own tooltip generator:
+        // https://github.com/vaadin/flow-components/issues/10247, fixed in later 25.3 releases
         timeEntriesDataGrid.setTooltipMarkdownEnabled(true);
     }
 
