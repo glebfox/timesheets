@@ -21,12 +21,16 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryListView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.View;
+import io.jmix.flowui.view.ViewControllerUtils;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -36,6 +40,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -113,10 +118,33 @@ public class TimeEntryListViewsUiTest {
         assertThat(renderer.createComponent(entry(TimeEntryStatus.NEW, null)).getIcon()).isNull();
     }
 
+    @ParameterizedTest
+    @MethodSource("listViews")
+    void reloadSizesColumnsAgain(Class<? extends View<?>> viewClass) {
+        DataGrid<TimeEntry> grid = openGrid(viewClass);
+        browserCalls(grid);
+
+        CollectionLoader<TimeEntry> loader =
+                ViewControllerUtils.getViewData(UiTestUtils.getCurrentView()).getLoader("timeEntriesDl");
+        loader.load();
+
+        // A Rejected badge, the widest with its icon, may come only with rows loaded after the grid was sized
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("recalculateColumnWidths"));
+    }
+
     private DataGrid<TimeEntry> openGrid(Class<? extends View<?>> viewClass) {
         viewBuilders.view(UiTestUtils.getCurrentView(), viewClass).open();
         View<?> view = UiTestUtils.getCurrentView();
         return UiTestUtils.getComponent(view, "timeEntriesDataGrid");
+    }
+
+    private static List<String> browserCalls(DataGrid<TimeEntry> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     // The grid's generators and renderers take an entry as it is, so it need not be saved

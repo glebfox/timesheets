@@ -29,6 +29,7 @@ import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.MetadataTools;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -55,6 +56,13 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
     public void onInit(final InitEvent event) {
         // The rejection reason is Markdown; the descriptor has no attribute for this
         timeEntriesDataGrid.setTooltipMarkdownEnabled(true);
+    }
+
+    @Subscribe(id = "timeEntriesDc", target = Target.DATA_CONTAINER)
+    public void onTimeEntriesDcCollectionChange(final CollectionContainer.CollectionChangeEvent<TimeEntry> event) {
+        // The browser sizes the auto-width columns to the rows it shows first, while a Rejected badge, the widest
+        // with its icon, may come only with another page, a filter, or a reload
+        timeEntriesDataGrid.recalculateColumnWidths();
     }
 
     @Supply(to = "timeEntriesDataGrid.status", subject = "renderer")
