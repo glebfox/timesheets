@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.view.timeentry.approval;
+package com.glebfox.timesheets.view.approval;
 
 /**
  * Which people the roster of the approval screen shows.

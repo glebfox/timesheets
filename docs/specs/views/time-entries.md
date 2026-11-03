@@ -1,6 +1,6 @@
 # Time entry screens
 
-Source: `view/timeentry/MyTimeEntryListView.java`, `view/timeentry/TimeEntryListView.java`, `view/timeentry/TimeEntryDetailView.java`, `view/timeentry/my-time-entry-list-view.xml`, `view/timeentry/time-entry-list-view.xml`, `view/timeentry/time-entry-detail-view.xml`, `action/TimeEntryCopyAction.java`
+Source: `view/timeentry/`, `action/TimeEntryCopyAction.java`
 
 The screens for logging and reviewing time: My time entries, Time entries, and the time entry editor. What a time entry is and which rules apply to it: [time entry](../data-model/time-entry.md). Approving and rejecting other people's entries by project role is a screen of its own: [Approve time entries](approval.md).
 

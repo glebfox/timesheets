@@ -44,7 +44,7 @@
               title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title"
               icon="fontawesome-solid:calendar-days"/>
         <item view="ts_TimeEntry.approval"
-              title="msg://com.glebfox.timesheets.view.timeentry.approval/timeEntryApprovalView.title"
+              title="msg://com.glebfox.timesheets.view.approval/timeEntryApprovalView.title"
               icon="fontawesome-solid:list-check"/>
     </menu>
 

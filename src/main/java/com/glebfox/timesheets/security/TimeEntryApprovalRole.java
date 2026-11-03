@@ -23,7 +23,7 @@ import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.tag.TagGroup;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
-import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
+import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
 import io.jmix.security.model.EntityAttributePolicyAction;
 import io.jmix.security.model.EntityPolicyAction;
 import io.jmix.security.role.annotation.EntityAttributePolicy;

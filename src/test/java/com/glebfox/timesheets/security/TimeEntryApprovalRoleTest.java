@@ -31,7 +31,7 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
-import com.glebfox.timesheets.view.timeentry.approval.TimeEntryApprovalView;
+import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
 import io.jmix.core.AccessManager;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
