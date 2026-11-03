@@ -107,6 +107,9 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
 
+    // Made on the first reason to show, as the descriptor's markdown element cannot be declared without content
+    private @Nullable Markdown rejectionNoticeReason;
+
     private boolean ownTimeEntry = false;
     private boolean tagsChanged = false;
 
@@ -140,7 +143,6 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
 
     @Subscribe
     public void onReady(final ReadyEvent event) {
-        updateRejectionNotice();
         updateStatusFieldIcon();
         if (getEditedEntity().getTask() != null) {
             updateTagsFields();
@@ -176,6 +178,11 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
 
         dialogWindow.getView().setUser(getEditedEntity().getUser());
         dialogWindow.open();
+    }
+
+    @Subscribe(id = "timeEntryDc", target = Target.DATA_CONTAINER)
+    public void onTimeEntryDcItemChange(final InstanceContainer.ItemChangeEvent<TimeEntry> event) {
+        updateRejectionNotice(event.getItem());
     }
 
     @Subscribe(id = "timeEntryDc", target = Target.DATA_CONTAINER)
@@ -285,23 +292,23 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
                 .forEach(component -> ((JmixMultiSelectComboBox<?>) component).setReadOnly(isReadOnly()));
     }
 
-    // Tells why the entry, as it was opened, was rejected; the reason is written on the approval screen.
+    // Tells why the entry, as it was loaded, was rejected; the reason is written on the approval screen.
     // Changing the status field does not show or hide it
-    private void updateRejectionNotice() {
-        TimeEntry timeEntry = getEditedEntity();
-        if (TimeEntryStatus.REJECTED != timeEntry.getStatus()) {
-            return;
-        }
+    private void updateRejectionNotice(@Nullable TimeEntry timeEntry) {
+        boolean rejected = timeEntry != null && TimeEntryStatus.REJECTED == timeEntry.getStatus();
+        rejectionNotice.setVisible(rejected);
 
-        rejectionNotice.setVisible(true);
-        String reason = timeEntry.getRejectionReason();
-        if (StringUtils.isNotBlank(reason)) {
-            // Created here, as the descriptor's markdown element cannot be declared without content
-            Markdown reasonText = uiComponents.create(Markdown.class);
-            reasonText.setId("rejectionNoticeReason");
-            reasonText.addClassName("reason");
-            reasonText.setContent(reason);
-            rejectionNoticeBody.add(reasonText);
+        String reason = rejected ? timeEntry.getRejectionReason() : null;
+        boolean hasReason = StringUtils.isNotBlank(reason);
+        if (hasReason && rejectionNoticeReason == null) {
+            rejectionNoticeReason = uiComponents.create(Markdown.class);
+            rejectionNoticeReason.setId("rejectionNoticeReason");
+            rejectionNoticeReason.addClassName("reason");
+            rejectionNoticeBody.add(rejectionNoticeReason);
+        }
+        if (rejectionNoticeReason != null) {
+            rejectionNoticeReason.setContent(hasReason ? reason : "");
+            rejectionNoticeReason.setVisible(hasReason);
         }
     }
 

@@ -40,6 +40,9 @@ import io.jmix.flowui.component.markdowneditor.MarkdownEditor;
 import io.jmix.flowui.component.multiselectcombobox.JmixMultiSelectComboBox;
 import io.jmix.flowui.component.select.JmixSelect;
 import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.model.DataContext;
+import io.jmix.flowui.model.InstanceContainer;
+import io.jmix.flowui.view.ViewControllerUtils;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -152,6 +155,27 @@ public class TimeEntryDetailViewUiTest {
     }
 
     @Test
+    void noticeFollowsTheContainersItem() {
+        TimeEntryDetailView view = openEditor(saveEntry(TimeEntryStatus.REJECTED, REASON));
+        InstanceContainer<TimeEntry> timeEntryDc = ViewControllerUtils.getViewData(view).getContainer("timeEntryDc");
+        DataContext dataContext = ViewControllerUtils.getViewData(view).getDataContext();
+
+        timeEntryDc.setItem(dataContext.merge(saveEntry(TimeEntryStatus.REJECTED, "Duplicate")));
+
+        Div notice = UiTestUtils.getComponent(view, "rejectionNotice");
+        Div body = UiTestUtils.getComponent(view, "rejectionNoticeBody");
+        assertThat(notice.isVisible()).isTrue();
+        // The reason's Markdown is the one made for the first entry, given the new reason
+        assertThat(body.getChildren().filter(Markdown.class::isInstance))
+                .singleElement()
+                .satisfies(reason -> assertThat(((Markdown) reason).getContent()).isEqualTo("Duplicate"));
+
+        timeEntryDc.setItem(dataContext.merge(saveEntry(TimeEntryStatus.NEW, null)));
+
+        assertThat(notice.isVisible()).isFalse();
+    }
+
+    @Test
     void savingChangedRejectedEntrySendsItToNew() {
         TimeEntry entry = saveEntry(TimeEntryStatus.REJECTED, REASON);
         TimeEntryDetailView view = openEditor(entry);
@@ -169,7 +193,7 @@ public class TimeEntryDetailViewUiTest {
         TagGroup tagGroup = saveTagGroup();
         Tag firstTag = saveTag(tagGroup, "first");
         Tag secondTag = saveTag(tagGroup, "second");
-        TimeEntry entry = saveEntry(TimeEntryStatus.REJECTED, REASON, List.of(firstTag, secondTag));
+        TimeEntry entry = saveRejectedEntry(List.of(firstTag, secondTag));
         TimeEntryDetailView view = openEditor(entry);
 
         JmixButton saveAndCloseBtn = UiTestUtils.getComponent(view, "saveAndCloseBtn");
@@ -207,14 +231,14 @@ public class TimeEntryDetailViewUiTest {
         return data.saveEntry(task, user, LocalDate.now(), status, rejectionReason);
     }
 
-    private TimeEntry saveEntry(TimeEntryStatus status, String rejectionReason, List<Tag> tags) {
+    private TimeEntry saveRejectedEntry(List<Tag> tags) {
         return data.save(dataManager.create(TimeEntry.class), entry -> {
             entry.setTask(task);
             entry.setUser(user);
             entry.setDate(LocalDate.now());
             entry.setSpentTime(WorkTime.ofHours(4));
-            entry.setStatus(status);
-            entry.setRejectionReason(rejectionReason);
+            entry.setStatus(TimeEntryStatus.REJECTED);
+            entry.setRejectionReason(REASON);
             entry.setTags(new ArrayList<>(tags));
         });
     }
