@@ -6,7 +6,7 @@ Mechanics of the framework's views, grids, filters, list actions, components dec
 
 A detail view of a saved entity opens read-only when the current user may not update that entity: no entity-level update permission, or a row-level constraint that refuses it. The read-only mode changes two things only:
 
-- Fields bound to an entity attribute become read-only. A field the view fills itself, such as the work schedule editor's workday buttons, does not follow the mode unless the view sets it on each change of the mode.
+- Fields bound to an entity attribute become read-only. A field the view fills or builds itself, such as the work schedule editor's workday buttons or the time entry editor's tag fields, does not follow the mode: the view sets it on each change of the mode, and on a field it builds later, such as a tag field rebuilt for another task, when it builds it.
 - Component actions that implement `AdjustWhenViewReadOnly`, and return `true` from `isDisabledWhenViewReadOnly()`, are disabled.
 
 OK is not such an action, and saving has no read-only check, so OK still saves the view's data context. An action that must keep working in a read-only editor does not implement `AdjustWhenViewReadOnly` and relies on its own permission check; OK then saves only what such actions changed. The assignment actions of the user editor and the work schedule editor work this way, so a holder of Work schedule management changes assignments in a user editor that is read-only for them (`docs/specs/roles/work-schedule-management.md`).
@@ -60,3 +60,5 @@ The view wires it as it wires a framework component. `@Subscribe("<id>")` finds 
 ## Tooltips that render Markdown
 
 `Tooltip.forComponent(part).setMarkdown(text)` renders the text as Markdown in a `vaadin-tooltip` that Vaadin attaches to `body`, outside the component, so only a theme-wide rule reaches it: the theme's `component/tooltip.css` trims the browser's margins above its first block and below its last. A tooltip stays open while the pointer is on it and hides what it covers, so one on a part with buttons nearby opens where it covers none of them, as a week board card's description opens beside the card with `TooltipPosition.END_TOP`. A part that takes no focus shows its tooltip on hover only, never to the keyboard. See `ApprovalEntryCard`.
+
+A grid gives a cell its tooltip from the column's `tooltipGenerator`, an `@Install` delegate, and renders the tooltips as Markdown only after the controller calls `setTooltipMarkdownEnabled(true)` on the grid: the descriptor has no attribute for it. A grid cell takes keyboard focus, so its tooltip opens on focus as well as on hover. See `MyTimeEntryListView` and `TimeEntryListView`.

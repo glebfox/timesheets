@@ -107,7 +107,8 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
 
-    // Made on the first reason to show, as the descriptor's markdown element cannot be declared without content
+    // Made on the first reason to show: the descriptor's markdown element can neither be declared without content nor
+    // be bound to the reason, https://github.com/jmix-framework/jmix/issues/5938
     private @Nullable Markdown rejectionNoticeReason;
 
     private boolean ownTimeEntry = false;
