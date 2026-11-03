@@ -39,9 +39,12 @@ Jmix reads a resource from `jmix.core.conf-dir` (`.jmix/conf/` in the project di
 
 - `NoSuchViewException: View '<id>' is not defined` while the menu is built, from a stale `menu.xml` that names a view the current branch does not have;
 - a raw message key, or an old text, from a stale copy of a message bundle;
-- `ClassCastException` between a class and itself, or `IllegalAccessError` on a package-private class, from a hot-deployed `.class`: the tests load it through Jmix's own class loader, apart from the application's classes.
+- `ClassCastException` between a class and itself, or `IllegalAccessError` on a package-private class, from a hot-deployed `.class`: the tests load it through Jmix's own class loader, apart from the application's classes;
+- `NotFoundException: No route found for the given navigation target` on every navigation to the main view of the running app, from a `MainView.class` that Studio hot-deployed on a save of its source; it lasts until the app restarts.
 
-Fix: delete the stale file, or the `.class`, under `.jmix/conf/`; Studio writes a class there again on the next save of its source. CI never has this directory. While Studio hot-deploys the classes being edited, which the developer's running app may be using, a test run in the checkout can leave its copies alone and read an empty folder instead: `JMIX_CORE_CONFDIR=<empty folder> SPRING_PROFILES_ACTIVE=test ./gradlew test …`.
+A theme stylesheet is served from the classpath, not read through Jmix, so a stale copy of one there changes nothing.
+
+Fix: delete the stale file, or the `.class`, under `.jmix/conf/`; Studio writes a class there again on the next save of its source. A checkout of the source is no save, so it leaves the copy as it was. CI never has this directory. While Studio hot-deploys the classes being edited, which the developer's running app may be using, a test run in the checkout can leave its copies alone and read an empty folder instead: `JMIX_CORE_CONFDIR=<empty folder> SPRING_PROFILES_ACTIVE=test ./gradlew test …`.
 
 ## Live checks
 

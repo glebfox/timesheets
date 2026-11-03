@@ -14,74 +14,14 @@
  * limitations under the License.
  */
 
+/* The application title, the tab bar, and the initial layout pad alike, so the drawer toggle has one place whether
+   tabs are open or not, and the title is as tall as the tab bar. */
 .jmix-main-view-app-layout {
     --vaadin-app-layout-drawer-width: 256px;
     --aura-app-layout-inset: 0px;
-}
 
-vaadin-app-layout.jmix-main-view-app-layout:not([primary-section='navbar']) {
-    --vaadin-app-layout-navbar-padding-top: var(--aura-app-layout-inset);
-    --vaadin-app-layout-navbar-padding-inline-start: var(--aura-app-layout-inset);
-    --vaadin-app-layout-navbar-padding-inline-end: var(--aura-app-layout-inset);
-    --vaadin-app-layout-navbar-padding-bottom: 0px;
-
-    transition: padding-bottom var(--vaadin-app-layout-transition-duration),
-    padding-inline-start var(--vaadin-app-layout-transition-duration),
-    padding-inline-end var(--vaadin-app-layout-transition-duration);
-}
-
-vaadin-app-layout.jmix-main-view-app-layout[drawer-opened]:not([primary-section='navbar']) {
-    --vaadin-app-layout-navbar-padding-inline-start: 0px;
-}
-
-vaadin-app-layout.jmix-main-view-app-layout:not([primary-section='navbar'])::part(navbar) {
-    transition: inset-inline-start var(--vaadin-app-layout-transition-duration),
-    padding var(--vaadin-app-layout-transition-duration);
-}
-
-vaadin-app-layout.jmix-main-view-app-layout[has-navbar]:not([primary-section='navbar'])::part(content) {
-    border-top-width: 0;
-    border-start-start-radius: 0;
-    border-start-end-radius: 0;
-}
-
-vaadin-app-layout.jmix-main-view-app-layout[has-navbar][has-drawer][drawer-opened]:not([overlay]):not([primary-section='navbar'])::part(content) {
-    border-start-start-radius: 0;
-}
-
-vaadin-app-layout.jmix-main-view-app-layout:not([primary-section='navbar']) .jmix-main-view-header {
-    background: linear-gradient(var(--aura-surface-color), var(--aura-surface-color)), var(--aura-app-background);
-    background-clip: padding-box;
-    background-origin: border-box;
-
-    border: var(--aura-app-layout-border-width) solid var(--vaadin-border-color-secondary);
-    border-top-width: min(var(--aura-app-layout-inset), var(--aura-app-layout-border-width));
-    border-inline-width: min(var(--aura-app-layout-inset), var(--aura-app-layout-border-width));
-    border-bottom-width: 1px;
-    border-start-start-radius: var(--_app-layout-radius);
-    border-start-end-radius: var(--_app-layout-radius);
-
-    padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
-}
-
-vaadin-app-layout.jmix-main-view-app-layout:not([primary-section='navbar'])::part(navbar-bottom) {
-    border-top: 1px solid var(--vaadin-border-color-secondary);
-}
-
-vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([overlay]):not([primary-section='navbar']) > .jmix-main-view-header {
-    border-inline-start-width: var(--aura-app-layout-border-width);
-}
-
-.jmix-main-view-header {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-    gap: var(--vaadin-gap-m);
-}
-
-.jmix-main-view-title {
-    font-size: var(--aura-font-size-xl);
+    --_bar-padding-block: var(--vaadin-padding-block-container);
+    --_bar-padding-inline: var(--vaadin-padding-inline-container);
 }
 
 .jmix-main-view-section {
@@ -92,17 +32,29 @@ vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([over
     min-height: 100%;
 }
 
+/* Application Title */
+
+/* The line is drawn as the tab bar draws its own, inside the box, so the two lines meet. */
 .jmix-main-view-application-title {
     display: flex;
-    align-items: center;
-    margin: 0;
-    padding: var(--vaadin-padding-m);
-    font-size: var(--aura-font-size-l);
+    justify-content: center;
+    padding: var(--_bar-padding-block) var(--_bar-padding-inline);
+    box-shadow: inset 0 -1px 0 0 var(--vaadin-border-color-secondary);
 }
 
-.jmix-main-view-application-title-base-link {
-    color: var(--vaadin-text-color);
-    text-decoration: none;
+/* As tall as a button, one line between its padding and border, since the drawer toggle sets the tab bar's
+   height. */
+.jmix-main-view-application-logo {
+    height: calc(1lh + 2 * var(--vaadin-padding-block-container) + 2 * var(--vaadin-button-border-width, 1px));
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* The brand has a logo for light surfaces and one for dark surfaces. Jmix marks the active theme on the root
+   element, whether the user picked it or it follows the system. */
+html[theme='dark'] .jmix-main-view-application-logo-light,
+html:not([theme='dark']) .jmix-main-view-application-logo-dark {
+    display: none;
 }
 
 .jmix-main-view-navigation {
@@ -112,23 +64,41 @@ vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([over
     overflow: auto;
 }
 
-.jmix-main-view-footer {
-    display: flex;
-    align-items: center;
-    gap: var(--vaadin-gap-m);
-    padding: var(--vaadin-padding-m);
-    padding-bottom: max(0px, var(--aura-app-layout-inset) - var(--vaadin-padding-m));
-    border-top: 1px solid var(--vaadin-border-color-secondary);
+/* The menu scrolls itself, not the navigation around it. */
+.jmix-main-view-navigation > .jmix-list-menu {
+    scrollbar-width: thin;
 }
 
-.jmix-main-view-footer .jmix-user-indicator {
-    flex-grow: 1;
+.jmix-main-view-footer {
+    display: flex;
+    padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
+    border-top: 1px solid var(--vaadin-border-color-secondary);
 }
 
 /* User Menu */
 
-.jmix-main-view-user-menu {
-    margin-inline-start: auto;
+/* The menu fills the footer, though neither Jmix's user menu nor a menu bar button shrinks by default. The menu
+   bar moves a button that does not fit into its overflow menu, so the stretched button may shrink, and its
+   content cuts the name short instead. */
+.jmix-main-view-footer .jmix-main-view-user-menu {
+    flex: 1 1 0;
+}
+
+.jmix-main-view-user-menu > vaadin-menu-bar-button.jmix-user-menu-button {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: start;
+}
+
+.jmix-main-view-user-menu > vaadin-menu-bar-button.jmix-user-menu-button::part(label) {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+/* The menu opens at the button's start edge and is at least as wide as the button. */
+.jmix-main-view-user-menu > vaadin-menu-bar-submenu::part(overlay) {
+    box-sizing: border-box;
+    min-width: calc(var(--vaadin-app-layout-drawer-width) - 2 * var(--vaadin-padding-inline-container));
 }
 
 .user-menu-button-content,
@@ -139,7 +109,7 @@ vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([over
     grid-template-columns: auto 1fr;
     column-gap: var(--vaadin-gap-s);
 
-    width: max-content;
+    width: 100%;
     box-sizing: border-box;
 
     color: var(--vaadin-text-color);
@@ -147,7 +117,6 @@ vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([over
 }
 
 .user-menu-header-content {
-    width: 100%;
     padding-inline-end: var(--vaadin-padding-l);
 }
 
@@ -201,70 +170,33 @@ vaadin-app-layout.jmix-main-view-app-layout[has-drawer][drawer-opened]:not([over
     text-overflow: ellipsis;
 }
 
+.user-menu-button-content > :is(.user-menu-text, .user-menu-subtext) {
+    white-space: nowrap;
+}
+
 .jmix-main-view-user-menu:not([theme~='substituted']) .user-menu-button-content > .user-menu-subtext {
     display: none;
 }
 
-/* Initial Layout */
+/* Work Area */
+
+.jmix-main-view-app-layout .jmix-main-tabsheet::part(tabs-container) {
+    padding: var(--_bar-padding-block) var(--_bar-padding-inline);
+}
+
+/* The tabs still span the bar's full height, so the selected tab's marker stays on the line. */
+.jmix-main-view-app-layout .jmix-main-tabsheet > vaadin-tabs[slot='tabs'] {
+    margin-block: calc(var(--_bar-padding-block) * -1);
+}
+
+/* A tab centers its content in the height it is stretched to, so it needs no padding of its own there, and the
+   drawer toggle alone sets the bar's height, also on a touch screen, where Aura pads a tab more. */
+.jmix-main-view-app-layout .jmix-main-tabsheet > vaadin-tabs[slot='tabs'] > jmix-view-tab {
+    padding-block: 0;
+}
 
 .jmix-initial-layout {
-    --title-size: round(var(--aura-font-size-m) * 2.5, 0.0625rem);
-    --title-color: var(--vaadin-text-color-secondary);
-
     width: 100%;
     height: 100%;
-
-    align-items: center;
-    justify-content: center;
-
-    container-type: inline-size;
-    container-name: jmix-initial-layout;
-}
-
-.jmix-initial-layout-content {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 50rem;
-    padding: var(--vaadin-padding-xl);
-    box-sizing: border-box;
-}
-
-.jmix-initial-layout-title {
-    position: relative;
-
-    color: var(--title-color);
-    font-size: var(--title-size);
-    line-height: calc(4 * var(--title-size));
-    box-sizing: border-box;
-}
-
-.jmix-initial-layout-title:after {
-    position: absolute;
-    width: 100%;
-    height: 0.3rem;
-    content: '';
-    background: var(--title-color);
-    top: 0;
-    left: 0;
-}
-
-.jmix-initial-layout-logo {
-    --logo-size: calc(2.5 * var(--title-size));
-    width: var(--logo-size);
-    height: var(--logo-size);
-}
-
-@container jmix-initial-layout (max-width: 45rem) {
-    .jmix-initial-layout-content {
-        flex-direction: column-reverse;
-        align-items: center;
-        gap: var(--vaadin-gap-l);
-    }
-
-    .jmix-initial-layout-title {
-        padding-top: var(--vaadin-padding-m);
-        line-height: var(--aura-line-height-m);
-        text-align: center;
-    }
+    padding: var(--_bar-padding-block) var(--_bar-padding-inline);
 }

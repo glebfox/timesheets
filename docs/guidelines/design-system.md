@@ -17,6 +17,8 @@ Lumo's utility classes, such as `text-secondary`, `text-s`, `font-bold`, or `p-m
 
 Project-specific values are `--ts-*` custom properties defined in `tokens.css`.
 
+**Light and dark.** The theme picked with the user menu's theme switch, Light, Dark, or System, which follows the system's setting, reaches the stylesheets through the root element: Jmix's `color-scheme-switching-support.js`, which `TimesheetsApplication` loads, sets `color-scheme` and a `theme` attribute of `light` or `dark` on `<html>`. A color follows it with `light-dark()`, as the project colors in `tokens.css` do. What is not a color, such as the drawer's logo, which has an image for each theme, keys on `html[theme='dark']`. A `prefers-color-scheme` media query sees only the system's setting and misses a theme the user picked.
+
 ---
 
 ## 2. Color Palette

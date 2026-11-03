@@ -21,45 +21,51 @@
         <action id="logoutAction" type="logout"
                 text="msg:///actions.logout.text" icon="gravity-ui:arrow-right-from-square"/>
     </actions>
+    <!-- No navigationBar (docs/decisions/0011-the-main-view-has-no-navigation-bar.md). Both main view XSDs declare it
+         as required, so the IDE reports appLayout as incomplete, but the loader adds a navigation bar only when it has
+         components, and the view loads without one. -->
     <appLayout classNames="jmix-main-view-app-layout">
-        <navigationBar>
-            <header id="header" classNames="jmix-main-view-header">
-                <drawerToggle id="drawerToggle"
-                              classNames="jmix-main-view-drawer-toggle"
-                              ariaLabel="msg://drawerToggle.ariaLabel"/>
-                <h2 id="applicationTitle"
-                    text="msg://applicationTitle.text"
-                    classNames="jmix-main-view-application-title">
-                </h2>
-
-                <userMenu id="userMenu"
-                          themeNames="tertiary" classNames="jmix-main-view-user-menu">
-                    <items>
-                        <separator/>
-                        <actionItem id="substituteUserMenuItem"
-                                    themeNames="non-checkable">
-                            <action id="substituteUserAction" type="sec_userMenuSubstituteUser"
-                                    icon="gravity-ui:arrow-right-arrow-left"/>
-                        </actionItem>
-                        <separator/>
-                        <actionItem id="themeSwitchMenuItem"
-                                    themeNames="non-checkable">
-                            <action id="themeSwitchAction" type="userMenu_themeSwitch"/>
-                        </actionItem>
-                        <separator/>
-                        <actionItem id="logoutMenuItem" ref="logoutAction"
-                                    themeNames="non-checkable"/>
-                    </items>
-                </userMenu>
-            </header>
-        </navigationBar>
         <drawerLayout>
             <section id="section" classNames="jmix-main-view-section">
+                <header id="applicationTitle" classNames="jmix-main-view-application-title">
+                    <image id="applicationTitleLightLogo"
+                           resource="assets/brand/logos/logo-no-tagline-light.svg"
+                           alternateText="msg://applicationTitle.text"
+                           classNames="jmix-main-view-application-logo jmix-main-view-application-logo-light"/>
+                    <image id="applicationTitleDarkLogo"
+                           resource="assets/brand/logos/logo-no-tagline-dark.svg"
+                           alternateText="msg://applicationTitle.text"
+                           classNames="jmix-main-view-application-logo jmix-main-view-application-logo-dark"/>
+                </header>
+
                 <nav id="navigation"
                      classNames="jmix-main-view-navigation"
                      ariaLabel="msg://navigation.ariaLabel">
                     <listMenu id="menu" themeNames="toggle-reverse"/>
                 </nav>
+
+                <footer id="footer" classNames="jmix-main-view-footer">
+                    <userMenu id="userMenu"
+                              themeNames="tertiary"
+                              classNames="jmix-main-view-user-menu">
+                        <items>
+                            <separator/>
+                            <actionItem id="substituteUserMenuItem"
+                                        themeNames="non-checkable">
+                                <action id="substituteUserAction" type="sec_userMenuSubstituteUser"
+                                        icon="gravity-ui:arrow-right-arrow-left"/>
+                            </actionItem>
+                            <separator/>
+                            <actionItem id="themeSwitchMenuItem"
+                                        themeNames="non-checkable">
+                                <action id="themeSwitchAction" type="userMenu_themeSwitch"/>
+                            </actionItem>
+                            <separator/>
+                            <actionItem id="logoutMenuItem" ref="logoutAction"
+                                        themeNames="non-checkable"/>
+                        </items>
+                    </userMenu>
+                </footer>
             </section>
         </drawerLayout>
         <workArea id="workArea"
@@ -73,8 +79,16 @@
                     <action id="closeOthersTabsAction" type="tabmod_closeOtherTabs"/>
                     <action id="closeAllTabsAction" type="tabmod_closeAllTabs"/>
                 </actions>
+                <prefix>
+                    <drawerToggle id="mainTabSheetDrawerToggle"
+                                  classNames="jmix-main-view-drawer-toggle"
+                                  ariaLabel="msg://drawerToggle.ariaLabel"/>
+                </prefix>
             </mainTabSheet>
             <initialLayout id="initialLayout" classNames="jmix-initial-layout">
+                <drawerToggle id="initialLayoutDrawerToggle"
+                              classNames="jmix-main-view-drawer-toggle"
+                              ariaLabel="msg://drawerToggle.ariaLabel"/>
             </initialLayout>
         </workArea>
     </appLayout>
