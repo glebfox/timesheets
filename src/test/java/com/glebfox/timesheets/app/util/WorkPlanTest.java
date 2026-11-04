@@ -21,7 +21,11 @@ import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,5 +69,46 @@ class WorkPlanTest {
                 Map.of(LocalDate.of(2026, 11, 2), WorkTime.ofHours(8)),
                 Map.of(LocalDate.of(2026, 11, 4), new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF))))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void absencesOutsideTheRangeAreRefused() {
+        WorkPlan.AbsencePeriod december = new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
+                LocalDate.of(2026, 12, 5), LocalDate.of(2026, 12, 7));
+
+        assertThatThrownBy(() -> new WorkPlan(novemberDays(), Map.of(), List.of(december)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void absenceEndingBeforeItStartsIsRefused() {
+        WorkPlan.AbsencePeriod backwards = new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
+                LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 9));
+
+        assertThatThrownBy(() -> new WorkPlan(novemberDays(), Map.of(), List.of(backwards)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void absenceOverlappingTheRangeIsKept() {
+        WorkPlan.AbsencePeriod acrossStart = new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
+                LocalDate.of(2026, 10, 28), LocalDate.of(2026, 11, 3));
+        WorkPlan.AbsencePeriod acrossEnd = new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Sick leave",
+                LocalDate.of(2026, 11, 30), LocalDate.of(2026, 12, 4));
+
+        WorkPlan plan = new WorkPlan(novemberDays(), Map.of(), List.of(acrossStart, acrossEnd));
+
+        assertThat(plan.absences()).containsExactly(acrossStart, acrossEnd);
+    }
+
+    @Test
+    void planWithoutAbsencesHasNone() {
+        assertThat(new WorkPlan(novemberDays()).absences()).isEmpty();
+        assertThat(new WorkPlan(novemberDays(), Map.of()).absences()).isEmpty();
+    }
+
+    private static Map<LocalDate, WorkTime> novemberDays() {
+        return LocalDate.of(2026, 11, 1).datesUntil(LocalDate.of(2026, 12, 1))
+                .collect(Collectors.toMap(Function.identity(), date -> WorkTime.ofHours(8)));
     }
 }
