@@ -106,7 +106,7 @@ A 480px dialog, titled "Holiday calendar day", that edits one day: **Name**, **D
 
 ## Absence types
 
-`absence-types`. Lists [absence types](../data-model/absence-type.md) with the name and the description, which is cut short with the full text in a popover. It offers a name filter and pagination, both kept when the browser page is reloaded; Create, Edit, and Remove. Remove asks the usual confirmation even when absences refer to the type: they keep it, and still plan nothing. It is also the type picker of the [absence editor](absences.md#absence-editor). The editor (`absence-types/:id`) has the name and the description; it opens as a page from the list, and as a 640px dialog from the list that the picker opens.
+`absence-types`. Lists [absence types](../data-model/absence-type.md) with the name and the description, which is cut short with the full text in a popover. It offers a name filter and pagination, both kept when the browser page is reloaded; Create, Edit, and Remove. Remove asks the usual confirmation even when absences refer to the type: they keep it, and still plan nothing. It is also the type picker of the [absence editor](absences.md#absence-editor) and of the [absence list's](absences.md#absences) type filter. The editor (`absence-types/:id`) has the name and the description; it opens as a page from the list, and as a 640px dialog from the list that the picker opens.
 
 ## Not covered
 

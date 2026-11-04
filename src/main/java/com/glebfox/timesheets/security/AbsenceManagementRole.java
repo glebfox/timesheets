@@ -29,7 +29,8 @@ import io.jmix.securityflowui.role.annotation.ViewPolicy;
 /**
  * Managing absences and absence types: who is absent on which days, and the catalog of types they are recorded as.
  * <p>
- * Users are only read, for the absence editor's user field and its picker.
+ * Users are only read, for the user drop-downs of the absence editor and of the absence list's filter, and their
+ * pickers.
  */
 @ResourceRole(name = "Absence management", code = AbsenceManagementRole.CODE)
 public interface AbsenceManagementRole extends UserReadOnlyRole {

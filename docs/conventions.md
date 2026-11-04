@@ -34,6 +34,10 @@ An action of a list component that the framework does not provide, such as Make 
 
 A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.
 
+## Entity drop-downs
+
+An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Older views lack one or both, such as the assignment editor's schedule field and the task lookup's project filter.
+
 ## Components in a view
 
 A component that a view shows, such as a panel, a bar, or a card of a list, is declared in the view's descriptor, with the generic `component` element when it has no element of its own, or created in the controller through `UiComponents`. The view handles its events with `@Subscribe` and gives its handlers with `@Install` wherever the component allows it, not with listeners and setters in code. Inside a component, the parts it builds are created with `new`, which is cheaper, except a Jmix component that takes beans from the application context, such as the reject dialog's Markdown editor, which comes from `UiComponents`. Older views still create some of their components with `new`. How the generic element and the annotations reach a component of the project's own: `docs/guidelines/views.md`.
