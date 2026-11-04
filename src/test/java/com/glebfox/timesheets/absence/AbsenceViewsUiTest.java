@@ -80,6 +80,7 @@ public class AbsenceViewsUiTest {
     static final LocalDate FEB_27 = LocalDate.of(2026, 2, 27);
     static final LocalDate MAR_2 = LocalDate.of(2026, 3, 2);
     static final LocalDate MAR_5 = LocalDate.of(2026, 3, 5);
+    static final LocalDate MAR_6 = LocalDate.of(2026, 3, 6);
     static final LocalDate MAR_10 = LocalDate.of(2026, 3, 10);
     static final LocalDate MAR_12 = LocalDate.of(2026, 3, 12);
     static final LocalDate MAR_13 = LocalDate.of(2026, 3, 13);
@@ -280,6 +281,33 @@ public class AbsenceViewsUiTest {
             assertThat(absence.getType()).isEqualTo(type);
             assertThat(absence.getFirstDay()).isEqualTo(MAR_2);
             assertThat(absence.getLastDay()).isEqualTo(MAR_2);
+        });
+    }
+
+    @Test
+    void oneDayAbsenceMovesWithItsFirstDay() {
+        User user = saveUser();
+        Absence saved = saveAbsence(user, saveType(uniqueName()), MAR_5, MAR_5);
+
+        AbsenceDetailView editor = openEditor(user, saved);
+
+        // The last day is empty, as when the editor creates a one-day absence, and opening changes nothing
+        assertThat(firstDayField(editor).getTypedValue()).isEqualTo(MAR_5);
+        assertThat(lastDayField(editor).getTypedValue()).isNull();
+        assertThat(rangeSummary(editor).getText()).isEqualTo("1 day, Thursday");
+        assertThat(editor.hasUnsavedChanges()).isFalse();
+
+        firstDayField(editor).setTypedValue(MAR_6);
+
+        assertThat(lastDayField(editor).isInvalid()).isFalse();
+        assertThat(rangeSummary(editor).getText()).isEqualTo("1 day, Friday");
+
+        save(editor);
+
+        assertThat(isOpen(editor)).isFalse();
+        assertThat(loadAbsences(user)).singleElement().satisfies(absence -> {
+            assertThat(absence.getFirstDay()).isEqualTo(MAR_6);
+            assertThat(absence.getLastDay()).isEqualTo(MAR_6);
         });
     }
 

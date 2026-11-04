@@ -75,9 +75,12 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
         Absence absence = getEditedEntity();
 
         // The stored days come with the absence, not as a change of a day, so the last day and its picker are set
-        // from them here; an absence opened with only a first day gets it as its last day
+        // from them here; an absence opened with only a first day gets it as its last day. A one-day absence
+        // opens with the last day empty, as the view creates one, so it stays one day when its first day moves
         followFirstDay(absence.getFirstDay());
-        lastDayField.setTypedValue(absence.getLastDay());
+        if (!Objects.equals(absence.getLastDay(), absence.getFirstDay())) {
+            lastDayField.setTypedValue(absence.getLastDay());
+        }
         onDatesChange();
         updateReadOnlyFields();
 
