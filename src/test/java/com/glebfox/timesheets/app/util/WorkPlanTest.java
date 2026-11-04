@@ -85,8 +85,10 @@ class WorkPlanTest {
         WorkPlan.AbsencePeriod backwards = new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
                 LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 9));
 
+        // 10-9 Nov has no day in the plan either, so only the message tells the order check from the coverage one
         assertThatThrownBy(() -> new WorkPlan(novemberDays(), Map.of(), List.of(backwards)))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("The absence " + backwards.id() + " ends before it starts");
     }
 
     @Test

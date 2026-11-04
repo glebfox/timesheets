@@ -303,6 +303,23 @@ public class WorkPlanSupportTest {
     }
 
     @Test
+    void absenceEndingOnTheRangesFirstDayCounts() {
+        User user = createUser();
+        // Every day a workday, so the range's first day, a Sunday, has time for the absence to take
+        assign(user, createSchedule("Every day", WorkTime.ofHours(8), null, EnumSet.allOf(DayOfWeek.class)),
+                LocalDate.of(2026, 10, 1));
+        AbsenceType type = createAbsenceType();
+        Absence absence = absent(user, type, LocalDate.of(2026, 10, 28), NOVEMBER_START);
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(NOVEMBER_START)).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(2))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.absences()).containsExactly(
+                new WorkPlan.AbsencePeriod(absence.getId(), type.getName(), LocalDate.of(2026, 10, 28), NOVEMBER_START));
+    }
+
+    @Test
     void absencesNextToTheRangeAreLeftOut() {
         User user = createUser();
         AbsenceType type = createAbsenceType();
