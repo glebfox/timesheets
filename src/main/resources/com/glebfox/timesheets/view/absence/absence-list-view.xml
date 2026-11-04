@@ -62,7 +62,8 @@
             <gridLayout id="filterLayout"
                         width="100%"
                         columnMinWidth="min(22rem, 100%)"
-                        gap="var(--ts-filter-layout-column-gap)">
+                        gap="var(--ts-filter-layout-column-gap)"
+                        classNames="absence-list-view-filters">
                 <propertyFilter id="userFilter"
                                 dataLoader="absencesDl" property="user"
                                 operation="EQUAL"
@@ -118,10 +119,11 @@
                     </entityComboBox>
                 </propertyFilter>
                 <!-- From and To together keep the absences that share at least one day with the period. They read
-                     as one range, as the editor's dates do: two dates joined by a dash, sharing the cell evenly -->
+                     as one range, as the editor's dates do: two dates joined by a dash, sharing the cell evenly,
+                     or stacked on a phone (absence-list-view.css) -->
                 <hbox id="periodFilterBox"
                       width="100%"
-                      alignItems="BASELINE">
+                      classNames="absence-list-view-period-filter">
                     <propertyFilter id="fromFilter"
                                     dataLoader="absencesDl" property="lastDay"
                                     operation="GREATER_OR_EQUAL"
@@ -134,7 +136,8 @@
                                     clearButtonVisible="true"
                                     width="100%"/>
                     </propertyFilter>
-                    <span id="periodFilterSeparator" text="msg://datesSeparator.text"/>
+                    <span id="periodFilterSeparator" text="msg://datesSeparator.text"
+                          classNames="absence-list-view-period-separator"/>
                     <propertyFilter id="toFilter"
                                     dataLoader="absencesDl" property="firstDay"
                                     operation="LESS_OR_EQUAL"

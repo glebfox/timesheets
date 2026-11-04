@@ -20,7 +20,7 @@ Filters:
 - **Type** — a drop-down of the non-deleted types, searched by name, with a picker that opens the [absence type list](settings.md#absence-types) and a button that clears it.
 - **Period** — a From and a To date side by side, joined by a dash, each named "From" or "To" for screen readers, and either optional. They keep every absence sharing at least one day with the period, both of its ends included: an absence that ends on From or starts on To is kept.
 
-The user, type, and period filters take columns of one width: three in a row on a wide screen, as at 1440px, two on a narrower one, as at 1280px, and one on a phone. The period's two dates share its column evenly.
+The user, type, and period filters take columns of one width: three in a row on a wide screen, as at 1440px, two on a narrower one, as at 1280px, and one on a phone. The period's two dates share its column evenly, and on a phone they stack, the dash centered between them.
 
 The filters and pagination are kept when the browser page is reloaded; opening the screen again, or returning to it with the browser's back or forward button, starts them empty.
 
@@ -41,7 +41,7 @@ Closing the editor with unsaved changes, with Cancel, Esc, or the dialog's close
 
 ## Not covered
 
-- How the screens look, in English and Russian, light and dark: the list's columns, the Days forms, the comment popover, and the Deleted badge; the filters' columns, three at 1440px, two at 1280px, and one at 375px, with no horizontal scroll, where a filled date fits at 1440 and 1280px but its last digits are cut at 375px; the editor as a dialog, its range line, and the last day's picker greying out the days before the first. Checked live on 2026-11-04 only. The UI tests check the list's order, renderers, and cell texts in English, the badge's text and style, the period dates' screen reader names, and the last day's minimum; the Russian forms of Days and of the range line are tested in `DateRangeFormatterTest`.
+- How the screens look, in English and Russian, light and dark: the list's columns, the Days forms, the comment popover, and the Deleted badge; the filters' columns, three at 1440px, two at 1280px, and one at 600, 480, and 375px, with no horizontal scroll and every filled date whole, the period's dates side by side down to 600px and stacked at 480 and 375px; the editor as a dialog, its range line, and the last day's picker greying out the days before the first. Checked live on 2026-11-04 only. The UI tests check the list's order, renderers, and cell texts in English, the badge's text and style, the period dates' screen reader names, and the last day's minimum; the Russian forms of Days and of the range line are tested in `DateRangeFormatterTest`.
 - The month the last day's picker opens at: the UI test checks only the month the server asks it to open at. Its first opening at the first day's month, and its keeping that month after a later change of the first day, were seen live on 2026-11-04.
 - Remove in the absence list: no test; removing one absence with the usual confirmation was seen live on 2026-11-04.
 - The "Dates required" mark of an empty first day: no test, and not checked live.
