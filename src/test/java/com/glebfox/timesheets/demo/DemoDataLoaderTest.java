@@ -29,11 +29,16 @@ import com.glebfox.timesheets.entity.tag.TagGroup;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.security.AbsenceManagementRole;
+import com.glebfox.timesheets.security.TimeEntryApprovalRole;
+import com.glebfox.timesheets.security.UiMinimalRole;
+import com.glebfox.timesheets.security.WorkScheduleManagementRole;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.UiEventPublisher;
+import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -170,6 +175,19 @@ public class DemoDataLoaderTest {
                 .containsOnly("Borealis Recovery");
         assertThat(entries).extracting(entry -> entry.getUser().getUsername())
                 .doesNotContain("mossman", "magnusson");
+    }
+
+    @Test
+    void mossmanHoldsGranularRoles() {
+        List<String> roleCodes = systemAuthenticator.withSystem(() -> dataManager.load(RoleAssignmentEntity.class)
+                .query("e.username = :username")
+                .parameter("username", "mossman")
+                .list().stream()
+                .map(RoleAssignmentEntity::getRoleCode)
+                .toList());
+
+        assertThat(roleCodes).containsExactlyInAnyOrder(UiMinimalRole.CODE, WorkScheduleManagementRole.CODE,
+                TimeEntryApprovalRole.CODE, AbsenceManagementRole.CODE);
     }
 
     @Test

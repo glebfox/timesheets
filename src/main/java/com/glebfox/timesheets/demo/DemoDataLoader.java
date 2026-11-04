@@ -36,6 +36,7 @@ import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.security.AbsenceManagementRole;
 import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.TimeEntryApprovalRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
@@ -358,6 +359,7 @@ public class DemoDataLoader {
                     assignRole(user, UiMinimalRole.CODE);
                     assignRole(user, WorkScheduleManagementRole.CODE);
                     assignRole(user, TimeEntryApprovalRole.CODE);
+                    assignRole(user, AbsenceManagementRole.CODE);
                 } else {
                     assignRole(user, FullAccessRole.CODE);
                 }
