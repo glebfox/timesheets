@@ -366,6 +366,25 @@
     text-overflow: ellipsis;
 }
 
+/* Only the absence's first and last days are rounded. Where FullCalendar breaks a bar at a week's end, it
+   squares the bar itself and draws it to the cell's edge. Where the calendar splits an absence at the month's
+   first or last day, or the grid cuts it off, each part is an event of its own, which FullCalendar takes for
+   a whole absence, so the calendar marks the side where the absence goes on and the bar is cut there in the
+   same way: the parts of a split absence meet at the line between the days */
+.calendar-view .fc .fc-daygrid-event.calendar-view-absence-continues-before {
+    margin-inline-start: 0;
+    border-inline-start-width: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.calendar-view .fc .fc-daygrid-event.calendar-view-absence-continues-after {
+    margin-inline-end: 0;
+    border-inline-end-width: 0;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
 /* Bottom Text */
 
 .jmix-day-cell-bottom-text.matching-time {

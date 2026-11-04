@@ -43,6 +43,7 @@ import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.SimpleCalendarEvent;
 import io.jmix.fullcalendarflowui.component.model.Display;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -303,7 +305,10 @@ public class CalendarSupportTest {
         assertThat(events).extracting(CalendarEvent::getTitle).containsOnly("Vacation");
         assertThat(events).extracting(CalendarEvent::getDescription)
                 .containsOnly("Vacation: 28/10/2026 – 03/11/2026");
-        assertThat(events).extracting(CalendarEvent::getClassNames).containsOnly(CalendarSupport.ABSENCE_CLASS_NAME);
+        // Each part is marked on the side where the absence goes on, so the bar is cut there and not rounded
+        assertThat(events).extracting(CalendarSupportTest::classNames).containsExactly(
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME));
         assertThat(events).extracting(CalendarEvent::getAllDay).containsOnly(true);
         // A bar, not a background mark, which cannot be dragged or resized
         assertThat(events).extracting(CalendarEvent::getDisplay).containsOnlyNulls();
@@ -344,6 +349,37 @@ public class CalendarSupportTest {
                 "Vacation: 20/10/2026 – 02/11/2026",
                 "Sick leave: 30/11/2026 – 10/12/2026",
                 "Sick leave: 30/11/2026 – 10/12/2026");
+        // The absence goes on past the grid's first and last days too, not only past the month's
+        assertThat(events).extracting(CalendarSupportTest::classNames).containsExactly(
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME));
+    }
+
+    @Test
+    void wholeAbsenceIsOnePartThatDoesNotGoOn() {
+        /* Given */
+        UUID week = UUID.randomUUID();
+        UUID day = UUID.randomUUID();
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(week, "Vacation", LocalDate.of(2026, 11, 9), LocalDate.of(2026, 11, 13)),
+                new WorkPlan.AbsencePeriod(day, "Day off", LocalDate.of(2026, 11, 18), LocalDate.of(2026, 11, 18)));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        // Both ends are the absence's own, so the bar is rounded at both
+        assertThat(events).extracting(CalendarEvent::getId)
+                .containsExactly(week + "/2026-11-09", day + "/2026-11-18");
+        assertThat(events).extracting(CalendarSupportTest::classNames)
+                .containsOnly(Set.of(CalendarSupport.ABSENCE_CLASS_NAME));
     }
 
     @Test
@@ -509,6 +545,11 @@ public class CalendarSupportTest {
         });
 
         return new WorkPlan(plannedTimeByDay, Map.of(), List.of(absences));
+    }
+
+    // The class names are one string, separated by spaces, in no order that matters
+    private static Set<String> classNames(CalendarEvent event) {
+        return Set.of(StringUtils.split(event.getClassNames()));
     }
 
     private CalendarEvent eventWithClassNames(String classNames) {

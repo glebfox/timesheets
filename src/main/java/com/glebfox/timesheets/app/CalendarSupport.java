@@ -74,6 +74,16 @@ public class CalendarSupport {
      * The class name of the event of an absence.
      */
     public static final String ABSENCE_CLASS_NAME = "calendar-view-absence";
+    /**
+     * The class name of the event of a part of an absence that starts after the absence's first day: the absence
+     * goes on before it, in the part of the month grid before it or before the grid.
+     */
+    public static final String ABSENCE_CONTINUES_BEFORE_CLASS_NAME = "calendar-view-absence-continues-before";
+    /**
+     * The class name of the event of a part of an absence that ends before the absence's last day: the absence
+     * goes on after it, in the part of the month grid after it or after the grid.
+     */
+    public static final String ABSENCE_CONTINUES_AFTER_CLASS_NAME = "calendar-view-absence-continues-after";
 
     private final TimeEntrySupport timeEntrySupport;
     private final DataManager dataManager;
@@ -262,7 +272,10 @@ public class CalendarSupport {
     // An absence is an all-day event, a bar across its days among the entries. FullCalendar dims an event
     // on a neighboring month's days by the cell the event starts in, so an absence across the month's first
     // or last day is split there, and each part is dimmed or not as a whole. A part's id is the absence's id
-    // and the part's first day, for the reason the day marks' ids are their dates.
+    // and the part's first day, for the reason the day marks' ids are their dates. FullCalendar rounds a part's
+    // ends, and those of an absence that the range cuts off, as the ends of the absence itself, so a part is
+    // marked where the absence goes on, and the stylesheet squares the bar there, as FullCalendar does where it
+    // breaks a bar at a week's end.
 
     /**
      * Creates the events of the absences of the specified plan for a calendar that shows the specified month:
@@ -273,7 +286,9 @@ public class CalendarSupport {
      * @param endDate   the day after the last day of the range (exclusive)
      * @param month     the month the calendar shows
      * @return for each absence of the plan, one event for each part of its days within the range, split at the
-     * month's first and last day, in date order; none for a plan without absences
+     * month's first and last day, in date order; none for a plan without absences. A part that starts after
+     * the absence's first day has {@link #ABSENCE_CONTINUES_BEFORE_CLASS_NAME}, and a part that ends before its
+     * last day has {@link #ABSENCE_CONTINUES_AFTER_CLASS_NAME}, besides {@link #ABSENCE_CLASS_NAME}
      */
     public List<CalendarEvent> createAbsenceEvents(WorkPlan plan, LocalDate startDate, LocalDate endDate,
                                                    YearMonth month) {
@@ -322,6 +337,15 @@ public class CalendarSupport {
 
     private CalendarEvent createAbsenceEvent(WorkPlan.AbsencePeriod absence, LocalDate firstDay, LocalDate lastDay,
                                              String description) {
+        List<String> classNames = new ArrayList<>();
+        classNames.add(ABSENCE_CLASS_NAME);
+        if (firstDay.isAfter(absence.firstDay())) {
+            classNames.add(ABSENCE_CONTINUES_BEFORE_CLASS_NAME);
+        }
+        if (lastDay.isBefore(absence.lastDay())) {
+            classNames.add(ABSENCE_CONTINUES_AFTER_CLASS_NAME);
+        }
+
         return SimpleCalendarEvent.create(absence.id() + "/" + firstDay)
                 .withAllDay(true)
                 .withStartDateTime(firstDay.atStartOfDay())
@@ -329,7 +353,7 @@ public class CalendarSupport {
                 // The calendar lets its events be dragged, for the entries; the bar turns it off for itself
                 .withStartEditable(false)
                 .withDurationEditable(false)
-                .withClassNames(ABSENCE_CLASS_NAME)
+                .withClassNames(String.join(" ", classNames))
                 // The calendar shows the title in the bar and the description as its tooltip
                 .withTitle(absence.typeName())
                 .withDescription(description)
