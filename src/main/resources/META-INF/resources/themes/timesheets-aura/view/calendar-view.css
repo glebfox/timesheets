@@ -310,10 +310,11 @@
 
 /* Events */
 
-/* An absence's bar has the entries' font size, so it takes about the height of an entry row */
+/* An absence's bar has the entries' type and line: an entry row is one line tall, and so is the bar */
 .time-entry,
 .calendar-view-absence {
     font-size: round(var(--aura-font-size-m) * 0.8, 0.0625rem); /* less than --aura-font-size-xs */
+    line-height: var(--aura-line-height-m);
 }
 
 .fc-direction-ltr .time-entry.fc-daygrid-event,
@@ -339,12 +340,19 @@
 }
 
 /* An absence's bar takes the purple that nothing else on the calendar uses: a light fill, and Aura's purple
-   text, which keeps its contrast on it in the light and dark themes. The bar does nothing on a click, so it
-   drops the pointer and the darkening that Jmix gives a block event on hover */
+   text. Measured in the browser, over the shading of a day without a plan, the text's contrast on the fill is
+   about 5:1 in the light theme and 6:1 in the dark one, and 4.9:1 on the today cell in both: AA for its 11px
+   text. The bar does nothing on a click, so it drops the pointer and the darkening that Jmix gives a block
+   event on hover.
+   The bar takes one entry row on each day it crosses, so a day under it shows one entry fewer before its
+   "+N more" link. So it is one line tall, without the top margin FullCalendar gives a day's events, the
+   block event's border, which is transparent here anyway, and the padding of its title */
 .calendar-view .fc .calendar-view-absence {
     --fc-event-bg-color: color-mix(in srgb, var(--aura-purple) 20%, transparent);
     --fc-event-border-color: transparent;
     --fc-event-text-color: var(--aura-purple-text);
+    margin-block-start: 0;
+    border-block-width: 0;
     font-weight: var(--aura-font-weight-medium);
 }
 
@@ -354,6 +362,7 @@
 }
 
 .calendar-view .fc .calendar-view-absence .fc-event-title {
+    padding-block: 0;
     text-overflow: ellipsis;
 }
 
@@ -384,7 +393,9 @@
    slot's top, which FullCalendar sets inline, so a top in a rule would lose to it. It is raised by as much
    with a negative margin, which FullCalendar does not set on it; otherwise it would be drawn over the slot
    below, while its own slot stayed empty. The entries that FullCalendar hides are absolutely positioned
-   too: raising them changes nothing, since they are not shown */
+   too: raising them changes nothing, since they are not shown. So is the mirror that FullCalendar draws
+   of an entry dragged over the days, which is raised as well; checked in the browser, it lines up with
+   the pointer */
 .calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-event-harness-abs {
     margin-block-start: calc(var(--day-cell-bottom-text-height) * -1);
 }
