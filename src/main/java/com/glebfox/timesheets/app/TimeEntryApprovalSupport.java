@@ -172,8 +172,10 @@ public class TimeEntryApprovalSupport {
         return dataManager.load(ProjectParticipant.class)
                 .query("select p from ts_ProjectParticipant p where p.project.id in :projectIds")
                 .parameter("projectIds", projects.stream().map(Project::getId).toList())
-                // The user and the role are read apart from the participant: a join would drop the participant
-                // when either is deleted
+                // The query names only the project by its id, so the participant of a deleted user or role stays in
+                // whatever the fetch mode, as a fetched to-one is a left outer join with no soft deletion filter.
+                // In batch, it stays in even if a condition naming the user or the role by its id, which turns the
+                // fetch into a filtered inner join, is added later (docs/guidelines/database.md)
                 .fetchPlan(fetchPlan -> fetchPlan
                         // Only the user's id: a roster matches a participant to a person by it
                         .add("user", user -> {

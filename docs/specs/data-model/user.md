@@ -18,11 +18,11 @@ Roles are not stored on the user: they are Jmix role assignments, managed in the
 
 ## Work schedule
 
-A user's planned time comes from their [work schedule assignments](work-schedule-assignment.md), or from the default [work schedule](work-schedule.md#the-default-schedule) on the days none covers. The user entity itself has no schedule attribute; the user editor shows and edits the assignments ([users](../views/users.md#work-schedule)).
+A user's planned time comes from their [work schedule assignments](work-schedule-assignment.md), or from the default [work schedule](work-schedule.md#the-default-schedule) on the days none covers, except on the days of their [absences](absence.md), which plan nothing. The user entity itself has no schedule attribute; the user editor shows and edits the assignments ([users](../views/users.md#work-schedule)).
 
 ## Deletion
 
-Deleting a user leaves their time entries and project participations in place and deletes their work schedule assignments with them; restoring the user in Data Tools restores those assignments.
+Deleting a user leaves their time entries and project participations in place and deletes their work schedule assignments and absences with them; restoring the user in Data Tools restores those assignments and absences.
 
 ## Not covered
 

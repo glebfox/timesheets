@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-/* The range summary under the two date pickers, which read as one field: it looks like the field's helper text */
-.holiday-calendar-days-add-view .range-summary {
-    margin-top: var(--vaadin-gap-xs);
-    color: var(--vaadin-text-color-secondary);
-}
+package com.glebfox.timesheets.view.absencetype;
 
-.holiday-calendar-days-add-view .range-summary:empty {
-    display: none;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
+import com.glebfox.timesheets.view.main.MainView;
+import com.vaadin.flow.router.Route;
+import io.jmix.flowui.view.*;
+
+@Route(value = "absence-types", layout = MainView.class)
+@ViewController("ts_AbsenceType.list")
+@ViewDescriptor("absence-type-list-view.xml")
+@LookupComponent("absenceTypesDataGrid")
+@DialogMode(width = "1024px", closeOnEsc = true)
+public class AbsenceTypeListView extends StandardListView<AbsenceType> {
 }

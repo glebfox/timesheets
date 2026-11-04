@@ -2,7 +2,7 @@
 
 Source: `entity/schedule/WorkSchedule.java`, `app/WorkScheduleSupport.java`, `listener/WorkScheduleEventListener.java`, `app/WorkPlanSupport.java`, `app/util/WorkPlan.java`, `liquibase/changelog/2026/10/25-161255-08247a92.xml`, `demo/DemoDataLoader.java`
 
-A named weekly pattern of planned work, such as "Full time" or "0.5 rate": how long a workday is, which days of the week are workdays, and optionally a [holiday calendar](holiday-calendar.md) whose days override the week. Users are tied to schedules by [assignments](work-schedule-assignment.md); a user's plan for a day comes from them.
+A named weekly pattern of planned work, such as "Full time" or "0.5 rate": how long a workday is, which days of the week are workdays, and optionally a [holiday calendar](holiday-calendar.md) whose days override the week. Users are tied to schedules by [assignments](work-schedule-assignment.md); a user's plan for a day comes from them and from the user's [absences](absence.md).
 
 Schedules are managed in the [work schedule screens](../views/settings.md#work-schedules), and assignments in the user editor and the work schedule editor. The [calendar](../views/calendar.md#totals) shows each user their plan: its totals measure the time spent against it, and it shades the days that plan nothing.
 
@@ -30,11 +30,12 @@ The schema changelog creates "Full time" in every environment: 8 hours, Monday t
 
 ## A user's plan for a day
 
-1. The schedule is the one of the user's assignment with the latest start date on or before the day, or the default schedule when there is none.
-2. When the schedule has a holiday calendar with this day, the day decides: a day off plans nothing, a workday plans the schedule's workday hours.
-3. Otherwise a day whose day of the week is on in the schedule plans its workday hours, and any other day nothing.
+1. A day inside one of the user's non-deleted [absences](absence.md) plans nothing, whatever the steps below would give, a Workday of the holiday calendar included. An absence of a deleted type still counts.
+2. Otherwise the schedule is the one of the user's assignment with the latest start date on or before the day, or the default schedule when there is none.
+3. When the schedule has a holiday calendar with this day, the day decides: a day off plans nothing, a workday plans the schedule's workday hours.
+4. Otherwise a day whose day of the week is on in the schedule plans its workday hours, and any other day nothing.
 
-A day is a workday when it plans more than zero. For a day that step 2 decides, the plan also gives that holiday calendar day's name and type, which the [calendar](../views/calendar.md#days) shows. A plan covers a date range, its end excluded, and answers only for the days in it. It does not depend on the current user's permissions: every user gets their own plan, whatever roles they hold.
+A day is a workday when it plans more than zero. For a day of the schedule's holiday calendar, the plan also gives that holiday calendar day's name and type, which the [calendar](../views/calendar.md#days) shows, whether step 3 decides the day or an absence does: a holiday inside an absence keeps its name. The plan also gives the user's absences that share a day with its range, each whole, with its type's name, which the calendar draws as [bars](../views/calendar.md#absences). A plan covers a date range, its end excluded, and answers only for the days in it. It does not depend on the current user's permissions: every user gets their own plan, whatever roles they hold.
 
 There are no versions of a schedule: editing its hours or days of the week changes the plan of every day it applies to, past days included. Conditions that change from some date are a new schedule, assigned from that date. Changing the default likewise changes the past plan of users who have no assignment on those days. Why no versions: [decision 0002](../../decisions/0002-work-schedules-have-no-versions.md).
 

@@ -16,13 +16,12 @@
 
 package com.glebfox.timesheets.view.holidaycalendarday;
 
-import com.glebfox.timesheets.app.util.PluralForms;
+import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.UnsavedInputSupport;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.component.SupportsTypedValue;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
@@ -33,7 +32,6 @@ import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -78,7 +76,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
     @Autowired
     private DatatypeFormatter datatypeFormatter;
     @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private DateRangeFormatter dateRangeFormatter;
     @Autowired
     private UnsavedInputSupport unsavedInputSupport;
 
@@ -190,7 +188,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
         if (to.isBefore(from)) {
             // A safety net: the last day's minimum refuses such a day before OK gets here
             refuseDates(toField, messageBundle.getMessage("toField.beforeFromError"), errors);
-        } else if (countDays(from, to) > MAX_DAYS) {
+        } else if (dateRangeFormatter.countDays(from, to) > MAX_DAYS) {
             refuseDates(toField, messageBundle.getMessage("toField.tooLongError"), errors);
         } else {
             List<LocalDate> taken = findTakenDates(from, to);
@@ -237,32 +235,11 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     private String formatRangeSummary() {
         LocalDate from = fromField.getTypedValue();
-        if (from == null) {
-            return "";
-        }
-        LocalDate to = getLastDay(from);
-        if (to.isBefore(from)) {
-            return "";
-        }
-
-        long days = countDays(from, to);
-        String daysText = messageBundle.formatMessage(
-                PluralForms.key("rangeSummary.days", days, currentAuthentication.getLocale()), days);
-        if (days == 1) {
-            return messageBundle.formatMessage("rangeSummary.oneDay",
-                    daysText, messageBundle.getMessage("rangeSummary.weekday." + from.getDayOfWeek()));
-        }
-        return messageBundle.formatMessage("rangeSummary.range", daysText,
-                messageBundle.getMessage("rangeSummary.from." + from.getDayOfWeek()),
-                messageBundle.getMessage("rangeSummary.to." + to.getDayOfWeek()));
+        return from != null ? dateRangeFormatter.formatSummary(from, getLastDay(from)) : "";
     }
 
     private LocalDate getLastDay(LocalDate from) {
         LocalDate to = toField.getTypedValue();
         return to != null ? to : from;
-    }
-
-    private static long countDays(LocalDate from, LocalDate to) {
-        return ChronoUnit.DAYS.between(from, to) + 1;
     }
 }

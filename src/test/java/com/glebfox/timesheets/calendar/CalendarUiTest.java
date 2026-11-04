@@ -19,6 +19,8 @@ package com.glebfox.timesheets.calendar;
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.CalendarSupport;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.absence.Absence;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
@@ -77,6 +79,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -86,6 +89,13 @@ public class CalendarUiTest {
     static final LocalDate GRID_START = LocalDate.of(2024, 12, 1);
     static final LocalDate GRID_END = LocalDate.of(2025, 1, 5);
     static final LocalDate DAY = LocalDate.of(2024, 12, 3);
+    // January 2025 starts on Wednesday, so its month grid runs from December 29 to February 1
+    static final LocalDate JANUARY_GRID_START = LocalDate.of(2024, 12, 29);
+    static final LocalDate JANUARY_GRID_END = LocalDate.of(2025, 2, 2);
+    // Monday, Dec 9 to Wednesday, Dec 11: workdays of the default schedule, inside one week row
+    static final LocalDate ABSENCE_FIRST_DAY = LocalDate.of(2024, 12, 9);
+    static final LocalDate ABSENCE_LAST_DAY = LocalDate.of(2024, 12, 11);
+    static final String ABSENCE_TYPE_NAME = "Calendar UI Test Absence Type";
 
     static final String USERNAME = "admin";
 
@@ -224,20 +234,77 @@ public class CalendarUiTest {
             CalendarView calendarView = openCalendar();
 
             /* When */
-            // January 2025 starts on Wednesday, so its month grid runs from December 29 to February 1
-            LocalDate januaryGridStart = LocalDate.of(2024, 12, 29);
-            LocalDate januaryGridEnd = LocalDate.of(2025, 2, 2);
-            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
-            ComponentUtil.fireEvent(calendar,
-                    new DatesSetEvent(calendar, true, januaryGridStart, januaryGridEnd,
-                            new DisplayModeInfo(januaryGridStart, januaryGridEnd,
-                                    LocalDate.of(2025, 1, 1), LocalDate.of(2025, 2, 1),
-                                    CalendarDisplayModes.DAY_GRID_MONTH)));
+            showJanuary(calendarView);
 
             /* Then */
             assertThat(getDayMarks(calendarView)).extracting(CalendarUiTest::dateOf)
-                    .allMatch(date -> !date.isBefore(januaryGridStart))
+                    .allMatch(date -> !date.isBefore(JANUARY_GRID_START))
                     .contains(LocalDate.of(2025, 2, 1));
+        });
+    }
+
+    @Test
+    void absenceBarsShowOnTheirDaysTest() {
+        /* Given */
+        Absence absence = absent();
+
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* When */
+            CalendarView calendarView = openCalendar();
+
+            /* Then */
+            assertThat(getAbsenceBars(calendarView)).singleElement()
+                    .extracting(CalendarEvent::getId, CalendarEvent::getTitle,
+                            CalendarEvent::getStartDateTime, CalendarEvent::getEndDateTime)
+                    .containsExactly(absence.getId() + "/" + ABSENCE_FIRST_DAY, ABSENCE_TYPE_NAME,
+                            ABSENCE_FIRST_DAY.atStartOfDay(), ABSENCE_LAST_DAY.plusDays(1).atStartOfDay());
+            assertAbsenceDaysShaded(calendarView);
+        });
+    }
+
+    @Test
+    void refreshShowsAndDropsAbsenceBarsTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            CalendarView calendarView = openCalendar();
+            assertThat(getAbsenceBars(calendarView)).isEmpty();
+
+            /* When */
+            // Saved after the calendar has loaded its plan
+            Absence absence = absent();
+            refresh(calendarView);
+
+            /* Then */
+            assertThat(getAbsenceBars(calendarView)).extracting(CalendarEvent::getId)
+                    .containsExactly(absence.getId() + "/" + ABSENCE_FIRST_DAY);
+            assertAbsenceDaysShaded(calendarView);
+
+            /* When */
+            remove(absence);
+            refresh(calendarView);
+
+            /* Then */
+            assertThat(getAbsenceBars(calendarView)).isEmpty();
+            assertAbsenceDaysNotShaded(calendarView);
+
+            /* When */
+            Absence nextAbsence = absent();
+            showJanuary(calendarView);
+            showDecember(calendarView);
+
+            /* Then */
+            assertThat(getAbsenceBars(calendarView)).extracting(CalendarEvent::getId)
+                    .containsExactly(nextAbsence.getId() + "/" + ABSENCE_FIRST_DAY);
+            assertAbsenceDaysShaded(calendarView);
+
+            /* When */
+            remove(nextAbsence);
+            showJanuary(calendarView);
+            showDecember(calendarView);
+
+            /* Then */
+            assertThat(getAbsenceBars(calendarView)).isEmpty();
+            assertAbsenceDaysNotShaded(calendarView);
         });
     }
 
@@ -282,13 +349,30 @@ public class CalendarUiTest {
     private CalendarView openCalendar() {
         viewBuilders.view(UiTestUtils.getCurrentView(), CalendarView.class).open();
         CalendarView calendarView = UiTestUtils.getCurrentView();
+        showDecember(calendarView);
 
-        // The browser reports the displayed dates, which makes the calendar load its entries
+        return calendarView;
+    }
+
+    // The browser reports the displayed dates, which makes the calendar load its plan and entries
+    private void showDecember(CalendarView calendarView) {
         FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
         ComponentUtil.fireEvent(calendar,
                 new DatesSetEvent(calendar, true, GRID_START, GRID_END, monthDisplayModeInfo()));
+    }
 
-        return calendarView;
+    private void showJanuary(CalendarView calendarView) {
+        FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+        ComponentUtil.fireEvent(calendar,
+                new DatesSetEvent(calendar, true, JANUARY_GRID_START, JANUARY_GRID_END,
+                        new DisplayModeInfo(JANUARY_GRID_START, JANUARY_GRID_END,
+                                LocalDate.of(2025, 1, 1), LocalDate.of(2025, 2, 1),
+                                CalendarDisplayModes.DAY_GRID_MONTH)));
+    }
+
+    private void refresh(CalendarView calendarView) {
+        JmixButton refreshBtn = UiTestUtils.getComponent(calendarView, "refreshBtn");
+        refreshBtn.click();
     }
 
     private void editSpentTime(CalendarView calendarView, TimeEntry timeEntry, WorkTime spentTime) {
@@ -342,6 +426,33 @@ public class CalendarUiTest {
         FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
         return Objects.requireNonNull(
                 calendar.getDataProvider(CalendarView.DAY_MARKS_PROVIDER_ID), "The calendar has no day marks");
+    }
+
+    private List<CalendarEvent> getAbsenceBars(CalendarView calendarView) {
+        FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+        ListCalendarDataProvider absencesProvider = Objects.requireNonNull(
+                calendar.getDataProvider(CalendarView.ABSENCES_PROVIDER_ID), "The calendar has no absence bars");
+        return absencesProvider.getItems();
+    }
+
+    // The days of the absence plan nothing, so each is marked as a day without a plan
+    private void assertAbsenceDaysShaded(CalendarView calendarView) {
+        assertThat(getDayMarks(calendarView))
+                .filteredOn(dayMark -> isAbsenceDay(dateOf(dayMark)))
+                .extracting(CalendarUiTest::dateOf, CalendarEvent::getClassNames)
+                .containsExactly(
+                        tuple(ABSENCE_FIRST_DAY, "calendar-view-unplanned-day"),
+                        tuple(ABSENCE_FIRST_DAY.plusDays(1), "calendar-view-unplanned-day"),
+                        tuple(ABSENCE_LAST_DAY, "calendar-view-unplanned-day"));
+    }
+
+    private void assertAbsenceDaysNotShaded(CalendarView calendarView) {
+        assertThat(getDayMarks(calendarView)).extracting(CalendarUiTest::dateOf)
+                .noneMatch(CalendarUiTest::isAbsenceDay);
+    }
+
+    private static boolean isAbsenceDay(LocalDate date) {
+        return !date.isBefore(ABSENCE_FIRST_DAY) && !date.isAfter(ABSENCE_LAST_DAY);
     }
 
     private static LocalDate dateOf(CalendarEvent dayMark) {
@@ -415,6 +526,29 @@ public class CalendarUiTest {
         List<Object> created = List.of(holidayCalendar, holiday, schedule, assignment);
         entities.addAll(created);
         dataManager.saveAll(created);
+    }
+
+    // Saves an absence of admin from ABSENCE_FIRST_DAY to ABSENCE_LAST_DAY
+    private Absence absent() {
+        AbsenceType type = dataManager.create(AbsenceType.class);
+        type.setName(ABSENCE_TYPE_NAME);
+
+        Absence absence = dataManager.create(Absence.class);
+        absence.setUser(loadUser());
+        absence.setType(type);
+        absence.setFirstDay(ABSENCE_FIRST_DAY);
+        absence.setLastDay(ABSENCE_LAST_DAY);
+
+        // The order lets the teardown remove each before what it refers to
+        List<Object> created = List.of(type, absence);
+        entities.addAll(created);
+        dataManager.saveAll(created);
+
+        return absence;
+    }
+
+    private void remove(Absence absence) {
+        dataManager.remove(dataManager.load(Id.of(absence)).one());
     }
 
     private User loadUser() {

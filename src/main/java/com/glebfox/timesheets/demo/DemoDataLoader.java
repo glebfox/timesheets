@@ -18,6 +18,8 @@ package com.glebfox.timesheets.demo;
 
 import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.absence.Absence;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.misc.ContactInformation;
 import com.glebfox.timesheets.entity.project.Project;
@@ -36,6 +38,7 @@ import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.security.AbsenceManagementRole;
 import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.TimeEntryApprovalRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
@@ -63,12 +66,14 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Creates the demo data: people and organizations of the Half-Life and Portal games, their
@@ -83,6 +88,10 @@ public class DemoDataLoader {
     private static final String AVATARS = "com/glebfox/timesheets/demo/avatars/";
     private static final String LOGOS = "com/glebfox/timesheets/demo/logos/";
     private static final List<String> IMAGE_EXTENSIONS = List.of("png", "jpg", "jpeg", "webp", "gif");
+
+    private static final String VACATION = "Vacation";
+    private static final String SICK_LEAVE = "Sick leave";
+    private static final String DAY_OFF = "Day off";
 
     private static final DateTimeFormatter MOVED_FROM_FORMAT = DateTimeFormatter.ofPattern("MMMM d", Locale.ENGLISH);
 
@@ -159,6 +168,108 @@ public class DemoDataLoader {
     }
 
     /**
+     * The days off of the Russia holiday calendar, with their names, from the year before the given
+     * day's to the year after it.
+     */
+    static NavigableMap<LocalDate, String> holidaysAround(LocalDate today) {
+        NavigableMap<LocalDate, String> holidays = new TreeMap<>();
+        for (int year = today.getYear() - 1; year <= today.getYear() + 1; year++) {
+            holidays.putAll(holidaysOf(year));
+        }
+        return holidays;
+    }
+
+    private static Map<LocalDate, String> holidaysOf(int year) {
+        Map<LocalDate, String> holidays = new LinkedHashMap<>();
+        for (int day = 1; day <= 8; day++) {
+            holidays.put(LocalDate.of(year, 1, day), day == 7 ? "Christmas" : "New Year holidays");
+        }
+        holidays.put(LocalDate.of(year, 2, 23), "Defender of the Fatherland Day");
+        holidays.put(LocalDate.of(year, 3, 8), "International Women's Day");
+        holidays.put(LocalDate.of(year, 5, 1), "Spring and Labour Day");
+        holidays.put(LocalDate.of(year, 5, 9), "Victory Day");
+        holidays.put(LocalDate.of(year, 6, 12), "Russia Day");
+        holidays.put(LocalDate.of(year, 11, 4), "Unity Day");
+
+        // The New Year holidays already include their weekends; any other holiday on a weekend
+        // gives a day off on the next workday
+        Map<LocalDate, String> movedDaysOff = new LinkedHashMap<>();
+        holidays.keySet().stream()
+                .filter(date -> date.getMonthValue() != 1 && isWeekend(date))
+                .forEach(date -> {
+                    LocalDate dayOff = date.plusDays(1);
+                    while (isWeekend(dayOff) || holidays.containsKey(dayOff) || movedDaysOff.containsKey(dayOff)) {
+                        dayOff = dayOff.plusDays(1);
+                    }
+                    movedDaysOff.put(dayOff, "Day off moved from " + MOVED_FROM_FORMAT.format(date));
+                });
+        holidays.putAll(movedDaysOff);
+        return holidays;
+    }
+
+    /**
+     * The absences of a load on the given day: a two-week vacation and a sick leave of three workdays in
+     * the weeks that get time logged, a vacation through the current week, a day off in the coming two
+     * weeks, a sick leave across the first day of the current month, and a vacation over the next holiday
+     * after the current week. Dated from the day, some of them share days on some days, as the sick leave
+     * across the first of the month and the vacation through the current week do early in a month, so each
+     * goes to a user of its own: only the absence editor refuses an overlap.
+     *
+     * @param today    the day of the load
+     * @param holidays the days off of the holiday calendar
+     */
+    static List<DemoAbsence> absencesOf(LocalDate today, NavigableSet<LocalDate> holidays) {
+        LocalDate thisWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate vacation = pastVacationStart(thisWeek, holidays);
+        LocalDate sickLeave = pastSickLeaveStart(thisWeek, holidays);
+        // The last workday of the coming two weeks: there is one even over the New Year holidays
+        LocalDate dayOff = today.plusWeeks(2);
+        while (!isWorkday(dayOff, holidays)) {
+            dayOff = dayOff.minusDays(1);
+        }
+        LocalDate firstOfMonth = today.withDayOfMonth(1);
+        // The holidays span the next year, so there is always one ahead
+        LocalDate holidayWeek = holidays.higher(thisWeek.plusDays(6)).with(DayOfWeek.MONDAY);
+        return List.of(
+                // Monday to Sunday of the next week, across the weekend between them
+                new DemoAbsence("freeman", VACATION, vacation, vacation.plusDays(13), null),
+                new DemoAbsence("barney", SICK_LEAVE, sickLeave, sickLeave.plusDays(2), "Doctor's note received"),
+                new DemoAbsence("alyx", VACATION, thisWeek, thisWeek.plusDays(6), null),
+                new DemoAbsence("gina", DAY_OFF, dayOff, dayOff, "Moving house"),
+                // Across the month boundary, so the calendar shows an absence partly in the dimmed days of the
+                // neighboring month
+                new DemoAbsence("colette", SICK_LEAVE, firstOfMonth.minusDays(2), firstOfMonth.plusDays(2), null),
+                // On every load, a holiday inside a vacation, whether or not the logged weeks have one
+                new DemoAbsence("eli", VACATION, holidayWeek, holidayWeek.plusDays(6), null));
+    }
+
+    // Two weeks over the latest holiday of the weeks that get time logged, so the calendar shows a holiday
+    // inside a vacation; without such a holiday, the sixth and fifth weeks before the current one
+    private static LocalDate pastVacationStart(LocalDate thisWeek, NavigableSet<LocalDate> holidays) {
+        LocalDate holiday = holidays.lower(thisWeek);
+        if (holiday == null || holiday.isBefore(thisWeek.minusWeeks(DemoTimeEntryGenerator.WEEKS))) {
+            return thisWeek.minusWeeks(6);
+        }
+        LocalDate holidayWeek = holiday.with(DayOfWeek.MONDAY);
+        LocalDate lastTwoWeeks = thisWeek.minusWeeks(2);
+        return holidayWeek.isAfter(lastTwoWeeks) ? lastTwoWeeks : holidayWeek;
+    }
+
+    // Tuesday to Thursday of the third week before the current one, or of an earlier week when one of
+    // those days is a holiday, so all three are workdays
+    private static LocalDate pastSickLeaveStart(LocalDate thisWeek, Set<LocalDate> holidays) {
+        LocalDate start = thisWeek.minusWeeks(3).with(DayOfWeek.TUESDAY);
+        while (start.datesUntil(start.plusDays(3)).anyMatch(holidays::contains)) {
+            start = start.minusWeeks(1);
+        }
+        return start;
+    }
+
+    private static boolean isWorkday(LocalDate date, Set<LocalDate> holidays) {
+        return !isWeekend(date) && !holidays.contains(date);
+    }
+
+    /**
      * The records of one load, saved together.
      */
     private class DataSet {
@@ -174,55 +285,27 @@ public class DemoDataLoader {
         }
 
         private void create() {
-            HolidayCalendar calendar = createHolidayCalendar();
+            NavigableMap<LocalDate, String> holidays = holidaysAround(today);
+            HolidayCalendar calendar = createHolidayCalendar(holidays);
             Map<String, WorkSchedule> schedules = createWorkSchedules(calendar);
             createProjectRoles();
             createTaskTypes();
             createUsers();
             assignSchedules(schedules);
+            createAbsences(holidays.navigableKeySet());
             createProjects(createClients());
             dataManager.save(context.setDiscardSaved(true));
         }
 
         // ---------------------------------------------------------------- work schedules
 
-        private HolidayCalendar createHolidayCalendar() {
+        private HolidayCalendar createHolidayCalendar(Map<LocalDate, String> holidays) {
             HolidayCalendar calendar = dataManager.create(HolidayCalendar.class);
             calendar.setName("Russia");
             calendar.setDescription("Public holidays of Russia; a holiday on a weekend moves to the next workday");
             context.saving(calendar);
-            for (int year = today.getYear() - 1; year <= today.getYear() + 1; year++) {
-                addHolidays(calendar, year);
-            }
-            return calendar;
-        }
-
-        private void addHolidays(HolidayCalendar calendar, int year) {
-            Map<LocalDate, String> holidays = new LinkedHashMap<>();
-            for (int day = 1; day <= 8; day++) {
-                holidays.put(LocalDate.of(year, 1, day), day == 7 ? "Christmas" : "New Year holidays");
-            }
-            holidays.put(LocalDate.of(year, 2, 23), "Defender of the Fatherland Day");
-            holidays.put(LocalDate.of(year, 3, 8), "International Women's Day");
-            holidays.put(LocalDate.of(year, 5, 1), "Spring and Labour Day");
-            holidays.put(LocalDate.of(year, 5, 9), "Victory Day");
-            holidays.put(LocalDate.of(year, 6, 12), "Russia Day");
-            holidays.put(LocalDate.of(year, 11, 4), "Unity Day");
             holidays.forEach((date, name) -> addCalendarDay(calendar, date, name));
-
-            // The New Year holidays already include their weekends; any other holiday on a weekend
-            // gives a day off on the next workday
-            Set<LocalDate> movedDaysOff = new HashSet<>();
-            holidays.keySet().stream()
-                    .filter(date -> date.getMonthValue() != 1 && isWeekend(date))
-                    .forEach(date -> {
-                        LocalDate dayOff = date.plusDays(1);
-                        while (isWeekend(dayOff) || holidays.containsKey(dayOff) || movedDaysOff.contains(dayOff)) {
-                            dayOff = dayOff.plusDays(1);
-                        }
-                        movedDaysOff.add(dayOff);
-                        addCalendarDay(calendar, dayOff, "Day off moved from " + MOVED_FROM_FORMAT.format(date));
-                    });
+            return calendar;
         }
 
         private void addCalendarDay(HolidayCalendar calendar, LocalDate date, String name) {
@@ -358,6 +441,7 @@ public class DemoDataLoader {
                     assignRole(user, UiMinimalRole.CODE);
                     assignRole(user, WorkScheduleManagementRole.CODE);
                     assignRole(user, TimeEntryApprovalRole.CODE);
+                    assignRole(user, AbsenceManagementRole.CODE);
                 } else {
                     assignRole(user, FullAccessRole.CODE);
                 }
@@ -386,6 +470,35 @@ public class DemoDataLoader {
             assignment.setRoleCode(roleCode);
             assignment.setRoleType(RoleAssignmentRoleType.RESOURCE);
             context.saving(assignment);
+        }
+
+        // ---------------------------------------------------------------- absences
+
+        private void createAbsences(NavigableSet<LocalDate> holidays) {
+            Map<String, AbsenceType> types = new LinkedHashMap<>();
+            for (String[] row : new String[][]{
+                    // name, description
+                    {VACATION, "Annual leave, planned ahead"},
+                    {SICK_LEAVE, "Away because of illness"},
+                    {DAY_OFF, "A day away for personal matters"},
+            }) {
+                AbsenceType type = dataManager.create(AbsenceType.class);
+                type.setName(row[0]);
+                type.setDescription(row[1]);
+                context.saving(type);
+                types.put(type.getName(), type);
+            }
+
+            // Saved with the rest, before the time is logged: their days plan nothing, so no time is logged on them
+            for (DemoAbsence demoAbsence : absencesOf(today, holidays)) {
+                Absence absence = dataManager.create(Absence.class);
+                absence.setUser(users.get(demoAbsence.username()));
+                absence.setType(types.get(demoAbsence.type()));
+                absence.setFirstDay(demoAbsence.firstDay());
+                absence.setLastDay(demoAbsence.lastDay());
+                absence.setComment(demoAbsence.comment());
+                context.saving(absence);
+            }
         }
 
         // ---------------------------------------------------------------- clients and projects
@@ -573,5 +686,12 @@ public class DemoDataLoader {
     }
 
     private record DemoProject(Project project, TagGroup billing) {
+    }
+
+    /**
+     * An absence of the demo data, with its user and type by name.
+     */
+    record DemoAbsence(String username, String type, LocalDate firstDay, LocalDate lastDay,
+                       @Nullable String comment) {
     }
 }

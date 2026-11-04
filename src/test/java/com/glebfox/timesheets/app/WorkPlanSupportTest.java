@@ -18,6 +18,8 @@ package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.absence.Absence;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
@@ -211,16 +213,19 @@ public class WorkPlanSupportTest {
 
     @Test
     void planIgnoresCurrentUserPermissions() {
-        // A user with no role assignments, so no permission on schedules, calendars, or assignments
+        // A user with no role assignments, so no permission on schedules, calendars, assignments, or absences
         User user = createUser();
         assign(user, sevenHours().schedule(), LocalDate.of(2026, 10, 1));
         assign(user, halfTime(), november(9));
+        Absence absence = absent(user, createAbsenceType(), november(10), november(10));
 
         WorkPlan plan = systemAuthenticator.withUser(user.getUsername(), () -> novemberPlan(user));
 
         assertThat(plan.getPlannedTime(november(4))).isEqualTo(WorkTime.ZERO);
         assertThat(plan.getPlannedTime(november(5))).isEqualTo(WorkTime.ofHours(7));
         assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(4));
+        assertThat(plan.getPlannedTime(november(10))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.absences()).extracting(WorkPlan.AbsencePeriod::id).containsExactly(absence.getId());
     }
 
     @Test
@@ -234,6 +239,151 @@ public class WorkPlanSupportTest {
         assertThat(plan.getPlannedTime(november(6))).isEqualTo(WorkTime.ofHours(8));
         assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ZERO);
         assertThat(plan.getPlannedTime(november(10))).isEqualTo(WorkTime.ZERO);
+    }
+
+    @Test
+    void absenceZeroesItsWorkdays() {
+        User user = createUser();
+        AbsenceType type = createAbsenceType();
+        Absence absence = absent(user, type, november(9), november(13));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(6))).isEqualTo(WorkTime.ofHours(8));
+        november(9).datesUntil(november(14)).forEach(date ->
+                assertThat(plan.getPlannedTime(date)).as("planned time of %s", date).isEqualTo(WorkTime.ZERO));
+        assertThat(plan.getPlannedTime(november(16))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.absences()).containsExactly(
+                new WorkPlan.AbsencePeriod(absence.getId(), type.getName(), november(9), november(13)));
+    }
+
+    @Test
+    void absenceZeroesAWorkingSaturdayAndKeepsHolidayNames() {
+        User user = createUser();
+        assign(user, sevenHours().schedule(), LocalDate.of(2026, 10, 1));
+        absent(user, createAbsenceType(), november(2), november(8));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(5))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(7))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.isWorkday(november(7))).isFalse();
+        assertThat(plan.findHolidayDay(november(4)))
+                .contains(new WorkPlan.HolidayDay("Unity Day", HolidayCalendarDayType.DAY_OFF));
+        assertThat(plan.findHolidayDay(november(7)))
+                .contains(new WorkPlan.HolidayDay("Working Saturday", HolidayCalendarDayType.WORKDAY));
+        assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(7));
+    }
+
+    @Test
+    void oneDayAbsencePlansNothingOnThatDay() {
+        User user = createUser();
+        absent(user, createAbsenceType(), november(10), november(10));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.getPlannedTime(november(10))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(11))).isEqualTo(WorkTime.ofHours(8));
+    }
+
+    @Test
+    void absenceAcrossTheRangeBoundsCountsOnItsDays() {
+        User user = createUser();
+        AbsenceType type = createAbsenceType();
+        Absence absence = absent(user, type, LocalDate.of(2026, 10, 28), november(3));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(2))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(3))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(4))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.absences()).containsExactly(
+                new WorkPlan.AbsencePeriod(absence.getId(), type.getName(), LocalDate.of(2026, 10, 28), november(3)));
+    }
+
+    @Test
+    void absenceEndingOnTheRangesFirstDayCounts() {
+        User user = createUser();
+        // Every day a workday, so the range's first day, a Sunday, has time for the absence to take
+        assign(user, createSchedule("Every day", WorkTime.ofHours(8), null, EnumSet.allOf(DayOfWeek.class)),
+                LocalDate.of(2026, 10, 1));
+        AbsenceType type = createAbsenceType();
+        Absence absence = absent(user, type, LocalDate.of(2026, 10, 28), NOVEMBER_START);
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(NOVEMBER_START)).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.getPlannedTime(november(2))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.absences()).containsExactly(
+                new WorkPlan.AbsencePeriod(absence.getId(), type.getName(), LocalDate.of(2026, 10, 28), NOVEMBER_START));
+    }
+
+    @Test
+    void absencesNextToTheRangeAreLeftOut() {
+        User user = createUser();
+        AbsenceType type = createAbsenceType();
+        absent(user, type, LocalDate.of(2026, 10, 26), LocalDate.of(2026, 10, 31));
+        absent(user, type, NOVEMBER_END, LocalDate.of(2026, 12, 4));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.absences()).isEmpty();
+        assertThat(plan.getPlannedTime(november(2))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.getPlannedTime(november(30))).isEqualTo(WorkTime.ofHours(8));
+    }
+
+    @Test
+    void emptyRangeHasNoAbsences() {
+        User user = createUser();
+        absent(user, createAbsenceType(), november(9), november(13));
+
+        WorkPlan plan = workPlanSupport.loadWorkPlan(user, november(10), november(10));
+
+        assertThat(plan.plannedTimeByDay()).isEmpty();
+        assertThat(plan.absences()).isEmpty();
+    }
+
+    @Test
+    void absencesComeInTheOrderOfTheirFirstDays() {
+        User user = createUser();
+        AbsenceType type = createAbsenceType();
+        Absence later = absent(user, type, november(16), november(17));
+        Absence earlier = absent(user, type, november(9), november(10));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.absences()).extracting(WorkPlan.AbsencePeriod::id)
+                .containsExactly(earlier.getId(), later.getId());
+    }
+
+    @Test
+    void deletedAbsenceAndOtherUsersAbsenceDoNotCount() {
+        User user = createUser();
+        User otherUser = createUser();
+        AbsenceType type = createAbsenceType();
+        remove(absent(user, type, november(9), november(13)));
+        absent(otherUser, type, november(16), november(20));
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.getPlannedTime(november(16))).isEqualTo(WorkTime.ofHours(8));
+        assertThat(plan.absences()).isEmpty();
+    }
+
+    @Test
+    void absenceOfADeletedTypeCounts() {
+        User user = createUser();
+        AbsenceType type = createAbsenceType();
+        Absence absence = absent(user, type, november(9), november(13));
+        remove(type);
+
+        WorkPlan plan = novemberPlan(user);
+
+        assertThat(plan.getPlannedTime(november(9))).isEqualTo(WorkTime.ZERO);
+        assertThat(plan.absences()).containsExactly(
+                new WorkPlan.AbsencePeriod(absence.getId(), type.getName(), november(9), november(13)));
     }
 
     @AfterEach
@@ -315,6 +465,21 @@ public class WorkPlanSupportTest {
         assignment.setWorkSchedule(schedule);
         assignment.setStartDate(startDate);
         return save(assignment);
+    }
+
+    private AbsenceType createAbsenceType() {
+        AbsenceType type = dataManager.create(AbsenceType.class);
+        type.setName("Work plan test type " + System.nanoTime());
+        return save(type);
+    }
+
+    private Absence absent(User user, AbsenceType type, LocalDate firstDay, LocalDate lastDay) {
+        Absence absence = dataManager.create(Absence.class);
+        absence.setUser(user);
+        absence.setType(type);
+        absence.setFirstDay(firstDay);
+        absence.setLastDay(lastDay);
+        return save(absence);
     }
 
     private <T> T save(T entity) {

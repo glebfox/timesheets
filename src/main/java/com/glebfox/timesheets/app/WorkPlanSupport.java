@@ -18,6 +18,7 @@ package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.absence.Absence;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
@@ -25,6 +26,7 @@ import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
 import com.google.common.base.Preconditions;
+import io.jmix.core.FetchMode;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.UnconstrainedDataManager;
 import org.jspecify.annotations.Nullable;
@@ -44,9 +46,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Resolves the time a user is planned to work from their work schedule assignments,
+ * Resolves the time a user is planned to work from their absences, their work schedule assignments,
  * the default work schedule, and the holiday calendars of those schedules, together with
- * the holiday calendar day that decides each date that has one.
+ * the holiday calendar day of each date that has one.
  */
 @Component("ts_WorkPlanSupport")
 public class WorkPlanSupport {
@@ -59,21 +61,25 @@ public class WorkPlanSupport {
     }
 
     /**
-     * Loads the plan of a user for a date range. Each day takes the schedule of the user's
-     * latest assignment that starts on or before it, or the default schedule before the first
-     * assignment. A day of the schedule's holiday calendar decides whether the day is worked;
-     * otherwise the schedule's days of the week do. The plan carries the holiday calendar day that
-     * decided a day, with its name and type. A deleted schedule or holiday calendar still counts for
-     * the assignments that refer to it; a deleted assignment or calendar day does not.
+     * Loads the plan of a user for a date range. A day inside one of the user's absences plans nothing.
+     * Any other day takes the schedule of the user's latest assignment that starts on or before it,
+     * or the default schedule before the first assignment. A day of the schedule's holiday calendar
+     * decides whether the day is worked; otherwise the schedule's days of the week do. The plan carries
+     * the holiday calendar day of a date, with its name and type, an absent date included, and the
+     * user's absences that share a day with the range, whole, in the order of their first days.
+     * A deleted schedule, holiday calendar, or absence type still counts for the records that refer
+     * to it; a deleted assignment, calendar day, or absence does not.
      *
      * @param user      the user to load the plan for
      * @param startDate the first day of the range (inclusive)
      * @param endDate   the end of the range (exclusive)
-     * @return the planned time of every day of the range, and the holiday calendar day that decided it
+     * @return the planned time of every day of the range, the holiday calendar day of each date that has one,
+     * and the absences that share a day with the range
      */
     public WorkPlan loadWorkPlan(User user, LocalDate startDate, LocalDate endDate) {
         Preconditions.checkArgument(!endDate.isBefore(startDate), "The range ends before it starts");
 
+        List<WorkPlan.AbsencePeriod> absences = loadAbsences(user, startDate, endDate);
         NavigableMap<LocalDate, WorkSchedule> scheduleByStartDate = loadAssignments(user, endDate).stream()
                 .collect(Collectors.toMap(WorkScheduleAssignment::getStartDate,
                         WorkScheduleAssignment::getWorkSchedule,
@@ -90,12 +96,45 @@ public class WorkPlanSupport {
             Map.Entry<LocalDate, WorkSchedule> assigned = scheduleByStartDate.floorEntry(date);
             WorkSchedule schedule = assigned != null ? assigned.getValue() : defaultSchedule;
             HolidayCalendarDay holidayDay = findHolidayDay(schedule, date, holidayDaysByCalendar);
-            plannedTimeByDay.put(date, getPlannedTime(schedule, date, holidayDay));
+            plannedTimeByDay.put(date, isAbsent(date, absences)
+                    ? WorkTime.ZERO
+                    : getPlannedTime(schedule, date, holidayDay));
             if (holidayDay != null) {
                 holidayDayByDate.put(date, new WorkPlan.HolidayDay(holidayDay.getName(), holidayDay.getType()));
             }
         });
-        return new WorkPlan(plannedTimeByDay, holidayDayByDate);
+        return new WorkPlan(plannedTimeByDay, holidayDayByDate, absences);
+    }
+
+    private List<WorkPlan.AbsencePeriod> loadAbsences(User user, LocalDate startDate, LocalDate endDate) {
+        if (!startDate.isBefore(endDate)) {
+            // An empty range has no day for an absence to share
+            return List.of();
+        }
+
+        return dataManager.load(Absence.class)
+                .query("""
+                        select e from ts_Absence e
+                        where e.user = :user and e.firstDay < :endDate and e.lastDay >= :startDate
+                        order by e.firstDay
+                        """)
+                .parameter("user", user)
+                .parameter("startDate", startDate)
+                .parameter("endDate", endDate)
+                // An absence of a deleted type stays in with its type's name whatever the fetch mode, as a fetched
+                // to-one is a left outer join with no soft deletion filter. In batch, it stays in even if a condition
+                // naming the type by its id, which turns the fetch into a filtered inner join, is added later
+                // (docs/guidelines/database.md)
+                .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
+                        .add("type", FetchPlan.INSTANCE_NAME, FetchMode.BATCH))
+                .list().stream()
+                .map(absence -> new WorkPlan.AbsencePeriod(absence.getId(), absence.getType().getName(),
+                        absence.getFirstDay(), absence.getLastDay()))
+                .toList();
+    }
+
+    private static boolean isAbsent(LocalDate date, List<WorkPlan.AbsencePeriod> absences) {
+        return absences.stream().anyMatch(absence -> absence.includes(date));
     }
 
     private List<WorkScheduleAssignment> loadAssignments(User user, LocalDate endDate) {

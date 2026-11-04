@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.app;
 
+import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.app.util.WorkPlan;
@@ -33,6 +34,9 @@ import io.jmix.flowui.kit.action.ActionVariant;
 import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
 import io.jmix.fullcalendarflowui.component.data.SimpleCalendarEvent;
 import io.jmix.fullcalendarflowui.component.model.Display;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -66,20 +70,37 @@ public class CalendarSupport {
      * The class name of the mark of a day that a holiday calendar makes a workday.
      */
     public static final String HOLIDAY_WORKDAY_CLASS_NAME = "calendar-view-holiday-workday";
+    /**
+     * The class name of the event of an absence.
+     */
+    public static final String ABSENCE_CLASS_NAME = "calendar-view-absence";
+    /**
+     * The class name of the event of a part of an absence that starts after the absence's first day: the absence
+     * goes on before it, in the part of the month grid before it or before the grid.
+     */
+    public static final String ABSENCE_CONTINUES_BEFORE_CLASS_NAME = "calendar-view-absence-continues-before";
+    /**
+     * The class name of the event of a part of an absence that ends before the absence's last day: the absence
+     * goes on after it, in the part of the month grid after it or after the grid.
+     */
+    public static final String ABSENCE_CONTINUES_AFTER_CLASS_NAME = "calendar-view-absence-continues-after";
 
     private final TimeEntrySupport timeEntrySupport;
     private final DataManager dataManager;
     private final Messages messages;
     private final Dialogs dialogs;
+    private final DateRangeFormatter dateRangeFormatter;
 
     public CalendarSupport(TimeEntrySupport timeEntrySupport,
                            DataManager dataManager,
                            Messages messages,
-                           Dialogs dialogs) {
+                           Dialogs dialogs,
+                           DateRangeFormatter dateRangeFormatter) {
         this.timeEntrySupport = timeEntrySupport;
         this.dataManager = dataManager;
         this.messages = messages;
         this.dialogs = dialogs;
+        this.dateRangeFormatter = dateRangeFormatter;
     }
 
     /**
@@ -246,6 +267,110 @@ public class CalendarSupport {
             case DAY_OFF -> HOLIDAY_DAY_OFF_CLASS_NAME;
             case WORKDAY -> HOLIDAY_WORKDAY_CLASS_NAME;
         };
+    }
+
+    // An absence is an all-day event, a bar across its days among the entries. FullCalendar dims an event
+    // on a neighboring month's days by the cell the event starts in, so an absence across the month's first
+    // or last day is split there, and each part is dimmed or not as a whole. A part's id is the absence's id
+    // and the part's first day, for the reason the day marks' ids are their dates. FullCalendar rounds a part's
+    // ends, and those of an absence that the range cuts off, as the ends of the absence itself, so a part is
+    // marked where the absence goes on, and the stylesheet squares the bar there, as FullCalendar does where it
+    // breaks a bar at a week's end.
+
+    /**
+     * Creates the events of the absences of the specified plan for a calendar that shows the specified month:
+     * all-day events labeled with the absence's type, which cannot be dragged or resized.
+     *
+     * @param plan      the plan to take the absences from
+     * @param startDate the first day of the range the calendar shows
+     * @param endDate   the day after the last day of the range (exclusive)
+     * @param month     the month the calendar shows
+     * @return for each absence of the plan, one event for each part of its days within the range, split at the
+     * month's first and last day, in date order; none for a plan without absences. A part that starts after
+     * the absence's first day has {@link #ABSENCE_CONTINUES_BEFORE_CLASS_NAME}, and a part that ends before its
+     * last day has {@link #ABSENCE_CONTINUES_AFTER_CLASS_NAME}, besides {@link #ABSENCE_CLASS_NAME}
+     */
+    public List<CalendarEvent> createAbsenceEvents(WorkPlan plan, LocalDate startDate, LocalDate endDate,
+                                                   YearMonth month) {
+        Preconditions.checkNotNullArgument(plan);
+        Preconditions.checkNotNullArgument(startDate);
+        Preconditions.checkNotNullArgument(endDate);
+        Preconditions.checkNotNullArgument(month);
+
+        LocalDate lastDate = endDate.minusDays(1);
+        List<CalendarEvent> events = new ArrayList<>();
+        for (WorkPlan.AbsencePeriod absence : plan.absences()) {
+            LocalDate firstDay = absence.firstDay().isBefore(startDate) ? startDate : absence.firstDay();
+            LocalDate lastDay = absence.lastDay().isAfter(lastDate) ? lastDate : absence.lastDay();
+
+            // The tooltip names the whole absence, its days outside the range included
+            String description = messages.formatMessage(CalendarSupport.class, "absenceEvent.description",
+                    absence.typeName(), dateRangeFormatter.formatDates(absence.firstDay(), absence.lastDay()));
+
+            // An absence outside the range has no part
+            LocalDate partStart = firstDay;
+            while (!partStart.isAfter(lastDay)) {
+                LocalDate partEnd = getMonthPartEnd(partStart, month);
+                if (partEnd.isAfter(lastDay)) {
+                    partEnd = lastDay;
+                }
+
+                events.add(createAbsenceEvent(absence, partStart, partEnd, description));
+                partStart = partEnd.plusDays(1);
+            }
+        }
+
+        return events;
+    }
+
+    // The last day of the part of a month grid that the date is in: the days before the month, the month,
+    // or the days after it
+    private static LocalDate getMonthPartEnd(LocalDate date, YearMonth month) {
+        if (date.isBefore(month.atDay(1))) {
+            return month.atDay(1).minusDays(1);
+        } else if (!date.isAfter(month.atEndOfMonth())) {
+            return month.atEndOfMonth();
+        } else {
+            return LocalDate.MAX;
+        }
+    }
+
+    private CalendarEvent createAbsenceEvent(WorkPlan.AbsencePeriod absence, LocalDate firstDay, LocalDate lastDay,
+                                             String description) {
+        List<String> classNames = new ArrayList<>();
+        classNames.add(ABSENCE_CLASS_NAME);
+        if (firstDay.isAfter(absence.firstDay())) {
+            classNames.add(ABSENCE_CONTINUES_BEFORE_CLASS_NAME);
+        }
+        if (lastDay.isBefore(absence.lastDay())) {
+            classNames.add(ABSENCE_CONTINUES_AFTER_CLASS_NAME);
+        }
+
+        return SimpleCalendarEvent.create(absence.id() + "/" + firstDay)
+                .withAllDay(true)
+                .withStartDateTime(firstDay.atStartOfDay())
+                .withEndDateTime(lastDay.plusDays(1).atStartOfDay())
+                // The calendar lets its events be dragged, for the entries; the bar turns it off for itself
+                .withStartEditable(false)
+                .withDurationEditable(false)
+                .withClassNames(String.join(" ", classNames))
+                // The calendar shows the title in the bar and the description as its tooltip
+                .withTitle(absence.typeName())
+                .withDescription(description)
+                .build();
+    }
+
+    /**
+     * Checks whether the specified calendar event is the event of an absence, as created by
+     * {@link #createAbsenceEvents(WorkPlan, LocalDate, LocalDate, YearMonth)}.
+     *
+     * @param event the event to check
+     * @return {@code true} if the event's class names include {@link #ABSENCE_CLASS_NAME}
+     */
+    public static boolean isAbsenceEvent(@Nullable CalendarEvent event) {
+        // The class names are one string, separated by spaces, or none
+        String classNames = event != null ? event.getClassNames() : null;
+        return classNames != null && ArrayUtils.contains(StringUtils.split(classNames), ABSENCE_CLASS_NAME);
     }
 
     /**

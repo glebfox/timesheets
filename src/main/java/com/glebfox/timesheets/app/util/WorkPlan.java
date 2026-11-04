@@ -21,27 +21,50 @@ import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.google.common.base.Preconditions;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
- * The time a user is planned to work on each day of a date range, and the holiday calendar day
- * that decided a date, if any.
+ * The time a user is planned to work on each day of a date range, the holiday calendar day of each date
+ * that has one, and the user's absences that share a day with the range.
  *
  * @param plannedTimeByDay the planned time of every day of the range, {@link WorkTime#ZERO} for a day off
- * @param holidayDayByDate the holiday calendar day that decided each date of the range that has one
+ * @param holidayDayByDate the holiday calendar day of each date of the range that has one, an absent date included
+ * @param absences         the absences that share a day with the range, each whole, its days outside the range
+ *                         included
  */
-public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate, HolidayDay> holidayDayByDate) {
+public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate, HolidayDay> holidayDayByDate,
+                       List<AbsencePeriod> absences) {
 
     public WorkPlan {
         plannedTimeByDay = Map.copyOf(plannedTimeByDay);
         holidayDayByDate = Map.copyOf(holidayDayByDate);
+        absences = List.copyOf(absences);
         Preconditions.checkArgument(plannedTimeByDay.keySet().containsAll(holidayDayByDate.keySet()),
                 "The plan has holiday calendar days outside its range");
+        for (AbsencePeriod absence : absences) {
+            Preconditions.checkArgument(!absence.lastDay().isBefore(absence.firstDay()),
+                    "The absence %s ends before it starts", absence.id());
+            Preconditions.checkArgument(plannedTimeByDay.keySet().stream().anyMatch(absence::includes),
+                    "The absence %s has no day in the plan", absence.id());
+        }
     }
 
     /**
-     * Creates a plan without holiday calendar days.
+     * Creates a plan without absences.
+     *
+     * @param plannedTimeByDay the planned time of every day of the range, {@link WorkTime#ZERO} for a day off
+     * @param holidayDayByDate the holiday calendar day of each date of the range that has one, an absent date
+     *                         included
+     */
+    public WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate, HolidayDay> holidayDayByDate) {
+        this(plannedTimeByDay, holidayDayByDate, List.of());
+    }
+
+    /**
+     * Creates a plan without holiday calendar days or absences.
      *
      * @param plannedTimeByDay the planned time of every day of the range, {@link WorkTime#ZERO} for a day off
      */
@@ -82,10 +105,11 @@ public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate,
     }
 
     /**
-     * Returns the holiday calendar day that decided the specified date.
+     * Returns the holiday calendar day of the specified date. An absent date has it too, although the absence
+     * decided the date's planned time.
      *
      * @param date a date the plan covers
-     * @return the holiday calendar day, or empty if the schedule's days of the week decided the date
+     * @return the holiday calendar day, or empty if the holiday calendar of the date's schedule has no day on it
      * @throws IllegalArgumentException if the plan does not cover the date
      */
     public Optional<HolidayDay> findHolidayDay(LocalDate date) {
@@ -100,5 +124,24 @@ public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate,
      * @param type whether the day is a day off or a workday
      */
     public record HolidayDay(String name, HolidayCalendarDayType type) {
+    }
+
+    /**
+     * An absence as a plan shows it: the whole absence, its days outside the plan's range included.
+     *
+     * @param id       the id of the absence
+     * @param typeName the name of the absence's type, such as "Vacation"
+     * @param firstDay the first day of the absence
+     * @param lastDay  the last day of the absence, the same as the first for a one-day absence
+     */
+    public record AbsencePeriod(UUID id, String typeName, LocalDate firstDay, LocalDate lastDay) {
+
+        /**
+         * @param date the date to check
+         * @return {@code true} if the date is one of the absence's days, its first and last included
+         */
+        public boolean includes(LocalDate date) {
+            return !date.isBefore(firstDay) && !date.isAfter(lastDay);
+        }
     }
 }

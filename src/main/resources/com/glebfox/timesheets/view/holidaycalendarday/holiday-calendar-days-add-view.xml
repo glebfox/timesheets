@@ -26,8 +26,7 @@
                 shortcutCombination="${SAVE_SHORTCUT}"/>
         <action id="closeAction" type="view_close"/>
     </actions>
-    <layout padding="false" expand="form" alignItems="STRETCH"
-            classNames="holiday-calendar-days-add-view">
+    <layout padding="false" expand="form" alignItems="STRETCH">
         <formLayout id="form" classNames="margin-inline-m">
             <responsiveSteps>
                 <responsiveStep minWidth="0" columns="1"/>

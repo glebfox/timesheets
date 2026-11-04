@@ -29,7 +29,7 @@ Such a table uses custom actions instead, as the assignment tables of the user e
 
 ## Lists after an editor save
 
-The standard create and edit actions do not invoke their `afterSaveHandler` when the detail view opens by navigation, as the editors opened from this project's lists do; the framework only logs that the handler is set but not invoked. In tabbed mode the list stays open, and a save reaches it only as the saved row added to its container or replaced there. A list that shows a value its own query does not load, as the holiday calendar list shows Filled until, listens for that change of its container and loads the value for the rows added or replaced.
+The standard create and edit actions do not invoke their `afterSaveHandler` when the detail view opens by navigation, as the editors opened from this project's lists do unless a list says otherwise; the framework only logs that the handler is set but not invoked. In tabbed mode the list stays open, and a save reaches it only as the saved row added to its container or replaced there. A list whose actions open the editor as a dialog (the action's `openMode` property set to `DIALOG`), as the absence list does, gets the saved row the same way, and there the actions also invoke `afterSaveHandler`. A list that shows a value its own query does not load, as the holiday calendar list shows Filled until, listens for that change of its container and loads the value for the rows added or replaced.
 
 ## Grids whose rows change after they are shown
 

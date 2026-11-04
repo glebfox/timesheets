@@ -53,7 +53,8 @@ import java.util.Random;
  */
 class DemoTimeEntryGenerator {
 
-    private static final int WEEKS = 8;
+    // The weeks before the current one that get time logged
+    static final int WEEKS = 8;
     // A closed project and an inactive task took time only in the first weeks
     private static final int WEEKS_BEFORE_CLOSING = 3;
     private static final int SLOT_MINUTES = 30;

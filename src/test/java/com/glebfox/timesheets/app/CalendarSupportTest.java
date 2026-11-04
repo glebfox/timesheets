@@ -20,6 +20,8 @@ import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.absence.Absence;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
@@ -38,8 +40,10 @@ import io.jmix.core.SaveContext;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.data.PersistenceHints;
 import io.jmix.fullcalendarflowui.component.data.CalendarEvent;
+import io.jmix.fullcalendarflowui.component.data.SimpleCalendarEvent;
 import io.jmix.fullcalendarflowui.component.model.Display;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +57,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +70,12 @@ public class CalendarSupportTest {
 
     // December 2024 starts on Sunday and ends on Tuesday; it has 22 workdays
     static final YearMonth DECEMBER_2024 = YearMonth.of(2024, 12);
+
+    // November 2026 starts on Sunday, so its month grid, with weeks that start on Monday,
+    // runs from Monday, October 26 to Sunday, December 6
+    static final YearMonth NOVEMBER_2026 = YearMonth.of(2026, 11);
+    static final LocalDate NOVEMBER_GRID_START = LocalDate.of(2026, 10, 26);
+    static final LocalDate NOVEMBER_GRID_END = LocalDate.of(2026, 12, 7);
 
     @Autowired
     DataManager dataManager;
@@ -201,6 +213,32 @@ public class CalendarSupportTest {
     }
 
     @Test
+    void weeksSummaryLeavesOutTheDaysOfAnAbsenceTest() {
+        /* Given */
+        Map<LocalDate, WorkTime> spentTimeByDay = calendarSupport.calculateSpentTimeByDay(decemberTimeEntries());
+        // Tuesday, Dec 10 to Thursday, Dec 12: three workdays of the default schedule
+        absent(LocalDate.of(2024, 12, 10), LocalDate.of(2024, 12, 12));
+
+        /* When */
+        List<WeekSummary> weeksSummary =
+                calendarSupport.calculateWeeksSummary(DECEMBER_2024, DayOfWeek.MONDAY, spentTimeByDay,
+                        loadDecemberPlan());
+        FactAndPlan monthSummary = calendarSupport.calculateMonthSummary(weeksSummary);
+
+        /* Then */
+        assertThat(weeksSummary).extracting(WeekSummary::total).containsExactly(
+                factAndPlan(WorkTime.ofHours(2), WorkTime.ZERO),
+                factAndPlan(WorkTime.ofHours(40), WorkTime.ofHours(40)),
+                // Dec 9 - Dec 15: two workdays left
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(16)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
+                factAndPlan(WorkTime.ZERO, WorkTime.ofHours(40)),
+                factAndPlan(WorkTime.of(1, 30), WorkTime.ofHours(16))
+        );
+        assertThat(monthSummary).isEqualTo(factAndPlan(WorkTime.of(43, 30), WorkTime.ofHours(152)));
+    }
+
+    @Test
     void weeksSummaryRequiresAPlanOfTheWholeMonthTest() {
         WorkPlan plan = new WorkPlan(Map.of(LocalDate.of(2024, 12, 2), WorkTime.ofHours(8)));
 
@@ -241,6 +279,176 @@ public class CalendarSupportTest {
         assertThat(reloadedMarks).extracting(CalendarEvent::getId)
                 .containsExactlyElementsOf(marks.stream().map(CalendarEvent::getId).toList());
         assertThat(marks).extracting(CalendarEvent::getId).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void absenceEventsAreSplitAtTheMonth() {
+        /* Given */
+        UUID id = UUID.randomUUID();
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(id, "Vacation", LocalDate.of(2026, 10, 28), LocalDate.of(2026, 11, 3)));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        // One event for the days of October and one for those of November; the ends are exclusive
+        assertThat(events).extracting(CalendarEvent::getId, CalendarEvent::getStartDateTime,
+                        CalendarEvent::getEndDateTime)
+                .containsExactly(
+                        tuple(id + "/2026-10-28",
+                                LocalDate.of(2026, 10, 28).atStartOfDay(), LocalDate.of(2026, 11, 1).atStartOfDay()),
+                        tuple(id + "/2026-11-01",
+                                LocalDate.of(2026, 11, 1).atStartOfDay(), LocalDate.of(2026, 11, 4).atStartOfDay()));
+        // Each part names the whole absence
+        assertThat(events).extracting(CalendarEvent::getTitle).containsOnly("Vacation");
+        assertThat(events).extracting(CalendarEvent::getDescription)
+                .containsOnly("Vacation: 28/10/2026 – 03/11/2026");
+        // Each part is marked on the side where the absence goes on, so the bar is cut there and not rounded
+        assertThat(events).extracting(CalendarSupportTest::classNames).containsExactly(
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME));
+        assertThat(events).extracting(CalendarEvent::getAllDay).containsOnly(true);
+        // A bar, not a background mark, which cannot be dragged or resized
+        assertThat(events).extracting(CalendarEvent::getDisplay).containsOnlyNulls();
+        assertThat(events).extracting(CalendarEvent::getStartEditable).containsOnly(false);
+        assertThat(events).extracting(CalendarEvent::getDurationEditable).containsOnly(false);
+    }
+
+    @Test
+    void absenceEventsAreClippedToTheRange() {
+        /* Given */
+        UUID beforeTheGrid = UUID.randomUUID();
+        UUID afterTheGrid = UUID.randomUUID();
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(beforeTheGrid, "Vacation",
+                        LocalDate.of(2026, 10, 20), LocalDate.of(2026, 11, 2)),
+                new WorkPlan.AbsencePeriod(afterTheGrid, "Sick leave",
+                        LocalDate.of(2026, 11, 30), LocalDate.of(2026, 12, 10)));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        assertThat(events).extracting(CalendarEvent::getId, CalendarEvent::getStartDateTime,
+                        CalendarEvent::getEndDateTime)
+                .containsExactly(
+                        tuple(beforeTheGrid + "/2026-10-26",
+                                NOVEMBER_GRID_START.atStartOfDay(), LocalDate.of(2026, 11, 1).atStartOfDay()),
+                        tuple(beforeTheGrid + "/2026-11-01",
+                                LocalDate.of(2026, 11, 1).atStartOfDay(), LocalDate.of(2026, 11, 3).atStartOfDay()),
+                        tuple(afterTheGrid + "/2026-11-30",
+                                LocalDate.of(2026, 11, 30).atStartOfDay(), LocalDate.of(2026, 12, 1).atStartOfDay()),
+                        tuple(afterTheGrid + "/2026-12-01",
+                                LocalDate.of(2026, 12, 1).atStartOfDay(), NOVEMBER_GRID_END.atStartOfDay()));
+        // The tooltip keeps the dates of the whole absence
+        assertThat(events).extracting(CalendarEvent::getDescription).containsExactly(
+                "Vacation: 20/10/2026 – 02/11/2026",
+                "Vacation: 20/10/2026 – 02/11/2026",
+                "Sick leave: 30/11/2026 – 10/12/2026",
+                "Sick leave: 30/11/2026 – 10/12/2026");
+        // The absence goes on past the grid's first and last days too, not only past the month's
+        assertThat(events).extracting(CalendarSupportTest::classNames).containsExactly(
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME, CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME),
+                Set.of(CalendarSupport.ABSENCE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_BEFORE_CLASS_NAME,
+                        CalendarSupport.ABSENCE_CONTINUES_AFTER_CLASS_NAME));
+    }
+
+    @Test
+    void wholeAbsenceIsOnePartThatDoesNotGoOn() {
+        /* Given */
+        UUID week = UUID.randomUUID();
+        UUID day = UUID.randomUUID();
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(week, "Vacation", LocalDate.of(2026, 11, 9), LocalDate.of(2026, 11, 13)),
+                new WorkPlan.AbsencePeriod(day, "Day off", LocalDate.of(2026, 11, 18), LocalDate.of(2026, 11, 18)));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        // Both ends are the absence's own, so the bar is rounded at both
+        assertThat(events).extracting(CalendarEvent::getId)
+                .containsExactly(week + "/2026-11-09", day + "/2026-11-18");
+        assertThat(events).extracting(CalendarSupportTest::classNames)
+                .containsOnly(Set.of(CalendarSupport.ABSENCE_CLASS_NAME));
+    }
+
+    @Test
+    void oneDayAbsenceGivesOneEvent() {
+        /* Given */
+        UUID id = UUID.randomUUID();
+        LocalDate day = LocalDate.of(2026, 11, 10);
+        WorkPlan plan = novemberGridPlan(new WorkPlan.AbsencePeriod(id, "Day off", day, day));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        assertThat(events).singleElement()
+                .extracting(CalendarEvent::getId, CalendarEvent::getStartDateTime, CalendarEvent::getEndDateTime,
+                        CalendarEvent::getTitle, CalendarEvent::getDescription)
+                .containsExactly(id + "/2026-11-10", day.atStartOfDay(), day.plusDays(1).atStartOfDay(),
+                        "Day off", "Day off: 10/11/2026");
+    }
+
+    @Test
+    void absenceEventsKeepTheirIds() {
+        /* Given */
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
+                        LocalDate.of(2026, 10, 28), LocalDate.of(2026, 11, 3)),
+                new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Day off",
+                        LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 10)));
+
+        /* When */
+        List<CalendarEvent> events =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+        List<CalendarEvent> reloadedEvents =
+                calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026);
+
+        /* Then */
+        // An event keeps its id from one load to the next, and each event has an id of its own
+        assertThat(reloadedEvents).extracting(CalendarEvent::getId)
+                .containsExactlyElementsOf(events.stream().map(CalendarEvent::getId).toList());
+        assertThat(events).hasSize(3).extracting(CalendarEvent::getId).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void planWithoutAbsencesGivesNoEvents() {
+        WorkPlan plan = novemberGridPlan();
+
+        assertThat(calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026))
+                .isEmpty();
+    }
+
+    @Test
+    void absenceEventsAreToldByTheirClassName() {
+        WorkPlan plan = novemberGridPlan(
+                new WorkPlan.AbsencePeriod(UUID.randomUUID(), "Vacation",
+                        LocalDate.of(2026, 11, 9), LocalDate.of(2026, 11, 13)));
+
+        assertThat(calendarSupport.createAbsenceEvents(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END, NOVEMBER_2026))
+                .isNotEmpty()
+                .allMatch(CalendarSupport::isAbsenceEvent);
+        // The weekends' marks
+        assertThat(calendarSupport.createDayMarks(plan, NOVEMBER_GRID_START, NOVEMBER_GRID_END))
+                .isNotEmpty()
+                .noneMatch(CalendarSupport::isAbsenceEvent);
+
+        assertThat(CalendarSupport.isAbsenceEvent(null)).isFalse();
+        assertThat(CalendarSupport.isAbsenceEvent(eventWithClassNames(null))).isFalse();
+        assertThat(CalendarSupport.isAbsenceEvent(eventWithClassNames("calendar-view-absence-other"))).isFalse();
+        assertThat(CalendarSupport.isAbsenceEvent(eventWithClassNames("other calendar-view-absence"))).isTrue();
     }
 
     @Test
@@ -326,6 +534,43 @@ public class CalendarSupportTest {
         plannedTimeByDay.putAll(overrides);
 
         return new WorkPlan(plannedTimeByDay);
+    }
+
+    // A plan of November 2026's month grid, 8 hours Monday to Friday, with the specified absences
+    private WorkPlan novemberGridPlan(WorkPlan.AbsencePeriod... absences) {
+        Map<LocalDate, WorkTime> plannedTimeByDay = new HashMap<>();
+        NOVEMBER_GRID_START.datesUntil(NOVEMBER_GRID_END).forEach(day -> {
+            boolean weekend = day.getDayOfWeek() == DayOfWeek.SATURDAY || day.getDayOfWeek() == DayOfWeek.SUNDAY;
+            plannedTimeByDay.put(day, weekend ? WorkTime.ZERO : WorkTime.ofHours(8));
+        });
+
+        return new WorkPlan(plannedTimeByDay, Map.of(), List.of(absences));
+    }
+
+    // The class names are one string, separated by spaces, in no order that matters
+    private static Set<String> classNames(CalendarEvent event) {
+        return Set.of(StringUtils.split(event.getClassNames()));
+    }
+
+    private CalendarEvent eventWithClassNames(String classNames) {
+        return SimpleCalendarEvent.create()
+                .withClassNames(classNames)
+                .build();
+    }
+
+    // Saves an absence of admin, the current user
+    private void absent(LocalDate firstDay, LocalDate lastDay) {
+        AbsenceType type = dataManager.create(AbsenceType.class);
+        type.setName("Calendar Test Absence Type");
+        type = dataManager.save(type);
+        entities.add(type);
+
+        Absence absence = dataManager.create(Absence.class);
+        absence.setUser((User) currentAuthentication.getUser());
+        absence.setType(type);
+        absence.setFirstDay(firstDay);
+        absence.setLastDay(lastDay);
+        entities.add(dataManager.save(absence));
     }
 
     private TimeEntryCalendarWrapper timeEntry(LocalDate date, WorkTime spentTime) {

@@ -63,6 +63,9 @@
         <item view="ts_HolidayCalendar.list"
               title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title"
               icon="ts-menu:holiday-calendars"/>
+        <item view="ts_AbsenceType.list"
+              title="msg://com.glebfox.timesheets.view.absencetype/absenceTypeListView.title"
+              icon="ts-menu:absence-types"/>
     </menu>
 
     <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"
@@ -71,6 +74,9 @@
         <item view="ts_User.list"
               title="msg://com.glebfox.timesheets.view.user/UserListView.title"
               icon="ts-menu:users"/>
+        <item view="ts_Absence.list"
+              title="msg://com.glebfox.timesheets.view.absence/absenceListView.title"
+              icon="ts-menu:absences"/>
     </menu>
 
     <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"
