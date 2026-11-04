@@ -210,9 +210,10 @@ public class DemoDataLoader {
     /**
      * The absences of a load on the given day: a two-week vacation and a sick leave of three workdays in
      * the weeks that get time logged, a vacation through the current week, a day off in the coming two
-     * weeks, and a sick leave across the first day of the current month. Dated from the day, some of them
-     * share days on some days, as the last one and the vacation through the current week do early in a
-     * month, so each goes to a user of its own: only the absence editor refuses an overlap.
+     * weeks, a sick leave across the first day of the current month, and a vacation over the next holiday
+     * after the current week. Dated from the day, some of them share days on some days, as the sick leave
+     * across the first of the month and the vacation through the current week do early in a month, so each
+     * goes to a user of its own: only the absence editor refuses an overlap.
      *
      * @param today    the day of the load
      * @param holidays the days off of the holiday calendar
@@ -227,14 +228,19 @@ public class DemoDataLoader {
             dayOff = dayOff.minusDays(1);
         }
         LocalDate firstOfMonth = today.withDayOfMonth(1);
+        // The holidays span the next year, so there is always one ahead
+        LocalDate holidayWeek = holidays.higher(thisWeek.plusDays(6)).with(DayOfWeek.MONDAY);
         return List.of(
                 // Monday to Sunday of the next week, across the weekend between them
                 new DemoAbsence("freeman", VACATION, vacation, vacation.plusDays(13), null),
                 new DemoAbsence("barney", SICK_LEAVE, sickLeave, sickLeave.plusDays(2), "Doctor's note received"),
                 new DemoAbsence("alyx", VACATION, thisWeek, thisWeek.plusDays(6), null),
                 new DemoAbsence("gina", DAY_OFF, dayOff, dayOff, "Moving house"),
-                // The calendar dims only its days in the neighboring month
-                new DemoAbsence("colette", SICK_LEAVE, firstOfMonth.minusDays(2), firstOfMonth.plusDays(2), null));
+                // Across the month boundary, so the calendar shows an absence partly in the dimmed days of the
+                // neighboring month
+                new DemoAbsence("colette", SICK_LEAVE, firstOfMonth.minusDays(2), firstOfMonth.plusDays(2), null),
+                // On every load, a holiday inside a vacation, whether or not the logged weeks have one
+                new DemoAbsence("eli", VACATION, holidayWeek, holidayWeek.plusDays(6), null));
     }
 
     // Two weeks over the latest holiday of the weeks that get time logged, so the calendar shows a holiday
@@ -273,32 +279,31 @@ public class DemoDataLoader {
         private final Map<String, ProjectRole> projectRoles = new LinkedHashMap<>();
         private final Map<String, TaskType> taskTypes = new LinkedHashMap<>();
         private final Map<String, User> users = new LinkedHashMap<>();
-        private final NavigableMap<LocalDate, String> holidays = new TreeMap<>();
 
         private DataSet(LocalDate today) {
             this.today = today;
         }
 
         private void create() {
-            HolidayCalendar calendar = createHolidayCalendar();
+            NavigableMap<LocalDate, String> holidays = holidaysAround(today);
+            HolidayCalendar calendar = createHolidayCalendar(holidays);
             Map<String, WorkSchedule> schedules = createWorkSchedules(calendar);
             createProjectRoles();
             createTaskTypes();
             createUsers();
             assignSchedules(schedules);
-            createAbsences();
+            createAbsences(holidays.navigableKeySet());
             createProjects(createClients());
             dataManager.save(context.setDiscardSaved(true));
         }
 
         // ---------------------------------------------------------------- work schedules
 
-        private HolidayCalendar createHolidayCalendar() {
+        private HolidayCalendar createHolidayCalendar(Map<LocalDate, String> holidays) {
             HolidayCalendar calendar = dataManager.create(HolidayCalendar.class);
             calendar.setName("Russia");
             calendar.setDescription("Public holidays of Russia; a holiday on a weekend moves to the next workday");
             context.saving(calendar);
-            holidays.putAll(holidaysAround(today));
             holidays.forEach((date, name) -> addCalendarDay(calendar, date, name));
             return calendar;
         }
@@ -469,7 +474,7 @@ public class DemoDataLoader {
 
         // ---------------------------------------------------------------- absences
 
-        private void createAbsences() {
+        private void createAbsences(NavigableSet<LocalDate> holidays) {
             Map<String, AbsenceType> types = new LinkedHashMap<>();
             for (String[] row : new String[][]{
                     // name, description
@@ -485,7 +490,7 @@ public class DemoDataLoader {
             }
 
             // Saved with the rest, before the time is logged: their days plan nothing, so no time is logged on them
-            for (DemoAbsence demoAbsence : absencesOf(today, holidays.navigableKeySet())) {
+            for (DemoAbsence demoAbsence : absencesOf(today, holidays)) {
                 Absence absence = dataManager.create(Absence.class);
                 absence.setUser(users.get(demoAbsence.username()));
                 absence.setType(types.get(demoAbsence.type()));

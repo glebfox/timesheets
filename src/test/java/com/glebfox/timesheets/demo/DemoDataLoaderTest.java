@@ -265,14 +265,9 @@ public class DemoDataLoaderTest {
                             && absence.firstDay().isAfter(today) && !absence.firstDay().isAfter(today.plusWeeks(2))
                             && isWorkday(absence.firstDay(), holidays))
                     .as("%s: one across the first day of the month", description)
-                    .anyMatch(absence -> crossesTheFirstOfTheMonth(absence, today));
-
-            List<LocalDate> recentHolidays = holidays.subSet(pastStart, true, today, true).stream().toList();
-            if (!recentHolidays.isEmpty()) {
-                assertThat(absences)
-                        .as("%s: one over a holiday of %s", description, recentHolidays)
-                        .anyMatch(absence -> recentHolidays.stream().anyMatch(day -> includes(absence, day)));
-            }
+                    .anyMatch(absence -> crossesTheFirstOfTheMonth(absence, today))
+                    .as("%s: one over a holiday", description)
+                    .anyMatch(absence -> days(absence).anyMatch(holidays::contains));
             assertNoUserAbsentTwiceOnADay(absences, description);
         });
     }
