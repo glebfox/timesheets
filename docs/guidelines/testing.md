@@ -66,3 +66,12 @@ Driving the app with Playwright:
 - its Chromium draws classic scrollbars, so a scrolling panel measures narrower than on a Mac with overlay scrollbars (`docs/guidelines/design-system.md`).
 
 A running app picks up Java changes only after a restart, and a change under `src/main/frontend/`, such as an iconset, also only after a restart, which rebuilds the development bundle; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.
+
+Every live check, on the developer's app or on a copy, runs against the developer's `ts` database, so it saves only data the UI can remove again and removes it when done.
+
+When the developer's app cannot be restarted for a change that needs it, such as during an unattended run, the check runs on a copy of the working tree on port 8081:
+
+- Copy the tree into a scratch directory with `rsync`, excluding `/build/`, `/.gradle/`, `/.git/`, and `/.jmix/` anchored at the root. An unanchored `build/` also drops `target/dev-bundle/webapp/VAADIN/build`, and every page then renders blank, with 404s on `VAADIN/build/*.js`.
+- Start the copy with `SPRING_PROFILES_ACTIVE=dev <copy>/gradlew -p <copy> bootRun --args='--server.port=8081'`, from a temporary entry in `.claude/launch.json`; an entry runs in this checkout, and `-p` points Gradle at the copy. Pages made only for the check go into the copy, never into the repository. When done, stop the server and remove the entry and the copy.
+- A changelog that is not final is never applied to the developer's `ts` database: the copy then runs against a scratch database created on the same server, with `--main.datasource.url=jdbc:postgresql://localhost/<name>`.
+- Localhost on ports 8080 and 8081 shares cookies, so in a normal browser a sign-in on one signs out the other; Playwright's browser keeps cookies of its own.

@@ -77,6 +77,8 @@ Reach these colors through the theme names and classes rather than through the `
 
 Both show the states of an Aura field. Invalid, the borders take the error color. Read-only, the borders turn dashed and only a checked item keeps a faint accent tint, with a solid outline in the accent text color and a semibold label, so it reads as checked by more than its hue. Disabled, the labels dim and a checked item keeps a stronger fill. Hovered and pressed, an item shades as an Aura button does, an unchecked one as a regular button and a checked one as a primary button; a pressed toggle button also drops its shadow and, on a high-density screen, shrinks slightly, while a segment keeps its size, as Aura's joined menu bar buttons do. A read-only or disabled group shows no hover or press. In forced-colors (high contrast) mode the chosen items use the system's selected-item colors, and a read-only chosen item keeps a doubled solid border and its semibold label.
 
+In a dialog, Tab stops on every option of a radio button group, a `segmented-group` included, rather than only on the checked one: the dialog's focus trap walks every focusable element and skips the browser's rule for radio groups, vaadin/web-components#8186. The project does not work around it.
+
 ---
 
 ## 3. Typography
