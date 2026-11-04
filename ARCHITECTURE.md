@@ -27,7 +27,7 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 ## Profiles
 
 - Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase creates the schema, the `admin` user, and the default work schedule, with no demo data.
-- `dev`: on a start against a database without clients, the application loads the demo data: people and organizations of the Half-Life and Portal games, their projects, and time logged over the eight weeks before the current week and the current week up to the day of the start. Every demo user's password is their username. A database that has clients, deleted ones included, is left as it is: to get the demo data again, recreate the database. The login form is pre-filled with `admin`/`admin`.
+- `dev`: on a start against a database without clients, the application loads the demo data: people and organizations of the Half-Life and Portal games, their projects, their absences in the past, current, and coming weeks, and time logged over the eight weeks before the current week and the current week up to the day of the start, none of it on their absences. Every demo user's password is their username. A database that has clients, deleted ones included, is left as it is: to get the demo data again, recreate the database. The login form is pre-filled with `admin`/`admin`.
 - `test`: in-memory HSQLDB.
 
 ## Commands

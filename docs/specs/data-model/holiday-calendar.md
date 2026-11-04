@@ -19,7 +19,7 @@ Each day has:
 - **Name** — required, such as "New Year" or "Working Saturday".
 - Shown as `<date> <name> (<type>)`.
 
-A day of the calendar decides the plan of that date for every schedule that uses the calendar: a day off plans nothing and a workday plans the schedule's workday hours, whatever the day of the week. There are no recurring days and no shortened days.
+A day of the calendar decides the plan of that date for every schedule that uses the calendar: a day off plans nothing and a workday plans the schedule's workday hours, whatever the day of the week. Only a user's [absence](absence.md) overrides it: an absent day plans nothing, a Workday included, and a holiday inside an absence keeps its name in that user's calendar. There are no recurring days and no shortened days.
 
 ## Deletion
 

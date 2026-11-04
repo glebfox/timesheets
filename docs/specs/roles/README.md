@@ -2,12 +2,13 @@
 
 Source: `security/`
 
-Access control is Jmix security roles only. The code defines five resource roles and one row-level role, each with its own spec here:
+Access control is Jmix security roles only. The code defines six resource roles and one row-level role, each with its own spec here:
 
 - [Full access](system-full-access.md) — everything.
 - [UI: minimal access](ui-minimal.md) — signing in and the main view, nothing else.
 - [User: read only](user-read-only.md) — reading users in the user list and the user editor.
 - [Work schedule management](work-schedule-management.md) — work schedules, holiday calendars, and who works to which schedule from which date; it includes User: read only.
+- [Absence management](absence-management.md) — absences and absence types; it includes User: read only.
 - [Time entries: approval](time-entry-approval.md) — the approval screen and changing the status and rejection reason of time entries; it includes User: read only.
 - [Edit active time entries](edit-active-time-entries.md) — a row-level role that forbids saving a time entry as Approved or Closed.
 

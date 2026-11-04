@@ -1,8 +1,8 @@
 # Settings screens
 
-Source: `view/tasktype/`, `view/projectrole/`, `view/workschedule/`, `view/holidaycalendar/`, `view/holidaycalendarday/`, `view/workscheduleassignment/`, `action/WorkScheduleMakeDefaultAction.java`, `action/WorkScheduleRemoveAction.java`, `action/WorkScheduleUsersAddAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `action/HolidayCalendarDaysAddAction.java`, `app/WorkScheduleAssignmentSupport.java`, `app/util/ComponentSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/PluralForms.java`, `app/util/UnsavedInputSupport.java`
+Source: `view/tasktype/`, `view/projectrole/`, `view/workschedule/`, `view/holidaycalendar/`, `view/holidaycalendarday/`, `view/workscheduleassignment/`, `view/absencetype/`, `action/WorkScheduleMakeDefaultAction.java`, `action/WorkScheduleRemoveAction.java`, `action/WorkScheduleUsersAddAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `action/HolidayCalendarDaysAddAction.java`, `app/WorkScheduleAssignmentSupport.java`, `app/util/ComponentSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/PluralForms.java`, `app/util/UnsavedInputSupport.java`
 
-The catalogs under the Settings menu: task types, project roles, work schedules, and holiday calendars.
+The catalogs under the Settings menu: task types, project roles, work schedules, holiday calendars, and absence types.
 
 ## Task types
 
@@ -104,9 +104,14 @@ Closing the dialog other than with OK while a field differs from how it opened a
 
 A 480px dialog, titled "Holiday calendar day", that edits one day: **Name**, **Date**, and **Type**, the last as the same bar. A date that another day of the calendar has, saved or added in this editor and not removed, is refused: "This day is already in the calendar".
 
+## Absence types
+
+`absence-types`. Lists [absence types](../data-model/absence-type.md) with the name and the description, which is cut short with the full text in a popover. It offers a name filter and pagination, both kept when the browser page is reloaded; Create, Edit, and Remove. Remove asks the usual confirmation even when absences refer to the type: they keep it, and still plan nothing. It is also the type picker of the [absence editor](absences.md#absence-editor). The editor (`absence-types/:id`) has the name and the description; it opens as a page from the list, and as a 640px dialog from the list that the picker opens.
+
 ## Not covered
 
 - Task types and project roles: no UI test exists for them.
+- Absence types: the UI tests open the list, save a type in the editor, and remove one. The description popover, the name filter, and the editor as a page from the list and as a dialog from the absence editor's picker were checked live on 2026-11-04 only; pagination and the filter after a reload of the browser page were not.
 - How the work schedule and holiday calendar screens look, in English and Russian, light and dark: the day chips; the workday buttons with their focus ring, keyboard use, hover and press, and read-only and invalid states; the badges and their colors; the counted lines; the refusal listing several dates; and the red Delete. Only a live check saw them. The day type bar as redrawn after Aura's filled tabs, a track with a pill, was checked live on 2026-11-03, as admin, in the light theme: in both dialogs, in English and Russian, the track, the pill, and the labels whole; in the add days dialog, the arrow keys and the focus ring, on the bar's first, bordered draft. Its hover, focus ring, and read-only, disabled, and invalid states, in the light and the dark theme, were looked at only on the approval screen's mode switch, which has the same style ([approval](approval.md#not-covered)); its press and forced-colors mode were not looked at. The UI tests check the texts of the counted lines and of the refusal, the workdays line only in English.
 - What only a browser shows: the columns fitting their content after their rows change, a Default or Current badge that appears then included; the Current badge moving to another row after an edit; the look of the Make default confirmation; and the last day's picker greying out the days before the first. The UI tests check the server side only: that the browser is asked to measure the columns again, that an edit redraws every row, the confirmation's texts, and the last day's minimum. The look of the Make default confirmation and the greyed days before the first day were checked live.
 - Cancel closing an unchanged work schedule editor without asking to save: checked live only.

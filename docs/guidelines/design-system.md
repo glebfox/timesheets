@@ -66,7 +66,7 @@ Use accent class names (e.g. `.aura-accent-purple`) on `<html>` or individual co
 | Warning | `warning` | `.aura-accent-yellow`, `.v-warning` | `--ts-warning-color` |
 | Info | `info` | `.aura-accent-blue`, `.v-info` | `--ts-primary-color` |
 
-Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange or neutral; such rules use `--aura-orange` and `--aura-neutral`, except a neutral fill shown beside the status colors, such as Closed on the approval screen: `--aura-neutral` is the text color itself, nearly black in the light theme and nearly white in the dark one, so such a fill takes the mid gray of `--vaadin-text-color-secondary`, which Aura derives from it.
+Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange, purple, or neutral; such rules use `--aura-orange`, `--aura-purple`, and `--aura-neutral`, except a neutral fill shown beside the status colors, such as Closed on the approval screen: `--aura-neutral` is the text color itself, nearly black in the light theme and nearly white in the dark one, so such a fill takes the mid gray of `--vaadin-text-color-secondary`, which Aura derives from it.
 
 **Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these.
 
@@ -181,7 +181,7 @@ The main menu has a set of its own, drawn for it: each group and item has its ow
 
 1. **What an icon shows.** One object per screen: a small preview of what the screen shows, not of what the user does there. Few parts; small details do not survive 16 px.
 2. **Two entries with one object.** When two entries would get the same object, the group, or the narrower or personal entry, gets the plain object, and the wider list gets rows plus the object: three rows on the left, one full and two short, and the object in the bottom right, in about 7..15. Time entries (beside My time entries), Row-level roles (beside the Security shield), Entity inspector (the magnifier alone is the search of filter fields), and Locks (beside Pessimistic locking) follow it.
-3. **A family with a mark.** Entries that share a base object and differ in one aspect take the base object cut open at the bottom right and one mark in that corner, a zone of about 7.5 × 7.5: Work schedules and Holiday calendars on the calendar. A mark is not placed inside the base object: inside the calendar there are about 2.5 units of free height, and a mark drawn there becomes a blot.
+3. **A family with a mark.** Entries that share a base object and differ in one aspect take the base object cut open at the bottom right and one mark in that corner, a zone of about 7.5 × 7.5: Work schedules, Holiday calendars, and Absences on the calendar. A mark is not placed inside the base object: inside the calendar there are about 2.5 units of free height, and a mark drawn there becomes a blot.
 4. **Meanings are shared with the screens.** The menu never gives an object a meaning that contradicts what the same object means on screens. The meanings in use:
    - briefcase — a project (project fields; Projects);
    - clock — time spent or work time (time fields; My time entries, Time entries, Work schedules);
@@ -190,7 +190,8 @@ The main menu has a set of its own, drawn for it: each group and item has its ow
    - shield — security roles (Security, Resource roles, Row-level roles);
    - magnifier — search and inspection (filter fields; Entity inspector);
    - rows — the list of all records of a kind (Time entries, Row-level roles, Entity inspector, Locks);
-   - calendar — dates and days (date fields; Calendar, Work schedules, Holiday calendars);
+   - calendar — dates and days (date fields; Calendar, Work schedules, Holiday calendars, Absences);
+   - umbrella — an absence (Absence types, Absences);
    - star — the default work schedule (the dialog that picks a new default); not available to the menu;
    - key — a password (the user editor); not available to the menu;
    - person — a person (person fields; Project roles, Users).
