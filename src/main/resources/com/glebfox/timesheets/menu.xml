@@ -74,6 +74,9 @@
         <item view="ts_User.list"
               title="msg://com.glebfox.timesheets.view.user/UserListView.title"
               icon="ts-menu:users"/>
+        <item view="ts_Absence.list"
+              title="msg://com.glebfox.timesheets.view.absence/absenceListView.title"
+              icon="ts-menu:absences"/>
     </menu>
 
     <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"

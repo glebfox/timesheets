@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-/* The range summary under the two date pickers, which read as one field: it looks like the field's helper text */
-.holiday-calendar-days-add-view .range-summary {
+/* The range summary under two date pickers that read as one field, as in the calendar days dialog and the absence
+   editor: it looks like the field's helper text */
+.range-summary {
     margin-top: var(--vaadin-gap-xs);
     color: var(--vaadin-text-color-secondary);
 }
 
-.holiday-calendar-days-add-view .range-summary:empty {
+.range-summary:empty {
     display: none;
 }

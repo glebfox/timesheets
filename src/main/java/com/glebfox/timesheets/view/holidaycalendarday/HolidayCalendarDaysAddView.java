@@ -32,7 +32,6 @@ import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -189,7 +188,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
         if (to.isBefore(from)) {
             // A safety net: the last day's minimum refuses such a day before OK gets here
             refuseDates(toField, messageBundle.getMessage("toField.beforeFromError"), errors);
-        } else if (countDays(from, to) > MAX_DAYS) {
+        } else if (dateRangeFormatter.countDays(from, to) > MAX_DAYS) {
             refuseDates(toField, messageBundle.getMessage("toField.tooLongError"), errors);
         } else {
             List<LocalDate> taken = findTakenDates(from, to);
@@ -242,9 +241,5 @@ public class HolidayCalendarDaysAddView extends StandardView {
     private LocalDate getLastDay(LocalDate from) {
         LocalDate to = toField.getTypedValue();
         return to != null ? to : from;
-    }
-
-    private static long countDays(LocalDate from, LocalDate to) {
-        return ChronoUnit.DAYS.between(from, to) + 1;
     }
 }

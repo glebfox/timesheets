@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://absenceListView.title"
+      focusComponent="userFilterField">
+    <data readOnly="true">
+        <collection id="absencesDc"
+                    class="com.glebfox.timesheets.entity.absence.Absence">
+            <!-- The user cell shows the avatar and the active flag. The type is read in a query of its own, which
+                 leaves deleted types in, so an absence of a deleted type stays listed (docs/guidelines/database.md);
+                 deletedDate marks it -->
+            <fetchPlan extends="_local">
+                <property name="user" fetchPlan="_instance_name">
+                    <property name="avatar"/>
+                    <property name="active"/>
+                </property>
+                <property name="type" fetchPlan="_instance_name" fetch="BATCH">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <loader id="absencesDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_Absence e order by e.firstDay desc]]>
+                </query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+        <urlQueryParameters>
+            <pagination component="pagination"/>
+            <propertyFilter component="userFilter"/>
+            <propertyFilter component="typeFilter"/>
+            <propertyFilter component="fromFilter"/>
+            <propertyFilter component="toFilter"/>
+        </urlQueryParameters>
+    </facets>
+    <actions>
+        <action id="selectAction" type="lookup_select"/>
+        <action id="discardAction" type="lookup_discard"/>
+    </actions>
+    <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <gridLayout id="filterLayout"
+                        width="100%"
+                        columnMinWidth="var(--ts-filter-layout-column-min-width)"
+                        gap="var(--ts-filter-layout-column-gap)">
+                <propertyFilter id="userFilter"
+                                dataLoader="absencesDl" property="user"
+                                operation="EQUAL"
+                                labelVisible="false">
+                    <entityComboBox id="userFilterField"
+                                    metaClass="ts_User"
+                                    placeholder="msg://userFilter.placeholder"
+                                    width="100%">
+                        <itemsQuery class="com.glebfox.timesheets.entity.user.User"
+                                    searchStringFormat="(?i)%${inputString}%"
+                                    escapeValueForLike="true">
+                            <query>
+                                <![CDATA[select e from ts_User e
+                                            where e.username like :searchString escape '\'
+                                                or e.firstName like :searchString escape '\'
+                                                or e.lastName like :searchString escape '\'
+                                            order by e.username asc]]>
+                            </query>
+                        </itemsQuery>
+                        <actions>
+                            <action id="clear" type="entity_clear"/>
+                        </actions>
+                        <prefix>
+                            <icon icon="gravity-ui:magnifier"/>
+                        </prefix>
+                    </entityComboBox>
+                </propertyFilter>
+                <propertyFilter id="typeFilter"
+                                dataLoader="absencesDl" property="type"
+                                operation="EQUAL"
+                                labelVisible="false">
+                    <entityComboBox id="typeFilterField"
+                                    metaClass="ts_AbsenceType"
+                                    placeholder="msg://typeFilter.placeholder"
+                                    width="100%">
+                        <itemsQuery class="com.glebfox.timesheets.entity.absence.AbsenceType"
+                                    searchStringFormat="(?i)%${inputString}%"
+                                    escapeValueForLike="true">
+                            <query>
+                                <![CDATA[select e from ts_AbsenceType e
+                                            where e.name like :searchString escape '\'
+                                            order by e.name]]>
+                            </query>
+                        </itemsQuery>
+                        <actions>
+                            <action id="clear" type="entity_clear"/>
+                        </actions>
+                        <prefix>
+                            <icon icon="gravity-ui:magnifier"/>
+                        </prefix>
+                    </entityComboBox>
+                </propertyFilter>
+                <!-- From and To together keep the absences that share at least one day with the period -->
+                <propertyFilter id="fromFilter"
+                                dataLoader="absencesDl" property="lastDay"
+                                operation="GREATER_OR_EQUAL"
+                                labelVisible="false">
+                    <datePicker id="fromFilterField"
+                                datatype="localDate"
+                                placeholder="msg://fromFilter.placeholder"
+                                clearButtonVisible="true"
+                                width="100%"/>
+                </propertyFilter>
+                <propertyFilter id="toFilter"
+                                dataLoader="absencesDl" property="firstDay"
+                                operation="LESS_OR_EQUAL"
+                                labelVisible="false">
+                    <datePicker id="toFilterField"
+                                datatype="localDate"
+                                placeholder="msg://toFilter.placeholder"
+                                clearButtonVisible="true"
+                                width="100%"/>
+                </propertyFilter>
+            </gridLayout>
+
+            <hbox id="buttonsPanel" classNames="buttons-panel">
+                <button id="createBtn" action="absencesDataGrid.create"/>
+                <button id="editBtn" action="absencesDataGrid.edit"/>
+                <button id="removeBtn" action="absencesDataGrid.remove"/>
+                <simplePagination id="pagination" dataLoader="absencesDl"/>
+            </hbox>
+            <dataGrid id="absencesDataGrid"
+                      width="100%"
+                      minHeight="20em"
+                      dataContainer="absencesDc"
+                      selectionMode="MULTI">
+                <actions>
+                    <action id="create" type="list_create"/>
+                    <action id="edit" type="list_edit"/>
+                    <action id="remove" type="list_remove"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="user" autoWidth="true"/>
+                    <column property="type" autoWidth="true"/>
+                    <column key="dates" header="msg://datesColumn.header" autoWidth="true" flexGrow="0"/>
+                    <column key="days" header="msg://daysColumn.header" autoWidth="true" flexGrow="0"/>
+                    <column property="comment" flexGrow="2">
+                        <popoverRenderer/>
+                    </column>
+                </columns>
+            </dataGrid>
+        </vbox>
+        <hbox id="lookupActions" visible="false"
+              classNames="footer-panel">
+            <button id="selectBtn" action="selectAction"/>
+            <button id="discardBtn" action="discardAction"/>
+        </hbox>
+    </layout>
+</view>

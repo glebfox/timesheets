@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://absenceDetailView.title"
+      focusComponent="form">
+    <data>
+        <instance id="absenceDc"
+                  class="com.glebfox.timesheets.entity.absence.Absence">
+            <!-- deletedDate marks a deleted type with the type field's helper -->
+            <fetchPlan extends="_local">
+                <property name="user" fetchPlan="_instance_name"/>
+                <property name="type" fetchPlan="_instance_name">
+                    <property name="deletedDate"/>
+                </property>
+            </fetchPlan>
+            <loader id="absenceDl"/>
+        </instance>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close"/>
+    </actions>
+    <layout padding="false" expand="form" alignItems="STRETCH">
+        <formLayout id="form"
+                    dataContainer="absenceDc"
+                    classNames="margin-inline-m">
+            <responsiveSteps>
+                <responsiveStep minWidth="0" columns="1"/>
+            </responsiveSteps>
+
+            <entityComboBox id="userField" property="user">
+                <!-- Inactive users included -->
+                <itemsQuery class="com.glebfox.timesheets.entity.user.User"
+                            searchStringFormat="(?i)%${inputString}%"
+                            escapeValueForLike="true">
+                    <query>
+                        <![CDATA[select e from ts_User e
+                                    where e.username like :searchString escape '\'
+                                        or e.firstName like :searchString escape '\'
+                                        or e.lastName like :searchString escape '\'
+                                    order by e.username asc]]>
+                    </query>
+                </itemsQuery>
+                <actions>
+                    <action id="entityLookup" type="entity_lookup"/>
+                </actions>
+            </entityComboBox>
+            <entityComboBox id="typeField" property="type">
+                <itemsQuery class="com.glebfox.timesheets.entity.absence.AbsenceType"
+                            searchStringFormat="(?i)%${inputString}%"
+                            escapeValueForLike="true">
+                    <query>
+                        <![CDATA[select e from ts_AbsenceType e
+                                    where e.name like :searchString escape '\'
+                                    order by e.name]]>
+                    </query>
+                </itemsQuery>
+                <actions>
+                    <action id="entityLookup" type="entity_lookup"/>
+                </actions>
+            </entityComboBox>
+            <!-- Two date pickers joined by a dash read as one field, with the range summary as its helper -->
+            <vbox id="datesBox" padding="false" spacing="false">
+                <hbox id="datesRangeBox" width="100%" alignItems="BASELINE">
+                    <!-- The form's container reaches it through the boxes at runtime; the IDE's check needs it named -->
+                    <datePicker id="firstDayField"
+                                dataContainer="absenceDc"
+                                property="firstDay"
+                                label="msg://firstDayField.label"
+                                requiredMessage="msg://firstDayField.requiredMessage"
+                                width="100%" minWidth="0"/>
+                    <span id="datesSeparator" text="msg://datesSeparator.text"/>
+                    <!-- Not bound: the view sets the absence's last day from it, or from the first day when empty -->
+                    <datePicker id="lastDayField"
+                                datatype="localDate"
+                                ariaLabel="msg://lastDayField.ariaLabel"
+                                width="100%" minWidth="0"/>
+                </hbox>
+                <span id="rangeSummary" classNames="range-summary"/>
+            </vbox>
+            <textArea id="commentField" property="comment"/>
+        </formLayout>
+        <hbox id="detailActions"
+              classNames="footer-panel">
+            <button id="saveAndCloseBtn" action="saveAction"/>
+            <button id="closeBtn" action="closeAction"/>
+        </hbox>
+    </layout>
+</view>

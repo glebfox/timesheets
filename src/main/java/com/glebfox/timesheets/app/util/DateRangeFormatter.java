@@ -26,8 +26,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 /**
- * Formats a range of days, both ends included, in the current user's locale: the number of days, a summary that
- * names the number and the weekdays, and the dates.
+ * Counts the days of a range, both ends included, and formats the range in the current user's locale: the number
+ * of days, a summary that names the number and the weekdays, and the dates.
  */
 @Component("ts_DateRangeFormatter")
 public class DateRangeFormatter {
@@ -42,6 +42,16 @@ public class DateRangeFormatter {
         this.messages = messages;
         this.datatypeFormatter = datatypeFormatter;
         this.currentAuthentication = currentAuthentication;
+    }
+
+    /**
+     * Returns the number of days of a range, both ends included: 1 for one day.
+     *
+     * @param firstDay the first day of the range
+     * @param lastDay  the last day of the range, not before the first one
+     */
+    public long countDays(LocalDate firstDay, LocalDate lastDay) {
+        return ChronoUnit.DAYS.between(firstDay, lastDay) + 1;
     }
 
     /**
@@ -66,7 +76,7 @@ public class DateRangeFormatter {
         }
 
         Locale locale = currentAuthentication.getLocale();
-        long days = ChronoUnit.DAYS.between(firstDay, lastDay) + 1;
+        long days = countDays(firstDay, lastDay);
         String daysText = formatDays(days, locale);
         if (days == 1) {
             return messages.formatMessage(DateRangeFormatter.class, "dateRange.oneDay", locale,

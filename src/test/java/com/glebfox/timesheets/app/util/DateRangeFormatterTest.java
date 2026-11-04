@@ -50,6 +50,13 @@ public class DateRangeFormatterTest {
     SystemAuthenticator systemAuthenticator;
 
     @Test
+    void daysAreCountedWithBothEnds() {
+        assertThat(dateRangeFormatter.countDays(MAR_2_2026, MAR_13_2026)).isEqualTo(12);
+        assertThat(dateRangeFormatter.countDays(MAR_2_2026, MAR_2_2026)).isEqualTo(1);
+        assertThat(dateRangeFormatter.countDays(DEC_31_2026, JAN_1_2027)).isEqualTo(2);
+    }
+
+    @Test
     void daysTakeTheFormOfTheirCount() {
         assertThat(dateRangeFormatter.formatDays(14)).isEqualTo("14 days");
         assertThat(dateRangeFormatter.formatDays(1)).isEqualTo("1 day");

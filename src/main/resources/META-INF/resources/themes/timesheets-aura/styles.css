@@ -16,7 +16,6 @@
 
 @import url('view/calendar-view.css');
 @import url('view/client-list-view.css');
-@import url('view/holiday-calendar-days-add-view.css');
 @import url('view/login-view.css');
 @import url('view/main-view.css');
 @import url('view/project-detail-view.css');
@@ -42,6 +41,7 @@
 @import url('component/tooltip.css');
 
 @import url('app/popover-renderer.css');
+@import url('app/range-summary.css');
 @import url('app/time-entry-grid.css');
 @import url('app/user-renderer.css');
 @import url('app/util.css');

@@ -63,6 +63,7 @@ public class MenuIconsTest {
             entry("ts_WorkSchedule.list", "work-schedules"), entry("ts_HolidayCalendar.list", "holiday-calendars"),
             entry("ts_AbsenceType.list", "absence-types"),
             entry("administration", "administration"), entry("ts_User.list", "users"),
+            entry("ts_Absence.list", "absences"),
             entry("security", "security"), entry("sec_ResourceRoleModel.list", "resource-roles"),
             entry("sec_RowLevelRoleModel.list", "row-level-roles"), entry("datatools", "data-tools"),
             entry("datatl_entityInspectorListView", "entity-inspector"),
