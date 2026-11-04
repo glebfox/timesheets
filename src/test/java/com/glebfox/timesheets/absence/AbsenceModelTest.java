@@ -26,9 +26,11 @@ import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.SaveContext;
+import io.jmix.core.validation.group.UiCrossFieldChecks;
 import io.jmix.data.PersistenceHints;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -51,6 +54,8 @@ public class AbsenceModelTest {
     DataManager dataManager;
     @Autowired
     MetadataTools metadataTools;
+    @Autowired
+    Validator validator;
 
     List<Id<?>> createdIds = new ArrayList<>();
 
@@ -127,6 +132,40 @@ public class AbsenceModelTest {
         absence.setLastDay(LocalDate.of(2026, 3, 2));
 
         assertThat(metadataTools.getInstanceName(absence)).isEqualTo("02/03/2026 Vacation");
+    }
+
+    @Test
+    void instanceNameOfAnUnsavedAbsenceShowsOnlyTheDaysSet() {
+        AbsenceType vacation = dataManager.create(AbsenceType.class);
+        vacation.setName("Vacation");
+        Absence absence = dataManager.create(Absence.class);
+        absence.setType(vacation);
+        absence.setFirstDay(LocalDate.of(2026, 3, 2));
+
+        assertThat(metadataTools.getInstanceName(absence)).isEqualTo("02/03/2026 Vacation");
+
+        absence.setFirstDay(null);
+        absence.setLastDay(LocalDate.of(2026, 3, 13));
+
+        assertThat(metadataTools.getInstanceName(absence)).isEqualTo("13/03/2026 Vacation");
+
+        absence.setLastDay(null);
+
+        assertThat(metadataTools.getInstanceName(absence)).isEqualTo("Vacation");
+    }
+
+    @Test
+    void lastDayBeforeFirstDayFailsTheCrossFieldChecksOfAnEditor() {
+        Absence absence = dataManager.create(Absence.class);
+        absence.setFirstDay(LocalDate.of(2026, 11, 10));
+        absence.setLastDay(LocalDate.of(2026, 11, 9));
+
+        // The group a detail view validates the whole entity with on save
+        Set<ConstraintViolation<Absence>> violations = validator.validate(absence, UiCrossFieldChecks.class);
+
+        assertThat(violations)
+                .extracting(ConstraintViolation::getMessage)
+                .containsExactly("The last day must not be before the first day");
     }
 
     @AfterEach

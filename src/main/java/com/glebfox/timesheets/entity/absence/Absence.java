@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.entity.absence;
 
+import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.DeletePolicy;
 import io.jmix.core.MetadataTools;
@@ -26,7 +27,6 @@ import io.jmix.core.entity.annotation.OnDeleteInverse;
 import io.jmix.core.metamodel.annotation.DependsOnProperties;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.validation.group.UiCrossFieldChecks;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -34,7 +34,6 @@ import jakarta.validation.groups.Default;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Objects;
 import java.util.UUID;
 
 // Default refuses a DataManager save; UiCrossFieldChecks lets a detail view's save show the violation as a message
@@ -161,10 +160,12 @@ public class Absence {
     @InstanceName
     @DependsOnProperties({"firstDay", "lastDay", "type"})
     public String getInstanceName(MetadataTools metadataTools,
-                                  DatatypeFormatter datatypeFormatter) {
-        String days = Objects.equals(firstDay, lastDay)
-                ? datatypeFormatter.formatLocalDate(firstDay)
-                : datatypeFormatter.formatLocalDate(firstDay) + " – " + datatypeFormatter.formatLocalDate(lastDay);
-        return String.format("%s %s", days, metadataTools.format(type));
+                                  DateRangeFormatter dateRangeFormatter) {
+        // An unsaved absence may lack a day: the day that is set reads as one date
+        LocalDate first = firstDay != null ? firstDay : lastDay;
+        String days = first != null
+                ? dateRangeFormatter.formatDates(first, lastDay != null ? lastDay : first)
+                : "";
+        return (days + " " + metadataTools.format(type)).trim();
     }
 }
