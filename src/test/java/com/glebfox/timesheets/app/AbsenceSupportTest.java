@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(AuthenticatedAsAdmin.class)
 public class AbsenceSupportTest {
 
+    static final LocalDate FEB_25 = LocalDate.of(2026, 2, 25);
     static final LocalDate MAR_2 = LocalDate.of(2026, 3, 2);
     static final LocalDate MAR_10 = LocalDate.of(2026, 3, 10);
     static final LocalDate MAR_13 = LocalDate.of(2026, 3, 13);
@@ -70,6 +71,16 @@ public class AbsenceSupportTest {
         Absence earlier = saveAbsence(user, type, MAR_2, MAR_13);
 
         assertThat(findOverlapping(user, MAR_10, MAR_20, null)).containsExactly(earlier.getId(), later.getId());
+    }
+
+    @Test
+    void sharingOneEdgeDayOverlaps() {
+        User user = saveUser();
+        Absence absence = saveAbsence(user, saveType(), MAR_2, MAR_13);
+
+        // Both ends of each range count: its last day is the other's first, or its first day the other's last
+        assertThat(findOverlapping(user, MAR_13, MAR_20, null)).containsExactly(absence.getId());
+        assertThat(findOverlapping(user, FEB_25, MAR_2, null)).containsExactly(absence.getId());
     }
 
     @Test

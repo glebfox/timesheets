@@ -66,6 +66,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -181,6 +182,12 @@ public class AbsenceViewsUiTest {
         // An absence that starts after the period is left out, one that started before it and runs into it is kept
         assertThat(listedIds(grid)).containsExactly(sharing.getId());
         assertThat(listedIds(grid)).doesNotContain(before.getId());
+
+        applyFilter("fromFilter", MAR_13);
+        applyFilter("toFilter", MAR_14);
+
+        // Both ends of the period count: an absence that ends on its first day, and one that starts on its last day
+        assertThat(listedIds(grid)).containsExactly(after.getId(), sharing.getId());
     }
 
     @Test
@@ -194,6 +201,58 @@ public class AbsenceViewsUiTest {
         applyFilter("typeFilter", vacation);
 
         assertThat(listedIds(grid)).containsExactly(ofVacation.getId());
+    }
+
+    @Test
+    void createAndEditOpenTheEditorAsADialogAndTheListShowsTheSave() {
+        User user = saveUser();
+        AbsenceType type = saveType(uniqueName());
+        DataGrid<Absence> grid = openListGrid(user);
+        AbsenceListView list = UiTestUtils.getCurrentView();
+
+        AbsenceDetailView creator = create(grid);
+
+        // A dialog over the list, not a navigation away from it
+        assertThat(isOpen(creator)).isTrue();
+        fillMar10To20(creator, user, type);
+        save(creator);
+
+        assertThat(isOpen(creator)).isFalse();
+        assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(list);
+        Absence created = loadAbsences(user).getFirst();
+        assertThat(listedIds(grid)).containsExactly(created.getId());
+
+        AbsenceDetailView editor = edit(grid, created);
+
+        assertThat(isOpen(editor)).isTrue();
+        commentField(editor).setValue("Booked in January");
+        save(editor);
+
+        assertThat(isOpen(editor)).isFalse();
+        assertThat(listed(grid, created).getComment()).isEqualTo("Booked in January");
+        assertThat(cellText(grid, "dates", listed(grid, created))).isEqualTo("10/03/2026 – 20/03/2026");
+    }
+
+    @Test
+    void closingTheDialogWithAChangeAsksFirst() {
+        User user = saveUser();
+
+        AbsenceDetailView editor = openNewEditor();
+        userField(editor).setValue(user);
+
+        // How Esc and the dialog's close button close it
+        editor.closeWithDefaultAction();
+
+        assertThat(isOpen(editor)).isTrue();
+        dialogButton(unsavedChangesQuestion(), "cancel").click();
+        assertThat(isOpen(editor)).isTrue();
+
+        UiTestUtils.<JmixButton>getComponent(editor, "closeBtn").click();
+
+        assertThat(isOpen(editor)).isTrue();
+        dialogButton(unsavedChangesQuestion(), "close").click();
+        assertThat(isOpen(editor)).isFalse();
+        assertThat(loadAbsences(user)).isEmpty();
     }
 
     @Test
@@ -234,14 +293,30 @@ public class AbsenceViewsUiTest {
         assertThat(firstDayField(editor).getErrorMessage())
                 .isEqualTo("Overlaps an absence: 02/03/2026 – 13/03/2026 Vacation");
         assertThat(lastDayField(editor).isInvalid()).isTrue();
-        assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(editor);
+        assertThat(isOpen(editor)).isTrue();
         assertThat(loadAbsences(user)).hasSize(1);
 
-        // A changed date clears the refusal
+        // A changed last day clears the refusal
         lastDayField(editor).setTypedValue(MAR_19);
 
         assertThat(firstDayField(editor).isInvalid()).isFalse();
         assertThat(lastDayField(editor).isInvalid()).isFalse();
+
+        // and so does a changed first day, after the range is refused again
+        save(editor);
+        assertThat(firstDayField(editor).isInvalid()).isTrue();
+        assertThat(lastDayField(editor).isInvalid()).isTrue();
+
+        firstDayField(editor).setTypedValue(MAR_14);
+
+        assertThat(firstDayField(editor).isInvalid()).isFalse();
+        assertThat(lastDayField(editor).isInvalid()).isFalse();
+
+        save(editor);
+
+        assertThat(isOpen(editor)).isFalse();
+        assertThat(loadAbsences(user)).extracting(Absence::getFirstDay, Absence::getLastDay)
+                .containsExactly(tuple(MAR_2, MAR_13), tuple(MAR_14, MAR_19));
     }
 
     @Test
@@ -293,7 +368,7 @@ public class AbsenceViewsUiTest {
         // The picker's minimum refuses the day with the framework's message, before the entity is checked
         assertThat(lastDayField(editor).isInvalid()).isTrue();
         assertThat(lastDayField(editor).getErrorMessage()).isEqualTo("Value should be greater than '10/03/2026'");
-        assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(editor);
+        assertThat(isOpen(editor)).isTrue();
         Absence reloaded = dataManager.load(Id.of(saved)).one();
         assertThat(reloaded.getFirstDay()).isEqualTo(MAR_2);
         assertThat(reloaded.getLastDay()).isEqualTo(MAR_13);
@@ -399,22 +474,41 @@ public class AbsenceViewsUiTest {
     }
 
     private AbsenceDetailView openNewEditor() {
-        DataGrid<Absence> grid = openListGrid();
+        return create(openListGrid());
+    }
+
+    private static AbsenceDetailView create(DataGrid<Absence> grid) {
         Action create = Objects.requireNonNull(grid.getAction("create"));
 
         assertThat(create.isEnabled()).isTrue();
         create.actionPerform(grid);
-        return UiTestUtils.getCurrentView();
+        return openedEditor();
     }
 
     private AbsenceDetailView openEditor(User user, Absence absence) {
-        DataGrid<Absence> grid = openListGrid(user);
+        return edit(openListGrid(user), absence);
+    }
+
+    private static AbsenceDetailView edit(DataGrid<Absence> grid, Absence absence) {
         Action edit = Objects.requireNonNull(grid.getAction("edit"));
 
         grid.select(listed(grid, absence));
         assertThat(edit.isEnabled()).isTrue();
         edit.actionPerform(grid);
-        return UiTestUtils.getCurrentView();
+        return openedEditor();
+    }
+
+    /**
+     * Returns the absence editor that the list opened as a dialog over itself.
+     */
+    private static AbsenceDetailView openedEditor() {
+        View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
+        assertThat(dialog).as("the absence editor opened as a dialog").isInstanceOf(AbsenceDetailView.class);
+        return (AbsenceDetailView) dialog;
+    }
+
+    private static boolean isOpen(AbsenceDetailView editor) {
+        return UiTestUtils.getOpenedViewDialogs().contains(editor);
     }
 
     private void removeThroughTheTypeList(AbsenceType type) {
@@ -432,7 +526,7 @@ public class AbsenceViewsUiTest {
         remove.actionPerform(grid);
         DialogInfo confirmation = Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(),
                 "a remove confirmation");
-        yesButton(confirmation).click();
+        dialogButton(confirmation, "yes").click();
 
         assertThat(dataManager.load(Id.of(type)).optional()).isEmpty();
     }
@@ -509,11 +603,15 @@ public class AbsenceViewsUiTest {
         return listed.get();
     }
 
-    private static Button yesButton(DialogInfo dialog) {
+    private static DialogInfo unsavedChangesQuestion() {
+        return Objects.requireNonNull(UiTestUtils.getLastOpenedDialog(), "a dialog about the unsaved changes");
+    }
+
+    private static Button dialogButton(DialogInfo dialog, String id) {
         return dialog.getButtons().stream()
-                .filter(button -> "yes".equals(button.getId().orElse(null)))
+                .filter(button -> id.equals(button.getId().orElse(null)))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("No 'yes' button in the dialog"));
+                .orElseThrow(() -> new AssertionError("No '" + id + "' button in the dialog"));
     }
 
     private static String uniqueName() {

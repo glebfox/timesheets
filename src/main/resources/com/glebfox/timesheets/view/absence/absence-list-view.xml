@@ -146,9 +146,19 @@
                       minHeight="20em"
                       dataContainer="absencesDc"
                       selectionMode="MULTI">
+                <!-- The editor opens as a 480px dialog over the list, as the user chose for absences, unlike
+                     the other lists, whose editors open by navigation -->
                 <actions>
-                    <action id="create" type="list_create"/>
-                    <action id="edit" type="list_edit"/>
+                    <action id="create" type="list_create">
+                        <properties>
+                            <property name="openMode" value="DIALOG"/>
+                        </properties>
+                    </action>
+                    <action id="edit" type="list_edit">
+                        <properties>
+                            <property name="openMode" value="DIALOG"/>
+                        </properties>
+                    </action>
                     <action id="remove" type="list_remove"/>
                 </actions>
                 <columns resizable="true">
