@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+@import url('view/absence-list-view.css');
 @import url('view/calendar-view.css');
 @import url('view/client-list-view.css');
 @import url('view/login-view.css');

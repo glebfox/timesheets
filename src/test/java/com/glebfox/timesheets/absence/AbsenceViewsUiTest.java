@@ -172,6 +172,12 @@ public class AbsenceViewsUiTest {
         Absence after = saveAbsence(user, type, MAR_14, MAR_20);
         DataGrid<Absence> grid = openListGrid(user);
 
+        // The two dates of the period keep their names when a date hides their placeholders
+        assertThat(UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(UiTestUtils.getCurrentView(),
+                "fromFilterField").getAriaLabel()).hasValue("From");
+        assertThat(UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(UiTestUtils.getCurrentView(),
+                "toFilterField").getAriaLabel()).hasValue("To");
+
         applyFilter("fromFilter", MAR_10);
 
         // An absence that ends before the period is left out, one that starts in it or later is kept
