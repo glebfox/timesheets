@@ -57,12 +57,12 @@
     </actions>
     <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
         <vbox id="contentBox" classNames="overflow-auto">
-            <!-- Not a gridLayout, whose columns are all of one width: the period keeps the width of its two dates,
-                 while the user and type filters grow, so the four share one row on a wide screen -->
-            <hbox id="filterLayout"
-                  width="100%"
-                  wrap="true"
-                  classNames="absence-list-view-filters">
+            <!-- Wider columns than the other lists' filters, as the period's cell holds two filled dates;
+                 never wider than the list, so a phone's screen takes one column -->
+            <gridLayout id="filterLayout"
+                        width="100%"
+                        columnMinWidth="min(22rem, 100%)"
+                        gap="var(--ts-filter-layout-column-gap)">
                 <propertyFilter id="userFilter"
                                 dataLoader="absencesDl" property="user"
                                 operation="EQUAL"
@@ -83,7 +83,8 @@
                             </query>
                         </itemsQuery>
                         <actions>
-                            <action id="clear" type="entity_clear"/>
+                            <action id="entityLookup" type="entity_lookup"/>
+                            <action id="entityClear" type="entity_clear"/>
                         </actions>
                         <prefix>
                             <icon icon="gravity-ui:magnifier"/>
@@ -108,7 +109,8 @@
                             </query>
                         </itemsQuery>
                         <actions>
-                            <action id="clear" type="entity_clear"/>
+                            <action id="entityLookup" type="entity_lookup"/>
+                            <action id="entityClear" type="entity_clear"/>
                         </actions>
                         <prefix>
                             <icon icon="gravity-ui:magnifier"/>
@@ -116,37 +118,37 @@
                     </entityComboBox>
                 </propertyFilter>
                 <!-- From and To together keep the absences that share at least one day with the period. They read
-                     as one range, as the editor's dates do: two dates joined by a dash, each picker at its default
-                     width, which holds a date and its buttons, and narrower only on a screen narrower than both -->
+                     as one range, as the editor's dates do: two dates joined by a dash, sharing the cell evenly -->
                 <hbox id="periodFilterBox"
-                      alignItems="BASELINE"
-                      minWidth="0"
-                      classNames="absence-list-view-period-filter">
+                      width="100%"
+                      alignItems="BASELINE">
                     <propertyFilter id="fromFilter"
                                     dataLoader="absencesDl" property="lastDay"
                                     operation="GREATER_OR_EQUAL"
                                     labelVisible="false"
-                                    minWidth="0">
+                                    width="100%" minWidth="0">
                         <datePicker id="fromFilterField"
                                     datatype="localDate"
                                     placeholder="msg://fromFilter.placeholder"
                                     ariaLabel="msg://fromFilterField.ariaLabel"
-                                    clearButtonVisible="true"/>
+                                    clearButtonVisible="true"
+                                    width="100%"/>
                     </propertyFilter>
                     <span id="periodFilterSeparator" text="msg://datesSeparator.text"/>
                     <propertyFilter id="toFilter"
                                     dataLoader="absencesDl" property="firstDay"
                                     operation="LESS_OR_EQUAL"
                                     labelVisible="false"
-                                    minWidth="0">
+                                    width="100%" minWidth="0">
                         <datePicker id="toFilterField"
                                     datatype="localDate"
                                     placeholder="msg://toFilter.placeholder"
                                     ariaLabel="msg://toFilterField.ariaLabel"
-                                    clearButtonVisible="true"/>
+                                    clearButtonVisible="true"
+                                    width="100%"/>
                     </propertyFilter>
                 </hbox>
-            </hbox>
+            </gridLayout>
 
             <hbox id="buttonsPanel" classNames="buttons-panel">
                 <button id="createBtn" action="absencesDataGrid.create"/>

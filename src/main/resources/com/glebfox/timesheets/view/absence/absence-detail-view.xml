@@ -61,6 +61,7 @@
                 </itemsQuery>
                 <actions>
                     <action id="entityLookup" type="entity_lookup"/>
+                    <action id="entityClear" type="entity_clear"/>
                 </actions>
             </entityComboBox>
             <entityComboBox id="typeField" property="type">
@@ -75,6 +76,7 @@
                 </itemsQuery>
                 <actions>
                     <action id="entityLookup" type="entity_lookup"/>
+                    <action id="entityClear" type="entity_clear"/>
                 </actions>
             </entityComboBox>
             <!-- Two date pickers joined by a dash read as one field, with the range summary as its helper -->
@@ -96,7 +98,8 @@
                 </hbox>
                 <span id="rangeSummary" classNames="range-summary"/>
             </vbox>
-            <textArea id="commentField" property="comment"/>
+            <textArea id="commentField" property="comment"
+                      minRows="5" maxRows="5"/>
         </formLayout>
         <hbox id="detailActions"
               classNames="footer-panel">

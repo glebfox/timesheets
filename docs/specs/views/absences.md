@@ -16,11 +16,11 @@ The absence list and the absence editor, under the Administration menu after Use
 
 Filters:
 
-- **User** — a drop-down of users, inactive ones included, searched by username, first name, or last name, case-insensitively.
-- **Type** — a drop-down of the non-deleted types, searched by name.
+- **User** — a drop-down of users, inactive ones included, searched by username, first name, or last name, case-insensitively, with a picker that opens the [user list](users.md#users) and a button that clears it.
+- **Type** — a drop-down of the non-deleted types, searched by name, with a picker that opens the [absence type list](settings.md#absence-types) and a button that clears it.
 - **Period** — a From and a To date side by side, joined by a dash, each named "From" or "To" for screen readers, and either optional. They keep every absence sharing at least one day with the period, both of its ends included: an absence that ends on From or starts on To is kept.
 
-The four filters share one row on a wide screen, as at 1440px; on a narrower one the period takes a row of its own, under the user and type filters.
+The user, type, and period filters take columns of one width: three in a row on a wide screen, as at 1440px, two on a narrower one, as at 1280px, and one on a phone. The period's two dates share its column evenly.
 
 The filters and pagination are kept when the browser page is reloaded; opening the screen again, or returning to it with the browser's back or forward button, starts them empty.
 
@@ -30,10 +30,10 @@ Actions: Create, Edit, and Remove. Create and Edit open the [absence editor](#ab
 
 `absences/:id`, titled "Absence", a 480px dialog when opened from the list.
 
-- **User** — required: a drop-down of users, inactive ones included, searched by username, first name, or last name, case-insensitively, with a picker that opens the [user list](users.md#users).
-- **Type** — required: a drop-down of the non-deleted types, searched by name, with a picker that opens the [absence type list](settings.md#absence-types). An absence of a deleted type shows that type with the helper "This type is deleted" and saves as it is; choosing another type drops the helper.
+- **User** — required: a drop-down of users, inactive ones included, searched by username, first name, or last name, case-insensitively, with a picker that opens the [user list](users.md#users) and a button that clears it.
+- **Type** — required: a drop-down of the non-deleted types, searched by name, with a picker that opens the [absence type list](settings.md#absence-types) and a button that clears it. An absence of a deleted type shows that type with the helper "This type is deleted" and saves as it is; choosing another type drops the helper.
 - **Dates** — required: the first day, a dash, and an optional last day, whose picker offers no day before the first and, while the last day is empty, opens at the first day's month the first time it opens in the editor; opened again, it keeps that month, even after the first day changes. A line under them names the range as it changes, such as "14 days, Monday to Sunday" («14 дней, с понедельника по воскресенье»), or "1 day, Monday" («1 день, понедельник») for one day. An empty last day saves a one-day absence, and a one-day absence opens with its last day empty, so it stays one day when its first day changes. A last day typed before the first is refused on the last day's field with the framework's message, which names the first day, such as "Value should be greater than '10/03/2026'". There is no limit on the length. An empty first day is marked "Dates required" («Заполните поле "Даты"»).
-- **Comment** — a plain text area.
+- **Comment** — a plain text area, five rows tall.
 
 Saving is refused, with the dates marked, when the range shares a day with another non-deleted absence of the same user, whatever its type, a deleted type included: "Overlaps an absence: 02/03/2026 – 13/03/2026 Vacation" («Пересекается с отсутствием: …»), naming every such absence. A range that starts the day after another absence ends, or ends the day before it starts, does not overlap it. The check sees all of the user's absences, whatever the saving user may read. Changing the user or either date clears the refusal.
 
@@ -41,7 +41,7 @@ Closing the editor with unsaved changes, with Cancel, Esc, or the dialog's close
 
 ## Not covered
 
-- How the screens look, in English and Russian, light and dark: the list's columns, the Days forms, the comment popover, and the Deleted badge; the filters' rows, four in one at 1440px and the period on its own at 1280 and 375px, with no horizontal scroll; the editor as a dialog, its range line, and the last day's picker greying out the days before the first. Checked live on 2026-11-04 only. The UI tests check the list's order, renderers, and cell texts in English, the badge's text and style, the period dates' screen reader names, and the last day's minimum; the Russian forms of Days and of the range line are tested in `DateRangeFormatterTest`.
+- How the screens look, in English and Russian, light and dark: the list's columns, the Days forms, the comment popover, and the Deleted badge; the filters' columns, three at 1440px, two at 1280px, and one at 375px, with no horizontal scroll, where a filled date fits at 1440 and 1280px but its last digits are cut at 375px; the editor as a dialog, its range line, and the last day's picker greying out the days before the first. Checked live on 2026-11-04 only. The UI tests check the list's order, renderers, and cell texts in English, the badge's text and style, the period dates' screen reader names, and the last day's minimum; the Russian forms of Days and of the range line are tested in `DateRangeFormatterTest`.
 - The month the last day's picker opens at: the UI test checks only the month the server asks it to open at. Its first opening at the first day's month, and its keeping that month after a later change of the first day, were seen live on 2026-11-04.
 - Remove in the absence list: no test; removing one absence with the usual confirmation was seen live on 2026-11-04.
 - The "Dates required" mark of an empty first day: no test, and not checked live.
