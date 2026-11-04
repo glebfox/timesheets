@@ -85,6 +85,10 @@ public class CalendarView extends StandardView {
      * The id of the calendar's data provider of the day marks, built by {@link CalendarSupport#createDayMarks}.
      */
     public static final String DAY_MARKS_PROVIDER_ID = "dayMarksProvider";
+    /**
+     * The id of the calendar's data provider of the absence bars, built by {@link CalendarSupport#createAbsenceEvents}.
+     */
+    public static final String ABSENCES_PROVIDER_ID = "absencesProvider";
 
     private static final Logger log = LoggerFactory.getLogger(CalendarView.class);
 
@@ -146,6 +150,7 @@ public class CalendarView extends StandardView {
     private Span monthName;
     private Span monthYear;
     private ListCalendarDataProvider dayMarksProvider;
+    private ListCalendarDataProvider absencesProvider;
 
     private YearMonth displayedMonth;
     private DayOfWeek firstDayOfWeek;
@@ -183,6 +188,9 @@ public class CalendarView extends StandardView {
         // Added here: the descriptor declares only container and callback data providers
         dayMarksProvider = new ListCalendarDataProvider(DAY_MARKS_PROVIDER_ID);
         calendar.addDataProvider(dayMarksProvider);
+
+        absencesProvider = new ListCalendarDataProvider(ABSENCES_PROVIDER_ID);
+        calendar.addDataProvider(absencesProvider);
     }
 
     @Install(to = "timeEntriesDl", target = Target.DATA_LOADER)
@@ -209,6 +217,13 @@ public class CalendarView extends StandardView {
 
             CalendarEvent calendarEvent = context.getCalendarEvent();
             DayCell dayCell = context.getDayCell();
+
+            // The add-on reports a right-click on a bar across several days with the first day of the bar's row,
+            // not the day under the cursor, so an Add there would create the entry on another date: the bar
+            // offers nothing, while the rest of each of its days offers Add
+            if (CalendarSupport.isAbsenceEvent(calendarEvent)) {
+                return false;
+            }
 
             // The add-on reports a right-click on a background event, such as a day mark, as a right-click
             // on an event, along with the day cell; on a day mark the day cell's menu is offered
@@ -302,16 +317,20 @@ public class CalendarView extends StandardView {
     }
 
     private void loadWorkPlan() {
-        Preconditions.checkState(gridStartDate != null && gridEndDate != null,
+        Preconditions.checkState(gridStartDate != null && gridEndDate != null && displayedMonth != null,
                 "The calendar has not reported the dates it shows");
 
         // The plan of the user whose entries the calendar shows
         User user = (User) currentUserSubstitution.getEffectiveUser();
         workPlan = workPlanSupport.loadWorkPlan(user, gridStartDate, gridEndDate);
 
-        // The marks of the new plan replace the previous ones: the provider has no method to set its items
+        // The marks and bars of the new plan replace the previous ones: the provider has no method to set its items
         dayMarksProvider.removeAllItems();
         dayMarksProvider.addItems(calendarSupport.createDayMarks(workPlan, gridStartDate, gridEndDate));
+
+        absencesProvider.removeAllItems();
+        absencesProvider.addItems(
+                calendarSupport.createAbsenceEvents(workPlan, gridStartDate, gridEndDate, displayedMonth));
     }
 
     private void updateHoursSummary() {
@@ -461,7 +480,7 @@ public class CalendarView extends StandardView {
 
     @Subscribe("calendar")
     private void onCalendarEventClick(final EventClickEvent event) {
-        // A click on a day mark does nothing
+        // A click on a day mark or an absence bar does nothing
         if (!isTimeEntry(event.getCalendarEvent())) {
             return;
         }

@@ -310,7 +310,9 @@
 
 /* Events */
 
-.time-entry {
+/* An absence's bar has the entries' font size, so it takes about the height of an entry row */
+.time-entry,
+.calendar-view-absence {
     font-size: round(var(--aura-font-size-m) * 0.8, 0.0625rem); /* less than --aura-font-size-xs */
 }
 
@@ -336,6 +338,25 @@
     border-color: var(--aura-neutral);
 }
 
+/* An absence's bar takes the purple that nothing else on the calendar uses: a light fill, and Aura's purple
+   text, which keeps its contrast on it in the light and dark themes. The bar does nothing on a click, so it
+   drops the pointer and the darkening that Jmix gives a block event on hover */
+.calendar-view .fc .calendar-view-absence {
+    --fc-event-bg-color: color-mix(in srgb, var(--aura-purple) 20%, transparent);
+    --fc-event-border-color: transparent;
+    --fc-event-text-color: var(--aura-purple-text);
+    font-weight: var(--aura-font-weight-medium);
+}
+
+.calendar-view .fc .calendar-view-absence:hover {
+    cursor: default;
+    filter: none;
+}
+
+.calendar-view .fc .calendar-view-absence .fc-event-title {
+    text-overflow: ellipsis;
+}
+
 /* Bottom Text */
 
 .jmix-day-cell-bottom-text.matching-time {
@@ -348,8 +369,7 @@
    keeps them under the day number. 1px is FullCalendar's own margin. The children are offset, not
    transformed: a transform would make each a stacking context under the day marks, which would then
    take the entries' clicks. Keyed on the view, whose every day has a total, not on the class Jmix gives
-   a cell with a bottom text: Jmix adds it after FullCalendar has measured the cell. The entries that
-   FullCalendar hides keep the absolute position it gives them */
+   a cell with a bottom text: Jmix adds it after FullCalendar has measured the cell */
 .calendar-view .fc .fc-daygrid-day-events {
     margin-top: calc(1px + var(--day-cell-bottom-text-height));
 }
@@ -358,6 +378,15 @@
 .calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-day-bottom {
     position: relative;
     top: calc(var(--day-cell-bottom-text-height) * -1);
+}
+
+/* A bar across several days, such as an absence's, is absolutely positioned in its row's first cell, at its
+   slot's top, which FullCalendar sets inline, so a top in a rule would lose to it. It is raised by as much
+   with a negative margin, which FullCalendar does not set on it; otherwise it would be drawn over the slot
+   below, while its own slot stayed empty. The entries that FullCalendar hides are absolutely positioned
+   too: raising them changes nothing, since they are not shown */
+.calendar-view .fc .fc-daygrid-day-events > .fc-daygrid-event-harness-abs {
+    margin-block-start: calc(var(--day-cell-bottom-text-height) * -1);
 }
 
 /* Day marks */
