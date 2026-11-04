@@ -1,6 +1,6 @@
 # Absence type
 
-Source: `entity/absence/AbsenceType.java`, `liquibase/changelog/2026/11/04-121000-08247a92.xml`
+Source: `entity/absence/AbsenceType.java`, `liquibase/changelog/2026/11/04-121000-08247a92.xml`, `demo/DemoDataLoader.java`
 
 A catalog entry classifying [absences](absence.md), such as "Vacation", "Sick leave", or "Day off". Types are managed in the [absence type screens](../views/settings.md#absence-types).
 

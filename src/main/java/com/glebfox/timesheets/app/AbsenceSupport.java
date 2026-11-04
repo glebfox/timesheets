@@ -63,8 +63,10 @@ public class AbsenceSupport {
                 .parameter("user", user)
                 .parameter("firstDay", firstDay)
                 .parameter("lastDay", lastDay)
-                // The type is read in a query of its own, which leaves deleted types in, so an absence of a deleted
-                // type is found and named (docs/guidelines/database.md)
+                // An absence of a deleted type is found and named whatever the fetch mode, as a fetched to-one is
+                // a left outer join with no soft deletion filter. In batch, it is found even if a condition naming
+                // the type by its id, which turns the fetch into a filtered inner join, is added later
+                // (docs/guidelines/database.md)
                 .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
                         .add("type", FetchPlan.INSTANCE_NAME, FetchMode.BATCH));
         if (excludedId != null) {

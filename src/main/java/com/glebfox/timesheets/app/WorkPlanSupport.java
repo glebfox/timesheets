@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 /**
  * Resolves the time a user is planned to work from their absences, their work schedule assignments,
  * the default work schedule, and the holiday calendars of those schedules, together with
- * the holiday calendar day that decides each date that has one.
+ * the holiday calendar day of each date that has one.
  */
 @Component("ts_WorkPlanSupport")
 public class WorkPlanSupport {
@@ -73,7 +73,7 @@ public class WorkPlanSupport {
      * @param user      the user to load the plan for
      * @param startDate the first day of the range (inclusive)
      * @param endDate   the end of the range (exclusive)
-     * @return the planned time of every day of the range, the holiday calendar day that decided it,
+     * @return the planned time of every day of the range, the holiday calendar day of each date that has one,
      * and the absences that share a day with the range
      */
     public WorkPlan loadWorkPlan(User user, LocalDate startDate, LocalDate endDate) {
@@ -121,8 +121,10 @@ public class WorkPlanSupport {
                 .parameter("user", user)
                 .parameter("startDate", startDate)
                 .parameter("endDate", endDate)
-                // The type is read in a query of its own, which leaves deleted types in, so an absence of a
-                // deleted type keeps its name (docs/guidelines/database.md)
+                // An absence of a deleted type stays in with its type's name whatever the fetch mode, as a fetched
+                // to-one is a left outer join with no soft deletion filter. In batch, it stays in even if a condition
+                // naming the type by its id, which turns the fetch into a filtered inner join, is added later
+                // (docs/guidelines/database.md)
                 .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
                         .add("type", FetchPlan.INSTANCE_NAME, FetchMode.BATCH))
                 .list().stream()

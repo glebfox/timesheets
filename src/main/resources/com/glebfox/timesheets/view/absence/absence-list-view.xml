@@ -21,9 +21,10 @@
     <data readOnly="true">
         <collection id="absencesDc"
                     class="com.glebfox.timesheets.entity.absence.Absence">
-            <!-- The user cell shows the avatar and the active flag. The type is read in a query of its own, which
-                 leaves deleted types in, so an absence of a deleted type stays listed (docs/guidelines/database.md);
-                 deletedDate marks it -->
+            <!-- The user cell shows the avatar and the active flag. An absence of a deleted type stays listed whatever
+                 the fetch mode, as a fetched to-one is a left outer join with no soft deletion filter; in batch, it
+                 stays listed even if a condition naming the type by its id, which turns the fetch into a filtered
+                 inner join, is added later (docs/guidelines/database.md). deletedDate marks it -->
             <fetchPlan extends="_local">
                 <property name="user" fetchPlan="_instance_name">
                     <property name="avatar"/>

@@ -27,11 +27,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The time a user is planned to work on each day of a date range, the holiday calendar day
- * that decided a date, if any, and the user's absences that share a day with the range.
+ * The time a user is planned to work on each day of a date range, the holiday calendar day of each date
+ * that has one, and the user's absences that share a day with the range.
  *
  * @param plannedTimeByDay the planned time of every day of the range, {@link WorkTime#ZERO} for a day off
- * @param holidayDayByDate the holiday calendar day that decided each date of the range that has one
+ * @param holidayDayByDate the holiday calendar day of each date of the range that has one, an absent date included
  * @param absences         the absences that share a day with the range, each whole, its days outside the range
  *                         included
  */
@@ -56,7 +56,8 @@ public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate,
      * Creates a plan without absences.
      *
      * @param plannedTimeByDay the planned time of every day of the range, {@link WorkTime#ZERO} for a day off
-     * @param holidayDayByDate the holiday calendar day that decided each date of the range that has one
+     * @param holidayDayByDate the holiday calendar day of each date of the range that has one, an absent date
+     *                         included
      */
     public WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate, HolidayDay> holidayDayByDate) {
         this(plannedTimeByDay, holidayDayByDate, List.of());
@@ -104,10 +105,11 @@ public record WorkPlan(Map<LocalDate, WorkTime> plannedTimeByDay, Map<LocalDate,
     }
 
     /**
-     * Returns the holiday calendar day that decided the specified date.
+     * Returns the holiday calendar day of the specified date. An absent date has it too, although the absence
+     * decided the date's planned time.
      *
      * @param date a date the plan covers
-     * @return the holiday calendar day, or empty if the schedule's days of the week decided the date
+     * @return the holiday calendar day, or empty if the holiday calendar of the date's schedule has no day on it
      * @throws IllegalArgumentException if the plan does not cover the date
      */
     public Optional<HolidayDay> findHolidayDay(LocalDate date) {
