@@ -375,6 +375,29 @@ public class AbsenceViewsUiTest {
     }
 
     @Test
+    void lastDayPickerOpensAtTheFirstDay() {
+        User user = saveUser();
+        Absence saved = saveAbsence(user, saveType(uniqueName()), JAN_12, JAN_16);
+
+        // An empty last day's picker opens where the first day is, not at today's month, which is far from
+        // a past absence; with a last day, the picker opens at that day anyway
+        AbsenceDetailView created = openNewEditor();
+        firstDayField(created).setTypedValue(MAR_10);
+
+        assertThat(lastDayField(created).getInitialPosition()).isEqualTo(MAR_10);
+
+        firstDayField(created).setTypedValue(FEB_23);
+
+        assertThat(lastDayField(created).getInitialPosition()).isEqualTo(FEB_23);
+        created.closeWithDiscard();
+
+        // and from the stored first day when the absence opens
+        AbsenceDetailView edited = openEditor(user, saved);
+
+        assertThat(lastDayField(edited).getInitialPosition()).isEqualTo(JAN_12);
+    }
+
+    @Test
     void lastDayFollowsTheReadOnlyMode() {
         User user = saveUser();
         Absence saved = saveAbsence(user, saveType(uniqueName()), MAR_2, MAR_13);

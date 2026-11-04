@@ -30,6 +30,7 @@ import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.validation.ValidationErrors;
 import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
@@ -73,9 +74,9 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
     public void onReady(final ReadyEvent event) {
         Absence absence = getEditedEntity();
 
-        // The stored days come with the absence, not as a change of a day, so the last day and its minimum are set
+        // The stored days come with the absence, not as a change of a day, so the last day and its picker are set
         // from them here; an absence opened with only a first day gets it as its last day
-        lastDayField.setMin(absence.getFirstDay());
+        followFirstDay(absence.getFirstDay());
         lastDayField.setTypedValue(absence.getLastDay());
         onDatesChange();
         updateReadOnlyFields();
@@ -103,8 +104,7 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
             // The field offers only non-deleted types, so the newly chosen one is not deleted
             case "type" -> typeField.setHelperText(null);
             case "firstDay" -> {
-                // The last day's picker offers no day before the first one
-                lastDayField.setMin(event.getItem().getFirstDay());
+                followFirstDay(event.getItem().getFirstDay());
                 if (lastDayField.isInvalid()) {
                     // Runs the last day's validation against the new minimum, which a new minimum alone does not do
                     lastDayField.setInvalid(false);
@@ -114,6 +114,13 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
             default -> {
             }
         }
+    }
+
+    // The last day's picker offers no day before the first one and, while the last day is empty, opens at the first
+    // day rather than at today, which may be months away from the absence
+    private void followFirstDay(@Nullable LocalDate firstDay) {
+        lastDayField.setMin(firstDay);
+        lastDayField.setInitialPosition(firstDay);
     }
 
     @Subscribe("lastDayField")
