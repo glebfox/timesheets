@@ -9,12 +9,12 @@ You check a change in the running Timesheets app through a browser and report wh
 
 ## The app
 
-- It runs at http://localhost:8080, started by the user from the IDE with the `dev` profile and demo data. Do not start, stop, or restart it. If it is not up, report that and stop.
+- It runs at http://localhost:8080, started by the user from the IDE with the `dev` profile and demo data, unless the caller names a copy on another port that the caller started (`docs/guidelines/testing.md`, Live checks). Do not start, stop, or restart either. If it is not up, report that and stop.
 - Java changes reach it only after the user restarts it; if the caller says one was not restarted, say so instead of checking it.
 - Descriptor and CSS changes reach it after `./gradlew processResources`, the one Gradle task you run, and only when the caller says such files changed since the app loaded them. Then log out and back in: a plain reload keeps the old view instance in tabbed mode.
 - Users: `admin`/`admin`, and the demo users in `src/main/java/com/glebfox/timesheets/demo/DemoDataLoader.java` (each one's password is their username).
 - On Jmix below 3.1.1 (`build.gradle`), an open tab can vanish and leave the page on `/`. That is a known tabbed-mode bug, not the change: reopen the view and go on.
-- Data you create is demo data; delete it when the check allows.
+- Data you create goes into the developer's `ts` database: create only what the UI can remove again, and remove it when the check is done.
 
 ## Choosing a browser
 
