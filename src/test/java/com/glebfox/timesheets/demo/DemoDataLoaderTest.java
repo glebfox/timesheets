@@ -20,6 +20,9 @@ import com.glebfox.timesheets.app.TimeEntryApprovalSupport;
 import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.component.avatarupload.AvatarImageFormat;
+import com.glebfox.timesheets.demo.DemoDataLoader.DemoAbsence;
+import com.glebfox.timesheets.entity.absence.Absence;
+import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
@@ -47,12 +50,15 @@ import org.springframework.test.context.bean.override.mockito.MockReset;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.nio.ByteBuffer;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -191,6 +197,87 @@ public class DemoDataLoaderTest {
     }
 
     @Test
+    void createsAbsenceTypesAndAbsences() {
+        LocalDate today = timeSource.now().toLocalDate();
+        systemAuthenticator.runWithSystem(() -> {
+            assertThat(dataManager.load(AbsenceType.class).all().list())
+                    .extracting(AbsenceType::getName)
+                    .containsExactlyInAnyOrder("Vacation", "Sick leave", "Day off");
+
+            List<DemoAbsence> absences = loadAbsences();
+            assertThat(absences)
+                    .hasSizeGreaterThanOrEqualTo(5)
+                    .anyMatch(absence -> includes(absence, today))
+                    .anyMatch(absence -> crossesTheFirstOfTheMonth(absence, today));
+            assertNoUserAbsentTwiceOnADay(absences, "demo absences");
+        });
+    }
+
+    @Test
+    void logsNoTimeOnAbsences() {
+        LocalDate today = timeSource.now().toLocalDate();
+        systemAuthenticator.runWithSystem(() -> {
+            List<DemoAbsence> absences = loadAbsences();
+            // Some of them fall on the days the time is logged over
+            assertThat(absences).anyMatch(absence -> absence.firstDay().isBefore(today));
+
+            assertThat(loadEntries())
+                    .filteredOn(entry -> absences.stream().anyMatch(absence ->
+                            absence.username().equals(entry.getUser().getUsername())
+                                    && includes(absence, entry.getDate())))
+                    .extracting(entry -> entry.getUser().getUsername() + " " + entry.getDate())
+                    .isEmpty();
+        });
+    }
+
+    @Test
+    void datesAbsencesAsDesignedWhateverTheDay() {
+        // Every day of the week on every day of the month, around a leap year
+        LocalDate.of(2026, 1, 1).datesUntil(LocalDate.of(2031, 1, 1)).forEach(today -> {
+            NavigableSet<LocalDate> holidays = DemoDataLoader.holidaysAround(today).navigableKeySet();
+            List<DemoAbsence> absences = DemoDataLoader.absencesOf(today, holidays);
+            LocalDate thisWeek = today.with(DayOfWeek.MONDAY);
+            LocalDate pastStart = thisWeek.minusWeeks(DemoTimeEntryGenerator.WEEKS);
+            String description = "absences on " + today;
+
+            assertThat(absences).as(description)
+                    .isNotEmpty()
+                    .allMatch(absence -> !absence.lastDay().isBefore(absence.firstDay()))
+                    .noneMatch(absence -> Set.of("admin", "mossman").contains(absence.username()))
+                    // The past ones are in the weeks the time is logged over
+                    .allMatch(absence -> !absence.lastDay().isBefore(thisWeek)
+                            || !absence.firstDay().isBefore(pastStart))
+                    .as("%s: a two-week vacation in the past weeks across a weekend", description)
+                    .anyMatch(absence -> absence.type().equals("Vacation")
+                            && !absence.firstDay().isBefore(pastStart) && absence.lastDay().isBefore(thisWeek)
+                            && dayCount(absence) == 14 && crossesAWeekend(absence))
+                    .as("%s: a sick leave of three workdays in the past weeks", description)
+                    .anyMatch(absence -> absence.type().equals("Sick leave")
+                            && !absence.firstDay().isBefore(pastStart) && absence.lastDay().isBefore(thisWeek)
+                            && dayCount(absence) == 3
+                            && days(absence).allMatch(day -> isWorkday(day, holidays)))
+                    .as("%s: a vacation through the current week", description)
+                    .anyMatch(absence -> absence.type().equals("Vacation")
+                            && includes(absence, thisWeek) && includes(absence, thisWeek.plusDays(6)))
+                    .as("%s: a day off in the coming two weeks", description)
+                    .anyMatch(absence -> absence.type().equals("Day off")
+                            && absence.firstDay().equals(absence.lastDay())
+                            && absence.firstDay().isAfter(today) && !absence.firstDay().isAfter(today.plusWeeks(2))
+                            && isWorkday(absence.firstDay(), holidays))
+                    .as("%s: one across the first day of the month", description)
+                    .anyMatch(absence -> crossesTheFirstOfTheMonth(absence, today));
+
+            List<LocalDate> recentHolidays = holidays.subSet(pastStart, true, today, true).stream().toList();
+            if (!recentHolidays.isEmpty()) {
+                assertThat(absences)
+                        .as("%s: one over a holiday of %s", description, recentHolidays)
+                        .anyMatch(absence -> recentHolidays.stream().anyMatch(day -> includes(absence, day)));
+            }
+            assertNoUserAbsentTwiceOnADay(absences, description);
+        });
+    }
+
+    @Test
     void storesImagesOfAcceptedFormats() {
         systemAuthenticator.runWithSystem(() -> {
             assertThat(dataManager.load(Client.class).all().list())
@@ -227,6 +314,56 @@ public class DemoDataLoaderTest {
                         .add("tags", tagBuilder -> tagBuilder.addFetchPlan(FetchPlan.BASE)
                                 .add("tagGroup", FetchPlan.BASE)))
                 .list();
+    }
+
+    private List<DemoAbsence> loadAbsences() {
+        return dataManager.load(Absence.class)
+                .all()
+                .fetchPlan(planBuilder -> planBuilder.addFetchPlan(FetchPlan.BASE)
+                        .add("user", FetchPlan.BASE)
+                        .add("type", FetchPlan.BASE))
+                .list().stream()
+                .map(absence -> new DemoAbsence(absence.getUser().getUsername(), absence.getType().getName(),
+                        absence.getFirstDay(), absence.getLastDay(), absence.getComment()))
+                .toList();
+    }
+
+    private static void assertNoUserAbsentTwiceOnADay(List<DemoAbsence> absences, String description) {
+        absences.stream()
+                .collect(Collectors.groupingBy(DemoAbsence::username))
+                .forEach((username, userAbsences) -> assertThat(userAbsences.stream()
+                        .flatMap(DemoDataLoaderTest::days)
+                        .toList())
+                        .as("%s: the absent days of %s", description, username)
+                        .doesNotHaveDuplicates());
+    }
+
+    private static Stream<LocalDate> days(DemoAbsence absence) {
+        return absence.firstDay().datesUntil(absence.lastDay().plusDays(1));
+    }
+
+    private static long dayCount(DemoAbsence absence) {
+        return days(absence).count();
+    }
+
+    private static boolean includes(DemoAbsence absence, LocalDate date) {
+        return !date.isBefore(absence.firstDay()) && !date.isAfter(absence.lastDay());
+    }
+
+    private static boolean crossesTheFirstOfTheMonth(DemoAbsence absence, LocalDate today) {
+        LocalDate firstOfMonth = today.withDayOfMonth(1);
+        return absence.firstDay().isBefore(firstOfMonth) && !absence.lastDay().isBefore(firstOfMonth);
+    }
+
+    // A weekend with a day of the absence before it and after it
+    private static boolean crossesAWeekend(DemoAbsence absence) {
+        return days(absence).anyMatch(day -> day.getDayOfWeek() == DayOfWeek.SATURDAY
+                && day.isAfter(absence.firstDay()) && !day.plusDays(2).isAfter(absence.lastDay()));
+    }
+
+    private static boolean isWorkday(LocalDate date, Set<LocalDate> holidays) {
+        return date.getDayOfWeek() != DayOfWeek.SATURDAY && date.getDayOfWeek() != DayOfWeek.SUNDAY
+                && !holidays.contains(date);
     }
 
     private static boolean isAcceptedImage(byte[] image) {
