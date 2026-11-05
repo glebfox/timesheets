@@ -675,6 +675,28 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
+    void anEntryShowsItsStatusAsADotInTheMonthAndAsAStripeOnTheWeekBoard() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(cidWaiting));
+
+            // In the month's list, a dot of the status's color leads the time
+            ApprovalEntryCard monthCard = entryCardOf(view, cidWaiting);
+            assertThat(classesOf(descendantOf(descendantOf(monthCard, "time"), "dot"))).contains("new");
+            assertThat(findDescendant(monthCard, "stripe")).isEmpty();
+
+            // On the week board, a stripe runs along the card's edge instead
+            modeField(view).setValue(ApprovalMode.WEEK);
+            view.setPeriod(ApprovalPeriod.weekOf(cidWaiting.getDate(), firstDayOfWeek()));
+            view.selectPerson(cid);
+            ApprovalEntryCard boardCard = entryCardOf(view, cidWaiting);
+            assertThat(findDescendant(boardCard, "stripe")).isPresent();
+            assertThat(findDescendant(boardCard, "dot")).isEmpty();
+        });
+    }
+
+    @Test
     void onlyTheWeekBoardShowsTheWholeDescriptionOnHover() {
         String description = "Checked:\n\n- the **pump**\n- the valves";
         TimeEntry described = save(dataManager.create(TimeEntry.class), e -> {

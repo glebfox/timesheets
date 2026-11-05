@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-/* Entry card: a stripe in the status color, the time, what was done, and the actions */
+/* Entry card: the status color, as a stripe on the week board and a dot before the time in a month's list, the time,
+   what was done, and the actions */
 
 .approval-entry-card {
     position: relative;
@@ -49,6 +50,13 @@
 
     font-weight: var(--aura-font-weight-semibold);
     font-variant-numeric: tabular-nums;
+}
+
+/* The status dot of a card in a month's list sits on the middle of the time */
+.approval-entry-card > .time:has(> .dot) {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
 }
 
 .approval-entry-card > .content {
