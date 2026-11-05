@@ -79,6 +79,10 @@ Both show the states of an Aura field. Invalid, the borders take the error color
 
 In a dialog, Tab stops on every option of a radio button group, a `segmented-group` included, rather than only on the checked one: the dialog's focus trap walks every focusable element and skips the browser's rule for radio groups, vaadin/web-components#8186. The project does not work around it.
 
+**Selected items.** A selected item of the project's own, such as the approval screen's roster card and week card, is filled as a selected grid row, with `--vaadin-grid-row-selected-background-color`, and has no accent line along an edge or accent border: such a line merges with the focus ring.
+
+**Forced colors.** Forced-colors (high contrast) mode drops background fills and box shadows, and draws a transparent border in the text color. So a card or row whose selection is only a fill, such as the approval screen's roster card and week card, marks it there as Vaadin's side nav marks its current item: the selected one has a border, or an outline where the part has no border all round, and text in `Highlight`, and a transparent border on the others takes `Canvas`. A system color that a rule sets explicitly survives the mode, so these rules need no `forced-color-adjust: none`. The mode stands for the user's own palette, each system color in its role, so the project's colors never come back in it: a part that is nothing but a color repeating what text says, such as the approval screen's status bars, dots, lines, and entry stripes, is left to disappear. A drawing whose shape tells what no text does, such as the roster's fingerprint, takes system colors, as Vaadin's progress bar draws its value in `CanvasText`; the mode leaves an SVG's `fill` as the author set it, so such a drawing sets it itself.
+
 ---
 
 ## 3. Typography

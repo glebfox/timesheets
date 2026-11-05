@@ -526,19 +526,20 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
-    void clickingADayShowsItsWeekAndScrollsToTheDay() {
+    void clickingADayShowsItsWeekWithoutScrolling() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openInOctober();
             view.selectPerson(cid);
             view.selectWeek(weekStartOf(cidRejected));
+            allBrowserCalls();
 
             click(dayOf(view, cidWaiting.getDate()));
 
             assertThat(view.getSelectedWeek()).isEqualTo(weekStartOf(cidWaiting));
             assertThat(listedOf(view)).containsExactly(cidWaiting.getId());
-            // The list scrolls to the group of the day's entries
+            // Nothing scrolls to the day's entries
+            assertThat(allBrowserCalls()).noneMatch(call -> call.contains("scrollIntoView"));
             Component day = entryCardOf(view, cidWaiting).getParent().orElseThrow();
-            assertThat(browserCalls(day)).anyMatch(call -> call.contains("scrollIntoView"));
             assertThat(headingOf(descendantOf(day, "day-header"))).isEqualTo("Wed, Oct 14 · 4h");
         });
     }
@@ -670,6 +671,28 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(textOf(descendantOf(waitingCard, "task"))).doesNotContain("New");
             assertThat(findDescendant(waitingCard, "reason")).isEmpty();
             assertThat(findDescendant(waitingCard, "description")).isEmpty();
+        });
+    }
+
+    @Test
+    void anEntryShowsItsStatusAsADotInTheMonthAndAsAStripeOnTheWeekBoard() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openInOctober();
+            view.selectPerson(cid);
+            view.selectWeek(weekStartOf(cidWaiting));
+
+            // In the month's list, a dot of the status's color leads the time
+            ApprovalEntryCard monthCard = entryCardOf(view, cidWaiting);
+            assertThat(classesOf(descendantOf(descendantOf(monthCard, "time"), "dot"))).contains("new");
+            assertThat(findDescendant(monthCard, "stripe")).isEmpty();
+
+            // On the week board, a stripe runs along the card's edge instead
+            modeField(view).setValue(ApprovalMode.WEEK);
+            view.setPeriod(ApprovalPeriod.weekOf(cidWaiting.getDate(), firstDayOfWeek()));
+            view.selectPerson(cid);
+            ApprovalEntryCard boardCard = entryCardOf(view, cidWaiting);
+            assertThat(findDescendant(boardCard, "stripe")).isPresent();
+            assertThat(findDescendant(boardCard, "dot")).isEmpty();
         });
     }
 
@@ -903,6 +926,18 @@ public class TimeEntryApprovalViewUiTest {
         internals.getStateTree().runExecutionsBeforeClientResponse();
         return internals.dumpPendingJavaScriptInvocations().stream()
                 .filter(invocation -> invocation.getOwner() == component.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
+    }
+
+    /**
+     * Lists the calls the server queued for the browser since the previous dump, whatever their element, and forgets
+     * them.
+     */
+    private static List<String> allBrowserCalls() {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
                 .map(invocation -> invocation.getInvocation().getExpression())
                 .toList();
     }

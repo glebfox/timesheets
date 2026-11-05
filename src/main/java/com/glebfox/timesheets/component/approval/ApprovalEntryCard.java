@@ -27,6 +27,7 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -50,7 +51,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 /**
- * A time entry's card on the approval screen: a stripe in the color of the entry's status, the time, the task with
+ * A time entry's card on the approval screen: the color of the entry's status, as a stripe along the card's edge on
+ * the week board and as a dot before the time in a month's list, the time, the task with
  * its project and, unless the entry waits, a badge of its status, the description, the tags, the rejection reason of
  * a rejected entry, and the buttons for what can be done with it: ✓ for a new or a rejected entry, ✕ for a new, an
  * approved, or a rejected one, and none for a closed one. The description and the reason are rendered from Markdown.
@@ -66,8 +68,8 @@ import java.util.stream.Stream;
  * <p>
  * The card's classes are {@code approval-entry-card}, the class of the entry's status ({@code new}, {@code approved},
  * {@code rejected}, or {@code closed}), {@code compact} on the week board, where the description is cut after three
- * lines and shows in full in a tooltip, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe},
- * {@code time}, {@code content}, which holds {@code task} (with {@code task-name}, {@code project}, and the
+ * lines and shows in full in a tooltip, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe} on the week board,
+ * {@code time}, with a {@code dot} in a month's list, {@code content}, which holds {@code task} (with {@code task-name}, {@code project}, and the
  * {@code basket-mark}), {@code description}, {@code tags}, and {@code reason}, and {@code actions}. The card's id is
  * {@code entry-<id>}, and its buttons' are {@code approveEntryBtn-<id>}, {@code rejectEntryBtn-<id>}, and
  * {@code unrejectEntryBtn-<id>}, with the id of the entry.
@@ -117,13 +119,24 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         card.addClassNames(CLASS_NAME, ApprovalStatusClassNames.of(status));
         card.setClassName(COMPACT_CLASS_NAME, compact);
 
-        Span stripe = new Span();
-        stripe.addClassName("stripe");
+        // The color of the status: a stripe along the edge of a card on the week board, where it reads down a column,
+        // and a dot before the time of a card in a month's list, whose cards are rows as wide as the list
+        Span statusMark = new Span();
+        // The stripe takes its color from the card's status class, and a dot, as everywhere on the screen, from its own
+        if (compact) {
+            statusMark.addClassName("stripe");
+        } else {
+            statusMark.addClassNames("dot", ApprovalStatusClassNames.of(status));
+        }
         // The status is told by the badge, or by the absence of one for an entry that waits
-        stripe.getElement().setAttribute("aria-hidden", "true");
+        statusMark.getElement().setAttribute("aria-hidden", "true");
 
-        Div time = new Div(metadataTools.format(entry.getSpentTime()));
+        Div time = new Div();
         time.addClassName("time");
+        if (!compact) {
+            time.add(statusMark);
+        }
+        time.add(new Text(metadataTools.format(entry.getSpentTime())));
 
         task = createTask(componentSupport, metadataTools);
         basketMark = componentSupport.createBadge(
@@ -168,7 +181,10 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         focusInsteadOnClick(unrejectButton, rejectButton);
         showButtons();
 
-        card.add(stripe, time, content, actions);
+        if (compact) {
+            card.add(statusMark);
+        }
+        card.add(time, content, actions);
     }
 
     /**

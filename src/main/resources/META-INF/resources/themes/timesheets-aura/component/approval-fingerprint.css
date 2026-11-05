@@ -36,3 +36,15 @@
 .approval-fingerprint .empty {
     fill: var(--vaadin-border-color-secondary);
 }
+
+/* Forced colors leave an SVG fill as it is, so the bars take the mode's own colors: the heights, the time of each day,
+   are told nowhere else on the card, while the status colors would bring back the author's palette */
+@media (forced-colors: active) {
+    .approval-fingerprint .bar:is(.new, .approved, .rejected, .closed) {
+        fill: CanvasText;
+    }
+
+    .approval-fingerprint .empty {
+        fill: GrayText;
+    }
+}

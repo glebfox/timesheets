@@ -122,7 +122,7 @@
     align-items: baseline;
     column-gap: var(--vaadin-gap-s);
     padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
-    border: 1px solid var(--vaadin-border-color-secondary);
+    border: 1px solid var(--vaadin-border-color);
     border-radius: var(--vaadin-radius-l);
 }
 

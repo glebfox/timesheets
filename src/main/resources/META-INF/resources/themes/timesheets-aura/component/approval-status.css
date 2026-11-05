@@ -50,8 +50,8 @@
     background: var(--vaadin-text-color-secondary);
 }
 
-/* The color of a status, for the parts that show it: a dot, a line, and an entry card's stripe. Each takes it from
-   its own status class, so it shows wherever the part is placed */
+/* The color of a status, for the parts that show it: a dot, a line, and an entry card's stripe. A dot and a line take
+   it from their own status class, so they show it wherever they are placed, and the stripe from its card's */
 :is(.approval-person-panel, .approval-month-grid, .approval-week-board) :is(.dot, .line).new,
 .approval-entry-card.new {
     --_status-color: var(--ts-warning-color);

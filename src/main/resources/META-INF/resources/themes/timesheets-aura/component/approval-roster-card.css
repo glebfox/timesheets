@@ -43,11 +43,9 @@
     outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
 }
 
-/* The selected card: the accent surface, with an accent line along its start edge */
+/* The selected card: filled as a selected grid row */
 .approval-roster-card.selected {
-    border-color: var(--aura-accent-border-color);
-    background: var(--aura-accent-surface);
-    box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
+    background: var(--vaadin-grid-row-selected-background-color);
 }
 
 .approval-roster-card > .avatar {
@@ -97,4 +95,17 @@
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
+}
+
+/* Forced colors drop the fill and would draw every card's transparent border, so the selected card is the one bordered
+   in the highlight color, as Vaadin marks the current side nav item */
+@media (forced-colors: active) {
+    .approval-roster-card {
+        border-color: Canvas;
+    }
+
+    .approval-roster-card.selected {
+        border-color: Highlight;
+        color: Highlight;
+    }
 }

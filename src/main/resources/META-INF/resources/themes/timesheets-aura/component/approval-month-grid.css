@@ -22,6 +22,8 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(10rem, 1.5fr);
     flex-shrink: 0;
     overflow: hidden;
+    /* A table, so its frame and lines are as light as a data grid's, while the cards around it take the stronger
+       border color */
     border: 1px solid var(--vaadin-border-color-secondary);
     border-radius: var(--vaadin-radius-l);
     /* Its days take their layout from its width */
@@ -63,8 +65,9 @@
     color: var(--vaadin-text-color-disabled);
 }
 
+/* The selected week's days: filled as its card */
 .approval-month-grid > .day.selected {
-    background: var(--aura-accent-surface);
+    background: var(--vaadin-grid-row-selected-background-color);
 }
 
 .approval-month-grid > .day:not(.outside):hover {
@@ -127,10 +130,9 @@
     background: var(--vaadin-background-container-strong);
 }
 
-/* The selected week: the accent surface, with an accent line along its start edge, as a selected roster card */
+/* The selected week: filled as a selected grid row, as a selected roster card */
 .approval-month-grid > .week.selected {
-    background: var(--aura-accent-surface);
-    box-shadow: inset var(--vaadin-focus-ring-width) 0 0 var(--aura-accent-color);
+    background: var(--vaadin-grid-row-selected-background-color);
 }
 
 .approval-month-grid > .week > .summary {
@@ -190,4 +192,14 @@
    the layouts around a slot leave no gap for it */
 .approval-month-grid .actions:empty {
     display: none;
+}
+
+/* Forced colors drop the fill, so the selected week's card is outlined in the highlight color, as a selected roster
+   card is bordered */
+@media (forced-colors: active) {
+    .approval-month-grid > .week.selected {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
+        color: Highlight;
+    }
 }
