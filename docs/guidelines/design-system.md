@@ -198,6 +198,7 @@ The main menu has a set of its own, drawn for it: each group and item has its ow
    - umbrella — an absence (Absence types, Absences);
    - star — the default work schedule (the dialog that picks a new default); not available to the menu;
    - key — a password (the user editor); not available to the menu;
+   - personnel card — personnel records (Administration);
    - person — a person (person fields; Project roles, Users).
 5. **Geometry.** The grid, live area, and stroke of the style above. Between stroke edges keep about 1 unit of clear space, and never less than 0.5, which only parts that sit side by side by design reach, such as the rows and the object of rule 2. A small part that must read on its own, such as the clock of Work schedules, is at least about 6 units across. Avoid shapes where many lines meet at sharp corners, such as a cube: at 16 px the corners blur and the lines seem to run past them.
 6. **One stroke.** When a part is too tight, give it room or remove parts; never draw it with a thinner stroke.
