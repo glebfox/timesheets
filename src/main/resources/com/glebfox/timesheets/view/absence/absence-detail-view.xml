@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://absenceDetailView.title"
       focusComponent="form">
     <data>
@@ -79,25 +80,13 @@
                     <action id="entityClear" type="entity_clear"/>
                 </actions>
             </entityComboBox>
-            <!-- Two date pickers joined by a dash read as one field, with the range summary as its helper -->
-            <vbox id="datesBox" padding="false" spacing="false">
-                <hbox id="datesRangeBox" width="100%" alignItems="BASELINE">
-                    <!-- The form's container reaches it through the boxes at runtime; the IDE's check needs it named -->
-                    <datePicker id="firstDayField"
+            <app:dateRangeField id="datesField"
                                 dataContainer="absenceDc"
-                                property="firstDay"
-                                label="msg://firstDayField.label"
-                                requiredMessage="msg://firstDayField.requiredMessage"
-                                width="100%" minWidth="0"/>
-                    <span id="datesSeparator" text="msg://datesSeparator.text"/>
-                    <!-- Not bound: the view sets the absence's last day from it, or from the first day when empty -->
-                    <datePicker id="lastDayField"
-                                datatype="localDate"
-                                ariaLabel="msg://lastDayField.ariaLabel"
-                                width="100%" minWidth="0"/>
-                </hbox>
-                <span id="rangeSummary" classNames="range-summary"/>
-            </vbox>
+                                startProperty="firstDay"
+                                endProperty="lastDay"
+                                label="msg://datesField.label"
+                                requiredMessage="msg://datesField.requiredMessage"
+                                summaryVisible="true"/>
             <textArea id="commentField" property="comment"
                       minRows="5" maxRows="5"/>
         </formLayout>

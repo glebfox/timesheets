@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.absence;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
 import com.glebfox.timesheets.entity.absence.Absence;
 import com.glebfox.timesheets.entity.absence.AbsenceType;
@@ -30,7 +31,6 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridSortOrder;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
@@ -270,10 +270,10 @@ public class AbsenceViewsUiTest {
         AbsenceDetailView editor = openNewEditor();
         userField(editor).setValue(user);
         typeField(editor).setValue(type);
-        firstDayField(editor).setTypedValue(MAR_2);
+        startPicker(editor).setTypedValue(MAR_2);
 
         // The line under the dates names the one day
-        assertThat(rangeSummary(editor).getText()).isEqualTo("1 day, Monday");
+        assertThat(datesField(editor).getHelperText()).isEqualTo("1 day, Monday");
 
         save(editor);
 
@@ -292,15 +292,15 @@ public class AbsenceViewsUiTest {
         AbsenceDetailView editor = openEditor(user, saved);
 
         // The last day is empty, as when the editor creates a one-day absence, and opening changes nothing
-        assertThat(firstDayField(editor).getTypedValue()).isEqualTo(MAR_5);
-        assertThat(lastDayField(editor).getTypedValue()).isNull();
-        assertThat(rangeSummary(editor).getText()).isEqualTo("1 day, Thursday");
+        assertThat(startPicker(editor).getTypedValue()).isEqualTo(MAR_5);
+        assertThat(endPicker(editor).getTypedValue()).isNull();
+        assertThat(datesField(editor).getHelperText()).isEqualTo("1 day, Thursday");
         assertThat(editor.hasUnsavedChanges()).isFalse();
 
-        firstDayField(editor).setTypedValue(MAR_6);
+        startPicker(editor).setTypedValue(MAR_6);
 
-        assertThat(lastDayField(editor).isInvalid()).isFalse();
-        assertThat(rangeSummary(editor).getText()).isEqualTo("1 day, Friday");
+        assertThat(endPicker(editor).isInvalid()).isFalse();
+        assertThat(datesField(editor).getHelperText()).isEqualTo("1 day, Friday");
 
         save(editor);
 
@@ -319,38 +319,56 @@ public class AbsenceViewsUiTest {
 
         AbsenceDetailView editor = openNewEditor();
         fillMar10To20(editor, user, type);
-        assertThat(rangeSummary(editor).getText()).isEqualTo("11 days, Tuesday to Friday");
+        assertThat(datesField(editor).getHelperText()).isEqualTo("11 days, Tuesday to Friday");
         save(editor);
 
-        // Both dates are marked, as the range is; the absences are named once, under the first one
-        assertThat(firstDayField(editor).isInvalid()).isTrue();
-        assertThat(firstDayField(editor).getErrorMessage())
+        // Both dates are marked, as the range is; the absences are named once, under the field
+        assertThat(datesField(editor).isInvalid()).isTrue();
+        assertThat(datesField(editor).getErrorMessage())
                 .isEqualTo("Overlaps an absence: 02/03/2026 – 13/03/2026 Vacation");
-        assertThat(lastDayField(editor).isInvalid()).isTrue();
+        assertThat(startPicker(editor).isInvalid()).isTrue();
+        assertThat(endPicker(editor).isInvalid()).isTrue();
         assertThat(isOpen(editor)).isTrue();
         assertThat(loadAbsences(user)).hasSize(1);
 
         // A changed last day clears the refusal
-        lastDayField(editor).setTypedValue(MAR_19);
+        endPicker(editor).setTypedValue(MAR_19);
 
-        assertThat(firstDayField(editor).isInvalid()).isFalse();
-        assertThat(lastDayField(editor).isInvalid()).isFalse();
+        assertThat(datesField(editor).isInvalid()).isFalse();
+        assertThat(startPicker(editor).isInvalid()).isFalse();
+        assertThat(endPicker(editor).isInvalid()).isFalse();
 
         // and so does a changed first day, after the range is refused again
         save(editor);
-        assertThat(firstDayField(editor).isInvalid()).isTrue();
-        assertThat(lastDayField(editor).isInvalid()).isTrue();
+        assertThat(datesField(editor).isInvalid()).isTrue();
 
-        firstDayField(editor).setTypedValue(MAR_14);
+        startPicker(editor).setTypedValue(MAR_14);
 
-        assertThat(firstDayField(editor).isInvalid()).isFalse();
-        assertThat(lastDayField(editor).isInvalid()).isFalse();
+        assertThat(datesField(editor).isInvalid()).isFalse();
+        assertThat(startPicker(editor).isInvalid()).isFalse();
+        assertThat(endPicker(editor).isInvalid()).isFalse();
 
         save(editor);
 
         assertThat(isOpen(editor)).isFalse();
         assertThat(loadAbsences(user)).extracting(Absence::getFirstDay, Absence::getLastDay)
                 .containsExactly(tuple(MAR_2, MAR_13), tuple(MAR_14, MAR_19));
+    }
+
+    @Test
+    void changingADateClearsTheOverlap() {
+        User user = saveUser();
+        saveAbsence(user, saveType(uniqueName()), MAR_2, MAR_13);
+        AbsenceType type = saveType(uniqueName());
+
+        AbsenceDetailView editor = openNewEditor();
+        fillMar10To20(editor, user, type);
+        save(editor);
+        assertThat(datesField(editor).isInvalid()).isTrue();
+
+        endPicker(editor).setTypedValue(MAR_14);
+
+        assertThat(datesField(editor).isInvalid()).isFalse();
     }
 
     @Test
@@ -363,12 +381,13 @@ public class AbsenceViewsUiTest {
         AbsenceDetailView editor = openNewEditor();
         fillMar10To20(editor, user, type);
         save(editor);
-        assertThat(firstDayField(editor).isInvalid()).isTrue();
+        assertThat(datesField(editor).isInvalid()).isTrue();
 
         userField(editor).setValue(userWithoutAbsences);
 
-        assertThat(firstDayField(editor).isInvalid()).isFalse();
-        assertThat(lastDayField(editor).isInvalid()).isFalse();
+        assertThat(datesField(editor).isInvalid()).isFalse();
+        assertThat(startPicker(editor).isInvalid()).isFalse();
+        assertThat(endPicker(editor).isInvalid()).isFalse();
 
         save(editor);
 
@@ -380,6 +399,24 @@ public class AbsenceViewsUiTest {
     }
 
     @Test
+    void changingTheUserOnANewAbsenceMarksNoDates() {
+        User user = saveUser();
+
+        AbsenceDetailView editor = openNewEditor();
+        // Jmix checks a required field the moment it is required, so the empty dates of a new absence carry
+        // the required message from the start, as the user field does
+        boolean invalidBefore = datesField(editor).isInvalid();
+        String messageBefore = datesField(editor).getErrorMessage();
+
+        userField(editor).setValue(user);
+
+        // The change of the user touches the dates only to clear an overlap refusal, and there is none
+        assertThat(datesField(editor).isInvalid()).isEqualTo(invalidBefore);
+        assertThat(datesField(editor).getErrorMessage()).isEqualTo(messageBefore);
+        assertThat(messageBefore).isEqualTo("Dates required");
+    }
+
+    @Test
     void lastDayBeforeFirstIsRefusedByThePicker() {
         User user = saveUser();
         Absence saved = saveAbsence(user, saveType(uniqueName()), MAR_2, MAR_13);
@@ -387,21 +424,21 @@ public class AbsenceViewsUiTest {
         AbsenceDetailView editor = openEditor(user, saved);
 
         // The stored days as saved, the last day's minimum from the stored first day, and nothing changed by opening
-        assertThat(firstDayField(editor).getTypedValue()).isEqualTo(MAR_2);
-        assertThat(lastDayField(editor).getTypedValue()).isEqualTo(MAR_13);
-        assertThat(lastDayField(editor).getMin()).isEqualTo(MAR_2);
-        assertThat(rangeSummary(editor).getText()).isEqualTo("12 days, Monday to Friday");
+        assertThat(startPicker(editor).getTypedValue()).isEqualTo(MAR_2);
+        assertThat(endPicker(editor).getTypedValue()).isEqualTo(MAR_13);
+        assertThat(endPicker(editor).getMin()).isEqualTo(MAR_2);
+        assertThat(datesField(editor).getHelperText()).isEqualTo("12 days, Monday to Friday");
         assertThat(editor.hasUnsavedChanges()).isFalse();
 
-        firstDayField(editor).setTypedValue(MAR_10);
-        assertThat(lastDayField(editor).getMin()).isEqualTo(MAR_10);
+        startPicker(editor).setTypedValue(MAR_10);
+        assertThat(endPicker(editor).getMin()).isEqualTo(MAR_10);
 
-        lastDayField(editor).setTypedValue(MAR_5);
+        endPicker(editor).setTypedValue(MAR_5);
         save(editor);
 
-        // The picker's minimum refuses the day with the framework's message, before the entity is checked
-        assertThat(lastDayField(editor).isInvalid()).isTrue();
-        assertThat(lastDayField(editor).getErrorMessage()).isEqualTo("Value should be greater than '10/03/2026'");
+        // The field refuses the range with its own message, before the entity is checked
+        assertThat(datesField(editor).isInvalid()).isTrue();
+        assertThat(datesField(editor).getErrorMessage()).isEqualTo("The last day must not be before the first day");
         assertThat(isOpen(editor)).isTrue();
         Absence reloaded = dataManager.load(Id.of(saved)).one();
         assertThat(reloaded.getFirstDay()).isEqualTo(MAR_2);
@@ -416,36 +453,39 @@ public class AbsenceViewsUiTest {
         // An empty last day's picker opens where the first day is, not at today's month, which is far from
         // a past absence; with a last day, the picker opens at that day anyway
         AbsenceDetailView created = openNewEditor();
-        firstDayField(created).setTypedValue(MAR_10);
+        startPicker(created).setTypedValue(MAR_10);
 
-        assertThat(lastDayField(created).getInitialPosition()).isEqualTo(MAR_10);
+        assertThat(endPicker(created).getInitialPosition()).isEqualTo(MAR_10);
 
-        firstDayField(created).setTypedValue(FEB_23);
+        startPicker(created).setTypedValue(FEB_23);
 
-        assertThat(lastDayField(created).getInitialPosition()).isEqualTo(FEB_23);
+        assertThat(endPicker(created).getInitialPosition()).isEqualTo(FEB_23);
         created.closeWithDiscard();
 
         // and from the stored first day when the absence opens
         AbsenceDetailView edited = openEditor(user, saved);
 
-        assertThat(lastDayField(edited).getInitialPosition()).isEqualTo(JAN_12);
+        assertThat(endPicker(edited).getInitialPosition()).isEqualTo(JAN_12);
     }
 
     @Test
-    void lastDayFollowsTheReadOnlyMode() {
+    void datesFollowTheReadOnlyMode() {
         User user = saveUser();
         Absence saved = saveAbsence(user, saveType(uniqueName()), MAR_2, MAR_13);
 
         AbsenceDetailView editor = openEditor(user, saved);
-        assertThat(lastDayField(editor).isReadOnly()).isFalse();
+        assertThat(datesField(editor).isReadOnly()).isFalse();
 
-        // As for a user who may not update the absence; the mode reaches only the bound fields by itself
+        // As for a user who may not update the absence
         editor.setReadOnly(true);
-        assertThat(firstDayField(editor).isReadOnly()).isTrue();
-        assertThat(lastDayField(editor).isReadOnly()).isTrue();
+        assertThat(datesField(editor).isReadOnly()).isTrue();
+        assertThat(startPicker(editor).isReadOnly()).isTrue();
+        assertThat(endPicker(editor).isReadOnly()).isTrue();
 
         editor.setReadOnly(false);
-        assertThat(lastDayField(editor).isReadOnly()).isFalse();
+        assertThat(datesField(editor).isReadOnly()).isFalse();
+        assertThat(startPicker(editor).isReadOnly()).isFalse();
+        assertThat(endPicker(editor).isReadOnly()).isFalse();
     }
 
     @Test
@@ -594,8 +634,8 @@ public class AbsenceViewsUiTest {
     private static void fillMar10To20(AbsenceDetailView editor, User user, AbsenceType type) {
         userField(editor).setValue(user);
         typeField(editor).setValue(type);
-        firstDayField(editor).setTypedValue(MAR_10);
-        lastDayField(editor).setTypedValue(MAR_20);
+        startPicker(editor).setTypedValue(MAR_10);
+        endPicker(editor).setTypedValue(MAR_20);
     }
 
     private static void save(AbsenceDetailView editor) {
@@ -610,16 +650,16 @@ public class AbsenceViewsUiTest {
         return UiTestUtils.getComponent(editor, "typeField");
     }
 
-    private static TypedDatePicker<LocalDate> firstDayField(AbsenceDetailView editor) {
-        return UiTestUtils.getComponent(editor, "firstDayField");
+    private static DateRangeField datesField(AbsenceDetailView editor) {
+        return UiTestUtils.getComponent(editor, "datesField");
     }
 
-    private static TypedDatePicker<LocalDate> lastDayField(AbsenceDetailView editor) {
-        return UiTestUtils.getComponent(editor, "lastDayField");
+    private static TypedDatePicker<LocalDate> startPicker(AbsenceDetailView editor) {
+        return datesField(editor).getStartPicker();
     }
 
-    private static Span rangeSummary(AbsenceDetailView editor) {
-        return UiTestUtils.getComponent(editor, "rangeSummary");
+    private static TypedDatePicker<LocalDate> endPicker(AbsenceDetailView editor) {
+        return datesField(editor).getEndPicker();
     }
 
     private static JmixTextArea commentField(AbsenceDetailView editor) {
