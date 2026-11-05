@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.schedule;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
@@ -506,7 +507,7 @@ public class HolidayCalendarViewsUiTest {
         HolidayCalendarDaysAddView daysDialog = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(),
                 "the days dialog");
         UiTestUtils.<TypedTextField<String>>getComponent(daysDialog, "nameField").setTypedValue("New Year");
-        UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(daysDialog, "fromField").setTypedValue(JAN_1_2027);
+        UiTestUtils.<DateRangeField>getComponent(daysDialog, "datesField").getStartPicker().setTypedValue(JAN_1_2027);
         UiTestUtils.<JmixRadioButtonGroup<HolidayCalendarDayType>>getComponent(daysDialog, "typeField")
                 .setValue(HolidayCalendarDayType.DAY_OFF);
         UiTestUtils.<JmixButton>getComponent(daysDialog, "okBtn").click();

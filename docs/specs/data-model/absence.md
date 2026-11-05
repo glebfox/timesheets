@@ -14,7 +14,7 @@ Absences are recorded for users by the holders of [Absence management](../roles/
 - **Comment** — optional plain text, for the people who manage absences; the calendar does not show it.
 - Shown as `<first day> – <last day> <type>`, such as "02/03/2026 – 13/03/2026 Vacation", or `<day> <type>` for one day.
 
-The last day is not before the first, on every save: a save through `DataManager` is refused with "The last day must not be before the first day" («Последний день не может быть раньше первого»). The [editor](../views/absences.md#absence-editor) refuses such a range on its last day's field before that.
+The last day is not before the first, on every save: a save through `DataManager` is refused with "The last day must not be before the first day" («Последний день не может быть раньше первого»). The [editor](../views/absences.md#absence-editor) refuses such a range on its one dates field, with the same message, before that.
 
 One user's absences do not overlap: the editor refuses a range that shares a day with another non-deleted absence of the same user, whatever its type, a deleted type included, before the save. Nothing else checks it, so a save through `DataManager` can make two absences overlap. The plan stays right then: each day they share plans nothing, and the calendar shows both bars.
 

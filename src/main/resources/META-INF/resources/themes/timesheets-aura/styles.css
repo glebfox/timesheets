@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@import url('view/absence-list-view.css');
 @import url('view/calendar-view.css');
 @import url('view/client-list-view.css');
 @import url('view/login-view.css');
@@ -34,6 +33,8 @@
 @import url('component/approval-status.css');
 @import url('component/approval-week-board.css');
 @import url('component/avatar-upload.css');
+@import url('component/date-range-field.css');
+@import url('component/date-range-filter.css');
 @import url('component/details.css');
 @import url('component/full-calendar.css');
 @import url('component/icon.css');
@@ -42,7 +43,6 @@
 @import url('component/tooltip.css');
 
 @import url('app/popover-renderer.css');
-@import url('app/range-summary.css');
 @import url('app/time-entry-grid.css');
 @import url('app/user-renderer.css');
 @import url('app/util.css');

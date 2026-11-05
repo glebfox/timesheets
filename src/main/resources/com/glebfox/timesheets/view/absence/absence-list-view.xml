@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://absenceListView.title"
       focusComponent="userFilterField">
     <data readOnly="true">
@@ -47,8 +48,6 @@
             <pagination component="pagination"/>
             <propertyFilter component="userFilter"/>
             <propertyFilter component="typeFilter"/>
-            <propertyFilter component="fromFilter"/>
-            <propertyFilter component="toFilter"/>
         </urlQueryParameters>
     </facets>
     <actions>
@@ -62,8 +61,7 @@
             <gridLayout id="filterLayout"
                         width="100%"
                         columnMinWidth="min(22rem, 100%)"
-                        gap="var(--ts-filter-layout-column-gap)"
-                        classNames="absence-list-view-filters">
+                        gap="var(--ts-filter-layout-column-gap)">
                 <propertyFilter id="userFilter"
                                 dataLoader="absencesDl" property="user"
                                 operation="EQUAL"
@@ -118,39 +116,22 @@
                         </prefix>
                     </entityComboBox>
                 </propertyFilter>
-                <!-- From and To together keep the absences that share at least one day with the period. They read
-                     as one range, as the editor's dates do: two dates joined by a dash, sharing the cell evenly,
-                     or stacked on a phone (absence-list-view.css) -->
-                <hbox id="periodFilterBox"
-                      width="100%"
-                      classNames="absence-list-view-period-filter">
-                    <propertyFilter id="fromFilter"
-                                    dataLoader="absencesDl" property="lastDay"
-                                    operation="GREATER_OR_EQUAL"
-                                    labelVisible="false"
-                                    width="100%" minWidth="0">
-                        <datePicker id="fromFilterField"
-                                    datatype="localDate"
-                                    placeholder="msg://fromFilter.placeholder"
-                                    ariaLabel="msg://fromFilterField.ariaLabel"
-                                    clearButtonVisible="true"
-                                    width="100%"/>
-                    </propertyFilter>
-                    <span id="periodFilterSeparator" text="msg://datesSeparator.text"
-                          classNames="absence-list-view-period-separator"/>
-                    <propertyFilter id="toFilter"
-                                    dataLoader="absencesDl" property="firstDay"
-                                    operation="LESS_OR_EQUAL"
-                                    labelVisible="false"
-                                    width="100%" minWidth="0">
-                        <datePicker id="toFilterField"
-                                    datatype="localDate"
-                                    placeholder="msg://toFilter.placeholder"
-                                    ariaLabel="msg://toFilterField.ariaLabel"
-                                    clearButtonVisible="true"
-                                    width="100%"/>
-                    </propertyFilter>
-                </hbox>
+                <!-- Keeps the absences that share at least one day with the period; an open end leaves that side
+                     unbounded. The filter has no URL query parameter binder, so it stays out of urlQueryParameters -->
+                <app:dateRangeFilter id="periodFilter"
+                                     dataLoader="absencesDl"
+                                     startProperty="firstDay"
+                                     endProperty="lastDay"
+                                     labelVisible="false"
+                                     width="100%" minWidth="0">
+                    <app:dateRangeField id="periodFilterField"
+                                        startPlaceholder="msg://periodFilterField.startPlaceholder"
+                                        endPlaceholder="msg://periodFilterField.endPlaceholder"
+                                        startAriaLabel="msg://periodFilterField.startAriaLabel"
+                                        endAriaLabel="msg://periodFilterField.endAriaLabel"
+                                        clearButtonVisible="true"
+                                        width="100%"/>
+                </app:dateRangeFilter>
             </gridLayout>
 
             <hbox id="buttonsPanel" classNames="buttons-panel">

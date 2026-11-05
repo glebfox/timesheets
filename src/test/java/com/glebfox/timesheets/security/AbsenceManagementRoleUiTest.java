@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.security;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.entity.absence.Absence;
 import com.glebfox.timesheets.entity.absence.AbsenceType;
 import com.glebfox.timesheets.entity.user.User;
@@ -31,7 +32,6 @@ import io.jmix.core.SaveContext;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.combobox.EntityComboBox;
-import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
@@ -106,8 +106,9 @@ public class AbsenceManagementRoleUiTest {
 
             userField.setValue(absent);
             typeField.setValue(type);
-            UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(creator, "firstDayField").setTypedValue(MAR_2);
-            UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(creator, "lastDayField").setTypedValue(MAR_13);
+            DateRangeField datesField = UiTestUtils.getComponent(creator, "datesField");
+            datesField.getStartPicker().setTypedValue(MAR_2);
+            datesField.getEndPicker().setTypedValue(MAR_13);
             UiTestUtils.<JmixButton>getComponent(creator, "saveAndCloseBtn").click();
 
             assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(creator);

@@ -18,13 +18,13 @@ package com.glebfox.timesheets.schedule;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.action.HolidayCalendarDaysAddAction;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
 import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarDetailView;
 import com.glebfox.timesheets.view.holidaycalendarday.HolidayCalendarDaysAddView;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Span;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
@@ -203,8 +203,8 @@ public class HolidayCalendarDaysAddUiTest {
         // Worded as the framework words the required message of a bound field
         assertThat(nameField(dialog).isInvalid()).isTrue();
         assertThat(nameField(dialog).getErrorMessage()).isEqualTo("Name required");
-        assertThat(fromField(dialog).isInvalid()).isTrue();
-        assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Dates required");
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("Dates required");
         assertThat(typeField(dialog).isInvalid()).isTrue();
         assertThat(typeField(dialog).getErrorMessage()).isEqualTo("Type required");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
@@ -223,7 +223,7 @@ public class HolidayCalendarDaysAddUiTest {
             clickOk(dialog);
 
             assertThat(nameField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Название\"");
-            assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Даты\"");
+            assertThat(datesField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Даты\"");
             assertThat(typeField(dialog).getErrorMessage()).isEqualTo("Заполните поле \"Тип\"");
         });
     }
@@ -232,16 +232,16 @@ public class HolidayCalendarDaysAddUiTest {
     void lastDayMinimumFollowsTheFirstDay() {
         HolidayCalendarDaysAddView dialog = openAddDialog(openCalendar(saveCalendar(uniqueName())));
 
-        assertThat(toField(dialog).getMin()).isNull();
+        assertThat(endPicker(dialog).getMin()).isNull();
 
-        fromField(dialog).setTypedValue(JAN_8_2027);
-        assertThat(toField(dialog).getMin()).isEqualTo(JAN_8_2027);
+        startPicker(dialog).setTypedValue(JAN_8_2027);
+        assertThat(endPicker(dialog).getMin()).isEqualTo(JAN_8_2027);
 
-        fromField(dialog).setTypedValue(JAN_1_2027);
-        assertThat(toField(dialog).getMin()).isEqualTo(JAN_1_2027);
+        startPicker(dialog).setTypedValue(JAN_1_2027);
+        assertThat(endPicker(dialog).getMin()).isEqualTo(JAN_1_2027);
 
-        fromField(dialog).setTypedValue(null);
-        assertThat(toField(dialog).getMin()).isNull();
+        startPicker(dialog).setTypedValue(null);
+        assertThat(endPicker(dialog).getMin()).isNull();
     }
 
     @Test
@@ -252,22 +252,20 @@ public class HolidayCalendarDaysAddUiTest {
         fill(dialog, NEW_YEAR_HOLIDAYS, JAN_8_2027, JAN_1_2027);
         clickOk(dialog);
 
-        // A last day typed before the first one breaks the field's minimum, so the framework refuses it
-        assertThat(toField(dialog).isInvalid()).isTrue();
-        assertThat(toField(dialog).getErrorMessage())
-                .isEqualTo("Value should be greater than '" + datatypeFormatter.formatLocalDate(JAN_8_2027) + "'");
+        // The field refuses the range with its own message
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("The last day must not be before the first day");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
 
-        // A changed first day checks the last one again: a day still too early names the new first day
-        fromField(dialog).setTypedValue(JAN_3_2027);
-        assertThat(toField(dialog).isInvalid()).isTrue();
-        assertThat(toField(dialog).getErrorMessage())
-                .isEqualTo("Value should be greater than '" + datatypeFormatter.formatLocalDate(JAN_3_2027) + "'");
+        // A first day changed while the last day is still before it stays refused
+        startPicker(dialog).setTypedValue(JAN_3_2027);
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("The last day must not be before the first day");
 
-        // and a corrected range clears the refusal
-        fromField(dialog).setTypedValue(DEC_31_2026);
-        assertThat(toField(dialog).isInvalid()).isFalse();
+        // A corrected range clears the refusal
+        endPicker(dialog).setTypedValue(JAN_8_2027);
+        assertThat(datesField(dialog).isInvalid()).isFalse();
     }
 
     @Test
@@ -278,17 +276,29 @@ public class HolidayCalendarDaysAddUiTest {
         fill(dialog, "January", JAN_1_2027, FEB_1_2027);
         clickOk(dialog);
 
-        assertThat(toField(dialog).isInvalid()).isTrue();
-        assertThat(toField(dialog).getErrorMessage()).isEqualTo("No more than 31 days");
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("No more than 31 days");
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
 
-        toField(dialog).setTypedValue(JAN_31_2027);
-        assertThat(toField(dialog).isInvalid()).isFalse();
+        endPicker(dialog).setTypedValue(JAN_31_2027);
+        assertThat(datesField(dialog).isInvalid()).isFalse();
         clickOk(dialog);
 
         assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
         assertThat(daysDc(view).getItems()).hasSize(31);
+    }
+
+    @Test
+    void changingADateClearsTheRefusal() {
+        HolidayCalendarDaysAddView dialog = openAddDialog(openCalendar(saveCalendar(uniqueName())));
+        fill(dialog, "January", JAN_1_2027, FEB_1_2027);
+        clickOk(dialog);
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+
+        endPicker(dialog).setTypedValue(JAN_31_2027);
+
+        assertThat(datesField(dialog).isInvalid()).isFalse();
     }
 
     @Test
@@ -305,18 +315,16 @@ public class HolidayCalendarDaysAddUiTest {
         clickOk(dialog);
 
         // The saved day and the day added in this editor, in date order
-        assertThat(fromField(dialog).isInvalid()).isTrue();
-        assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Already in the calendar: "
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("Already in the calendar: "
                 + datatypeFormatter.formatLocalDate(DEC_31_2026) + ", "
                 + datatypeFormatter.formatLocalDate(JAN_2_2027));
-        assertThat(toField(dialog).isInvalid()).isTrue();
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(dates(daysDataGrid(view))).containsExactly(JAN_2_2027, DEC_31_2026);
 
         // A changed range is checked again
-        fromField(dialog).setTypedValue(JAN_3_2027);
-        assertThat(fromField(dialog).isInvalid()).isFalse();
-        assertThat(toField(dialog).isInvalid()).isFalse();
+        startPicker(dialog).setTypedValue(JAN_3_2027);
+        assertThat(datesField(dialog).isInvalid()).isFalse();
     }
 
     @Test
@@ -353,20 +361,16 @@ public class HolidayCalendarDaysAddUiTest {
         HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
         HolidayCalendarDaysAddView dialog = openAddDialog(view);
 
-        assertThat(rangeSummary(dialog).getText()).isEmpty();
+        assertThat(datesField(dialog).getHelperText()).isNullOrEmpty();
 
         fill(dialog, NEW_YEAR_HOLIDAYS, JAN_1_2027, JAN_8_2027);
-        assertThat(rangeSummary(dialog).getText()).isEqualTo("8 days, Friday to Friday");
+        assertThat(datesField(dialog).getHelperText()).isEqualTo("8 days, Friday to Friday");
 
-        toField(dialog).setTypedValue(null);
-        assertThat(rangeSummary(dialog).getText()).isEqualTo("1 day, Friday");
+        endPicker(dialog).setTypedValue(null);
+        assertThat(datesField(dialog).getHelperText()).isEqualTo("1 day, Friday");
 
-        toField(dialog).setTypedValue(JAN_1_2027);
-        assertThat(rangeSummary(dialog).getText()).isEqualTo("1 day, Friday");
-
-        // A range that ends before it starts names no days
-        toField(dialog).setTypedValue(DEC_31_2026);
-        assertThat(rangeSummary(dialog).getText()).isEmpty();
+        endPicker(dialog).setTypedValue(JAN_1_2027);
+        assertThat(datesField(dialog).getHelperText()).isEqualTo("1 day, Friday");
     }
 
     @Test
@@ -382,8 +386,8 @@ public class HolidayCalendarDaysAddUiTest {
         fill(dialog, NEW_YEAR_HOLIDAYS, JAN_1_2027, null);
         clickOk(dialog);
 
-        assertThat(fromField(dialog).isInvalid()).isTrue();
-        assertThat(fromField(dialog).getErrorMessage())
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage())
                 .isEqualTo("Already in the calendar: " + datatypeFormatter.formatLocalDate(JAN_1_2027));
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
     }
@@ -494,7 +498,7 @@ public class HolidayCalendarDaysAddUiTest {
             fill(dialog, "Новогодние каникулы", DEC_30_2026, JAN_1_2027);
             clickOk(dialog);
 
-            assertThat(fromField(dialog).getErrorMessage()).isEqualTo("Уже есть в календаре: 31.12.2026");
+            assertThat(datesField(dialog).getErrorMessage()).isEqualTo("Уже есть в календаре: 31.12.2026");
         });
     }
 
@@ -535,15 +539,15 @@ public class HolidayCalendarDaysAddUiTest {
 
     private static void fill(HolidayCalendarDaysAddView dialog, String name, LocalDate from, @Nullable LocalDate to) {
         nameField(dialog).setTypedValue(name);
-        fromField(dialog).setTypedValue(from);
-        toField(dialog).setTypedValue(to);
+        startPicker(dialog).setTypedValue(from);
+        endPicker(dialog).setTypedValue(to);
     }
 
     private static void assertSummary(HolidayCalendarDaysAddView dialog, LocalDate from, @Nullable LocalDate to,
                                       String expected) {
-        fromField(dialog).setTypedValue(from);
-        toField(dialog).setTypedValue(to);
-        assertThat(rangeSummary(dialog).getText()).isEqualTo(expected);
+        startPicker(dialog).setTypedValue(from);
+        endPicker(dialog).setTypedValue(to);
+        assertThat(datesField(dialog).getHelperText()).isEqualTo(expected);
     }
 
     private static void clickOk(HolidayCalendarDaysAddView dialog) {
@@ -562,20 +566,20 @@ public class HolidayCalendarDaysAddUiTest {
         return UiTestUtils.getComponent(dialog, "nameField");
     }
 
-    private static TypedDatePicker<LocalDate> fromField(HolidayCalendarDaysAddView dialog) {
-        return UiTestUtils.getComponent(dialog, "fromField");
+    private static DateRangeField datesField(HolidayCalendarDaysAddView dialog) {
+        return UiTestUtils.getComponent(dialog, "datesField");
     }
 
-    private static TypedDatePicker<LocalDate> toField(HolidayCalendarDaysAddView dialog) {
-        return UiTestUtils.getComponent(dialog, "toField");
+    private static TypedDatePicker<LocalDate> startPicker(HolidayCalendarDaysAddView dialog) {
+        return datesField(dialog).getStartPicker();
+    }
+
+    private static TypedDatePicker<LocalDate> endPicker(HolidayCalendarDaysAddView dialog) {
+        return datesField(dialog).getEndPicker();
     }
 
     private static JmixRadioButtonGroup<HolidayCalendarDayType> typeField(HolidayCalendarDaysAddView dialog) {
         return UiTestUtils.getComponent(dialog, "typeField");
-    }
-
-    private static Span rangeSummary(HolidayCalendarDaysAddView dialog) {
-        return UiTestUtils.getComponent(dialog, "rangeSummary");
     }
 
     private static List<LocalDate> dates(DataGrid<HolidayCalendarDay> grid) {

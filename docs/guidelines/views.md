@@ -1,6 +1,6 @@
 # Views and actions
 
-Mechanics of the framework's views, grids, filters, list actions, components declared in descriptors, and tooltips that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
+Mechanics of the framework's views, grids, filters, list actions, components declared in descriptors, custom fields and filters, and tooltips that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
 
 ## Read-only detail views
 
@@ -56,6 +56,14 @@ A `genericFilter` shows Add condition and its settings button only to a user wit
 A component of the project's own that has no element of its own in the descriptors, such as the approval screen's person panel and basket bar, is declared with the generic `<component id="…" class="…"/>` element. The loader creates it through `UiComponents`, and so through Spring: the component has a constructor without arguments and takes its beans as `AvatarUpload` does, as `ApplicationContextAware` and `InitializingBean`, building the parts that need them in `afterPropertiesSet`. What it shows comes through its own methods once it is created, such as the person panel's `show` and the basket bar's `setEntries`, never through a constructor. The loader sets the `id`, `visible`, and `css` attributes and the `properties` element, not `classNames`, so the view's stylesheet reaches such a component by its own class.
 
 The view wires it as it wires a framework component. `@Subscribe("<id>")` finds the public `addXxxListener(ComponentEventListener<E>)` that returns a `Registration` by the event type of the method's parameter alone. When two such methods take the same event type, `subject` must name one by its full method name, `addXxxListener`; only for a `ClickEvent` does the framework add the `add` itself, so there the subject is `xxxListener`, as with a button's `clickListener`. `@Install(to = "<id>", subject = "xxx")` reaches a public `setXxx` that takes one functional interface.
+
+## Custom fields and filters
+
+The date range field and its filter (`component/daterange/`, [decision 0015](../decisions/0015-a-range-of-two-dates-is-one-field-of-its-own.md)) rely on mechanics of Jmix's own components that the project skills do not state.
+
+- A field that is not an `EntityValueSource` binding gets from the framework no required flag, no bean validation, and no attribute-permission check. The view's read-only mode reaches only a component that is `SupportsValueSource` with a value source, and checks attribute permissions only for an `EntityValueSource`. A custom field bound to the data model therefore goes through a value source of its own that checks `UiEntityAttributeContext` in `isReadOnly()`, and the field sets its own required mark. A value source fires no value change for its own writes, or the binding reads the value back into the field.
+- A view refuses the field with `setInvalid(true)` and `setErrorMessage(...)`, in either order: `setInvalid(true)` runs no validators, so it leaves the message alone. Only `setInvalid(false)` runs the validators again, which is how the field drops both the mark and the message at the next change of either date.
+- A filter on `SingleFilterComponentBase` applies only a change that comes from the client, so a value set from the server loads nothing; a value the filter must not use is held back in both `onFilterValueChanged` and `updateQueryCondition`. Its condition is built before the loader has set an id or a property, so the label's id and the parameter names are set later, and every parameter needs a name or the first load fails. Its value field is a nested element of the filter's own element, and a filter element is never declared inside `urlQueryParameters`, whose loader fails on a child no binder supports.
 
 ## Tooltips that render Markdown
 
