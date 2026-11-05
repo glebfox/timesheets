@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-/* The field's width is the container the row's layout is decided by. Inline-size containment removes the host's
-   intrinsic inline size, so a field declared without a width would collapse; it takes the width two filled dates and
-   their buttons need, and never more than its parent. A width given to the field overrides it */
+/* The field's width is the container the row's layout is decided by. Inline-size containment counts the host's
+   content as zero wide, so a field declared without a width, whose width would come from its content, would
+   collapse. It takes instead the width its content would give it: two pickers at a date picker's own default width,
+   the two gaps, and the dash, about a digit wide; never more than its parent. A width given to the field overrides
+   it */
 .date-range-field {
     container-name: date-range-field;
     container-type: inline-size;
-    width: 22rem;
+    width: calc(2 * var(--vaadin-field-default-width, 12em) + 2 * var(--vaadin-gap-s) + 1ch);
     max-width: 100%;
 }
 
