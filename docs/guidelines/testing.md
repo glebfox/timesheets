@@ -65,7 +65,7 @@ Driving the app with Playwright:
 - its `colorScheme` emulation is lost after a reload or a new login, so a check of a theme sets it again after each;
 - its Chromium draws classic scrollbars, so a scrolling panel measures narrower than on a Mac with overlay scrollbars (`docs/guidelines/design-system.md`).
 
-A running app picks up Java changes only after a restart, and a change under `src/main/frontend/`, such as an iconset, also only after a restart, which rebuilds the development bundle; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. The `live-checker` agent runs a live check against the app the developer has running.
+A running app picks up Java changes only after a restart, and a change under `src/main/frontend/`, such as an iconset, also only after a restart, which rebuilds the development bundle; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. A changed message bundle does not: the app caches the bundles it has read until a restart, or until it finds an empty file named `io.jmix.core.Messages#clearCache` in `.jmix/temp/triggers/`, which it checks every five seconds and then deletes; after `./gradlew processResources` and such a file, a new text shows after a logout and login. The `live-checker` agent runs a live check against the app the developer has running.
 
 Every live check, on the developer's app or on a copy, runs against the developer's `ts` database, so it saves only data the UI can remove again and removes it when done.
 
