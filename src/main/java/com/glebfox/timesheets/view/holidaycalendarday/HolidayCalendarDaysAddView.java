@@ -110,7 +110,8 @@ public class HolidayCalendarDaysAddView extends StandardView {
      */
     public List<LocalDate> getDates() {
         DateRange range = Objects.requireNonNull(datesField.getValue());
-        return range.start().datesUntil(range.endOrStart().plusDays(1)).toList();
+        LocalDate start = Objects.requireNonNull(range.start());
+        return start.datesUntil(range.endOrStart().plusDays(1)).toList();
     }
 
     @Subscribe
