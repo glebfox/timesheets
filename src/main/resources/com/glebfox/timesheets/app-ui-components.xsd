@@ -50,6 +50,10 @@
                     <xs:attribute name="endAriaLabel" type="layout:resourceString"/>
                     <xs:attribute name="clearButtonVisible" type="xs:boolean"/>
                     <xs:attribute name="summaryVisible" type="xs:boolean"/>
+                    <!-- Bound when all three are given: the first and the last day of the container's item -->
+                    <xs:attribute name="dataContainer" type="xs:string"/>
+                    <xs:attribute name="startProperty" type="xs:string"/>
+                    <xs:attribute name="endProperty" type="xs:string"/>
 
                     <xs:attributeGroup ref="layout:hasLabel"/>
                     <xs:attributeGroup ref="layout:hasRequired"/>

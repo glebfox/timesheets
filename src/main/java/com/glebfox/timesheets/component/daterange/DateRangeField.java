@@ -55,6 +55,9 @@ import java.util.List;
  * the field, with {@link #setInvalid(boolean)} and then {@link #setErrorMessage(String)}, is dropped at the next
  * change of either date. The field validates a new range and updates its summary before any other listener of its
  * value hears of the change.
+ * <p>
+ * Bound to two attributes of an item through a {@link DateRangeValueSource}, the field is required when the first
+ * day's attribute is mandatory.
  */
 public class DateRangeField extends CustomField<DateRange>
         implements SupportsValueSource<DateRange>, SupportsValidation<DateRange>, HasRequired,
@@ -326,6 +329,12 @@ public class DateRangeField extends CustomField<DateRange>
     @Override
     public void setValueSource(@Nullable ValueSource<DateRange> valueSource) {
         fieldDelegate.setValueSource(valueSource);
+
+        // The binding marks a field required only for a value source of one attribute. The required message stays
+        // as given, or the field's own with its label
+        if (valueSource instanceof DateRangeValueSource<?> rangeSource && rangeSource.isStartMandatory()) {
+            setRequired(true);
+        }
     }
 
     @Override

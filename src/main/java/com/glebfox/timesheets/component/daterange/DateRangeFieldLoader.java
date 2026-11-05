@@ -16,6 +16,8 @@
 
 package com.glebfox.timesheets.component.daterange;
 
+import io.jmix.flowui.exception.GuiDevelopmentException;
+import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.xml.layout.loader.AbstractComponentLoader;
 
 public class DateRangeFieldLoader extends AbstractComponentLoader<DateRangeField> {
@@ -27,6 +29,9 @@ public class DateRangeFieldLoader extends AbstractComponentLoader<DateRangeField
 
     @Override
     public void loadComponent() {
+        // First, as Jmix's loaders bind a field, so that the attributes below override what the binding sets
+        loadValueSource();
+
         componentLoader().loadLabel(resultComponent, element);
         componentLoader().loadRequired(resultComponent, element, context);
         componentLoader().loadEnabled(resultComponent, element);
@@ -40,5 +45,22 @@ public class DateRangeFieldLoader extends AbstractComponentLoader<DateRangeField
         loadResourceString(element, "endAriaLabel", context.getMessageGroup(), resultComponent::setEndAriaLabel);
         loadBoolean(element, "clearButtonVisible", resultComponent::setClearButtonVisible);
         loadBoolean(element, "summaryVisible", resultComponent::setSummaryVisible);
+    }
+
+    // Not through DataLoaderSupport, which binds one property and refuses a container without it
+    private void loadValueSource() {
+        String containerId = loadString(element, "dataContainer").orElse(null);
+        String startProperty = loadString(element, "startProperty").orElse(null);
+        String endProperty = loadString(element, "endProperty").orElse(null);
+        if (containerId == null && startProperty == null && endProperty == null) {
+            return;
+        }
+        if (containerId == null || startProperty == null || endProperty == null) {
+            throw new GuiDevelopmentException(String.format("Can't bind component '%s': 'dataContainer', "
+                    + "'startProperty', and 'endProperty' go together", element.attributeValue("id")), context);
+        }
+
+        InstanceContainer<?> container = context.getDataHolder().getContainer(containerId);
+        resultComponent.setValueSource(new DateRangeValueSource<>(container, startProperty, endProperty));
     }
 }

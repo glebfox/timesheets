@@ -77,11 +77,16 @@ public interface StudioAppComponents {
             icon = "com/glebfox/timesheets/meta/icon/component/dateRangeField.svg",
             propertyGroups = {
                     StudioPropertyGroups.BaseSizedEnabledComponentWithClassName.class,
+                    StudioPropertyGroups.CollectionOrInstanceDataContainer.class,
                     StudioPropertyGroups.Label.class,
                     StudioPropertyGroups.RequiredAttributes.class,
                     StudioPropertyGroups.ReadOnly.class
             },
             properties = {
+                    @StudioProperty(xmlAttribute = "startProperty", type = StudioPropertyType.PROPERTY_REF,
+                            category = StudioProperty.Category.DATA_BINDING),
+                    @StudioProperty(xmlAttribute = "endProperty", type = StudioPropertyType.PROPERTY_REF,
+                            category = StudioProperty.Category.DATA_BINDING),
                     @StudioProperty(xmlAttribute = "startPlaceholder", type = StudioPropertyType.LOCALIZED_STRING),
                     @StudioProperty(xmlAttribute = "endPlaceholder", type = StudioPropertyType.LOCALIZED_STRING),
                     @StudioProperty(xmlAttribute = "startAriaLabel", type = StudioPropertyType.LOCALIZED_STRING),
@@ -90,6 +95,10 @@ public interface StudioAppComponents {
                             type = StudioPropertyType.BOOLEAN, defaultValue = "false"),
                     @StudioProperty(xmlAttribute = "summaryVisible", type = StudioPropertyType.BOOLEAN,
                             defaultValue = "false")
+            },
+            propertiesBindings = {
+                    @StudioPropertiesBinding(source = "dataContainer", item = "startProperty"),
+                    @StudioPropertiesBinding(source = "dataContainer", item = "endProperty")
             }
     )
     DateRangeField dateRangeField();

@@ -23,7 +23,8 @@ import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
 
 /**
- * Loads a {@link DateRangeField} with every attribute of its XML element set, for {@link DateRangeFieldXmlLoadTest}.
+ * Loads a {@link DateRangeField} with every attribute of its XML element set, for {@link DateRangeFieldXmlLoadTest}, and
+ * one bound to the days of an absence in a container without a loader, for {@link DateRangeFieldBindingUiTest}.
  */
 @Route(value = "date-range-field-test", layout = MainView.class)
 @ViewController("ts_DateRangeFieldTestView")

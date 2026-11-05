@@ -17,6 +17,11 @@
 
 <view xmlns="http://jmix.io/schema/flowui/view"
       xmlns:app="http://glebfox.com/schema/app-ui-components.xsd">
+    <data>
+        <!-- No loader: a test sets the item -->
+        <instance id="absenceDc"
+                  class="com.glebfox.timesheets.entity.absence.Absence"/>
+    </data>
     <layout>
         <app:dateRangeField id="configuredField"
                             label="Period"
@@ -31,5 +36,9 @@
                             summaryVisible="true"
                             width="20em"
                             classNames="extra"/>
+        <app:dateRangeField id="boundField"
+                            dataContainer="absenceDc"
+                            startProperty="firstDay"
+                            endProperty="lastDay"/>
     </layout>
 </view>
