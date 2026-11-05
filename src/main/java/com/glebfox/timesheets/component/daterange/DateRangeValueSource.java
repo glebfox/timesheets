@@ -181,20 +181,18 @@ public class DateRangeValueSource<E> implements ValueSource<DateRange>, Applicat
     }
 
     private void onItemPropertyChange(InstanceContainer.ItemPropertyChangeEvent<E> event) {
-        if (writing) {
+        boolean startChanged = event.getProperty().equals(getStartProperty());
+        boolean endChanged = event.getProperty().equals(getEndProperty());
+        // Any other attribute of the item is none of the range's business, and its previous value is not a day
+        if (writing || !(startChanged || endChanged)) {
             return;
         }
 
         E item = event.getItem();
         LocalDate prevValue = (LocalDate) event.getPrevValue();
-        DateRange prevRange;
-        if (event.getProperty().equals(getStartProperty())) {
-            prevRange = toRange(prevValue, EntityValues.getValue(item, getEndProperty()));
-        } else if (event.getProperty().equals(getEndProperty())) {
-            prevRange = toRange(EntityValues.getValue(item, getStartProperty()), prevValue);
-        } else {
-            return;
-        }
+        DateRange prevRange = startChanged
+                ? toRange(prevValue, EntityValues.getValue(item, getEndProperty()))
+                : toRange(EntityValues.getValue(item, getStartProperty()), prevValue);
 
         events.fireEvent(new ValueChangeEvent<>(this, prevRange, toRange(item)));
     }

@@ -132,6 +132,41 @@ class DateRangeFieldBindingUiTest {
     }
 
     @Test
+    void daysChangedOnTheItemAreShown() {
+        systemAuthenticator.runWithUser("admin", () -> {
+            Absence absence = absence(MAR_2, MAR_13);
+            DateRangeField field = openBoundField(absence);
+
+            absence.setLastDay(MAR_20);
+            absence.setFirstDay(MAR_14);
+
+            assertThat(field.getStartPicker().getTypedValue()).isEqualTo(MAR_14);
+            assertThat(field.getEndPicker().getTypedValue()).isEqualTo(MAR_20);
+
+            // A last day equal to the first one shows as an empty end
+            absence.setLastDay(MAR_14);
+
+            assertThat(field.getStartPicker().getTypedValue()).isEqualTo(MAR_14);
+            assertThat(field.getEndPicker().getTypedValue()).isNull();
+        });
+    }
+
+    @Test
+    void otherAttributesOfTheItemChangeFreely() {
+        systemAuthenticator.runWithUser("admin", () -> {
+            Absence absence = absence(MAR_2, MAR_13);
+            DateRangeField field = openBoundField(absence);
+
+            // From a value to another, so the change carries a previous value that is not a day
+            absence.setComment("First");
+            absence.setComment("Second");
+
+            assertThat(absence.getComment()).isEqualTo("Second");
+            assertThat(field.getValue()).isEqualTo(new DateRange(MAR_2, MAR_13));
+        });
+    }
+
+    @Test
     void newItemShowsItsDays() {
         systemAuthenticator.runWithUser("admin", () -> {
             DateRangeField field = openBoundField(absence(MAR_2, MAR_13));
