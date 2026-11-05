@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+/* The field's width is the container the row's layout is decided by. Inline-size containment removes the host's
+   intrinsic inline size, so a field declared without a width would collapse; it takes the width two filled dates and
+   their buttons need, and never more than its parent. A width given to the field overrides it */
+.date-range-field {
+    container-name: date-range-field;
+    container-type: inline-size;
+    width: 22rem;
+    max-width: 100%;
+}
+
 /* The two date pickers side by side, joined by a dash on their text's baseline, with the gap of a row of fields */
 .date-range-field-row {
     display: flex;
@@ -25,4 +35,38 @@
 .date-range-field-row > vaadin-date-picker {
     flex: 1;
     min-width: 0;
+}
+
+/* Below the width that two filled dates need whole, the dates stack, each as wide as the field, with the dash
+   centered between them. The widest filled dates (08/08/2026, 08.08.2026) need 274px in English and 262px in
+   Russian without clear buttons, and 330px and 318px with them, so the field stacks below 18rem (288px) without
+   clear buttons and below 21.5rem (344px) with them. The field's width at the common windows (375, 480, 600, 768,
+   1024, 1280 with the menu open and collapsed, 1440), as measured:
+     - the absence editor's and the calendar days dialog's field: 327px at 375, 432px at 480, 448px from 600 on, so
+       it stays side by side at every window but the narrowest it could be, which is still 39px above 288px;
+     - the absence list's period field: 343px at 375, 448 at 480, 568 at 600, 364 at 768, 363.5 at 1024, 491.5 and
+       410.7 at 1280 (menu open and collapsed), 378.3 and 464 at 1440 (open and collapsed).
+   No width from 330px up is a scrollbar's width (15px) away from 343px, so 21.5rem sits just above it: a classic
+   scrollbar only narrows a field, so the 375px window stacks with or without one, and every other window (363.5px
+   and up) stays side by side with or without one */
+@container date-range-field (width < 18rem) {
+    .date-range-field-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-range-field-row > .date-range-field-separator {
+        align-self: center;
+    }
+}
+
+@container date-range-field (width < 21.5rem) {
+    .date-range-field-clearable > .date-range-field-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-range-field-clearable > .date-range-field-row > .date-range-field-separator {
+        align-self: center;
+    }
 }

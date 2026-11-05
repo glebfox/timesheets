@@ -64,6 +64,8 @@ public class DateRangeField extends CustomField<DateRange>
         ApplicationContextAware, InitializingBean {
 
     public static final String CLASS_NAME = "date-range-field";
+    // On the host while the pickers have clear buttons, for the stylesheet's wider stacking width
+    public static final String CLEARABLE_CLASS_NAME = CLASS_NAME + "-clearable";
 
     private ApplicationContext applicationContext;
     private Messages messages;
@@ -282,6 +284,7 @@ public class DateRangeField extends CustomField<DateRange>
     public void setClearButtonVisible(boolean clearButtonVisible) {
         startPicker.setClearButtonVisible(clearButtonVisible);
         endPicker.setClearButtonVisible(clearButtonVisible);
+        setClassName(CLEARABLE_CLASS_NAME, clearButtonVisible);
     }
 
     public boolean isSummaryVisible() {

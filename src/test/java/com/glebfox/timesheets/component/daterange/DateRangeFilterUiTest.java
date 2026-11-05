@@ -165,6 +165,7 @@ class DateRangeFilterUiTest {
         assertThat(filter.getStartProperty()).isEqualTo("firstDay");
         assertThat(filter.getEndProperty()).isEqualTo("lastDay");
         assertThat(filter.isLabelVisible()).isFalse();
+        assertThat(filter.getChildren().anyMatch(child -> child.hasClassName(DateRangeFilter.CLASS_NAME))).isTrue();
         assertThat(filter.getDataLoader()).isSameAs(absencesDl());
 
         DateRangeField field = field(filter);

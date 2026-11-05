@@ -19,6 +19,7 @@ package com.glebfox.timesheets.component.daterange;
 import com.glebfox.timesheets.app.util.DateRange;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.customfield.CustomField;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import io.jmix.core.querycondition.LogicalCondition;
 import io.jmix.core.querycondition.PropertyCondition;
 import io.jmix.flowui.component.filter.SingleFilterComponentBase;
@@ -41,6 +42,8 @@ import static com.google.common.base.Preconditions.checkState;
 @NullMarked
 public class DateRangeFilter extends SingleFilterComponentBase<DateRange> {
 
+    public static final String CLASS_NAME = "date-range-filter";
+
     // Each condition has no property and no parameter name until the setters give them, and no value while its side
     // of the field's range is empty, which drops it from the query
 
@@ -57,6 +60,13 @@ public class DateRangeFilter extends SingleFilterComponentBase<DateRange> {
         PropertyCondition condition = new PropertyCondition().skipNullOrEmpty();
         condition.setOperation(operation);
         return condition;
+    }
+
+    @Override
+    protected void initRootComponent(HorizontalLayout root) {
+        super.initRootComponent(root);
+        // The root's own class, which the stylesheet gives what the property filter's root has
+        root.addClassName(CLASS_NAME);
     }
 
     @Override

@@ -295,12 +295,14 @@ class DateRangeFieldUiTest {
         assertThat(field.isClearButtonVisible()).isTrue();
         assertThat(field.getStartPicker().isClearButtonVisible()).isTrue();
         assertThat(field.getEndPicker().isClearButtonVisible()).isTrue();
+        assertThat(field.hasClassName(DateRangeField.CLEARABLE_CLASS_NAME)).isTrue();
 
         field.setClearButtonVisible(false);
 
         assertThat(field.isClearButtonVisible()).isFalse();
         assertThat(field.getStartPicker().isClearButtonVisible()).isFalse();
         assertThat(field.getEndPicker().isClearButtonVisible()).isFalse();
+        assertThat(field.hasClassName(DateRangeField.CLEARABLE_CLASS_NAME)).isFalse();
     }
 
     @Test

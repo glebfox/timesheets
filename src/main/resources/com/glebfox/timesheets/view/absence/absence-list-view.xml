@@ -61,8 +61,7 @@
             <gridLayout id="filterLayout"
                         width="100%"
                         columnMinWidth="min(22rem, 100%)"
-                        gap="var(--ts-filter-layout-column-gap)"
-                        classNames="absence-list-view-filters">
+                        gap="var(--ts-filter-layout-column-gap)">
                 <propertyFilter id="userFilter"
                                 dataLoader="absencesDl" property="user"
                                 operation="EQUAL"

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-/* The range summary under two date pickers that read as one field, as in the calendar days dialog and the absence
-   editor: it looks like the field's helper text */
-.range-summary {
-    margin-top: var(--vaadin-gap-xs);
-    color: var(--vaadin-text-color-secondary);
+/* What the property filter's root has: a label that is visible does not sit flush against the field, and does not
+   wrap. The filter's base class sets the root's spacing to false, so the gap is set here */
+.date-range-filter {
+    gap: var(--vaadin-gap-s);
 }
 
-.range-summary:empty {
-    display: none;
+.date-range-filter .filter-label {
+    white-space: nowrap;
 }
