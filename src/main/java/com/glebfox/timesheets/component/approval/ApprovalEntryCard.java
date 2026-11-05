@@ -122,7 +122,12 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         // The color of the status: a stripe along the edge of a card on the week board, where it reads down a column,
         // and a dot before the time of a card in a month's list, whose cards are rows as wide as the list
         Span statusMark = new Span();
-        statusMark.addClassNames(compact ? "stripe" : "dot", ApprovalStatusClassNames.of(status));
+        // The stripe takes its color from the card's status class, and a dot, as everywhere on the screen, from its own
+        if (compact) {
+            statusMark.addClassName("stripe");
+        } else {
+            statusMark.addClassNames("dot", ApprovalStatusClassNames.of(status));
+        }
         // The status is told by the badge, or by the absence of one for an entry that waits
         statusMark.getElement().setAttribute("aria-hidden", "true");
 
