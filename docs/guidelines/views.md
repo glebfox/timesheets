@@ -59,7 +59,7 @@ The view wires it as it wires a framework component. `@Subscribe("<id>")` finds 
 
 ## Custom fields and filters
 
-The date range field and its filter (`component/daterange/`) rely on mechanics of Jmix's own components that the project skills do not state.
+The date range field and its filter (`component/daterange/`, [decision 0015](../decisions/0015-a-range-of-two-dates-is-one-field-of-its-own.md)) rely on mechanics of Jmix's own components that the project skills do not state.
 
 - A field that is not an `EntityValueSource` binding gets from the framework no required flag, no bean validation, and no attribute-permission check. The view's read-only mode reaches only a component that is `SupportsValueSource` with a value source, and checks attribute permissions only for an `EntityValueSource`. A custom field bound to the data model therefore goes through a value source of its own that checks `UiEntityAttributeContext` in `isReadOnly()`, and the field sets its own required mark. A value source fires no value change for its own writes, or the binding reads the value back into the field.
 - A view refuses the field with `setInvalid(true)` and `setErrorMessage(...)`, in either order: `setInvalid(true)` runs no validators, so it leaves the message alone. Only `setInvalid(false)` runs the validators again, which is how the field drops both the mark and the message at the next change of either date.
