@@ -258,6 +258,11 @@ public class HolidayCalendarDaysAddUiTest {
         assertThat(UiTestUtils.<View<?>>getLastOpenedViewDialog()).isSameAs(dialog);
         assertThat(daysDc(view).getItems()).isEmpty();
 
+        // A first day changed while the last day is still before it stays refused
+        startPicker(dialog).setTypedValue(JAN_3_2027);
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("The last day must not be before the first day");
+
         // A corrected range clears the refusal
         endPicker(dialog).setTypedValue(JAN_8_2027);
         assertThat(datesField(dialog).isInvalid()).isFalse();

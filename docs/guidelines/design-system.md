@@ -149,7 +149,7 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 A container query styles the descendants of its container, never the container itself, so what changes under the query sits inside the container. As the approval figures go from four in a row to two, their row is the container, a wrapping flex container, and each figure changes its `flex-basis`; a grid that is itself the container cannot change its own columns.
 
-A layout attribute in a descriptor, such as an `hbox`'s `alignItems` or a component's `width`, is an inline style on its element, and no stylesheet rule overrides it, a container query's included. A property that a query changes is set in the stylesheet, not in the descriptor, as the absence list's period filter sets its alignment in `view/absence-list-view.css`.
+A layout attribute in a descriptor, such as an `hbox`'s `alignItems` or a component's `width`, is an inline style on its element, and no stylesheet rule overrides it, a container query's included. A property that a query changes is set in the stylesheet, not in the descriptor, as the date range field sets how its two pickers stack in its own `component/date-range-field.css`.
 
 A container's width at a common window is not the screen's. With the navigation drawer open at 1280 pixels, the approval screen's person panel is about 640 pixels wide, and a classic scrollbar, as on Windows or in Playwright's Chromium, takes 15 pixels of it where a Mac's overlay scrollbar takes none. A switch within a scrollbar's width of such a width puts the same window on either side of it, depending on the scrollbar.
 

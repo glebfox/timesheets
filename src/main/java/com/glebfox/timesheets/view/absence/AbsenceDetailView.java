@@ -92,8 +92,7 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
                     .collect(Collectors.joining(", "));
             String message = messageBundle.formatMessage("datesField.overlapError", absences);
 
-            // Marked before the message is set: a validation of the field while it is invalid resets its message,
-            // and the mark itself runs none
+            // The field drops both the mark and the message at the next change of either date
             datesField.setInvalid(true);
             datesField.setErrorMessage(message);
             overlapRefused = true;
@@ -104,9 +103,8 @@ public class AbsenceDetailView extends StandardDetailView<Absence> {
         }
     }
 
-    // A change of a date clears the refusal by itself. A change of the user does not touch the dates, and clears
-    // only the refusal this view made: clearing runs the field's validation, which would mark empty dates of a new
-    // absence as required
+    // A change of a date clears the refusal by itself. A change of the user clears only the overlap refusal this
+    // view made, and leaves the field's own state alone
     private void clearOverlapRefusal() {
         if (overlapRefused) {
             overlapRefused = false;

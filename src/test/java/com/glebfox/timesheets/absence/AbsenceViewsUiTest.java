@@ -399,7 +399,7 @@ public class AbsenceViewsUiTest {
     }
 
     @Test
-    void changingTheUserOnANewAbsenceMarksNoDates() {
+    void changingTheUserLeavesTheDatesAsTheyWere() {
         User user = saveUser();
 
         AbsenceDetailView editor = openNewEditor();

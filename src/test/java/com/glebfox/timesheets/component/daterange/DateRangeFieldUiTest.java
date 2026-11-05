@@ -149,6 +149,9 @@ class DateRangeFieldUiTest {
 
         field.getEndPicker().setTypedValue(MAR_13);
 
+        // What the user sees at once, though the value is not null
+        assertThat(field.isInvalid()).isTrue();
+        assertThat(field.getErrorMessage()).isEqualTo("Dates required");
         assertThatThrownBy(field::executeValidators)
                 .isInstanceOf(ValidationException.class)
                 .hasMessage("Dates required");

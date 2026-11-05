@@ -181,8 +181,7 @@ public class HolidayCalendarDaysAddView extends StandardView {
     }
 
     private void refuseDates(String message, ValidationErrors errors) {
-        // Marked before the message is set: marking runs the field's validators, which clear the message
-        // of a field that is invalid already. A change of either date clears the refusal by itself.
+        // The field drops both the mark and the message at the next change of either date
         datesField.setInvalid(true);
         datesField.setErrorMessage(message);
         errors.add(datesField, message);
