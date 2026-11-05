@@ -18,6 +18,8 @@ package com.glebfox.timesheets;
 
 import com.glebfox.timesheets.component.avatarupload.AvatarUpload;
 import com.glebfox.timesheets.component.avatarupload.AvatarUploadLoader;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
+import com.glebfox.timesheets.component.daterange.DateRangeFieldLoader;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.StyleSheet;
@@ -86,6 +88,13 @@ public class TimesheetsApplication implements AppShellConfigurator {
     public ComponentRegistration avatarUpload() {
         return ComponentRegistrationBuilder.create(AvatarUpload.class)
                 .withComponentLoader("avatarUpload", AvatarUploadLoader.class)
+                .build();
+    }
+
+    @Bean
+    public ComponentRegistration dateRangeField() {
+        return ComponentRegistrationBuilder.create(DateRangeField.class)
+                .withComponentLoader("dateRangeField", DateRangeFieldLoader.class)
                 .build();
     }
 }

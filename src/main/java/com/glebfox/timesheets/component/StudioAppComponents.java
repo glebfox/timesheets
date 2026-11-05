@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.component;
 
 import com.glebfox.timesheets.component.avatarupload.AvatarUpload;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import io.jmix.flowui.kit.meta.StudioComponent;
 import io.jmix.flowui.kit.meta.StudioPropertiesBinding;
 import io.jmix.flowui.kit.meta.StudioProperty;
@@ -65,4 +66,31 @@ public interface StudioAppComponents {
             propertiesBindings = @StudioPropertiesBinding(source = "dataContainer", item = "property")
     )
     AvatarUpload avatarUpload();
+
+    @StudioComponent(
+            name = "DateRangeField",
+            classFqn = "com.glebfox.timesheets.component.daterange.DateRangeField",
+            category = "Components",
+            xmlElement = "dateRangeField",
+            xmlns = "http://glebfox.com/schema/app-ui-components.xsd",
+            xmlnsAlias = "app",
+            icon = "com/glebfox/timesheets/meta/icon/component/dateRangeField.svg",
+            propertyGroups = {
+                    StudioPropertyGroups.BaseSizedEnabledComponentWithClassName.class,
+                    StudioPropertyGroups.Label.class,
+                    StudioPropertyGroups.RequiredAttributes.class,
+                    StudioPropertyGroups.ReadOnly.class
+            },
+            properties = {
+                    @StudioProperty(xmlAttribute = "startPlaceholder", type = StudioPropertyType.LOCALIZED_STRING),
+                    @StudioProperty(xmlAttribute = "endPlaceholder", type = StudioPropertyType.LOCALIZED_STRING),
+                    @StudioProperty(xmlAttribute = "startAriaLabel", type = StudioPropertyType.LOCALIZED_STRING),
+                    @StudioProperty(xmlAttribute = "endAriaLabel", type = StudioPropertyType.LOCALIZED_STRING),
+                    @StudioProperty(xmlAttribute = StudioXmlAttributes.CLEAR_BUTTON_VISIBLE,
+                            type = StudioPropertyType.BOOLEAN, defaultValue = "false"),
+                    @StudioProperty(xmlAttribute = "summaryVisible", type = StudioPropertyType.BOOLEAN,
+                            defaultValue = "false")
+            }
+    )
+    DateRangeField dateRangeField();
 }
