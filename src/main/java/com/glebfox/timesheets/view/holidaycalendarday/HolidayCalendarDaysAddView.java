@@ -16,14 +16,13 @@
 
 package com.glebfox.timesheets.view.holidaycalendarday;
 
+import com.glebfox.timesheets.app.util.DateRange;
 import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.UnsavedInputSupport;
+import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDay;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
-import com.vaadin.flow.component.html.Span;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
-import io.jmix.flowui.component.SupportsTypedValue;
-import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.component.validation.ValidationErrors;
@@ -41,8 +40,9 @@ import java.util.stream.Collectors;
 /**
  * Adds days to a holiday calendar from a range of dates, one day per date, each with the same name and type.
  * Opened as a dialog from the calendar editor, which hands it the calendar's days as they stand in the editor.
- * Refuses a range that ends before it starts, is longer than 31 days, or has a date the calendar already has;
- * otherwise closes with {@link StandardOutcome#SAVE}, and the opener adds the days of {@link #getDates()}.
+ * The dates are an unbound {@link DateRangeField}, which refuses a range that ends before it starts; this view
+ * refuses a range longer than 31 days or with a date the calendar already has. Otherwise it closes with
+ * {@link StandardOutcome#SAVE}, and the opener adds the days of {@link #getDates()}.
  * Closed any other way while a field differs from how it opened, it asks whether to discard the input:
  * Yes closes it, No keeps it open.
  */
@@ -61,13 +61,9 @@ public class HolidayCalendarDaysAddView extends StandardView {
     @ViewComponent
     private TypedTextField<String> nameField;
     @ViewComponent
-    private TypedDatePicker<LocalDate> fromField;
-    @ViewComponent
-    private TypedDatePicker<LocalDate> toField;
+    private DateRangeField datesField;
     @ViewComponent
     private JmixRadioButtonGroup<HolidayCalendarDayType> typeField;
-    @ViewComponent
-    private Span rangeSummary;
     @ViewComponent
     private MessageBundle messageBundle;
 
@@ -82,7 +78,6 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     private Collection<HolidayCalendarDay> calendarDays = List.of();
     private List<Object> openedValues = List.of();
-    private boolean datesRefused;
 
     /**
      * Sets the days of the calendar to check the range against: the days of the calendar editor as they stand
@@ -114,8 +109,8 @@ public class HolidayCalendarDaysAddView extends StandardView {
      * weekends included, or only the first day when the last one is empty.
      */
     public List<LocalDate> getDates() {
-        LocalDate from = Objects.requireNonNull(fromField.getTypedValue());
-        return from.datesUntil(getLastDay(from).plusDays(1)).toList();
+        DateRange range = Objects.requireNonNull(datesField.getValue());
+        return range.start().datesUntil(range.endOrStart().plusDays(1)).toList();
     }
 
     @Subscribe
@@ -137,36 +132,11 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     private List<Object> getFieldValues() {
         // The values as the fields show them, nulls included
-        return Arrays.asList(nameField.getValue(), fromField.getValue(), toField.getValue(), typeField.getValue());
-    }
-
-    @Subscribe("fromField")
-    public void onFromFieldTypedValueChange(
-            final SupportsTypedValue.TypedValueChangeEvent<TypedDatePicker<LocalDate>, LocalDate> event) {
-        // The last day's picker offers no day before the first one
-        toField.setMin(event.getValue());
-        if (toField.isInvalid()) {
-            // Runs the last day's validation against the new minimum, which a new minimum alone does not do
-            toField.setInvalid(false);
-        }
-        onDatesChange();
-    }
-
-    @Subscribe("toField")
-    public void onToFieldTypedValueChange(
-            final SupportsTypedValue.TypedValueChangeEvent<TypedDatePicker<LocalDate>, LocalDate> event) {
-        onDatesChange();
-    }
-
-    private void onDatesChange() {
-        clearRefusedDates();
-        rangeSummary.setText(formatRangeSummary());
+        return Arrays.asList(nameField.getValue(), datesField.getValue(), typeField.getValue());
     }
 
     @Subscribe("okAction")
     public void onOkAction(final ActionPerformedEvent event) {
-        clearRefusedDates();
-
         ValidationErrors errors = viewValidation.validateUiComponents(getContent());
         if (errors.isEmpty()) {
             errors = validateDates();
@@ -182,25 +152,19 @@ public class HolidayCalendarDaysAddView extends StandardView {
 
     private ValidationErrors validateDates() {
         ValidationErrors errors = new ValidationErrors();
-        LocalDate from = Objects.requireNonNull(fromField.getTypedValue());
-        LocalDate to = getLastDay(from);
+        DateRange range = Objects.requireNonNull(datesField.getValue());
+        LocalDate from = Objects.requireNonNull(range.start());
+        LocalDate to = range.endOrStart();
 
-        if (to.isBefore(from)) {
-            // A safety net: the last day's minimum refuses such a day before OK gets here
-            refuseDates(toField, messageBundle.getMessage("toField.beforeFromError"), errors);
-        } else if (dateRangeFormatter.countDays(from, to) > MAX_DAYS) {
-            refuseDates(toField, messageBundle.getMessage("toField.tooLongError"), errors);
+        if (dateRangeFormatter.countDays(from, to) > MAX_DAYS) {
+            refuseDates(messageBundle.getMessage("datesField.tooLongError"), errors);
         } else {
             List<LocalDate> taken = findTakenDates(from, to);
             if (!taken.isEmpty()) {
                 String dates = taken.stream()
                         .map(datatypeFormatter::formatLocalDate)
                         .collect(Collectors.joining(", "));
-                refuseDates(fromField, messageBundle.formatMessage("fromField.duplicateError", dates), errors);
-                if (toField.getTypedValue() != null) {
-                    // Both dates are marked, as the range is; the dates are listed once, under the first one
-                    toField.setInvalid(true);
-                }
+                refuseDates(messageBundle.formatMessage("datesField.duplicateError", dates), errors);
             }
         }
         return errors;
@@ -215,31 +179,11 @@ public class HolidayCalendarDaysAddView extends StandardView {
                 .toList();
     }
 
-    private void refuseDates(TypedDatePicker<LocalDate> field, String message, ValidationErrors errors) {
+    private void refuseDates(String message, ValidationErrors errors) {
         // Marked before the message is set: marking runs the field's validators, which clear the message
-        // of a field that is invalid already
-        field.setInvalid(true);
-        field.setErrorMessage(message);
-        errors.add(field, message);
-        datesRefused = true;
-    }
-
-    private void clearRefusedDates() {
-        if (datesRefused) {
-            datesRefused = false;
-            // Runs the fields' own validation again, which clears the refusal
-            fromField.setInvalid(false);
-            toField.setInvalid(false);
-        }
-    }
-
-    private String formatRangeSummary() {
-        LocalDate from = fromField.getTypedValue();
-        return from != null ? dateRangeFormatter.formatSummary(from, getLastDay(from)) : "";
-    }
-
-    private LocalDate getLastDay(LocalDate from) {
-        LocalDate to = toField.getTypedValue();
-        return to != null ? to : from;
+        // of a field that is invalid already. A change of either date clears the refusal by itself.
+        datesField.setInvalid(true);
+        datesField.setErrorMessage(message);
+        errors.add(datesField, message);
     }
 }
