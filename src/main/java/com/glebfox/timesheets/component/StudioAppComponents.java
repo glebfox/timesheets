@@ -18,6 +18,8 @@ package com.glebfox.timesheets.component;
 
 import com.glebfox.timesheets.component.avatarupload.AvatarUpload;
 import com.glebfox.timesheets.component.daterange.DateRangeField;
+import com.glebfox.timesheets.component.daterange.DateRangeFilter;
+import io.jmix.flowui.kit.meta.StudioAvailableChildrenInfo;
 import io.jmix.flowui.kit.meta.StudioComponent;
 import io.jmix.flowui.kit.meta.StudioPropertiesBinding;
 import io.jmix.flowui.kit.meta.StudioProperty;
@@ -102,4 +104,37 @@ public interface StudioAppComponents {
             }
     )
     DateRangeField dateRangeField();
+
+    @StudioComponent(
+            name = "DateRangeFilter",
+            classFqn = "com.glebfox.timesheets.component.daterange.DateRangeFilter",
+            category = "Components",
+            xmlElement = "dateRangeFilter",
+            xmlns = "http://glebfox.com/schema/app-ui-components.xsd",
+            xmlnsAlias = "app",
+            icon = "com/glebfox/timesheets/meta/icon/component/dateRangeFilter.svg",
+            // As Jmix's propertyFilter declares its value component; the schema allows only a dateRangeField
+            availableChildren = @StudioAvailableChildrenInfo(
+                    availableTags = @StudioAvailableChildrenInfo.TagInfo(
+                            qualifiedName = StudioAvailableChildrenInfo.ANY_TAG,
+                            maxCount = 1)),
+            propertyGroups = {
+                    StudioPropertyGroups.BaseSizedComponentWithClassNames.class,
+                    StudioPropertyGroups.DataLoader.class,
+                    StudioPropertyGroups.AutoApply.class,
+                    StudioPropertyGroups.Label.class,
+                    StudioPropertyGroups.LabelVisible.class
+            },
+            properties = {
+                    @StudioProperty(xmlAttribute = "startProperty", type = StudioPropertyType.PROPERTY_REF,
+                            category = StudioProperty.Category.DATA_BINDING, required = true),
+                    @StudioProperty(xmlAttribute = "endProperty", type = StudioPropertyType.PROPERTY_REF,
+                            category = StudioProperty.Category.DATA_BINDING, required = true)
+            },
+            propertiesBindings = {
+                    @StudioPropertiesBinding(source = "dataLoader", item = "startProperty"),
+                    @StudioPropertiesBinding(source = "dataLoader", item = "endProperty")
+            }
+    )
+    DateRangeFilter dateRangeFilter();
 }

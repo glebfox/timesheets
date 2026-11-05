@@ -66,6 +66,30 @@
         </xs:complexType>
     </xs:element>
 
+    <!-- Not kept in the URL: urlQueryParameters has no binder for it and fails on a child it does not support -->
+    <xs:element name="dateRangeFilter">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="layout:baseComponent">
+                    <xs:sequence>
+                        <xs:element ref="dateRangeField" minOccurs="0"/>
+                    </xs:sequence>
+
+                    <xs:attribute name="dataLoader" type="xs:string" use="required"/>
+                    <!-- The first and the last day of the loader's entity -->
+                    <xs:attribute name="startProperty" type="xs:string" use="required"/>
+                    <xs:attribute name="endProperty" type="xs:string" use="required"/>
+                    <xs:attribute name="autoApply" type="xs:boolean"/>
+                    <xs:attribute name="labelVisible" type="xs:boolean"/>
+
+                    <xs:attributeGroup ref="layout:hasLabel"/>
+                    <xs:attributeGroup ref="layout:hasClassNames"/>
+                    <xs:attributeGroup ref="layout:hasSize"/>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
     <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports -->
     <xs:simpleType name="avatarUploadAcceptedFileTypes">
         <xs:union>
