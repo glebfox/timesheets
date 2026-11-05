@@ -53,7 +53,8 @@ import java.util.List;
  * The end picker offers no day before the start and opens at the start's month, and an end before the start is
  * refused with the field's own message. Required means that the start is required. An error that a view sets on
  * the field, with {@link #setInvalid(boolean)} and then {@link #setErrorMessage(String)}, is dropped at the next
- * change of either date.
+ * change of either date. The field validates a new range and updates its summary before any other listener of its
+ * value hears of the change.
  */
 public class DateRangeField extends CustomField<DateRange>
         implements SupportsValueSource<DateRange>, SupportsValidation<DateRange>, HasRequired,
@@ -100,6 +101,10 @@ public class DateRangeField extends CustomField<DateRange>
     private void initComponent() {
         addClassName(CLASS_NAME);
 
+        // Registered before anything else can listen, so every other listener of the value sees the new range's
+        // validation and summary, and a view's mark set from such a listener stays
+        addValueChangeListener(event -> onValueChange());
+
         UiComponents uiComponents = applicationContext.getBean(UiComponents.class);
         Datatype<LocalDate> datatype = applicationContext.getBean(DatatypeRegistry.class).get(LocalDate.class);
 
@@ -142,9 +147,13 @@ public class DateRangeField extends CustomField<DateRange>
     }
 
     private void onDatesChange(boolean fromClient) {
-        // While the field's own value is being shown, the field support folds the pickers' changes into that value.
-        // A date the user picks stays a change from the client, as a filter applies only those
+        // While the field's own value is being shown, the field support folds the pickers' changes into that value,
+        // which then changes once. A date the user picks stays a change from the client, as a filter applies only
+        // those
         setModelValue(generateModelValue(), fromClient);
+    }
+
+    private void onValueChange() {
         // Unlike executeValidators(), this also resets the mark of a view's error, so the error is dropped and the
         // field's own validation runs again
         setInvalid(false);

@@ -23,12 +23,15 @@ import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.exception.ValidationException;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +51,7 @@ class DateRangeFieldUiTest {
     static final LocalDate MAR_8 = LocalDate.of(2026, 3, 8);
     static final LocalDate MAR_9 = LocalDate.of(2026, 3, 9);
     static final LocalDate MAR_10 = LocalDate.of(2026, 3, 10);
+    static final LocalDate MAR_11 = LocalDate.of(2026, 3, 11);
     static final LocalDate MAR_13 = LocalDate.of(2026, 3, 13);
     static final LocalDate MAR_14 = LocalDate.of(2026, 3, 14);
     static final LocalDate MAR_15 = LocalDate.of(2026, 3, 15);
@@ -180,6 +184,45 @@ class DateRangeFieldUiTest {
         refuseAsAView();
         field.getStartPicker().setTypedValue(MAR_3);
         assertThat(field.isInvalid()).isFalse();
+    }
+
+    @Test
+    void valueListenersSeeTheNewRangesValidationAndSummary() {
+        record Seen(boolean invalid, @Nullable String errorMessage, @Nullable String helperText) {
+        }
+        field.setSummaryVisible(true);
+        List<Seen> seen = new ArrayList<>();
+        field.addValueChangeListener(event ->
+                seen.add(new Seen(field.isInvalid(), field.getErrorMessage(), field.getHelperText())));
+
+        field.getStartPicker().setTypedValue(MAR_10);
+        field.getEndPicker().setTypedValue(MAR_9);
+        field.getEndPicker().setTypedValue(MAR_11);
+        // Both dates at once, one change
+        field.setValue(new DateRange(MAR_2, MAR_15));
+
+        assertThat(seen).containsExactly(
+                new Seen(false, null, "1 day, Tuesday"),
+                new Seen(true, "The last day must not be before the first day", ""),
+                new Seen(false, null, "2 days, Tuesday to Wednesday"),
+                new Seen(false, null, "14 days, Monday to Sunday"));
+    }
+
+    @Test
+    void viewErrorSetByAValueListenerStays() {
+        field.addValueChangeListener(event -> {
+            if (event.getValue() != null && MAR_14.equals(event.getValue().end())) {
+                refuseAsAView();
+            }
+        });
+        field.setValue(new DateRange(MAR_2, MAR_13));
+
+        field.getEndPicker().setTypedValue(MAR_14);
+
+        assertThat(field.isInvalid()).isTrue();
+        assertThat(field.getErrorMessage()).isEqualTo("Overlaps");
+        assertThat(field.getStartPicker().isInvalid()).isTrue();
+        assertThat(field.getEndPicker().isInvalid()).isTrue();
     }
 
     private void refuseAsAView() {
