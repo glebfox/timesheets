@@ -17,7 +17,9 @@
 package com.glebfox.timesheets.absence;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.util.DateRange;
 import com.glebfox.timesheets.component.daterange.DateRangeField;
+import com.glebfox.timesheets.component.daterange.DateRangeFilter;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
 import com.glebfox.timesheets.entity.absence.Absence;
 import com.glebfox.timesheets.entity.absence.AbsenceType;
@@ -174,24 +176,22 @@ public class AbsenceViewsUiTest {
         DataGrid<Absence> grid = openListGrid(user);
 
         // The two dates of the period keep their names when a date hides their placeholders
-        assertThat(UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(UiTestUtils.getCurrentView(),
-                "fromFilterField").getAriaLabel()).hasValue("From");
-        assertThat(UiTestUtils.<TypedDatePicker<LocalDate>>getComponent(UiTestUtils.getCurrentView(),
-                "toFilterField").getAriaLabel()).hasValue("To");
+        DateRangeField period = UiTestUtils.getComponent(UiTestUtils.getCurrentView(), "periodFilterField");
+        assertThat(period.getStartPicker().getAriaLabel()).hasValue("From");
+        assertThat(period.getEndPicker().getAriaLabel()).hasValue("To");
 
-        applyFilter("fromFilter", MAR_10);
+        applyPeriod(new DateRange(MAR_10, null));
 
         // An absence that ends before the period is left out, one that starts in it or later is kept
         assertThat(listedIds(grid)).containsExactly(after.getId(), sharing.getId());
 
-        applyFilter("toFilter", MAR_12);
+        applyPeriod(new DateRange(MAR_10, MAR_12));
 
         // An absence that starts after the period is left out, one that started before it and runs into it is kept
         assertThat(listedIds(grid)).containsExactly(sharing.getId());
         assertThat(listedIds(grid)).doesNotContain(before.getId());
 
-        applyFilter("fromFilter", MAR_13);
-        applyFilter("toFilter", MAR_14);
+        applyPeriod(new DateRange(MAR_13, MAR_14));
 
         // Both ends of the period count: an absence that ends on its first day, and one that starts on its last day
         assertThat(listedIds(grid)).containsExactly(after.getId(), sharing.getId());
@@ -566,6 +566,13 @@ public class AbsenceViewsUiTest {
     private static <V> void applyFilter(String filterId, V value) {
         PropertyFilter<V> filter = UiTestUtils.getComponent(UiTestUtils.getCurrentView(), filterId);
         filter.setValue(value);
+        // A value set from the server does not apply the filter by itself
+        filter.apply();
+    }
+
+    private static void applyPeriod(DateRange range) {
+        DateRangeFilter filter = UiTestUtils.getComponent(UiTestUtils.getCurrentView(), "periodFilter");
+        filter.setValue(range);
         // A value set from the server does not apply the filter by itself
         filter.apply();
     }
