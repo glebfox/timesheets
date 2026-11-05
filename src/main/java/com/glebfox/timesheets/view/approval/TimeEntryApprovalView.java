@@ -276,10 +276,11 @@ public class TimeEntryApprovalView extends StandardView {
         selectWeek(event.getWeekStart());
     }
 
+    // The list below the grid is not scrolled to the day: the weeks list different numbers of entries, so a scroll
+    // made the screen jump from one week to another
     @Subscribe("personPanel")
     public void onPersonPanelDayClick(final ApprovalPersonPanel.DayClickEvent event) {
         selectWeek(ApprovalPeriod.weekStartOf(event.getDay(), firstDayOfWeek));
-        personPanel.scrollToDay(event.getDay());
     }
 
     @Subscribe("personPanel")

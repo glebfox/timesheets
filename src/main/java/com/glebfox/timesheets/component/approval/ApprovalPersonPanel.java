@@ -27,12 +27,10 @@ import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.google.common.base.Preconditions;
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.HasComponents;
-import com.vaadin.flow.component.ScrollIntoViewOption;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
@@ -116,7 +114,6 @@ public final class ApprovalPersonPanel extends Composite<Div>
     private ApprovalMonthGrid monthGrid;
     @Nullable
     private Div entryList;
-    private final Map<LocalDate, Div> dayGroups = new HashMap<>();
     // The cards drawn, by the id of their entry
     private final Map<UUID, ApprovalEntryCard> entryCards = new HashMap<>();
     // Until they are set, no entry waits to be approved, and none is in the basket
@@ -243,7 +240,6 @@ public final class ApprovalPersonPanel extends Composite<Div>
         entriesByDay = Map.of();
         monthGrid = null;
         entryList = null;
-        dayGroups.clear();
         entryCards.clear();
         drawnButtons.clear();
         listedButtons.clear();
@@ -263,7 +259,6 @@ public final class ApprovalPersonPanel extends Composite<Div>
         monthGrid.setSelectedWeek(weekStart);
 
         entryList.removeAll();
-        dayGroups.clear();
         // In a month, the cards drawn are those of the week listed
         entryCards.clear();
         listedButtons.clear();
@@ -291,9 +286,7 @@ public final class ApprovalPersonPanel extends Composite<Div>
         for (LocalDate day : days) {
             List<TimeEntry> dayEntries = entriesByDay.getOrDefault(day, List.of());
             if (!dayEntries.isEmpty()) {
-                Div group = createDayGroup(day, dayEntries);
-                dayGroups.put(day, group);
-                entryList.add(group);
+                entryList.add(createDayGroup(day, dayEntries));
             }
         }
         listedButtons.refresh();
@@ -307,19 +300,6 @@ public final class ApprovalPersonPanel extends Composite<Div>
         entryCards.values().forEach(card -> card.setInBasket(inBasket.test(card.getEntry())));
         drawnButtons.refresh();
         listedButtons.refresh();
-    }
-
-    /**
-     * Scrolls the list of a week's entries to a day: to the day's entries, or to the list itself for a day without
-     * any. Does nothing unless the panel shows a month.
-     *
-     * @param day a day of the week listed
-     */
-    public void scrollToDay(LocalDate day) {
-        Component target = dayGroups.containsKey(day) ? dayGroups.get(day) : entryList;
-        if (target != null) {
-            target.scrollIntoView(ScrollIntoViewOption.Behavior.SMOOTH, ScrollIntoViewOption.Block.START);
-        }
     }
 
     /**
