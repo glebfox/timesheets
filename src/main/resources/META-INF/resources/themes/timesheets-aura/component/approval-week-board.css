@@ -47,7 +47,7 @@
     column-gap: var(--vaadin-gap-xs);
     row-gap: var(--vaadin-gap-xs);
     padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
-    border: 1px solid var(--vaadin-border-color-secondary);
+    border: 1px solid var(--vaadin-border-color);
     border-radius: var(--vaadin-radius-l);
 
     font-size: var(--aura-font-size-s);
