@@ -22,17 +22,18 @@
     grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(10rem, 1.5fr);
     flex-shrink: 0;
     overflow: hidden;
-    border: 1px solid var(--vaadin-border-color);
+    /* A table, so its frame and lines are as light as a data grid's, while the cards around it take the stronger
+       border color */
+    border: 1px solid var(--vaadin-border-color-secondary);
     border-radius: var(--vaadin-radius-l);
     /* Its days take their layout from its width */
     container-name: approval-month;
     container-type: inline-size;
 }
 
-/* The header row is set off from the days as strongly as the grid's frame; the lines between the days stay light */
 .approval-month-grid > .heading {
     padding: var(--vaadin-padding-xs);
-    border-block-end: 1px solid var(--vaadin-border-color);
+    border-block-end: 1px solid var(--vaadin-border-color-secondary);
     background: var(--vaadin-background-container);
     text-align: center;
 
