@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * The cell is as wide as its content, but never wider than its column. In a narrower column the title track,
- * which has no minimum, gives up the width: the avatar and the badge keep their size, and the title and the body
- * line end with an ellipsis. When the content fits, nothing is cut and the badge stays right after the title.
- */
 .avatar-cell {
+    /* The cell is as wide as its content, but never wider than its column. In a narrower column the title track,
+       which has no minimum, gives up the width: the avatar and the badge keep their size, and the title and the
+       body line end with an ellipsis. When the content fits, nothing is cut and the badge stays right after the
+       title. */
     display: grid;
     grid-template: "prefix title title-suffix"
                    "prefix body body";
