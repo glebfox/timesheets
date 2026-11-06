@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
+/*
+ * The cell is as wide as its content, but never wider than its column. In a narrower column the title track,
+ * which has no minimum, gives up the width: the avatar and the badge keep their size, and the title and the body
+ * line end with an ellipsis. When the content fits, nothing is cut and the badge stays right after the title.
+ */
 .avatar-cell {
     display: grid;
     grid-template: "prefix title title-suffix"
                    "prefix body body";
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     width: max-content;
+    max-width: 100%;
 }
 
 .avatar-cell > .prefix {
@@ -33,6 +39,10 @@
     font-size: var(--aura-font-size-m);
     font-weight: var(--aura-font-weight-medium);
     color: var(--vaadin-text-color);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .avatar-cell > .title-suffix {
@@ -44,6 +54,10 @@
     grid-area: body;
     font-size: var(--aura-font-size-s);
     color: var(--vaadin-text-color-secondary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .avatar-cell > .title-body {
