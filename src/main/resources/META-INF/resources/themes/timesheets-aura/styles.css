@@ -37,6 +37,7 @@
 @import url('component/date-range-filter.css');
 @import url('component/details.css');
 @import url('component/full-calendar.css');
+@import url('component/grid-empty-state.css');
 @import url('component/icon.css');
 @import url('component/segmented-group.css');
 @import url('component/toggle-group.css');

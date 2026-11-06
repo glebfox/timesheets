@@ -90,6 +90,21 @@
         </xs:complexType>
     </xs:element>
 
+    <!-- The single child of a grid's emptyStateComponent -->
+    <xs:element name="gridEmptyState">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="layout:baseComponent">
+                    <!-- An icon of the project's own set, such as ts:projects -->
+                    <xs:attribute name="icon" type="xs:string" use="required"/>
+                    <xs:attribute name="text" type="layout:resourceString" use="required"/>
+
+                    <xs:attributeGroup ref="layout:hasClassNames"/>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
     <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports -->
     <xs:simpleType name="avatarUploadAcceptedFileTypes">
         <xs:union>

@@ -19,6 +19,7 @@ package com.glebfox.timesheets.component;
 import com.glebfox.timesheets.component.avatarupload.AvatarUpload;
 import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.component.daterange.DateRangeFilter;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import io.jmix.flowui.kit.meta.StudioAvailableChildrenInfo;
 import io.jmix.flowui.kit.meta.StudioComponent;
 import io.jmix.flowui.kit.meta.StudioPropertiesBinding;
@@ -137,4 +138,21 @@ public interface StudioAppComponents {
             }
     )
     DateRangeFilter dateRangeFilter();
+
+    @StudioComponent(
+            name = "GridEmptyState",
+            classFqn = "com.glebfox.timesheets.component.emptystate.GridEmptyState",
+            category = "Components",
+            xmlElement = "gridEmptyState",
+            xmlns = "http://glebfox.com/schema/app-ui-components.xsd",
+            xmlnsAlias = "app",
+            icon = "com/glebfox/timesheets/meta/icon/component/gridEmptyState.svg",
+            propertyGroups = StudioPropertyGroups.BaseComponentWithClassNames.class,
+            properties = {
+                    @StudioProperty(xmlAttribute = "icon", type = StudioPropertyType.ICON, required = true),
+                    @StudioProperty(xmlAttribute = "text", type = StudioPropertyType.LOCALIZED_STRING,
+                            required = true)
+            }
+    )
+    GridEmptyState gridEmptyState();
 }
