@@ -39,6 +39,7 @@ import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryListView;
 import com.glebfox.timesheets.view.user.UserListView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleListView;
+import com.vaadin.flow.component.Component;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
@@ -60,6 +61,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -142,8 +144,7 @@ class GridEmptyStatesUiTest {
         View<?> view = opener.apply(viewBuilders);
         DataGrid<?> grid = UiTestUtils.getComponent(view, gridId);
 
-        assertThat(grid.getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
-        GridEmptyState emptyState = (GridEmptyState) grid.getEmptyStateComponent();
+        GridEmptyState emptyState = emptyStateOf(grid);
         assertThat(emptyState.getIcon()).isEqualTo(icon);
         assertThat(emptyState.getText()).isEqualTo(text);
         assertThat(emptyState.getRefreshButton().isVisible()).isEqualTo(refresh);
@@ -162,7 +163,7 @@ class GridEmptyStatesUiTest {
 
         saveTaskType(NAME_PREFIX + "a1");
         saveTaskType(NAME_PREFIX + "b1");
-        ((GridEmptyState) grid.getEmptyStateComponent()).getRefreshButton().click();
+        emptyStateOf(grid).getRefreshButton().click();
 
         assertThat(grid.getItems().getItems())
                 .extracting(TaskType::getName)
@@ -202,6 +203,12 @@ class GridEmptyStatesUiTest {
             viewBuilders.detail(UiTestUtils.getCurrentView(), entityClass).newEntity().open();
             return UiTestUtils.getCurrentView();
         };
+    }
+
+    private static GridEmptyState emptyStateOf(DataGrid<?> grid) {
+        Component emptyState = grid.getEmptyStateComponent();
+        assertThat(emptyState).isInstanceOf(GridEmptyState.class);
+        return (GridEmptyState) Objects.requireNonNull(emptyState);
     }
 
     private void saveTaskType(String name) {
