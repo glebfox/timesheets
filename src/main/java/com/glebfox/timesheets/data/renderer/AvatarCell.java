@@ -27,7 +27,8 @@ import org.jspecify.annotations.Nullable;
  * @param title the title, which also names the avatar and gives its initials when there is no image
  * @param image the avatar image, or {@code null} for the initials of the title
  * @param body  the line under the title, or {@code null} for none; without it the title is centered on the avatar
- * @param badge the badge after the title, or {@code null} for none; the renderer places it
+ * @param badge the badge after the title, or {@code null} for none; a new instance for every cell, since the
+ *              renderer adds its placement classes to it
  */
 @NullMarked
 public record AvatarCell(String title, byte @Nullable [] image, @Nullable String body, @Nullable Badge badge) {

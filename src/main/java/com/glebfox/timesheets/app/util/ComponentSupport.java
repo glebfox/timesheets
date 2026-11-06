@@ -19,6 +19,7 @@ package com.glebfox.timesheets.app.util;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.data.renderer.AvatarCell;
 import com.glebfox.timesheets.data.renderer.AvatarCellRenderer;
+import com.glebfox.timesheets.data.renderer.AvatarImages;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
@@ -34,9 +35,6 @@ import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
-import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.security.CurrentAuthentication;
@@ -45,7 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
 import java.time.DayOfWeek;
 import java.time.format.TextStyle;
 import java.time.temporal.WeekFields;
@@ -102,18 +99,7 @@ public class ComponentSupport {
         avatar.getElement().setAttribute("tabindex", "-1");
 
         if (data != null) {
-            InputStreamDownloadHandler downloadHandler = DownloadHandler.fromInputStream(downloadEvent ->
-                    new DownloadResponse(new ByteArrayInputStream(data),
-                            "avatar.png", null, data.length));
-
-            // Vaadin answers 403 for the image of a disabled avatar. Tabbed mode disables the content of a tab that
-            // is not selected, and an avatar rendered just before its tab is disabled, such as one in the project
-            // editor's client field or in a grid's avatar cell (AvatarCellRenderer, which builds its avatar itself
-            // with the same handler), has its image requested while disabled. Vaadin serves Image and IFrame
-            // sources while disabled, but not Avatar images: https://github.com/vaadin/flow/issues/22772
-            // inline() comes first: setImageHandler makes only a predefined handler inline, not the wrapper
-            // that allowDisabled() returns.
-            avatar.setImageHandler(downloadHandler.inline().allowDisabled());
+            avatar.setImageHandler(AvatarImages.handler(data));
         }
 
         if (!Strings.isNullOrEmpty(className)) {

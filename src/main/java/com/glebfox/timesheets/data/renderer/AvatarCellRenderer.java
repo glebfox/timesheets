@@ -21,13 +21,9 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.function.SerializableSupplier;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
-import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.util.function.Function;
 
 /**
@@ -77,9 +73,9 @@ public class AvatarCellRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
         if (body != null) {
             wrapper.add(createBody(body));
         } else {
-            title.addClassNames("title-body");
+            title.addClassName("title-body");
             if (badge != null) {
-                badge.addClassNames("title-suffix-body");
+                badge.addClassName("title-suffix-body");
             }
         }
 
@@ -91,13 +87,7 @@ public class AvatarCellRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
         avatar.getElement().setAttribute("tabindex", "-1");
 
         if (data != null) {
-            InputStreamDownloadHandler downloadHandler = DownloadHandler.fromInputStream(downloadEvent ->
-                    new DownloadResponse(new ByteArrayInputStream(data),
-                            "avatar.png", null, data.length));
-
-            // allowDisabled(): Vaadin answers 403 for the image of a disabled avatar, which every avatar in a tab
-            // that tabbed mode disables is; see ComponentSupport.createAvatar for the details
-            avatar.setImageHandler(downloadHandler.inline().allowDisabled());
+            avatar.setImageHandler(AvatarImages.handler(data));
         }
 
         avatar.addClassName("prefix");
