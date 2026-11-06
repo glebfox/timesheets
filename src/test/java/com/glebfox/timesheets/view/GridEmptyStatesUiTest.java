@@ -67,6 +67,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.glebfox.timesheets.component.emptystate.EmptyStateTestUtils.buttonsOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -221,20 +222,6 @@ class GridEmptyStatesUiTest {
         Component emptyState = grid.getEmptyStateComponent();
         assertThat(emptyState).isInstanceOf(GridEmptyState.class);
         return (GridEmptyState) Objects.requireNonNull(emptyState);
-    }
-
-    /**
-     * Returns the buttons among the component's descendants, found as any child component is.
-     */
-    private static List<JmixButton> buttonsOf(Component component) {
-        return descendants(component)
-                .filter(JmixButton.class::isInstance)
-                .map(JmixButton.class::cast)
-                .toList();
-    }
-
-    private static Stream<Component> descendants(Component component) {
-        return component.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
     }
 
     private void saveTaskType(String name) {

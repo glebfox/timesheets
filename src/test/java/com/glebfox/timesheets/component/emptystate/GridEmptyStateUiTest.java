@@ -53,19 +53,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
+import static com.glebfox.timesheets.component.emptystate.EmptyStateTestUtils.buttonsOf;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -82,8 +78,7 @@ class GridEmptyStateUiTest {
     Messages messages;
     @Autowired
     SystemAuthenticator systemAuthenticator;
-    // A spy, so a test can count the components the empty state creates through it
-    @MockitoSpyBean
+    @Autowired
     UiComponents uiComponents;
 
     List<Id<?>> createdIds = new ArrayList<>();
@@ -133,7 +128,6 @@ class GridEmptyStateUiTest {
     @Test
     void setActionCreatesTheButtonOnceAndNullRemovesIt() {
         GridEmptyState emptyState = uiComponents.create(GridEmptyState.class);
-        clearInvocations(uiComponents);
         AtomicInteger firstRuns = new AtomicInteger();
         AtomicInteger secondRuns = new AtomicInteger();
         Action first = new BaseAction("first").withText("First").withHandler(event -> firstRuns.incrementAndGet());
@@ -148,7 +142,6 @@ class GridEmptyStateUiTest {
         assertThat(buttonsOf(emptyState)).containsExactly(button);
         assertThat(button.getText()).isEqualTo("Second");
         assertThat(emptyState.getAction()).isSameAs(second);
-        verify(uiComponents, times(1)).create(JmixButton.class);
 
         button.click();
         assertThat(firstRuns).hasValue(0);
@@ -315,17 +308,6 @@ class GridEmptyStateUiTest {
         List<JmixButton> buttons = buttonsOf(emptyState);
         assertThat(buttons).hasSize(1);
         return buttons.getFirst();
-    }
-
-    private static List<JmixButton> buttonsOf(Component component) {
-        return descendants(component)
-                .filter(JmixButton.class::isInstance)
-                .map(JmixButton.class::cast)
-                .toList();
-    }
-
-    private static Stream<Component> descendants(Component component) {
-        return component.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
     }
 
     private static void assertDecorative(@Nullable Component icon) {

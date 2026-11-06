@@ -98,7 +98,10 @@ public class GridEmptyState extends Composite<Div>
      */
     public void setIcon(@Nullable Component icon) {
         if (this.icon != null) {
-            heading.remove(this.icon);
+            // The caller may have moved the previous icon elsewhere, where removing it from the heading would throw
+            if (this.icon.getParent().filter(heading::equals).isPresent()) {
+                heading.remove(this.icon);
+            }
         }
         this.icon = icon;
         if (icon != null) {
