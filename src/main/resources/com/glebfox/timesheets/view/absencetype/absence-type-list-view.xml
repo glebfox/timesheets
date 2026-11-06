@@ -81,7 +81,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:absence-types"
-                                        text="msg://absenceTypesDataGrid.emptyStateText"/>
+                                        text="msg://absenceTypesDataGrid.emptyStateText"
+                                        action="absenceTypesDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

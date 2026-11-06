@@ -16,13 +16,21 @@
 
 package com.glebfox.timesheets.component.emptystate;
 
+import io.jmix.flowui.xml.layout.inittask.AssignActionInitTask;
 import io.jmix.flowui.xml.layout.loader.AbstractComponentLoader;
+import io.jmix.flowui.xml.layout.support.IconLoaderSupport;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Loads the {@code gridEmptyState} element. It does not look for the grid's refresh action: a grid loads its empty
- * state before its actions, so the component finds the action itself when it is attached.
+ * Loads the {@code gridEmptyState} element as {@code ButtonLoader} loads a button's icon and action: the icon from
+ * the {@code icon} attribute or a nested {@code icon} element, and the action, such as
+ * {@code projectsDataGrid.refresh}, once the whole view is loaded, since a grid loads its empty state before its
+ * actions.
  */
 public class GridEmptyStateLoader extends AbstractComponentLoader<GridEmptyState> {
+
+    @Nullable
+    private IconLoaderSupport iconLoaderSupport;
 
     @Override
     protected GridEmptyState createComponent() {
@@ -33,7 +41,17 @@ public class GridEmptyStateLoader extends AbstractComponentLoader<GridEmptyState
     public void loadComponent() {
         componentLoader().loadClassNames(resultComponent, element);
 
-        loadString(element, "icon", resultComponent::setIcon);
+        iconLoaderSupport().loadIcon(element, resultComponent::setIcon);
         loadResourceString(element, "text", context.getMessageGroup(), resultComponent::setText);
+
+        loadString(element, "action").ifPresent(actionId ->
+                getContext().addInitTask(new AssignActionInitTask<>(resultComponent, actionId)));
+    }
+
+    private IconLoaderSupport iconLoaderSupport() {
+        if (iconLoaderSupport == null) {
+            iconLoaderSupport = applicationContext.getBean(IconLoaderSupport.class, context);
+        }
+        return iconLoaderSupport;
     }
 }

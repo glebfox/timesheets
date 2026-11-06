@@ -147,9 +147,12 @@ public interface StudioAppComponents {
             xmlns = "http://glebfox.com/schema/app-ui-components.xsd",
             xmlnsAlias = "app",
             icon = "com/glebfox/timesheets/meta/icon/component/gridEmptyState.svg",
-            propertyGroups = StudioPropertyGroups.BaseComponentWithClassNames.class,
+            propertyGroups = {
+                    StudioPropertyGroups.BaseComponentWithClassNames.class,
+                    StudioPropertyGroups.Action.class,
+                    StudioPropertyGroups.Icon.class
+            },
             properties = {
-                    @StudioProperty(xmlAttribute = "icon", type = StudioPropertyType.ICON, required = true),
                     @StudioProperty(xmlAttribute = "text", type = StudioPropertyType.LOCALIZED_STRING,
                             required = true)
             }

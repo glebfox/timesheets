@@ -68,7 +68,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:clients"
-                                        text="msg://clientsDataGrid.emptyStateText"/>
+                                        text="msg://clientsDataGrid.emptyStateText"
+                                        action="clientsDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

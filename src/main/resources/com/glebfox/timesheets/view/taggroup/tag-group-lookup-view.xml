@@ -79,7 +79,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:tag-group"
-                                        text="msg://tagGroupsDataGrid.emptyStateText"/>
+                                        text="msg://tagGroupsDataGrid.emptyStateText"
+                                        action="tagGroupsDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

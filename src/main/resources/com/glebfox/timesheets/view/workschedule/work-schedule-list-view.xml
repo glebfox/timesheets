@@ -84,7 +84,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:work-schedules"
-                                        text="msg://workSchedulesDataGrid.emptyStateText"/>
+                                        text="msg://workSchedulesDataGrid.emptyStateText"
+                                        action="workSchedulesDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

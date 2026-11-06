@@ -81,7 +81,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:task-types"
-                                        text="msg://taskTypesDataGrid.emptyStateText"/>
+                                        text="msg://taskTypesDataGrid.emptyStateText"
+                                        action="taskTypesDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

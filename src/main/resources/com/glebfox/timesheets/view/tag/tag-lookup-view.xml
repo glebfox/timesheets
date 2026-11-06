@@ -70,7 +70,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:tag"
-                                        text="msg://tagsDataGrid.emptyStateText"/>
+                                        text="msg://tagsDataGrid.emptyStateText"
+                                        action="tagsDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

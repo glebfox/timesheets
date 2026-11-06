@@ -40,12 +40,14 @@ import com.glebfox.timesheets.view.timeentry.TimeEntryListView;
 import com.glebfox.timesheets.view.user.UserListView;
 import com.glebfox.timesheets.view.workschedule.WorkScheduleListView;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.icon.Icon;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.propertyfilter.PropertyFilter;
+import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
@@ -69,8 +71,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * Every data grid with an empty state shows it with the right icon and text, and the Refresh button where the grid
- * has a {@code list_refresh} action.
+ * Every data grid with an empty state shows it with the right icon and text, and the button of the grid's
+ * {@code list_refresh} action where the grid has one.
  */
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -145,9 +147,17 @@ class GridEmptyStatesUiTest {
         DataGrid<?> grid = UiTestUtils.getComponent(view, gridId);
 
         GridEmptyState emptyState = emptyStateOf(grid);
-        assertThat(emptyState.getIcon()).isEqualTo(icon);
+        assertThat(emptyState.getIcon()).isInstanceOfSatisfying(Icon.class,
+                iconComponent -> assertThat(iconComponent.getIcon()).isEqualTo(icon));
         assertThat(emptyState.getText()).isEqualTo(text);
-        assertThat(emptyState.getRefreshButton().isVisible()).isEqualTo(refresh);
+        List<JmixButton> buttons = buttonsOf(emptyState);
+        if (refresh) {
+            assertThat(emptyState.getAction()).isSameAs(grid.getAction("refresh"));
+            assertThat(buttons).singleElement().satisfies(button -> assertThat(button.isVisible()).isTrue());
+        } else {
+            assertThat(emptyState.getAction()).isNull();
+            assertThat(buttons).isEmpty();
+        }
     }
 
     @Test
@@ -163,7 +173,9 @@ class GridEmptyStatesUiTest {
 
         saveTaskType(NAME_PREFIX + "a1");
         saveTaskType(NAME_PREFIX + "b1");
-        emptyStateOf(grid).getRefreshButton().click();
+        List<JmixButton> buttons = buttonsOf(emptyStateOf(grid));
+        assertThat(buttons).hasSize(1);
+        buttons.getFirst().click();
 
         assertThat(grid.getItems().getItems())
                 .extracting(TaskType::getName)
@@ -209,6 +221,20 @@ class GridEmptyStatesUiTest {
         Component emptyState = grid.getEmptyStateComponent();
         assertThat(emptyState).isInstanceOf(GridEmptyState.class);
         return (GridEmptyState) Objects.requireNonNull(emptyState);
+    }
+
+    /**
+     * Returns the buttons among the component's descendants, found as any child component is.
+     */
+    private static List<JmixButton> buttonsOf(Component component) {
+        return descendants(component)
+                .filter(JmixButton.class::isInstance)
+                .map(JmixButton.class::cast)
+                .toList();
+    }
+
+    private static Stream<Component> descendants(Component component) {
+        return component.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
     }
 
     private void saveTaskType(String name) {

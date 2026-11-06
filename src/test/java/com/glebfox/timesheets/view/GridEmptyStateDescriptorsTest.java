@@ -39,14 +39,16 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Plain guard over the view descriptors: every grid declares the project's empty state,
- * with an icon from the {@code ts} set and a text key present in both message bundles.
+ * Plain guard over the view descriptors: every grid declares the project's empty state, with an icon from the
+ * {@code ts} set, a text key present in both message bundles, and the grid's {@code list_refresh} action where the
+ * grid has one and no action where it has none.
  */
 class GridEmptyStateDescriptorsTest {
 
     static final String APP_NS = "http://glebfox.com/schema/app-ui-components.xsd";
     static final String ICON_PREFIX = "ts:";
     static final String MSG_PREFIX = "msg://";
+    static final String REFRESH_TYPE = "list_refresh";
     static final Path RESOURCES = Path.of("src/main/resources/com/glebfox/timesheets");
     static final Path VIEWS = RESOURCES.resolve("view");
     static final Path ICONSET = Path.of("src/main/frontend/src/component/icon/ts-icons.js");
@@ -119,6 +121,34 @@ class GridEmptyStateDescriptorsTest {
             }
         }
         assertThat(problems).isEmpty();
+    }
+
+    @Test
+    void everyEmptyStateTakesItsGridsRefresh() throws Exception {
+        List<String> problems = new ArrayList<>();
+        for (Grid grid : grids()) {
+            List<String> refreshIds = refreshActionIds(grid);
+            String expected = refreshIds.isEmpty() ? "" : grid.id() + "." + refreshIds.getFirst();
+            for (Element state : emptyStates(grid)) {
+                String action = state.getAttribute("action");
+                if (!expected.equals(action)) {
+                    problems.add(grid.label() + ": action '" + action + "', expected '" + expected + "'");
+                }
+            }
+        }
+        assertThat(problems).isEmpty();
+    }
+
+    List<String> refreshActionIds(Grid grid) {
+        List<String> ids = new ArrayList<>();
+        for (Element actions : children(grid.element(), "actions", null)) {
+            for (Element action : children(actions, "action", null)) {
+                if (REFRESH_TYPE.equals(action.getAttribute("type"))) {
+                    ids.add(action.getAttribute("id"));
+                }
+            }
+        }
+        return ids;
     }
 
     List<Element> emptyStates(Grid grid) {

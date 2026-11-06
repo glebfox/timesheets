@@ -103,7 +103,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:project-roles"
-                                        text="msg://projectRolesDataGrid.emptyStateText"/>
+                                        text="msg://projectRolesDataGrid.emptyStateText"
+                                        action="projectRolesDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

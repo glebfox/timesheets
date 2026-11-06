@@ -131,7 +131,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:my-tasks"
-                                        text="msg://tasksDataGrid.emptyStateText"/>
+                                        text="msg://tasksDataGrid.emptyStateText"
+                                        action="tasksDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

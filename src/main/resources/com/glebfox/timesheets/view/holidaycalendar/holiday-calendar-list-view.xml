@@ -83,7 +83,8 @@
                 </columns>
                 <emptyStateComponent>
                     <app:gridEmptyState icon="ts:holiday-calendars"
-                                        text="msg://holidayCalendarsDataGrid.emptyStateText"/>
+                                        text="msg://holidayCalendarsDataGrid.emptyStateText"
+                                        action="holidayCalendarsDataGrid.refresh"/>
                 </emptyStateComponent>
             </dataGrid>
         </vbox>

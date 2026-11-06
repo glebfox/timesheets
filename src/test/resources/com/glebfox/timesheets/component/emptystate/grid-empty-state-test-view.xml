@@ -55,7 +55,7 @@
                 <column property="description"/>
             </columns>
             <emptyStateComponent>
-                <app:gridEmptyState icon="ts:task-types" text="No task types"/>
+                <app:gridEmptyState icon="ts:task-types" text="No task types" action="refreshGrid.refresh"/>
             </emptyStateComponent>
         </dataGrid>
         <dataGrid id="plainGrid"
@@ -66,7 +66,12 @@
                 <column property="description"/>
             </columns>
             <emptyStateComponent>
-                <app:gridEmptyState icon="ts:tag" text="No tags"/>
+                <!-- Any icon component, in place of the icon attribute -->
+                <app:gridEmptyState text="No tags">
+                    <app:icon>
+                        <fontIcon fontFamily="Material Symbols Outlined" ligature="sell"/>
+                    </app:icon>
+                </app:gridEmptyState>
             </emptyStateComponent>
         </dataGrid>
         <!-- No entity of the project has a parent of its own type; no task type is ever saved under this grid's
@@ -82,7 +87,7 @@
                 <column property="name"/>
             </columns>
             <emptyStateComponent>
-                <app:gridEmptyState icon="ts:task-types" text="No task types"/>
+                <app:gridEmptyState icon="ts:task-types" text="No task types" action="treeGrid.refresh"/>
             </emptyStateComponent>
         </treeDataGrid>
     </layout>
