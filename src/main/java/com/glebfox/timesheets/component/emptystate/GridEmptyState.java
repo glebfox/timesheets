@@ -20,7 +20,6 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -200,9 +199,11 @@ public class GridEmptyState extends Composite<Div> implements HasStyle {
         Component parent = getParent().orElse(null);
         if (parent instanceof ListDataComponent<?> grid
                 && grid.getItems() instanceof DataGridItems<?> items
-                && !items.getItems().isEmpty()
-                && parent instanceof Focusable<?> focusable) {
-            focusable.focus();
+                && !items.getItems().isEmpty()) {
+            // Grid.focus() does nothing: the vaadin-grid host is not focusable, and no Flow or Jmix API focuses a
+            // cell. The grid's own body focus target, the cell that Tab lands on, is focused instead. The timeout,
+            // as in Focusable.focus(), runs after the response has given the grid its rows.
+            parent.getElement().executeJs("setTimeout(() => this._itemsFocusable?.focus())");
         }
     }
 

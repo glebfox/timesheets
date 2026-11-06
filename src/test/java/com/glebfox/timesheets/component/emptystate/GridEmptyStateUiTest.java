@@ -179,7 +179,8 @@ class GridEmptyStateUiTest {
         emptyStateOf(view, "refreshGrid").getRefreshButton().click();
 
         assertThat(Objects.requireNonNull(grid.getItems()).getItems()).isNotEmpty();
-        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("this.focus()"));
+        // The grid's host takes no focus, so the call focuses the body cell that Tab would land on
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("this._itemsFocusable?.focus()"));
     }
 
     @Test
