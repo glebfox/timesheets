@@ -28,6 +28,6 @@ A screen the user may not open does not open, whether its address is followed or
 
 - The live refresh of the rejected badge: it needs two live sessions (`docs/guidelines/testing.md`).
 - What an address typed into the browser gets before any screen opens, the 403 and the redirect to the login page: no test sends a request through the security filters.
-- How the menu's icons look: `MenuIconsTest` checks only that each group and item names an icon of its own that the menu's set defines, so only a live check sees them (`docs/guidelines/testing.md`).
+- How the menu's icons look: `MenuIconsTest` checks only that each group and item names an icon of its own that the project's own set, `ts`, defines, so only a live check sees them (`docs/guidelines/testing.md`).
 - How the frame looks, which no test sees (`docs/guidelines/testing.md`). A live check on 2026-11-03, on `dev` demo data, as admin, in English, in the light and the dark theme, at 1280×800 and at 375×812 with a touch screen emulated, with the drawer open and collapsed, looked at the logo in each theme and as the system theme changed, the menu toggle keeping its place as the first tab opened and the last one closed, the line under the logo meeting the tab bar's, the user menu across the drawer with a long name, set in the browser, cut short, and the menu it opens, and the menu's thin scrollbar. Russian, a substituted user, and a theme picked in the user menu were not looked at.
 - The rest of these screens: no UI test exists for them.

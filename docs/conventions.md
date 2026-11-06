@@ -30,6 +30,10 @@ Security roles are granular: each grants one piece of access and is named by wha
 
 An action of a list component that the framework does not provide, such as Make default, is a class of its own in `action/` with its own `@ActionType`, declared in the descriptor as standard actions are. It is never a click listener on a button, or a declarative action with an `actionPerformed` handler. It checks what the standard action it stands for checks: a create-like action, which needs no selection, the entity-level create permission; an action on selected items, the entity-level permission of its operation and then the row-level constraints. It finds its container, loader, view, and data context, and makes the entity-level check, through `ListActionTargets`, the package's shared helper; `TimeEntryCopyAction` predates the helper and makes the check itself. It implements `AdjustWhenViewReadOnly`, so a read-only view disables it, unless it must keep working in an editor that opens read-only for lack of permission on the editor's own entity, as the assignment actions do. Why the base classes and the read-only mode call for this: `docs/guidelines/views.md`.
 
+## Refresh in grids
+
+A grid that loads its own data outside an editor, a list or a picker, declares the standard `list_refresh` action and no Refresh button: its empty state shows Refresh, and a list's right-click menu lists it. A table in an editor declares none. Why: [decision 0017](decisions/0017-refresh-lives-in-the-empty-state-not-in-the-toolbar.md).
+
 ## Shared UI pieces
 
 A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.

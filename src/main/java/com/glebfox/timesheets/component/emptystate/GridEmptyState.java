@@ -203,6 +203,8 @@ public class GridEmptyState extends Composite<Div> implements HasStyle {
             // Grid.focus() does nothing: the vaadin-grid host is not focusable, and no Flow or Jmix API focuses a
             // cell. The grid's own body focus target, the cell that Tab lands on, is focused instead. The timeout,
             // as in Focusable.focus(), runs after the response has given the grid its rows.
+            // _itemsFocusable is an internal of vaadin-grid: an upgrade that renames it turns this call into a silent
+            // no-op, which only a live check notices.
             parent.getElement().executeJs("setTimeout(() => this._itemsFocusable?.focus())");
         }
     }

@@ -6,7 +6,7 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 ## My tasks
 
-`my-tasks`, menu Timesheets. Lists the tasks [bookable](../data-model/task.md#bookable-tasks) for the current user, by project name and then task name, with the project, name, type, and description, which is cut short with the full text in a popover. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded.
+`my-tasks`, menu Timesheets. Lists the tasks [bookable](../data-model/task.md#bookable-tasks) for the current user, by project name and then task name, with the project, name, type, and description, which is cut short with the full text in a popover. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded. Empty, it shows the My tasks icon and "No tasks" («Нет задач»), with Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
 
 - **Create time entry** — the primary action; needs one selected task and is available only to users who may create time entries. It opens the [time entry editor](time-entries.md#editor) in a dialog on a new own entry for the selected task, with the task locked.
 - **Read** — opens the task editor read-only, in a dialog.
@@ -23,8 +23,8 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 ## Task picker
 
-"Select a task", opened from the task field of the time entry editor for the entry's user. It lists the tasks bookable for that user, by project name and then task name, with a project filter (the user's Open projects) and a name filter, and pagination. Opened without a user, it lists every Active task of an Open project.
+"Select a task", opened from the task field of the time entry editor for the entry's user. It lists the tasks bookable for that user, by project name and then task name, with a project filter (the user's Open projects) and a name filter, and pagination. Opened without a user, it lists every Active task of an Open project. Empty, it shows the My tasks icon and "No tasks" («Нет задач»), with Refresh.
 
 ## Not covered
 
-- All of these screens: no UI test exists for them.
+- All of these screens beyond the empty states of My tasks and the task picker (`GridEmptyStatesUiTest`): no UI test exists for them.

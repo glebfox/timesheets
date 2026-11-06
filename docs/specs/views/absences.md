@@ -26,6 +26,8 @@ The filters and pagination are kept when the browser page is reloaded; opening t
 
 Actions: Create, Edit, and Remove. Create and Edit open the [absence editor](#absence-editor) as a dialog over the list, and the list shows what it saves at once: a created absence among the rows, an edited one changed in place. Remove asks the usual confirmation and deletes every selected absence.
 
+Empty, the list shows the Absences icon and "No absences" («Нет отсутствий»), with Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
+
 ## Absence editor
 
 `absences/:id`, titled "Absence", a 480px dialog when opened from the list.

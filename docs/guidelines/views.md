@@ -37,6 +37,10 @@ The browser sizes an `autoWidth` column once, to the rows it shows first. Rows t
 
 A replaced item redraws only its own row. A cell computed from other rows as well, such as the Current badge of the assignment tables, would keep its old content on the rows not replaced, so those grids call `setRefreshAllOnItemReplace(true)` on their `ContainerDataGridItems`, and a replace redraws every row.
 
+## Grids whose every column security hides
+
+When security hides every property column of a grid, because the user may view none of the attributes it shows, the framework puts its own empty state in the grid, a warning icon and "Access denied" («Доступ запрещен»), in place of the empty-state component or text that the descriptor sets. So a screen with a grid of an entity a role does not read shows "Access denied" there, not the grid's own empty text, as the user editor's Work schedule section does for a holder of User: read only (`docs/specs/views/users.md`). The project's `gridEmptyState` is set as the grid's `emptyStateComponent`, so the framework's state still takes its place.
+
 ## Input dialogs that are not detail views
 
 Only a detail view checks for unsaved changes when it closes. A dialog that is a plain `StandardView` and collects input for its opener closes at once on Cancel, Esc, or its close button. The calendar days dialog and the add users dialog ask the framework's unsaved-changes question through `UnsavedInputSupport` in `app/util/`: each compares its fields with how it opened and passes the result from its `BeforeCloseEvent` handler. A close with `StandardOutcome.SAVE`, and a close that does not check for unsaved changes, such as one with `StandardOutcome.DISCARD`, pass without the question.
