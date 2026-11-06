@@ -22,6 +22,9 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.internal.UIInternals;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
@@ -30,6 +33,7 @@ import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.app.datagrid.DataGridEmptyStateByPermissionsFragment;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.component.grid.TreeDataGrid;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionLoader;
@@ -158,6 +162,49 @@ class GridEmptyStateUiTest {
     }
 
     @Test
+    void refreshMovesTheFocusToTheGridWhenRowsArrive() {
+        GridEmptyStateTestView view = openView();
+        DataGrid<TaskType> grid = UiTestUtils.getComponent(view, "refreshGrid");
+        // Drops what opening the view queued for the browser
+        browserCalls(grid);
+
+        saveTaskType(NAME_PREFIX + 1);
+        emptyStateOf(view, "refreshGrid").getRefreshButton().click();
+
+        assertThat(Objects.requireNonNull(grid.getItems()).getItems()).isNotEmpty();
+        assertThat(browserCalls(grid)).anyMatch(call -> call.contains("this.focus()"));
+    }
+
+    @Test
+    void refreshKeepsTheFocusWhileTheGridStaysEmpty() {
+        GridEmptyStateTestView view = openView();
+        DataGrid<TaskType> grid = UiTestUtils.getComponent(view, "refreshGrid");
+        browserCalls(grid);
+
+        emptyStateOf(view, "refreshGrid").getRefreshButton().click();
+
+        assertThat(Objects.requireNonNull(grid.getItems()).getItems()).isEmpty();
+        assertThat(browserCalls(grid)).noneMatch(call -> call.contains("focus"));
+    }
+
+    @Test
+    void refreshShowsOnATreeDataGrid() {
+        GridEmptyStateTestView view = openView();
+        TreeDataGrid<TaskType> grid = UiTestUtils.getComponent(view, "treeGrid");
+        CollectionLoader<TaskType> loader = ViewControllerUtils.getViewData(view).getLoader("treeTaskTypesDl");
+        AtomicInteger loads = new AtomicInteger();
+        loader.addPostLoadListener(event -> loads.incrementAndGet());
+        JmixButton refreshButton = emptyStateOf(grid).getRefreshButton();
+
+        assertThat(refreshButton.isVisible()).isTrue();
+        assertThat(refreshButton.getText()).isEqualTo(messages.getMessage("actions.Refresh"));
+
+        refreshButton.click();
+
+        assertThat(loads).hasValue(1);
+    }
+
+    @Test
     void accessDeniedWinsWhenSecurityHidesEveryColumn() {
         User user = saveUser();
         assignRole(user, UiMinimalRole.CODE);
@@ -197,13 +244,28 @@ class GridEmptyStateUiTest {
     }
 
     private static GridEmptyState emptyStateOf(GridEmptyStateTestView view, String gridId) {
-        DataGrid<?> grid = UiTestUtils.getComponent(view, gridId);
+        return emptyStateOf(UiTestUtils.getComponent(view, gridId));
+    }
+
+    private static GridEmptyState emptyStateOf(Grid<?> grid) {
         assertThat(grid.getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
         return (GridEmptyState) grid.getEmptyStateComponent();
     }
 
     private static Stream<Component> descendants(Component component) {
         return component.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
+    }
+
+    /**
+     * Returns the calls to the grid's browser side queued since the last check, as a response would send them.
+     */
+    private static List<String> browserCalls(Grid<?> grid) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == grid.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     private void saveTaskType(String name) {

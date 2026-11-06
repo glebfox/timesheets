@@ -23,8 +23,9 @@ import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
 
 /**
- * Two grids with a {@link GridEmptyState}, for {@link GridEmptyStateUiTest}: one that loads its own rows and declares
- * the standard refresh action, and one over a container without a loader and with no actions.
+ * Three grids with a {@link GridEmptyState}, for {@link GridEmptyStateUiTest}: one that loads its own rows and declares
+ * the standard refresh action, one over a container without a loader and with no actions, and a tree data grid that
+ * loads its own rows, which never exist, and declares the standard refresh action.
  */
 @Route(value = "grid-empty-state-test", layout = MainView.class)
 @ViewController("ts_GridEmptyStateTestView")

@@ -27,6 +27,15 @@
                 </query>
             </loader>
         </collection>
+        <collection id="treeTaskTypesDc"
+                    class="com.glebfox.timesheets.entity.task.TaskType">
+            <fetchPlan extends="_base"/>
+            <loader id="treeTaskTypesDl" readOnly="true">
+                <query>
+                    <![CDATA[select e from ts_TaskType e where e.name like 'grid-empty-state-tree-test-%']]>
+                </query>
+            </loader>
+        </collection>
         <!-- No loader: nothing fills it -->
         <collection id="plainTaskTypesDc"
                     class="com.glebfox.timesheets.entity.task.TaskType"/>
@@ -60,5 +69,21 @@
                 <app:gridEmptyState icon="ts:tag" text="No tags"/>
             </emptyStateComponent>
         </dataGrid>
+        <!-- No entity of the project has a parent of its own type; no task type is ever saved under this grid's
+             prefix, so the tree has no rows and its hierarchy property is never read -->
+        <treeDataGrid id="treeGrid"
+                      width="100%"
+                      dataContainer="treeTaskTypesDc"
+                      hierarchyProperty="description">
+            <actions>
+                <action id="refresh" type="list_refresh"/>
+            </actions>
+            <columns>
+                <column property="name"/>
+            </columns>
+            <emptyStateComponent>
+                <app:gridEmptyState icon="ts:task-types" text="No task types"/>
+            </emptyStateComponent>
+        </treeDataGrid>
     </layout>
 </view>

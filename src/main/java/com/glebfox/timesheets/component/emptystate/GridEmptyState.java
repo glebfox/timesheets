@@ -20,6 +20,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -27,9 +28,11 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.flowui.action.list.RefreshAction;
-import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.component.ListDataComponent;
+import io.jmix.flowui.data.grid.DataGridItems;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.ComponentUtils;
+import io.jmix.flowui.kit.component.HasActions;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import org.jspecify.annotations.Nullable;
 
@@ -38,7 +41,9 @@ import org.jspecify.annotations.Nullable;
  * which loads the grid's rows again. It is placed as the single child of a grid's {@code emptyStateComponent}.
  * <p>
  * Refresh runs the grid's refresh action, the first of its actions that is a {@link RefreshAction}, whatever its id,
- * and is shown only while the component is attached to such a grid and that action is both visible and enabled. The
+ * and is shown only while the component is attached to a grid with such an action, a data grid or a tree data grid,
+ * and that action is both visible and enabled. When the refresh brings rows, the empty state is no longer shown, so
+ * the keyboard focus moves from Refresh to the grid; while the grid stays empty, it stays on Refresh. The
  * component finds the action when it is attached, since a descriptor's grid gets its actions after its empty state;
  * it follows the action's state until it is detached, so a component attached again is bound once.
  * <p>
@@ -159,7 +164,7 @@ public class GridEmptyState extends Composite<Div> implements HasStyle {
     @Nullable
     private Action findRefreshAction() {
         Component parent = getParent().orElse(null);
-        if (!(parent instanceof DataGrid<?> grid)) {
+        if (!(parent instanceof HasActions grid)) {
             return null;
         }
         return grid.getActions().stream()
@@ -186,6 +191,18 @@ public class GridEmptyState extends Composite<Div> implements HasStyle {
     private void performRefresh() {
         if (refreshAction != null && refreshAction.isEnabled()) {
             refreshAction.actionPerform(refreshButton);
+            focusGridIfFilled();
+        }
+    }
+
+    // The empty state, and Refresh with it, is hidden once the grid has rows, which would leave the focus nowhere
+    private void focusGridIfFilled() {
+        Component parent = getParent().orElse(null);
+        if (parent instanceof ListDataComponent<?> grid
+                && grid.getItems() instanceof DataGridItems<?> items
+                && !items.getItems().isEmpty()
+                && parent instanceof Focusable<?> focusable) {
+            focusable.focus();
         }
     }
 
