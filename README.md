@@ -23,7 +23,7 @@
 - **Review** — every entry is New, Approved, Rejected, or Closed. The managers and approvers of a project go through the time logged on it person by person, in a week or a month: they approve an entry, a day, a week, or a person at once, and reject entries together with a reason. A rejected entry carries the reason, and its owner sees the number of rejected entries in the menu, updated live.
 - **Projects** — a project belongs to a client and owns its tasks, its participants with their project roles, and its tag groups.
 - **Tags** — time entries are tagged from the tag groups of their project, and a task can make some groups required.
-- **Clients** — client cards with a logo and contact details.
+- **Clients** — the clients projects belong to, each with a logo and contact details: email, phone, website, and address.
 - **Users and access** — users with avatars and time zones, access through Jmix security roles, and user substitution.
 - **Interface** — a tabbed workspace, light and dark themes, English and Russian.
 

@@ -13,7 +13,7 @@ The project list, the project editor, and the participant editor. What a project
 `projects/:id`, a 1024px dialog when opened as one.
 
 - **Name**, **description** — the description in a Markdown editor with a preview.
-- **Client** — a drop-down showing each client's logo and name, or the client picker.
+- **Client** — a drop-down showing each client's logo and name, or the client picker, which opens the [client list](clients.md#clients).
 - **Status** — Open or Closed.
 
 Three tabs below hold what the project owns. Their changes, including those made in the dialogs they open, reach the database only when the project is saved. The one exception is a project role created from the participant editor: it is saved at once.
@@ -34,5 +34,5 @@ An empty tab's table shows an icon and what is missing, with no Refresh ([empty 
 
 ## Not covered
 
-- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`): no UI test exists for them.
+- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`), and the editor's client picker opening the client list (`ClientListViewUiTest`): no UI test exists for them.
 - The failed save when a participating user is added again: PostgreSQL only, so no test can check it.

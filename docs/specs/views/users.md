@@ -1,6 +1,6 @@
 # User screens
 
-Source: `view/user/`, `component/avatarupload/`, `action/WorkScheduleAssignmentCreateAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `app/WorkScheduleAssignmentSupport.java`
+Source: `view/user/`, `component/avatarupload/`, `action/WorkScheduleAssignmentCreateAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `app/WorkScheduleAssignmentSupport.java`, `data/renderer/UserRenderer.java`
 
 The user list and the user editor, under the Administration menu. What a user is: [user](../data-model/user.md).
 
@@ -35,7 +35,7 @@ The section stays editable when the editor opens read-only for a user who may no
 
 ## Not covered
 
-- The Users list's cells, the user cell without a status badge and the status column's Active and Inactive badges and their colors: checked live only; the UI tests only find a created user among the list's items and check the security actions.
+- The Users list's cells as they look, and the status column's Active and Inactive badges and their colors: checked live only. `AvatarCellRendererTest` checks what the user cell holds, the full name with the username under it or the username alone, with or without the status badge; the list's UI tests only find a created user among the list's items and check the security actions.
 - The password mismatch, the locked username, and the warning: the user editor's UI tests cover only creating a user with matching passwords, the avatar field, and the Work schedule section.
 - Hiding the security actions: the UI tests cover `admin`, who sees all four, and a user who may not edit users and may open none of their screens but Change password's, who sees none; no other combination.
 - How the Work schedule section looks in the editor, with its badges and its empty table, and Cancel closing an unchanged editor that has assignments without asking to save: checked live only.

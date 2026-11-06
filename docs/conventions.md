@@ -36,7 +36,9 @@ A grid that loads its own data outside an editor, a list or a picker, declares t
 
 ## Shared UI pieces
 
-A UI piece that several views show the same way, such as an avatar, a user cell, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.
+A UI piece that several views show the same way, such as an avatar, the avatar cell of a user or a client, or a status badge, is built by `ComponentSupport` in `app/util/`, not in each view. Older views still build some of these pieces themselves.
+
+When a UI piece that looks the same in several places becomes a component or a renderer of its own, every place that looks the same moves to it, including one that differs in its settings or its data: their differences become its API, not a reason to leave a place out or to share only a helper class. The avatar cell is one: the user cell and the client cell differ only in the optional line under the title and the badge.
 
 ## Entity drop-downs
 
@@ -48,7 +50,7 @@ A component that a view shows, such as a panel, a bar, or a card of a list, is d
 
 ## CSS classes set from Java
 
-A component or renderer with its own Java class and its own stylesheet in the theme, such as the user cell, gives its parts classes that name them, such as `title`, and its stylesheet gives their look; it sets no utility classes, ones that each carry a single look such as a font size or a color. A piece built in place, with no class or stylesheet of its own, such as a grid renderer in a view, may set the project's utility classes from `app/util.css`. Lumo's utility classes are used nowhere. Aura's classes that `docs/guidelines/design-system.md` prescribes, such as `aura-accent-neutral` on a badge, are not utility classes. Why: [decision 0006](decisions/0006-a-component-with-its-own-stylesheet-sets-no-utility-classes.md).
+A component or renderer with its own Java class and its own stylesheet in the theme, such as the avatar cell, gives its parts classes that name them, such as `title`, and its stylesheet gives their look; it sets no utility classes, ones that each carry a single look such as a font size or a color. A piece built in place, with no class or stylesheet of its own, such as a grid renderer in a view, may set the project's utility classes from `app/util.css`. Lumo's utility classes are used nowhere. Aura's classes that `docs/guidelines/design-system.md` prescribes, such as `aura-accent-neutral` on a badge, are not utility classes. Why: [decision 0006](decisions/0006-a-component-with-its-own-stylesheet-sets-no-utility-classes.md).
 
 ## Breakpoints
 
