@@ -96,9 +96,7 @@ class ClientListViewUiTest {
         DataGrid<Client> grid = openListGrid();
 
         Component cell = urlCell(grid, listed(grid, saved));
-        assertThat(cell).satisfiesAnyOf(
-                component -> assertThat(component).isNull(),
-                component -> assertThat(component).isNotInstanceOf(Anchor.class));
+        assertThat(cell).isNull();
     }
 
     @Test

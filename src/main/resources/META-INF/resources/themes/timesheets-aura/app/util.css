@@ -39,16 +39,6 @@
     margin-inline-start: var(--text-divider-gap);
 }
 
-hr {
-    display: block;
-    align-self: stretch;
-    height: 1px;
-    border: 0;
-    padding: 0;
-    margin: var(--vaadin-padding-s) calc(var(--vaadin-radius-m) / 2);
-    background-color: var(--vaadin-border-color);
-}
-
 .footer-panel {
     padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
 }

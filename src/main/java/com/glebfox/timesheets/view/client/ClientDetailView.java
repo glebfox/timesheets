@@ -25,5 +25,6 @@ import io.jmix.flowui.view.*;
 @ViewController("ts_Client.detail")
 @ViewDescriptor("client-detail-view.xml")
 @EditedEntityContainer("clientDc")
+@DialogMode(width = "640px", closeOnEsc = true)
 public class ClientDetailView extends StandardDetailView<Client> {
 }

@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.main;
 
 import com.glebfox.timesheets.app.TimeEntrySupport;
+import com.glebfox.timesheets.data.renderer.AvatarImages;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.google.common.base.Strings;
@@ -28,9 +29,6 @@ import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
-import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import io.jmix.core.Messages;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.UiComponents;
@@ -42,8 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.io.ByteArrayInputStream;
 
 @Route("")
 @ViewController("ts_MainView")
@@ -137,11 +133,7 @@ public class MainView extends StandardTabbedModeMainView {
         avatar.setClassName("user-menu-avatar");
 
         if (imageData != null) {
-            InputStreamDownloadHandler downloadHandler = DownloadHandler.fromInputStream(downloadEvent ->
-                    new DownloadResponse(new ByteArrayInputStream(imageData),
-                            "user-avatar.png", null, imageData.length));
-
-            avatar.setImageHandler(downloadHandler);
+            avatar.setImageHandler(AvatarImages.handler(imageData));
         }
 
         return avatar;
