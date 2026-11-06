@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://workScheduleListView.title"
       focusComponent="workSchedulesDataGrid">
     <data readOnly="true">
@@ -70,6 +71,7 @@
                     <action id="edit" type="list_edit"/>
                     <action id="remove" type="list_workSchedule_remove"/>
                     <action id="makeDefault" type="list_workSchedule_makeDefault"/>
+                    <action id="refresh" type="list_refresh"/>
                 </actions>
                 <columns resizable="true">
                     <column property="name" autoWidth="true"/>
@@ -80,6 +82,10 @@
                         <popoverRenderer/>
                     </column>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:work-schedules"
+                                        text="msg://workSchedulesDataGrid.emptyStateText"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"
