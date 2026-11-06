@@ -21,10 +21,14 @@ import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.view.absence.AbsenceListView;
 import com.glebfox.timesheets.view.absencetype.AbsenceTypeListView;
+import com.glebfox.timesheets.view.client.ClientLookupView;
 import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarListView;
 import com.glebfox.timesheets.view.project.ProjectListView;
 import com.glebfox.timesheets.view.projectrole.ProjectRoleListView;
+import com.glebfox.timesheets.view.tag.TagLookupView;
+import com.glebfox.timesheets.view.taggroup.TagGroupLookupView;
 import com.glebfox.timesheets.view.task.MyTaskListView;
+import com.glebfox.timesheets.view.task.TaskLookupView;
 import com.glebfox.timesheets.view.tasktype.TaskTypeListView;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryListView;
@@ -98,7 +102,15 @@ class GridEmptyStatesUiTest {
                 arguments("users", listOpener(UserListView.class),
                         "usersDataGrid", "ts:users", "No users", true),
                 arguments("work schedules", listOpener(WorkScheduleListView.class),
-                        "workSchedulesDataGrid", "ts:work-schedules", "No work schedules", true)
+                        "workSchedulesDataGrid", "ts:work-schedules", "No work schedules", true),
+                arguments("client lookup", listOpener(ClientLookupView.class),
+                        "clientsDataGrid", "ts:clients", "No clients", true),
+                arguments("tag lookup", listOpener(TagLookupView.class),
+                        "tagsDataGrid", "ts:tag", "No tags", true),
+                arguments("tag group lookup", listOpener(TagGroupLookupView.class),
+                        "tagGroupsDataGrid", "ts:tag-group", "No tag groups", true),
+                arguments("task lookup", listOpener(TaskLookupView.class),
+                        "tasksDataGrid", "ts:my-tasks", "No tasks", true)
         );
     }
 

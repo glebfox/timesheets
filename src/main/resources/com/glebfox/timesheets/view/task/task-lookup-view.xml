@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       xmlns:c="http://jmix.io/schema/flowui/jpql-condition"
       title="msg://taskLookupView.title"
       focusComponent="projectFilterField">
@@ -117,6 +118,9 @@
                       minHeight="20em"
                       dataContainer="tasksDc"
                       columnReorderingAllowed="true">
+                <actions>
+                    <action id="refresh" type="list_refresh"/>
+                </actions>
                 <columns resizable="true">
                     <column property="project"/>
                     <column property="name"/>
@@ -125,6 +129,10 @@
                         <popoverRenderer/>
                     </column>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:my-tasks"
+                                        text="msg://tasksDataGrid.emptyStateText"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"
