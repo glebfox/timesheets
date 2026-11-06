@@ -19,12 +19,13 @@ package com.glebfox.timesheets.component.icon;
 import com.vaadin.flow.component.dependency.JsModule;
 
 /**
- * Brings the main menu's own icon set, {@code ts-menu}, into the frontend bundle. The menu names its icons
- * as {@code ts-menu:<id>}, so nothing refers to this class; its annotation is all it is for.
+ * Brings the project's own outline icon set, {@code ts}, into the frontend bundle: the icons of the main menu and of
+ * the grids' empty states. Views name the icons as {@code ts:<id>}, so nothing refers to this class; its annotation
+ * is all it is for.
  */
-@JsModule("./src/component/icon/ts-menu-icons.js")
-public final class MenuIconset {
+@JsModule("./src/component/icon/ts-icons.js")
+public final class TsIconset {
 
-    private MenuIconset() {
+    private TsIconset() {
     }
 }

@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.menu;
 
-import com.glebfox.timesheets.component.icon.MenuIconset;
+import com.glebfox.timesheets.component.icon.TsIconset;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.icon.Icon;
@@ -49,10 +49,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(AuthenticatedAsAdmin.class)
 public class MenuIconsTest {
 
-    static final String ICONSET = "ts-menu";
-    static final String MODULE = "src/component/icon/ts-menu-icons.js";
+    static final String ICONSET = "ts";
+    static final String MODULE = "src/component/icon/ts-icons.js";
     static final String STYLE = "fill: none; stroke: var(--vaadin-icon-color, currentColor); "
-            + "stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round";
+            + "stroke-width: var(--ts-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round";
     static final Map<String, String> ICONS = Map.ofEntries(
             entry("timesheets", "timesheets"), entry("ts_CalendarView", "calendar"),
             entry("ts_TimeEntry.my", "my-time-entries"), entry("ts_Task.my", "my-tasks"),
@@ -84,7 +84,7 @@ public class MenuIconsTest {
 
     @Test
     void theMenuSetIsBundledWithTheApplication() {
-        assertThat(MenuIconset.class.getAnnotation(JsModule.class).value()).isEqualTo("./" + MODULE);
+        assertThat(TsIconset.class.getAnnotation(JsModule.class).value()).isEqualTo("./" + MODULE);
     }
 
     @Test
