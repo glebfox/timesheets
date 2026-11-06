@@ -19,7 +19,6 @@ package com.glebfox.timesheets.app.util;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.data.renderer.AvatarCell;
 import com.glebfox.timesheets.data.renderer.AvatarCellRenderer;
-import com.glebfox.timesheets.data.renderer.AvatarImages;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;

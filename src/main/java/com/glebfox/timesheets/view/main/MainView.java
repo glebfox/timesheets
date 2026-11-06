@@ -17,7 +17,7 @@
 package com.glebfox.timesheets.view.main;
 
 import com.glebfox.timesheets.app.TimeEntrySupport;
-import com.glebfox.timesheets.data.renderer.AvatarImages;
+import com.glebfox.timesheets.app.util.AvatarImages;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.google.common.base.Strings;

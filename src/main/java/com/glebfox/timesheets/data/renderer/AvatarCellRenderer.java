@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.data.renderer;
 
+import com.glebfox.timesheets.app.util.AvatarImages;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;

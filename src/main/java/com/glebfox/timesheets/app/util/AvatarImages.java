@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.glebfox.timesheets.data.renderer;
+package com.glebfox.timesheets.app.util;
 
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
