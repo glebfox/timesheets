@@ -20,10 +20,12 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentCreateAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentEditAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentRemoveAction;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.view.user.UserDetailView;
 import com.glebfox.timesheets.view.workscheduleassignment.WorkScheduleAssignmentDetailView;
 import com.vaadin.flow.component.Component;
@@ -39,7 +41,9 @@ import io.jmix.core.FetchPlan;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.app.datagrid.DataGridEmptyStateByPermissionsFragment;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.datepicker.TypedDatePicker;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -50,6 +54,8 @@ import io.jmix.flowui.data.grid.DataGridItems;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.View;
+import io.jmix.security.role.assignment.RoleAssignmentRoleType;
+import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -89,8 +95,11 @@ public class UserAssignmentsUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     Messages messages;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
 
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
+    List<Id<RoleAssignmentEntity>> roleAssignmentIds = new ArrayList<>();
 
     @Test
     void createIsEnabledOnAnEmptyTable() {
@@ -98,7 +107,7 @@ public class UserAssignmentsUiTest {
         DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
 
         assertThat(listed(grid)).isEmpty();
-        assertThat(grid.getEmptyStateText()).isEqualTo("No assignments");
+        assertThat(emptyState(grid).getText()).isEqualTo("No assignments");
         assertThat(action(grid, "create")).isInstanceOf(WorkScheduleAssignmentCreateAction.class);
         assertThat(action(grid, "edit")).isInstanceOf(WorkScheduleAssignmentEditAction.class);
         assertThat(action(grid, "remove")).isInstanceOf(WorkScheduleAssignmentRemoveAction.class);
@@ -106,6 +115,30 @@ public class UserAssignmentsUiTest {
         assertThat(action(grid, "create").isEnabled()).isTrue();
         assertThat(action(grid, "edit").isEnabled()).isFalse();
         assertThat(action(grid, "remove").isEnabled()).isFalse();
+    }
+
+    @Test
+    void unreadableAssignmentsShowAccessDenied() {
+        User viewer = saveUser();
+        assignRole(viewer, UiMinimalRole.CODE);
+        assignRole(viewer, UserWithoutAssignmentsTestRole.CODE);
+        User user = saveUser();
+        saveAssignment(user, saveSchedule(), NOV_1);
+
+        systemAuthenticator.runWithUser(viewer.getUsername(), () -> {
+            // The editor opens, with none of the user's assignments in the table
+            UserDetailView editor = openUser(user);
+            assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(editor);
+            DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
+            assertThat(listed(grid)).isEmpty();
+
+            // Security hides every column, so Jmix puts its own fragment into the slot instead of the empty state
+            Component emptyStateSlot = grid.getChildren()
+                    .filter(c -> "empty-state".equals(c.getElement().getAttribute("slot")))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(emptyStateSlot).isInstanceOf(DataGridEmptyStateByPermissionsFragment.class);
+        });
     }
 
     @Test
@@ -491,6 +524,14 @@ public class UserAssignmentsUiTest {
 
     @AfterEach
     void tearDown() {
+        // Role assignments are soft-deleted, so they are removed for good, reloaded by id
+        for (Id<RoleAssignmentEntity> id : roleAssignmentIds) {
+            dataManager.load(id)
+                    .hint(PersistenceHints.SOFT_DELETION, false)
+                    .optional()
+                    .ifPresent(this::hardRemove);
+        }
+        roleAssignmentIds.clear();
         // Each test user with every assignment it has, those saved through the editor and those removed included,
         // before the user; then the schedules the assignments referred to
         List<User> users = dataManager.load(User.class)
@@ -568,6 +609,11 @@ public class UserAssignmentsUiTest {
 
     private static DataGrid<WorkScheduleAssignment> assignmentsDataGrid(UserDetailView editor) {
         return UiTestUtils.getComponent(editor, "assignmentsDataGrid");
+    }
+
+    private static GridEmptyState emptyState(DataGrid<WorkScheduleAssignment> grid) {
+        assertThat(grid.getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
+        return (GridEmptyState) grid.getEmptyStateComponent();
     }
 
     private static Action action(DataGrid<WorkScheduleAssignment> grid, String id) {
@@ -676,6 +722,14 @@ public class UserAssignmentsUiTest {
         assignment.setWorkSchedule(schedule);
         assignment.setStartDate(startDate);
         return dataManager.save(assignment);
+    }
+
+    private void assignRole(User user, String roleCode) {
+        RoleAssignmentEntity assignment = dataManager.create(RoleAssignmentEntity.class);
+        assignment.setUsername(user.getUsername());
+        assignment.setRoleCode(roleCode);
+        assignment.setRoleType(RoleAssignmentRoleType.RESOURCE);
+        roleAssignmentIds.add(Id.of(dataManager.save(assignment)));
     }
 
     private void hardRemove(Object... entities) {

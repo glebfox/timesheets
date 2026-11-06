@@ -6,7 +6,7 @@ The project list, the project editor, and the participant editor. What a project
 
 ## Projects
 
-`projects`, menu Project Management. Lists projects with the name, client, status as a badge (Open green, Closed red), and description, which is cut short with the full text in a popover that renders the Markdown. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded, and Create, Edit, and Remove. It is also the project picker of the other editors.
+`projects`, menu Project Management. Lists projects with the name, client, status as a badge (Open green, Closed red), and description, which is cut short with the full text in a popover that renders the Markdown. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded, and Create, Edit, and Remove. It is also the project picker of the other editors. Empty, it shows the Projects icon and "No projects" («Нет проектов»), with Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
 
 ## Project editor
 
@@ -22,6 +22,8 @@ Three tabs below hold what the project owns. Their changes, including those made
 - **Participants** — the user (avatar, name, and an Active or Inactive badge) and the role as a badge colored by role type: Manager primary, Approver green, Observer neutral, Member plain. Create and Edit open the participant editor in a dialog; Remove; **Add participants** lists every project role, and choosing one opens the user picker in multi-select mode and adds each chosen user with that role. Users who already participate are not filtered out: adding one again breaks the one-participation rule, and the save fails on PostgreSQL.
 - **Tag groups** — the name. Create and Edit open the [tag group editor](tags.md#tag-group-editor) in a dialog; Remove.
 
+An empty tab's table shows an icon and what is missing, with no Refresh ([empty lists and tables](README.md#empty-lists-and-tables)): Tasks the My tasks icon and "No tasks" («Нет задач»), Participants the Users icon and "No participants" («Нет участников»), and Tag groups the tag group icon and "No tag groups" («Нет групп тегов»).
+
 ## Participant editor
 
 `project-participants/:id`, a 480px dialog when opened as one.
@@ -32,5 +34,5 @@ Three tabs below hold what the project owns. Their changes, including those made
 
 ## Not covered
 
-- All of these screens: no UI test exists for them.
+- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`): no UI test exists for them.
 - The failed save when a participating user is added again: PostgreSQL only, so no test can check it.

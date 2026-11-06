@@ -16,7 +16,7 @@
 
 package com.glebfox.timesheets.menu;
 
-import com.glebfox.timesheets.component.icon.MenuIconset;
+import com.glebfox.timesheets.component.icon.TsIconset;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.icon.Icon;
@@ -40,7 +40,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,10 +51,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(AuthenticatedAsAdmin.class)
 public class MenuIconsTest {
 
-    static final String ICONSET = "ts-menu";
-    static final String MODULE = "src/component/icon/ts-menu-icons.js";
+    static final String ICONSET = "ts";
+    static final String MODULE = "src/component/icon/ts-icons.js";
     static final String STYLE = "fill: none; stroke: var(--vaadin-icon-color, currentColor); "
-            + "stroke-width: var(--ts-menu-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round";
+            + "stroke-width: var(--ts-icon-stroke-width); stroke-linecap: round; stroke-linejoin: round";
     static final Map<String, String> ICONS = Map.ofEntries(
             entry("timesheets", "timesheets"), entry("ts_CalendarView", "calendar"),
             entry("ts_TimeEntry.my", "my-time-entries"), entry("ts_Task.my", "my-tasks"),
@@ -68,6 +70,7 @@ public class MenuIconsTest {
             entry("sec_RowLevelRoleModel.list", "row-level-roles"), entry("datatools", "data-tools"),
             entry("datatl_entityInspectorListView", "entity-inspector"),
             entry("pessimisticlock", "pessimistic-locking"), entry("pslock_LockInfo.list", "locks"));
+    static final Set<String> EMPTY_STATE_ONLY = Set.of("tag", "tag-group");
 
     @Autowired
     MenuConfig menuConfig;
@@ -84,18 +87,20 @@ public class MenuIconsTest {
 
     @Test
     void theMenuSetIsBundledWithTheApplication() {
-        assertThat(MenuIconset.class.getAnnotation(JsModule.class).value()).isEqualTo("./" + MODULE);
+        assertThat(TsIconset.class.getAnnotation(JsModule.class).value()).isEqualTo("./" + MODULE);
     }
 
     @Test
-    void iconsetDefinesExactlyTheMenuIconsOnTheSixteenGrid() throws Exception {
+    void iconsetDefinesTheMenuAndEmptyStateIconsOnTheSixteenGrid() throws Exception {
         Element iconset = loadIconset();
 
         assertThat(iconset.getTagName()).isEqualTo("vaadin-iconset");
         assertThat(iconset.getAttribute("name")).isEqualTo(ICONSET);
         assertThat(iconset.getAttribute("size")).isEqualTo("16");
         assertThat(icons(iconset)).extracting(icon -> icon.getAttribute("id"))
-                .containsExactlyInAnyOrderElementsOf(ICONS.values().stream().map(id -> ICONSET + ":" + id).toList());
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(ICONS.values().stream(), EMPTY_STATE_ONLY.stream())
+                        .map(id -> ICONSET + ":" + id)
+                        .toList());
     }
 
     @Test

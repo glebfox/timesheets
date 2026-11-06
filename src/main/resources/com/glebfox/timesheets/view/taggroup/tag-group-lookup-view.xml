@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       xmlns:c="http://jmix.io/schema/flowui/jpql-condition"
       title="msg://tagGroupLookupView.title"
       focusComponent="tagGroupsDataGrid">
@@ -71,10 +72,16 @@
                       minHeight="20em"
                       dataContainer="tagGroupsDc">
                 <actions>
+                    <action id="refresh" type="list_refresh"/>
                 </actions>
                 <columns>
                     <column property="name"/>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:tag-group"
+                                        text="msg://tagGroupsDataGrid.emptyStateText"
+                                        action="tagGroupsDataGrid.refresh"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"

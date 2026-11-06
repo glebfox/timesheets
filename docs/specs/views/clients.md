@@ -21,10 +21,10 @@ The client list, the client editor, and the client picker. What a client is: [cl
 
 ## Client picker
 
-"Select a client", the picker of the client field in the project editor: a name filter and pagination over the client names.
+"Select a client", the picker of the client field in the project editor: a name filter and pagination over the client names. Empty, it shows the Clients icon and "No clients" («Нет клиентов»), with Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
 
 ## Not covered
 
-- The client list, the client picker, and the client editor beyond its image field storing an upload in the client: no UI test exists for them.
+- The client list, the client picker beyond its empty state (`GridEmptyStatesUiTest`), and the client editor beyond its image field storing an upload in the client: no UI test exists for them.
 - The image field in a read-only client editor: no test; read-only is tested only in the user editor. The field in a browser: as for the user editor's avatar ([users](users.md#not-covered)).
 - How the cards, logo, and placeholders look: only a live check shows it.

@@ -90,6 +90,28 @@
         </xs:complexType>
     </xs:element>
 
+    <!-- The single child of a grid's emptyStateComponent -->
+    <xs:element name="gridEmptyState">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="layout:baseComponent">
+                    <xs:sequence>
+                        <!-- Any icon component, in place of the icon attribute -->
+                        <xs:element name="icon" type="layout:iconComponentElement" minOccurs="0"/>
+                    </xs:sequence>
+
+                    <xs:attribute name="text" type="layout:resourceString" use="required"/>
+                    <!-- The action of the button under the heading, such as projectsDataGrid.refresh -->
+                    <xs:attribute name="action" type="xs:string"/>
+
+                    <!-- An icon by its full name, such as ts:projects -->
+                    <xs:attributeGroup ref="layout:hasIcon"/>
+                    <xs:attributeGroup ref="layout:hasClassNames"/>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
     <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports -->
     <xs:simpleType name="avatarUploadAcceptedFileTypes">
         <xs:union>

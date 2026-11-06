@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://holidayCalendarListView.title"
       focusComponent="nameFilterField">
     <data readOnly="true">
@@ -70,6 +71,7 @@
                     <action id="create" type="list_create"/>
                     <action id="edit" type="list_edit"/>
                     <action id="remove" type="list_remove"/>
+                    <action id="refresh" type="list_refresh"/>
                 </actions>
                 <columns resizable="true">
                     <column property="name" autoWidth="true"/>
@@ -79,6 +81,11 @@
                         <popoverRenderer/>
                     </column>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:holiday-calendars"
+                                        text="msg://holidayCalendarsDataGrid.emptyStateText"
+                                        action="holidayCalendarsDataGrid.refresh"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"

@@ -17,88 +17,88 @@
 
 <menu-config xmlns="http://jmix.io/schema/flowui/menu">
     <menu id="timesheets" title="msg://com.glebfox.timesheets/menu.timesheets.title"
-          icon="ts-menu:timesheets"
+          icon="ts:timesheets"
           opened="true">
         <item view="ts_CalendarView"
               title="msg://com.glebfox.timesheets.view.calendar/calendarView.title"
-              icon="ts-menu:calendar"/>
+              icon="ts:calendar"/>
         <item view="ts_TimeEntry.my"
               title="msg://com.glebfox.timesheets.view.timeentry/myTimeEntryListView.title"
-              icon="ts-menu:my-time-entries"/>
+              icon="ts:my-time-entries"/>
         <item view="ts_Task.my"
               title="msg://com.glebfox.timesheets.view.task/myTaskListView.title"
-              icon="ts-menu:my-tasks"/>
+              icon="ts:my-tasks"/>
     </menu>
 
     <menu id="projects" title="msg://com.glebfox.timesheets/menu.projects.title"
-          icon="ts-menu:project-management"
+          icon="ts:project-management"
           opened="true">
         <item view="ts_Client.list"
               title="msg://com.glebfox.timesheets.view.client/clientListView.title"
-              icon="ts-menu:clients"/>
+              icon="ts:clients"/>
         <item view="ts_Project.list"
               title="msg://com.glebfox.timesheets.view.project/projectListView.title"
-              icon="ts-menu:projects"/>
+              icon="ts:projects"/>
         <separator/>
         <item view="ts_TimeEntry.list"
               title="msg://com.glebfox.timesheets.view.timeentry/timeEntryListView.title"
-              icon="ts-menu:time-entries"/>
+              icon="ts:time-entries"/>
         <item view="ts_TimeEntry.approval"
               title="msg://com.glebfox.timesheets.view.approval/timeEntryApprovalView.title"
-              icon="ts-menu:approve-time-entries"/>
+              icon="ts:approve-time-entries"/>
     </menu>
 
     <menu id="settings" title="msg://com.glebfox.timesheets/menu.settings.title"
-          icon="ts-menu:settings"
+          icon="ts:settings"
           opened="true">
         <item view="ts_TaskType.list"
               title="msg://com.glebfox.timesheets.view.tasktype/taskTypeListView.title"
-              icon="ts-menu:task-types"/>
+              icon="ts:task-types"/>
         <item view="ts_ProjectRole.list"
               title="msg://com.glebfox.timesheets.view.projectrole/projectRoleListView.title"
-              icon="ts-menu:project-roles"/>
+              icon="ts:project-roles"/>
         <item view="ts_WorkSchedule.list"
               title="msg://com.glebfox.timesheets.view.workschedule/workScheduleListView.title"
-              icon="ts-menu:work-schedules"/>
+              icon="ts:work-schedules"/>
         <item view="ts_HolidayCalendar.list"
               title="msg://com.glebfox.timesheets.view.holidaycalendar/holidayCalendarListView.title"
-              icon="ts-menu:holiday-calendars"/>
+              icon="ts:holiday-calendars"/>
         <item view="ts_AbsenceType.list"
               title="msg://com.glebfox.timesheets.view.absencetype/absenceTypeListView.title"
-              icon="ts-menu:absence-types"/>
+              icon="ts:absence-types"/>
     </menu>
 
     <menu id="administration" title="msg://com.glebfox.timesheets/menu.administration.title"
-          icon="ts-menu:administration"
+          icon="ts:administration"
           opened="true">
         <item view="ts_User.list"
               title="msg://com.glebfox.timesheets.view.user/UserListView.title"
-              icon="ts-menu:users"/>
+              icon="ts:users"/>
         <item view="ts_Absence.list"
               title="msg://com.glebfox.timesheets.view.absence/absenceListView.title"
-              icon="ts-menu:absences"/>
+              icon="ts:absences"/>
     </menu>
 
     <menu id="security" title="msg://com.glebfox.timesheets/menu.security.title"
-          icon="ts-menu:security">
+          icon="ts:security">
         <item view="sec_ResourceRoleModel.list"
               title="msg://io.jmix.securityflowui.view.resourcerole/resourceRoleModelListView.menu"
-              icon="ts-menu:resource-roles"/>
+              icon="ts:resource-roles"/>
         <item view="sec_RowLevelRoleModel.list"
               title="msg://io.jmix.securityflowui.view.rowlevelrole/rowLevelRoleModelListView.menu"
-              icon="ts-menu:row-level-roles"/>
+              icon="ts:row-level-roles"/>
     </menu>
     <menu id="datatools" title="msg://com.glebfox.timesheets/menu.datatools.title"
-          icon="ts-menu:data-tools">
+          icon="ts:data-tools">
         <item view="datatl_entityInspectorListView"
               title="msg://io.jmix.datatoolsflowui.view.entityinspector/listTitle"
-              icon="ts-menu:entity-inspector"/>
+              icon="ts:entity-inspector"/>
     </menu>
     <menu id="pessimisticlock" title="msg://com.glebfox.timesheets/menu.pessimisticlock.title"
-          icon="ts-menu:pessimistic-locking">
+          icon="ts:pessimistic-locking">
         <item view="pslock_LockInfo.list"
               title="msg://io.jmix.pessimisticlockflowui/pessimisticLockListView.menu"
-              icon="ts-menu:locks"/>
+              icon="ts:locks"/>
     </menu>
 
 </menu-config>

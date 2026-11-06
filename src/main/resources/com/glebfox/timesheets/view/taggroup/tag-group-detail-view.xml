@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://tagGroupDetailView.title"
       focusComponent="form">
     <data>
@@ -86,6 +87,10 @@
                 <columns>
                     <column property="name"/>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:tag"
+                                        text="msg://tagsDataGrid.emptyStateText"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="detailActions"

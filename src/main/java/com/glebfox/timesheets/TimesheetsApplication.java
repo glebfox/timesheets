@@ -22,6 +22,8 @@ import com.glebfox.timesheets.component.daterange.DateRangeField;
 import com.glebfox.timesheets.component.daterange.DateRangeFieldLoader;
 import com.glebfox.timesheets.component.daterange.DateRangeFilter;
 import com.glebfox.timesheets.component.daterange.DateRangeFilterLoader;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
+import com.glebfox.timesheets.component.emptystate.GridEmptyStateLoader;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.StyleSheet;
@@ -104,6 +106,13 @@ public class TimesheetsApplication implements AppShellConfigurator {
     public ComponentRegistration dateRangeFilter() {
         return ComponentRegistrationBuilder.create(DateRangeFilter.class)
                 .withComponentLoader("dateRangeFilter", DateRangeFilterLoader.class)
+                .build();
+    }
+
+    @Bean
+    public ComponentRegistration gridEmptyState() {
+        return ComponentRegistrationBuilder.create(GridEmptyState.class)
+                .withComponentLoader("gridEmptyState", GridEmptyStateLoader.class)
                 .build();
     }
 }

@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://tagLookupView.title"
       focusComponent="tagsDataGrid">
     <data>
@@ -62,10 +63,16 @@
                       minHeight="20em"
                       dataContainer="tagsDc">
                 <actions>
+                    <action id="refresh" type="list_refresh"/>
                 </actions>
                 <columns>
                     <column property="name"/>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:tag"
+                                        text="msg://tagsDataGrid.emptyStateText"
+                                        action="tagsDataGrid.refresh"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"

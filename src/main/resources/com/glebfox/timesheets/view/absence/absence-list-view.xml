@@ -159,6 +159,7 @@
                         </properties>
                     </action>
                     <action id="remove" type="list_remove"/>
+                    <action id="refresh" type="list_refresh"/>
                 </actions>
                 <columns resizable="true">
                     <column property="user" autoWidth="true"/>
@@ -169,6 +170,11 @@
                         <popoverRenderer/>
                     </column>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:absences"
+                                        text="msg://absencesDataGrid.emptyStateText"
+                                        action="absencesDataGrid.refresh"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="lookupActions" visible="false"
