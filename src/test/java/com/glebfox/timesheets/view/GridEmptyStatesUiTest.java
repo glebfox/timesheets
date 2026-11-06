@@ -18,7 +18,12 @@ package com.glebfox.timesheets.view;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
+import com.glebfox.timesheets.entity.project.Project;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendar;
+import com.glebfox.timesheets.entity.schedule.WorkSchedule;
+import com.glebfox.timesheets.entity.tag.TagGroup;
 import com.glebfox.timesheets.entity.task.TaskType;
+import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.absence.AbsenceListView;
 import com.glebfox.timesheets.view.absencetype.AbsenceTypeListView;
 import com.glebfox.timesheets.view.client.ClientLookupView;
@@ -79,6 +84,7 @@ class GridEmptyStatesUiTest {
     List<Id<?>> createdIds = new ArrayList<>();
 
     static Stream<Arguments> emptyStates() {
+        Function<ViewBuilders, View<?>> projectEditor = editorOpener(Project.class);
         return Stream.of(
                 // name, opener, grid id, icon, EN text, refresh
                 arguments("absences", listOpener(AbsenceListView.class),
@@ -110,7 +116,22 @@ class GridEmptyStatesUiTest {
                 arguments("tag group lookup", listOpener(TagGroupLookupView.class),
                         "tagGroupsDataGrid", "ts:tag-group", "No tag groups", true),
                 arguments("task lookup", listOpener(TaskLookupView.class),
-                        "tasksDataGrid", "ts:my-tasks", "No tasks", true)
+                        "tasksDataGrid", "ts:my-tasks", "No tasks", true),
+                // A new entity in each editor: its table is empty, and none of them gets Refresh
+                arguments("user editor assignments", editorOpener(User.class),
+                        "assignmentsDataGrid", "ts:work-schedules", "No assignments", false),
+                arguments("work schedule editor assignments", editorOpener(WorkSchedule.class),
+                        "assignmentsDataGrid", "ts:users", "No assignments", false),
+                arguments("holiday calendar editor days", editorOpener(HolidayCalendar.class),
+                        "daysDataGrid", "ts:holiday-calendars", "No days", false),
+                arguments("project editor tasks", projectEditor,
+                        "tasksDataGrid", "ts:my-tasks", "No tasks", false),
+                arguments("project editor participants", projectEditor,
+                        "participantsDataGrid", "ts:users", "No participants", false),
+                arguments("project editor tag groups", projectEditor,
+                        "tagGroupsDataGrid", "ts:tag-group", "No tag groups", false),
+                arguments("tag group editor tags", editorOpener(TagGroup.class),
+                        "tagsDataGrid", "ts:tag", "No tags", false)
         );
     }
 
@@ -169,6 +190,16 @@ class GridEmptyStatesUiTest {
     private static <V extends View<?>> Function<ViewBuilders, View<?>> listOpener(Class<V> viewClass) {
         return viewBuilders -> {
             viewBuilders.view(UiTestUtils.getCurrentView(), viewClass).open();
+            return UiTestUtils.getCurrentView();
+        };
+    }
+
+    /**
+     * Opens the editor of a new entity as the current view.
+     */
+    private static Function<ViewBuilders, View<?>> editorOpener(Class<?> entityClass) {
+        return viewBuilders -> {
+            viewBuilders.detail(UiTestUtils.getCurrentView(), entityClass).newEntity().open();
             return UiTestUtils.getCurrentView();
         };
     }

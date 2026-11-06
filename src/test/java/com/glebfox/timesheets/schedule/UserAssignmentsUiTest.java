@@ -20,6 +20,7 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentCreateAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentEditAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentRemoveAction;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.WorkSchedule;
 import com.glebfox.timesheets.entity.schedule.WorkScheduleAssignment;
@@ -98,7 +99,7 @@ public class UserAssignmentsUiTest {
         DataGrid<WorkScheduleAssignment> grid = assignmentsDataGrid(editor);
 
         assertThat(listed(grid)).isEmpty();
-        assertThat(grid.getEmptyStateText()).isEqualTo("No assignments");
+        assertThat(emptyState(grid).getText()).isEqualTo("No assignments");
         assertThat(action(grid, "create")).isInstanceOf(WorkScheduleAssignmentCreateAction.class);
         assertThat(action(grid, "edit")).isInstanceOf(WorkScheduleAssignmentEditAction.class);
         assertThat(action(grid, "remove")).isInstanceOf(WorkScheduleAssignmentRemoveAction.class);
@@ -568,6 +569,11 @@ public class UserAssignmentsUiTest {
 
     private static DataGrid<WorkScheduleAssignment> assignmentsDataGrid(UserDetailView editor) {
         return UiTestUtils.getComponent(editor, "assignmentsDataGrid");
+    }
+
+    private static GridEmptyState emptyState(DataGrid<WorkScheduleAssignment> grid) {
+        assertThat(grid.getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
+        return (GridEmptyState) grid.getEmptyStateComponent();
     }
 
     private static Action action(DataGrid<WorkScheduleAssignment> grid, String id) {

@@ -116,7 +116,6 @@
                       dataContainer="assignmentsDc"
                       selectionMode="MULTI"
                       allRowsVisible="true"
-                      emptyStateText="msg://assignmentsDataGrid.emptyStateText"
                       width="100%">
                 <actions>
                     <action id="create" type="list_workScheduleAssignment_create"/>
@@ -127,6 +126,10 @@
                     <column property="startDate" autoWidth="true" flexGrow="0"/>
                     <column property="workSchedule" autoWidth="true"/>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:work-schedules"
+                                        text="msg://assignmentsDataGrid.emptyStateText"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="detailActions"

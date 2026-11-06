@@ -16,6 +16,7 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://workScheduleDetailView.title"
       focusComponent="form">
     <data>
@@ -122,6 +123,10 @@
                     <column property="user" autoWidth="true"/>
                     <column property="startDate" autoWidth="true" flexGrow="0"/>
                 </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:users"
+                                        text="msg://assignmentsDataGrid.emptyStateText"/>
+                </emptyStateComponent>
             </dataGrid>
         </vbox>
         <hbox id="detailActions"
