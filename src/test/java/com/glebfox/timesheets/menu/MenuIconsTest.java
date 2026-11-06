@@ -40,7 +40,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +70,7 @@ public class MenuIconsTest {
             entry("sec_RowLevelRoleModel.list", "row-level-roles"), entry("datatools", "data-tools"),
             entry("datatl_entityInspectorListView", "entity-inspector"),
             entry("pessimisticlock", "pessimistic-locking"), entry("pslock_LockInfo.list", "locks"));
+    static final Set<String> EMPTY_STATE_ONLY = Set.of("tag", "tag-group");
 
     @Autowired
     MenuConfig menuConfig;
@@ -88,14 +91,16 @@ public class MenuIconsTest {
     }
 
     @Test
-    void iconsetDefinesExactlyTheMenuIconsOnTheSixteenGrid() throws Exception {
+    void iconsetDefinesTheMenuAndEmptyStateIconsOnTheSixteenGrid() throws Exception {
         Element iconset = loadIconset();
 
         assertThat(iconset.getTagName()).isEqualTo("vaadin-iconset");
         assertThat(iconset.getAttribute("name")).isEqualTo(ICONSET);
         assertThat(iconset.getAttribute("size")).isEqualTo("16");
         assertThat(icons(iconset)).extracting(icon -> icon.getAttribute("id"))
-                .containsExactlyInAnyOrderElementsOf(ICONS.values().stream().map(id -> ICONSET + ":" + id).toList());
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(ICONS.values().stream(), EMPTY_STATE_ONLY.stream())
+                        .map(id -> ICONSET + ":" + id)
+                        .toList());
     }
 
     @Test
