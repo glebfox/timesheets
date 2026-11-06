@@ -16,15 +16,18 @@
   -->
 
 <view xmlns="http://jmix.io/schema/flowui/view"
+      xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
       title="msg://clientListView.title"
-      focusComponent="nameFilterField">
+      focusComponent="clientsDataGrid">
     <data readOnly="true">
         <collection id="clientsDc"
                     class="com.glebfox.timesheets.entity.client.Client">
-            <fetchPlan extends="_base"/>
+            <fetchPlan extends="_base">
+                <property name="contactInformation" fetchPlan="_base"/>
+            </fetchPlan>
             <loader id="clientsDl" readOnly="true">
                 <query>
-                    <![CDATA[select e from ts_Client e]]>
+                    <![CDATA[select e from ts_Client e order by e.name]]>
                 </query>
             </loader>
         </collection>
@@ -32,37 +35,61 @@
     <facets>
         <dataLoadCoordinator auto="true"/>
         <urlQueryParameters>
+            <genericFilter component="genericFilter"/>
             <pagination component="pagination"/>
-            <propertyFilter component="nameFilter"/>
         </urlQueryParameters>
     </facets>
-    <layout classNames="client-list-view">
-        <propertyFilter id="nameFilter"
-                        dataLoader="clientsDl" property="name"
-                        operation="CONTAINS"
-                        labelVisible="false"
-                        width="100%" maxWidth="30em">
-            <textField id="nameFilterField"
-                       placeholder="msg://nameFilter.placeholder"
-                       clearButtonVisible="true">
-                <prefix>
-                    <icon icon="gravity-ui:magnifier"/>
-                </prefix>
-            </textField>
-        </propertyFilter>
-
-        <hbox id="buttonsPanel" classNames="buttons-panel">
-            <button id="createBtn" text="msg:///actions.Create" icon="gravity-ui:plus" themeNames="primary"/>
-            <simplePagination id="pagination" dataLoader="clientsDl"/>
-        </hbox>
-        <vbox id="noDataContainer"
-              classNames="no-data-container"
-              justifyContent="CENTER"
-              alignItems="CENTER"
-              height="20em"
-              visible="true">
-            <h3 id="noDataHeader" text="msg://noData.text"/>
+    <actions>
+        <action id="selectAction" type="lookup_select"/>
+        <action id="discardAction" type="lookup_discard"/>
+    </actions>
+    <layout padding="false" spacing="false" alignItems="STRETCH" expand="contentBox">
+        <vbox id="contentBox" classNames="overflow-auto">
+            <genericFilter id="genericFilter"
+                           dataLoader="clientsDl">
+                <configurations>
+                    <configuration id="byName" name="msg://byNameConfiguration.name" default="true">
+                        <propertyFilter property="name" operation="CONTAINS"/>
+                    </configuration>
+                </configurations>
+                <properties include=".*"/>
+            </genericFilter>
+            <hbox id="buttonsPanel" classNames="buttons-panel">
+                <button id="createBtn" action="clientsDataGrid.create"/>
+                <button id="editBtn" action="clientsDataGrid.edit"/>
+                <button id="removeBtn" action="clientsDataGrid.remove"/>
+                <simplePagination id="pagination" dataLoader="clientsDl"/>
+            </hbox>
+            <dataGrid id="clientsDataGrid"
+                      width="100%"
+                      minHeight="20em"
+                      dataContainer="clientsDc">
+                <actions>
+                    <action id="create" type="list_create"/>
+                    <action id="edit" type="list_edit"/>
+                    <action id="remove" type="list_remove"/>
+                    <action id="refresh" type="list_refresh"/>
+                </actions>
+                <columns resizable="true">
+                    <column property="name"/>
+                    <column key="email" property="contactInformation.email"/>
+                    <column key="phone" property="contactInformation.phone"/>
+                    <column key="url" property="contactInformation.url"/>
+                    <column key="address" property="contactInformation.address" flexGrow="2">
+                        <popoverRenderer/>
+                    </column>
+                </columns>
+                <emptyStateComponent>
+                    <app:gridEmptyState icon="ts:clients"
+                                        text="msg://clientsDataGrid.emptyStateText"
+                                        action="clientsDataGrid.refresh"/>
+                </emptyStateComponent>
+            </dataGrid>
         </vbox>
-        <virtualList id="clientsList" itemsContainer="clientsDc"/>
+        <hbox id="lookupActions" visible="false"
+              classNames="footer-panel">
+            <button id="selectBtn" action="selectAction"/>
+            <button id="discardBtn" action="discardAction"/>
+        </hbox>
     </layout>
 </view>
