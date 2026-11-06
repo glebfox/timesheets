@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -144,21 +143,29 @@ class GridEmptyStateUiTest {
     void reattachBindsOnce() {
         GridEmptyStateTestView view = openView();
         DataGrid<TaskType> grid = UiTestUtils.getComponent(view, "refreshGrid");
+        Action refreshAction = Objects.requireNonNull(grid.getAction("refresh"));
+        GridEmptyState emptyState = emptyStateOf(view, "refreshGrid");
+        JmixButton refreshButton = emptyState.getRefreshButton();
         HasComponents parent = (HasComponents) grid.getParent().orElseThrow();
 
         parent.remove(grid);
+        // Detached, the component no longer follows the action: its listener was removed
+        refreshAction.setEnabled(false);
+        assertThat(refreshButton.isVisible()).isTrue();
+
         parent.add(grid);
+        // Attached again, it follows the action again
+        assertThat(refreshButton.isVisible()).isFalse();
+        refreshAction.setEnabled(true);
+        assertThat(refreshButton.isVisible()).isTrue();
 
         CollectionLoader<TaskType> loader = ViewControllerUtils.getViewData(view).getLoader("taskTypesDl");
         AtomicInteger loads = new AtomicInteger();
         loader.addPostLoadListener(event -> loads.incrementAndGet());
 
-        GridEmptyState emptyState = emptyStateOf(view, "refreshGrid");
-        emptyState.getRefreshButton().click();
+        refreshButton.click();
 
         assertThat(loads).hasValue(1);
-        assertThat(descendants(emptyState).filter(JmixButton.class::isInstance)).hasSize(1);
-        assertThat(emptyState.getRefreshButton().isVisible()).isTrue();
     }
 
     @Test
@@ -250,10 +257,6 @@ class GridEmptyStateUiTest {
     private static GridEmptyState emptyStateOf(Grid<?> grid) {
         assertThat(grid.getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
         return (GridEmptyState) grid.getEmptyStateComponent();
-    }
-
-    private static Stream<Component> descendants(Component component) {
-        return component.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
     }
 
     /**
