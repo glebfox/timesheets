@@ -32,7 +32,7 @@ An action of a list component that the framework does not provide, such as Make 
 
 ## Refresh in grids
 
-A grid that loads its own data outside an editor, a list or a picker, declares the standard `list_refresh` action and no Refresh button: its empty state shows Refresh, and a list's right-click menu lists it. A table in an editor declares none. Why: [decision 0017](decisions/0017-refresh-lives-in-the-empty-state-not-in-the-toolbar.md).
+A grid that loads its own data outside an editor, a list or a picker, declares the standard `list_refresh` action and no Refresh button, and its `gridEmptyState` names that action, `action="<gridId>.refresh"`: the empty state shows Refresh, and a list's right-click menu lists it. A table in an editor declares none. Why: [decision 0017](decisions/0017-refresh-lives-in-the-empty-state-not-in-the-toolbar.md).
 
 ## Shared UI pieces
 
