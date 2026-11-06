@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.user-name-layout {
+.avatar-cell {
     display: grid;
     grid-template: "prefix title title-suffix"
                    "prefix body body";
@@ -22,36 +22,36 @@
     width: max-content;
 }
 
-.user-name-layout > .prefix {
+.avatar-cell > .prefix {
     grid-area: prefix;
     align-self: center;
     margin-inline-end: var(--vaadin-padding-s);
 }
 
-.user-name-layout > .title {
+.avatar-cell > .title {
     grid-area: title;
     font-size: var(--aura-font-size-m);
     font-weight: var(--aura-font-weight-medium);
     color: var(--vaadin-text-color);
 }
 
-.user-name-layout > .title-suffix {
+.avatar-cell > .title-suffix {
     grid-area: title-suffix;
     margin-inline-start: var(--vaadin-padding-s);
 }
 
-.user-name-layout > .body {
+.avatar-cell > .body {
     grid-area: body;
     font-size: var(--aura-font-size-s);
     color: var(--vaadin-text-color-secondary);
 }
 
-.user-name-layout > .title-body {
+.avatar-cell > .title-body {
     grid-row: title / body;
     align-self: center;
 }
 
-.user-name-layout > .title-suffix-body {
+.avatar-cell > .title-suffix-body {
     grid-row: title-suffix / body;
     align-self: center;
 }

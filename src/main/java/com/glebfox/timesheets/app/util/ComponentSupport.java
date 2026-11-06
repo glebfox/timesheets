@@ -17,10 +17,13 @@
 package com.glebfox.timesheets.app.util;
 
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
+import com.glebfox.timesheets.data.renderer.AvatarCell;
+import com.glebfox.timesheets.data.renderer.AvatarCellRenderer;
 import com.glebfox.timesheets.data.renderer.BadgeRender;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.data.renderer.UserRenderer;
 import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -104,8 +107,9 @@ public class ComponentSupport {
                             "avatar.png", null, data.length));
 
             // Vaadin answers 403 for the image of a disabled avatar. Tabbed mode disables the content of a tab that
-            // is not selected, and opening a new tab re-renders the client list's cards just before their tab is
-            // disabled, so the browser requests the new images from disabled avatars. Vaadin serves Image and IFrame
+            // is not selected, and an avatar rendered just before its tab is disabled, such as one in the project
+            // editor's client field or in a grid's avatar cell (AvatarCellRenderer, which builds its avatar itself
+            // with the same handler), has its image requested while disabled. Vaadin serves Image and IFrame
             // sources while disabled, but not Avatar images: https://github.com/vaadin/flow/issues/22772
             // inline() comes first: setImageHandler makes only a predefined handler inline, not the wrapper
             // that allowDisabled() returns.
@@ -164,6 +168,16 @@ public class ComponentSupport {
      */
     public <ITEM> UserRenderer<ITEM> createUserRendererShort(Function<ITEM, @Nullable User> valueProvider) {
         return new UserRenderer<>(valueProvider);
+    }
+
+    /**
+     * Creates an {@link AvatarCellRenderer} for rendering a {@link Client} entity: the client's logo, or the initials
+     * of its name when there is no logo, beside the name.
+     *
+     * @return an {@link AvatarCellRenderer} instance configured to render clients
+     */
+    public AvatarCellRenderer<Client> createClientRenderer() {
+        return new AvatarCellRenderer<>(client -> new AvatarCell(client.getName(), client.getImage(), null, null));
     }
 
     /**
