@@ -104,7 +104,8 @@
                 <textArea id="descriptionField" property="description"
                           minHeight="10rem" colspan="2"/>
             </formLayout>
-            <h4 id="usersTitle" text="msg://usersTitle.text"/>
+            <h4 id="usersTitle" text="msg://usersTitle.text"
+                classNames="text-divider"/>
             <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
                 <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
                 <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>

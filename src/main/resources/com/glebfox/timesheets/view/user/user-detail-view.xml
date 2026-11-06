@@ -106,7 +106,8 @@
                 <switch id="activeField" property="active"/>
             </formLayout>
 
-            <h4 id="workScheduleTitle" text="msg://workScheduleTitle.text"/>
+            <h4 id="workScheduleTitle" text="msg://workScheduleTitle.text"
+                classNames="text-divider"/>
             <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
                 <button id="assignmentCreateBtn" action="assignmentsDataGrid.create"/>
                 <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>

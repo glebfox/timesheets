@@ -18,10 +18,7 @@ package com.glebfox.timesheets.view.client;
 
 import com.glebfox.timesheets.entity.client.Client;
 import com.glebfox.timesheets.view.main.MainView;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.shared.SlotUtils;
 import com.vaadin.flow.router.Route;
-import io.jmix.flowui.component.details.JmixDetails;
 import io.jmix.flowui.view.*;
 
 @Route(value = "clients/:id", layout = MainView.class)
@@ -29,14 +26,4 @@ import io.jmix.flowui.view.*;
 @ViewDescriptor("client-detail-view.xml")
 @EditedEntityContainer("clientDc")
 public class ClientDetailView extends StandardDetailView<Client> {
-
-    @ViewComponent
-    private JmixDetails contactInformationDetails;
-
-    @Subscribe
-    public void onInit(final InitEvent event) {
-        // Workaround to prevent keyboard interaction
-        Component summaryContainer = SlotUtils.getChildInSlot(contactInformationDetails, "summary");
-        summaryContainer.getElement().setAttribute("tabindex", "-1");
-    }
 }
