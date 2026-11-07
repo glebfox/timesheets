@@ -28,6 +28,7 @@ import io.jmix.core.FetchPlan;
 import io.jmix.core.FetchPlanBuilder;
 import io.jmix.core.FetchPlans;
 import io.jmix.core.SaveContext;
+import io.jmix.core.UnconstrainedDataManager;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import jakarta.persistence.OptimisticLockException;
 import org.jspecify.annotations.Nullable;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,8 +84,9 @@ public class TimeEntryApprovalSupport {
      * {@code PersistenceHints.SOFT_DELETION} hint off, a written {@code x.deletedDate is null} is printed as
      * {@code (0=0)}, so the deleted participants, roles, tasks, and projects would no longer be dropped.
      * <p>
-     * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, so a change to the
-     * rule touches both.
+     * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, and
+     * {@link #loadApprovedPeople} states the same rule by participation, so a change to the rule touches all
+     * three.
      */
     private static final String APPROVABLE_ENTRY = """
             (exists (select p from ts_ProjectParticipant p
@@ -101,13 +104,16 @@ public class TimeEntryApprovalSupport {
             """.formatted(MANAGER, APPROVER);
 
     private final DataManager dataManager;
+    private final UnconstrainedDataManager unconstrainedDataManager;
     private final FetchPlans fetchPlans;
     private final CurrentUserSubstitution currentUserSubstitution;
 
     public TimeEntryApprovalSupport(DataManager dataManager,
+                                    UnconstrainedDataManager unconstrainedDataManager,
                                     FetchPlans fetchPlans,
                                     CurrentUserSubstitution currentUserSubstitution) {
         this.dataManager = dataManager;
+        this.unconstrainedDataManager = unconstrainedDataManager;
         this.fetchPlans = fetchPlans;
         this.currentUserSubstitution = currentUserSubstitution;
     }
@@ -126,6 +132,62 @@ public class TimeEntryApprovalSupport {
                         "and p.role.type in (" + MANAGER + ", " + APPROVER + ")) " +
                         "order by pr.name")
                 .parameter("approverId", approverId())
+                .list();
+    }
+
+    /**
+     * Loads the people whose entries the current user approves by participation, the people the dashboard's team
+     * is made of: every participant of a project where the user is a Manager, and every participant of a project
+     * where the user is an Approver except that project's Managers. The current user, inactive users, and deleted
+     * users are left out. Soft deletion applies to the participants, the roles, and the projects: a deleted one
+     * grants nothing.
+     * <p>
+     * The users are read without the current user's own permissions, as the approval screen shows the user of every
+     * entry it lists.
+     *
+     * @return the people, sorted by their instance names
+     */
+    public List<User> loadApprovedPeople() {
+        return unconstrainedDataManager.load(User.class)
+                .query("""
+                        select u from ts_User u
+                        where u.id <> :approverId and u.active = true
+                        and exists (select pt from ts_ProjectParticipant pt, ts_ProjectParticipant my
+                                    where pt.user = u
+                                    and my.project = pt.project
+                                    and my.user.id = :approverId
+                                    and exists (select pr from ts_Project pr where pr = my.project)
+                                    and (my.role.type = %1$s
+                                         or (my.role.type = %2$s
+                                             and not exists (select m from ts_ProjectParticipant m
+                                                             where m.project = pt.project
+                                                             and m.user = pt.user
+                                                             and m.role.type = %1$s))))
+                        """.formatted(MANAGER, APPROVER))
+                .parameter("approverId", approverId())
+                .fetchPlan(FetchPlan.BASE)
+                .list().stream()
+                .sorted(Comparator.comparing(User::getDisplayName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    /**
+     * Loads the entries in status New that the current user may approve, of any date.
+     * <p>
+     * They include the entries of deleted users, of inactive users, and of users who are no longer participants,
+     * which {@link #loadApprovedPeople} leaves out.
+     *
+     * @return the entries with their user, whose own attributes and user are the only ones loaded
+     */
+    public List<TimeEntry> loadWaitingEntries() {
+        return dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where " + APPROVABLE_ENTRY +
+                        " and e.status = @enum(com.glebfox.timesheets.entity.timeentry.TimeEntryStatus.NEW)" +
+                        " order by e.date")
+                .parameter("approverId", approverId())
+                .fetchPlan(fetchPlan -> fetchPlan
+                        .addFetchPlan(FetchPlan.BASE)
+                        .add("user", FetchPlan.BASE, FetchMode.BATCH))
                 .list();
     }
 

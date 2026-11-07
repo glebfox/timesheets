@@ -150,6 +150,19 @@ public final class ApprovalTestData {
     }
 
     /**
+     * Saves an entry of the given time.
+     */
+    public TimeEntry saveEntryOf(Task task, User user, LocalDate date, TimeEntryStatus status, WorkTime spentTime) {
+        return save(dataManager.create(TimeEntry.class), entry -> {
+            entry.setTask(task);
+            entry.setUser(user);
+            entry.setDate(date);
+            entry.setSpentTime(spentTime);
+            entry.setStatus(status);
+        });
+    }
+
+    /**
      * Loads a user that the test did not create, such as {@code admin}.
      */
     public User loadUser(String username) {
