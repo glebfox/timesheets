@@ -60,7 +60,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -191,7 +190,6 @@ public class MyTimeListsUiTest {
 
     @Test
     void comingUpListsNearestFirstTest() {
-        List<String> names = new ArrayList<>();
         // Saved out of order, and one ended yesterday, which does not come up
         for (int offset : List.of(30, 5, 90, 12, 60)) {
             String name = "leave in " + offset + " days";
