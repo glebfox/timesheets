@@ -50,8 +50,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Computes what the dashboard shows of the current user's own time: this week, the recent weeks, and what needs
- * attention. The current user is the effective user, the substituted one when a substitution is active.
+ * Computes what the dashboard shows of the current user's own time: this week, the recent weeks, what needs
+ * attention, the time by project, what is coming up, and the recent entries. The current user is the effective user, the substituted one when a substitution is active.
  * Weeks are whole, across month and year boundaries.
  */
 @Component("ts_DashboardSupport")
@@ -124,7 +124,7 @@ public class DashboardSupport {
         List<ShortDay> shortDays = days.stream()
                 .filter(day -> !day.date().isBefore(shortDaysStart) && day.date().isBefore(today))
                 .filter(day -> day.total().isInsufficient())
-                .map(day -> new ShortDay(day.date(), WorkTime.ofMinutes(day.total().difference().toMinutes())))
+                .map(day -> new ShortDay(day.date(), day.total().difference()))
                 .toList()
                 .reversed();
         List<WeekSummary> shortWeeks = toWeeks(days).reversed().stream()

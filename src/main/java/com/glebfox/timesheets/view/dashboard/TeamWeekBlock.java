@@ -155,16 +155,8 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 NAME_WIDTH);
 
         // A week of absence is hatched along the whole axis, behind the time spent, if any, and named on it
-        ItemStyleWithDecal offStyle = new ItemStyleWithDecal()
-                .withColor(DashboardColors.OFF_DAY)
-                .withDecal(new Decal()
-                        .withSymbol("rect")
-                        .withColor(DashboardColors.OFF_DAY_HATCH)
-                        .withDashArrayX(1, 0)
-                        .withDashArrayY(2, 4)
-                        .withRotation(-Math.PI / 4));
         chart.addSeries(bar(OFF)
-                .withItemStyle(offStyle)
+                .withItemStyle(DashboardCharts.offDayStyle())
                 .withLabel(new Label()
                         .withShow(true)
                         .withPosition(Label.Position.PositionType.INSIDE_LEFT)
@@ -325,13 +317,14 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     }
 
     /**
-     * Returns the name, made different from the names already taken by zero-width spaces, which do not show: ECharts
-     * draws the rows of one category name on one bar.
+     * Returns the name, made different from the names already taken by zero-width spaces (U+200B), which do not show:
+     * ECharts draws the rows of one category name on one bar.
      */
     private static String uniqueName(String name, Set<String> taken) {
         String unique = name;
         while (!taken.add(unique)) {
-            unique = unique + "​";
+            // A zero-width space, written as an escape so the source shows it
+            unique = unique + "\u200B";
         }
         return unique;
     }

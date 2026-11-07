@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.dashboard;
 
+import com.glebfox.timesheets.app.util.PluralForms;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.ClickEvent;
@@ -23,8 +24,11 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import io.jmix.core.Messages;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.kit.component.button.JmixButton;
+
+import java.util.Locale;
 
 /**
  * Builds the rows of the dashboard's list blocks, so every list looks and reads the same: a row is a line of parts,
@@ -36,6 +40,11 @@ final class DashboardRows {
      * The class of a row of a list.
      */
     static final String ROW = "dashboard-list-row";
+
+    /**
+     * The class of the "and N more" line under a list.
+     */
+    static final String MORE = "dashboard-list-more";
 
     private DashboardRows() {
     }
@@ -69,6 +78,19 @@ final class DashboardRows {
         JmixButton row = actionButton(uiComponents, listener, parts);
         row.addClassName(ROW);
         return row;
+    }
+
+    /**
+     * Creates the "and N more" line under a list that shows only some of its items.
+     *
+     * @param count how many items the list does not show
+     */
+    static Div more(UiComponents uiComponents, Messages messages, int count, Locale locale) {
+        Div more = uiComponents.create(Div.class);
+        more.addClassName(MORE);
+        more.setText(messages.formatMessage(DashboardRows.class, PluralForms.key("list.more", count, locale), locale,
+                count));
+        return more;
     }
 
     /**

@@ -27,8 +27,6 @@ import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
-import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
-import io.jmix.chartsflowui.kit.component.model.shared.Decal;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
@@ -102,16 +100,8 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         DashboardCharts.setUpBarChart(chart, messages.getMessage(getClass(), "chart.hoursAxisLabel"));
 
         // A day off is hatched over the whole height of the chart, behind the time spent on it, if any
-        ItemStyleWithDecal offStyle = new ItemStyleWithDecal()
-                .withColor(DashboardColors.OFF_DAY)
-                .withDecal(new Decal()
-                        .withSymbol("rect")
-                        .withColor(DashboardColors.OFF_DAY_HATCH)
-                        .withDashArrayX(1, 0)
-                        .withDashArrayY(2, 4)
-                        .withRotation(-Math.PI / 4));
         chart.withSeries(
-                DashboardCharts.bar(OFF, DAY, OFF).withItemStyle(offStyle),
+                DashboardCharts.bar(OFF, DAY, OFF).withItemStyle(DashboardCharts.offDayStyle()),
                 DashboardCharts.bar(SPENT, DAY, SPENT),
                 DashboardCharts.planBar(DAY, PLAN));
     }

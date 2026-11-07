@@ -29,6 +29,7 @@ import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
 import io.jmix.chartsflowui.kit.component.model.series.Encode;
 import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
 import io.jmix.chartsflowui.kit.component.model.shared.AbstractTooltip;
+import io.jmix.chartsflowui.kit.component.model.shared.Decal;
 import io.jmix.chartsflowui.kit.component.model.shared.Overflow;
 import org.springframework.web.util.HtmlUtils;
 
@@ -155,6 +156,23 @@ public final class DashboardCharts {
      */
     public static BarSeries horizontalPlanBar(String categoryField, String planField) {
         return asPlan(horizontalBar(planField, categoryField, planField));
+    }
+
+    /**
+     * Creates the style of a bar that marks time off, such as a day off or a week of absence: hatched in the color
+     * of a day off.
+     *
+     * @return the style
+     */
+    public static ItemStyleWithDecal offDayStyle() {
+        return new ItemStyleWithDecal()
+                .withColor(DashboardColors.OFF_DAY)
+                .withDecal(new Decal()
+                        .withSymbol("rect")
+                        .withColor(DashboardColors.OFF_DAY_HATCH)
+                        .withDashArrayX(1, 0)
+                        .withDashArrayY(2, 4)
+                        .withRotation(-Math.PI / 4));
     }
 
     /**

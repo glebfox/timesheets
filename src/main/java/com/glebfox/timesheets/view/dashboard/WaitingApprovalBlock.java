@@ -110,7 +110,7 @@ public class WaitingApprovalBlock extends Fragment<JmixCard> implements Dashboar
         List<WaitingApproval.Person> people = waiting.people();
         people.stream().limit(MAX_ROWS).forEach(person -> rows.add(createPersonRow(person)));
         if (people.size() > MAX_ROWS) {
-            rows.add(createMore(people.size() - MAX_ROWS));
+            rows.add(DashboardRows.more(uiComponents, messages, people.size() - MAX_ROWS, locale));
         }
     }
 
@@ -137,14 +137,5 @@ public class WaitingApprovalBlock extends Fragment<JmixCard> implements Dashboar
                 componentSupport.createAvatar(name, person.user().getAvatar(), "avatar"),
                 DashboardRows.part(uiComponents, "name", name),
                 DashboardRows.part(uiComponents, "value", String.valueOf(person.count())));
-    }
-
-    private Component createMore(int more) {
-        Locale locale = currentAuthentication.getLocale();
-        Div line = uiComponents.create(Div.class);
-        line.addClassName(NeedsAttentionBlock.MORE);
-        line.setText(messages.formatMessage(getClass(), PluralForms.key("waitingApprovalBlock.more", more, locale),
-                locale, more));
-        return line;
     }
 }

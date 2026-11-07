@@ -35,7 +35,6 @@ import io.jmix.core.TimeSource;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
-import io.jmix.flowui.accesscontext.UiShowViewContext;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
@@ -65,16 +64,6 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
      * How many rows the block shows; the rest of what needs attention is counted in "and N more".
      */
     static final int MAX_ROWS = 5;
-
-    /**
-     * The class of the "and N more" line.
-     */
-    static final String MORE = "dashboard-list-more";
-
-    /**
-     * The view id of My time entries, as the view policies of roles name it.
-     */
-    private static final String MY_TIME_ENTRIES_VIEW_ID = "ts_TimeEntry.my";
 
     @ViewComponent
     private Div rows;
@@ -127,7 +116,8 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
         rows.removeAll();
         all.stream().limit(MAX_ROWS).forEach(row -> rows.add(row.get()));
         if (all.size() > MAX_ROWS) {
-            rows.add(createMore(all.size() - MAX_ROWS));
+            rows.add(DashboardRows.more(uiComponents, messages, all.size() - MAX_ROWS,
+                    currentAuthentication.getLocale()));
         }
 
         rows.setVisible(!all.isEmpty());
@@ -143,9 +133,7 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     }
 
     private boolean isMyTimeEntriesPermitted() {
-        UiShowViewContext context = new UiShowViewContext(MY_TIME_ENTRIES_VIEW_ID);
-        accessManager.applyRegisteredConstraints(context);
-        return context.isPermitted();
+        return DashboardAccess.isViewPermitted(accessManager, MyTimeEntryListView.ID);
     }
 
     private Component createRejectedRow(long count) {
@@ -178,14 +166,5 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
         return clickable
                 ? DashboardRows.buttonRow(uiComponents, event -> calendarOpener.open(this, date), parts)
                 : DashboardRows.row(uiComponents, parts);
-    }
-
-    private Component createMore(int count) {
-        Locale locale = currentAuthentication.getLocale();
-        Div more = uiComponents.create(Div.class);
-        more.addClassName(MORE);
-        more.setText(messages.formatMessage(getClass(), PluralForms.key("needsAttentionBlock.more", count, locale),
-                locale, count));
-        return more;
     }
 }

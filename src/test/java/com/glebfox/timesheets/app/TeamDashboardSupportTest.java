@@ -34,6 +34,7 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
 import io.jmix.core.DataManager;
+import io.jmix.core.EntityStates;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.SystemAuthenticator;
@@ -81,6 +82,8 @@ public class TeamDashboardSupportTest {
     TimeEntryApprovalSupport approvalSupport;
     @Autowired
     TeamDashboardSupport teamSupport;
+    @Autowired
+    EntityStates entityStates;
 
     ApprovalTestData data;
     List<Id<?>> assignmentIds = new ArrayList<>();
@@ -163,6 +166,18 @@ public class TeamDashboardSupportTest {
         assertThat(people).extracting(User::getUsername)
                 .containsExactly(approver.getUsername(), member.getUsername(), observer.getUsername());
         assertThat(asUser(manager, () -> teamSupport.approvesAnywhere())).isTrue();
+    }
+
+    @Test
+    void peopleLoadWithoutCredentialsTest() {
+        List<User> people = asUser(manager, () -> approvalSupport.loadApprovedPeople());
+
+        assertThat(people).isNotEmpty().allSatisfy(person -> {
+            for (String attribute : List.of("username", "firstName", "lastName", "avatar", "active")) {
+                assertThat(entityStates.isLoaded(person, attribute)).as(attribute).isTrue();
+            }
+            assertThat(entityStates.isLoaded(person, "password")).isFalse();
+        });
     }
 
     @Test

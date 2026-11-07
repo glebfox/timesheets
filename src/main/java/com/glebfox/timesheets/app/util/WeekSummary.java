@@ -21,12 +21,12 @@ import com.google.common.base.Preconditions;
 import java.time.LocalDate;
 
 /**
- * The time spent in a calendar week of a month against the time planned for it. The week is the part of
- * a calendar row that falls within the displayed month, so the first and the last weeks of a month
- * may be shorter than seven days.
+ * The time spent in a week, or in a part of one, against the time planned for it. The week runs from its first
+ * day to its last day: a whole week of seven days, as the dashboard builds them, or the part of a calendar row that
+ * falls within a displayed month, as the calendar builds them, so a month's first and last weeks may be shorter.
  *
- * @param firstDay the first day of the week within the displayed month
- * @param lastDay  the last day of the week within the displayed month, not before the first day
+ * @param firstDay the first day of the week
+ * @param lastDay  the last day of the week, not before the first day
  * @param total    the time spent and planned in the days from the first day to the last day
  */
 public record WeekSummary(LocalDate firstDay, LocalDate lastDay, FactAndPlan total) {

@@ -143,7 +143,7 @@ public class TimeEntryApprovalSupport {
      * grants nothing.
      * <p>
      * The users are read without the current user's own permissions, as the approval screen shows the user of every
-     * entry it lists.
+     * entry it lists, and only with their username, names, avatar, and active flag.
      *
      * @return the people, sorted by their instance names
      */
@@ -165,7 +165,9 @@ public class TimeEntryApprovalSupport {
                                                              and m.role.type = %1$s))))
                         """.formatted(MANAGER, APPROVER))
                 .parameter("approverId", approverId())
-                .fetchPlan(FetchPlan.BASE)
+                // Only what the dashboard shows of a person and their instance name needs, so no password hash or
+                // other credentials leave the database
+                .fetchPlan(fetchPlan -> fetchPlan.addAll("username", "firstName", "lastName", "avatar", "active"))
                 .list().stream()
                 .sorted(Comparator.comparing(User::getDisplayName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
