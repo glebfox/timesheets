@@ -19,6 +19,7 @@ package com.glebfox.timesheets.dashboard;
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.project.Project;
+import com.glebfox.timesheets.entity.project.ProjectRoleType;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
@@ -201,12 +202,14 @@ public class DashboardUiTest {
 
     @Test
     void blockAsksTheDashboardToRefreshTest() {
+        // The team section refreshes only for a user who approves
+        User approver = saveApprover();
         DashboardFragment dashboard = dashboard();
         CountingTestBlock asking = addBlock(dashboard, "myTimeBlocks");
         CountingTestBlock other = addBlock(dashboard, "myTeamBlocks");
         int before = other.getRefreshes();
 
-        asking.refreshDashboard();
+        systemAuthenticator.runWithUser(approver.getUsername(), asking::refreshDashboard);
 
         assertThat(other.getRefreshes()).isEqualTo(before + 1);
     }
@@ -249,7 +252,16 @@ public class DashboardUiTest {
 
     @Test
     void headingsShowOnlyWithBothSectionsTest() {
+        // The team section shows only to a user who approves; its own blocks give way to the test's
+        User approver = saveApprover();
         DashboardFragment dashboard = dashboard();
+        HasComponents myTeamBlocks = component(dashboard, "myTeamBlocks");
+        myTeamBlocks.removeAll();
+
+        systemAuthenticator.runWithUser(approver.getUsername(), () -> assertHeadings(dashboard));
+    }
+
+    private void assertHeadings(DashboardFragment dashboard) {
         Component myTimeHeading = component(dashboard, "myTimeHeading");
         Component myTeamHeading = component(dashboard, "myTeamHeading");
         Component myTimeBlocks = component(dashboard, "myTimeBlocks");
@@ -277,6 +289,17 @@ public class DashboardUiTest {
         assertThat(myTeamBlocks.isVisible()).isFalse();
         assertThat(myTimeHeading.isVisible()).isFalse();
         assertThat(timeBlock.isVisible()).isTrue();
+    }
+
+    /**
+     * Saves a user with Full access who is an Approver on a project, so the dashboard shows them the team section.
+     */
+    private User saveApprover() {
+        User approver = data.saveUser("approver", "Isaac", "Kleiner");
+        assignRole(approver, FullAccessRole.CODE);
+        Project project = data.saveProject("approved", data.saveClient());
+        data.saveParticipant(project, approver, data.saveRole(ProjectRoleType.APPROVER));
+        return approver;
     }
 
     private MainView mainView() {

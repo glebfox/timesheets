@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<fragment xmlns="http://jmix.io/schema/flowui/fragment"
+          xmlns:app="http://glebfox.com/schema/app-ui-components.xsd">
+    <content>
+        <card id="root" title="msg://waitingApprovalBlock.title">
+            <content>
+                <div id="body" classNames="dashboard-list-block">
+                    <div id="figure" classNames="dashboard-figure">
+                        <span id="count" classNames="dashboard-figure-value"/>
+                        <span id="note" classNames="dashboard-figure-note"/>
+                    </div>
+                    <div id="rows" classNames="dashboard-list"/>
+                    <app:gridEmptyState id="emptyState"
+                                        icon="ts:approve-time-entries"
+                                        text="msg://waitingApprovalBlock.emptyState"/>
+                    <button id="approvalLink"
+                            text="msg://waitingApprovalBlock.approvalLink"
+                            themeNames="tertiary"
+                            classNames="dashboard-list-link"/>
+                </div>
+            </content>
+        </card>
+    </content>
+</fragment>

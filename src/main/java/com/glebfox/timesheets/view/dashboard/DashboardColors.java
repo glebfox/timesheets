@@ -61,6 +61,19 @@ public final class DashboardColors {
     public static final Color OFF_DAY_HATCH = new Color("rgba(125, 128, 134, 0.35)");
 
     /**
+     * The time a person of the team spent on projects where the current user does not approve them: a plain total,
+     * in the neutral, as Closed is, and told apart from Closed by the stripes of
+     * {@link #OTHER_PROJECTS_STRIPE} over it. 3.72:1 light, 4.17:1 dark.
+     */
+    public static final Color OTHER_PROJECTS = NEUTRAL;
+
+    /**
+     * The stripes over {@link #OTHER_PROJECTS}: light enough to show on the neutral in both themes. Decorative: the
+     * tooltip names the segment.
+     */
+    public static final Color OTHER_PROJECTS_STRIPE = new Color("rgba(255, 255, 255, 0.45)");
+
+    /**
      * A chart's background, so the card's surface shows through in either theme.
      */
     public static final Color TRANSPARENT = new Color("transparent");

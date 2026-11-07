@@ -32,8 +32,9 @@ import java.time.LocalDate;
  * section's grid it is one column wide; the class {@code wide} makes it two columns wide where the grid has two or
  * more, and the class {@code full} spans the whole row.
  * <p>
- * The dashboard calls {@link #refresh()} each time it is shown and on its Refresh button; a block loads nothing
- * before, so it loads nothing on its own {@code ReadyEvent}. A block that has nothing it may show hides itself with
+ * The dashboard calls {@link #refresh()} each time it is shown and on its Refresh button, except on the blocks of
+ * the My team section for a user who does not see that section; a block loads nothing before, so it loads nothing on
+ * its own {@code ReadyEvent}. A block that has nothing it may show hides itself with
  * {@code setVisible(false)} in {@code refresh()}, and shows itself again in a later one that finds something; a
  * section whose blocks are all hidden hides too.
  * <p>

@@ -20,6 +20,7 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.kit.component.model.Grid;
 import io.jmix.chartsflowui.kit.component.model.Tooltip;
+import io.jmix.chartsflowui.kit.component.model.axis.AbstractCartesianAxis;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisLabel;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisType;
 import io.jmix.chartsflowui.kit.component.model.axis.XAxis;
@@ -53,6 +54,11 @@ public final class DashboardCharts {
      */
     private static final String BAR_MAX_WIDTH = "40";
 
+    /**
+     * The widest a category's label gets on a vertical bar chart, in pixels.
+     */
+    private static final int CATEGORY_LABEL_WIDTH = 72;
+
     // The options are parsed in the browser into a function: arguments up to the first ")", the body from the first
     // "{" to the last "}"
     private static final String AXIS_TOOLTIP_FORMATTER = "function (params) { return params[0].data.tooltip; }";
@@ -69,26 +75,26 @@ public final class DashboardCharts {
      * @param hoursAxisLabel the label of a value on the hours axis, an ECharts template such as {@code {value}h}
      */
     public static void setUpBarChart(Chart chart, String hoursAxisLabel) {
-        chart.withBackgroundColor(DashboardColors.TRANSPARENT)
-                .withGrid(new Grid()
-                        .withLeft("8")
-                        .withRight("8")
-                        .withTop("12")
-                        .withBottom("8")
-                        // The axis labels fit inside the grid's box, as ECharts' former containLabel did
-                        .withOuterBoundsMode(Grid.OuterBoundsMode.SAME)
-                        .withOuterBoundsContain(Grid.OuterBoundsContain.AXIS_LABEL))
-                .withTooltip(new Tooltip()
-                        .withTrigger(AbstractTooltip.Trigger.AXIS)
-                        .withAxisPointer(new AbstractTooltip.AxisPointer()
-                                .withType(AbstractTooltip.AxisPointer.IndicatorType.SHADOW))
-                        .withConfine(true)
-                        .withFormatterFunction(AXIS_TOOLTIP_FORMATTER))
-                .withXAxis(categoryAxis())
-                .withYAxis(new YAxis()
-                        .withType(AxisType.VALUE)
-                        .withMinInterval(1)
-                        .withAxisLabel(new AxisLabel().withFormatter(hoursAxisLabel)));
+        setUpChart(chart);
+        chart.withXAxis(categoryAxis(new XAxis(), CATEGORY_LABEL_WIDTH))
+                .withYAxis(hoursAxis(new YAxis(), hoursAxisLabel));
+    }
+
+    /**
+     * Sets up a horizontal bar chart: as {@link #setUpBarChart}, with the categories on the y axis, the first at the
+     * top, and the hours on the x axis. Its series are made with {@link #horizontalBar} and
+     * {@link #horizontalPlanBar}.
+     *
+     * @param chart              the chart
+     * @param hoursAxisLabel     the label of a value on the hours axis, an ECharts template such as {@code {value}h}
+     * @param categoryLabelWidth the widest a category's label gets, in pixels, before it is cut with an ellipsis
+     */
+    public static void setUpHorizontalBarChart(Chart chart, String hoursAxisLabel, int categoryLabelWidth) {
+        setUpChart(chart);
+        YAxis categoryAxis = categoryAxis(new YAxis(), categoryLabelWidth);
+        categoryAxis.setInverse(true);
+        chart.withXAxis(hoursAxis(new XAxis(), hoursAxisLabel))
+                .withYAxis(categoryAxis);
     }
 
     /**
@@ -113,10 +119,19 @@ public final class DashboardCharts {
      * @return the series
      */
     public static BarSeries bar(String id, String categoryField, String valueField) {
-        return new BarSeries()
-                .withId(id)
-                .withEncode(new Encode().withX(categoryField).withY(valueField))
-                .withBarMaxWidth(BAR_MAX_WIDTH);
+        return bar(id, new Encode().withX(categoryField).withY(valueField));
+    }
+
+    /**
+     * Creates a bar of a value of the rows in a horizontal bar chart, as thick as the other bars of the chart.
+     *
+     * @param id            the series' id
+     * @param categoryField the field of a row that names its category
+     * @param valueField    the field of a row that holds the bar's length, in hours
+     * @return the series
+     */
+    public static BarSeries horizontalBar(String id, String categoryField, String valueField) {
+        return bar(id, new Encode().withX(valueField).withY(categoryField));
     }
 
     /**
@@ -128,14 +143,18 @@ public final class DashboardCharts {
      * @return the series
      */
     public static BarSeries planBar(String categoryField, String planField) {
-        ItemStyleWithDecal style = new ItemStyleWithDecal().withColor(DashboardColors.TRANSPARENT);
-        style.setBorderColor(DashboardColors.PLAN);
-        style.setBorderWidth(1);
-        style.setBorderType("dashed");
+        return asPlan(bar(planField, categoryField, planField));
+    }
 
-        return bar(planField, categoryField, planField)
-                .withItemStyle(style)
-                .withBarGap("-100%");
+    /**
+     * Creates the plan's mark of a horizontal bar chart, as {@link #planBar} does for a vertical one.
+     *
+     * @param categoryField the field of a row that names its category
+     * @param planField     the field of a row that holds the plan, in hours
+     * @return the series
+     */
+    public static BarSeries horizontalPlanBar(String categoryField, String planField) {
+        return asPlan(horizontalBar(planField, categoryField, planField));
     }
 
     /**
@@ -153,16 +172,56 @@ public final class DashboardCharts {
         return HtmlUtils.htmlEscape(text, StandardCharsets.UTF_8.name());
     }
 
-    private static XAxis categoryAxis() {
+    private static void setUpChart(Chart chart) {
+        chart.withBackgroundColor(DashboardColors.TRANSPARENT)
+                .withGrid(new Grid()
+                        .withLeft("8")
+                        .withRight("8")
+                        .withTop("12")
+                        .withBottom("8")
+                        // The axis labels fit inside the grid's box, as ECharts' former containLabel did
+                        .withOuterBoundsMode(Grid.OuterBoundsMode.SAME)
+                        .withOuterBoundsContain(Grid.OuterBoundsContain.AXIS_LABEL))
+                .withTooltip(new Tooltip()
+                        .withTrigger(AbstractTooltip.Trigger.AXIS)
+                        .withAxisPointer(new AbstractTooltip.AxisPointer()
+                                .withType(AbstractTooltip.AxisPointer.IndicatorType.SHADOW))
+                        .withConfine(true)
+                        .withFormatterFunction(AXIS_TOOLTIP_FORMATTER));
+    }
+
+    private static <A extends AbstractCartesianAxis<A>> A categoryAxis(A axis, int labelWidth) {
         AxisLabel label = new AxisLabel()
                 // Every category is labeled, however narrow the chart; a long label is cut with an ellipsis
                 .withInterval(0)
                 .withHideOverlap(false);
         label.setOverflow(Overflow.TRUNCATE);
-        label.setWidth(72);
+        label.setWidth(labelWidth);
 
-        return new XAxis()
-                .withType(AxisType.CATEGORY)
+        return axis.withType(AxisType.CATEGORY)
                 .withAxisLabel(label);
+    }
+
+    private static <A extends AbstractCartesianAxis<A>> A hoursAxis(A axis, String hoursAxisLabel) {
+        return axis.withType(AxisType.VALUE)
+                .withMinInterval(1)
+                .withAxisLabel(new AxisLabel().withFormatter(hoursAxisLabel));
+    }
+
+    private static BarSeries bar(String id, Encode encode) {
+        return new BarSeries()
+                .withId(id)
+                .withEncode(encode)
+                .withBarMaxWidth(BAR_MAX_WIDTH);
+    }
+
+    private static BarSeries asPlan(BarSeries bar) {
+        ItemStyleWithDecal style = new ItemStyleWithDecal().withColor(DashboardColors.TRANSPARENT);
+        style.setBorderColor(DashboardColors.PLAN);
+        style.setBorderWidth(1);
+        style.setBorderType("dashed");
+
+        return bar.withItemStyle(style)
+                .withBarGap("-100%");
     }
 }

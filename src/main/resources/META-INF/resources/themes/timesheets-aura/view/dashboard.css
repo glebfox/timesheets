@@ -374,3 +374,31 @@ vaadin-button.row-open {
     flex: none;
     font-variant-numeric: tabular-nums;
 }
+
+/* A row of a person, in Waiting for my approval and Team away: the avatar keeps its size before the name */
+.dashboard-list-row > vaadin-avatar {
+    flex: none;
+}
+
+/* Team this week: a bar per person, so the chart grows taller with the team. The block sets the number of people
+   on the chart, and each has a row; where the names stand above the bars, each row is taller to hold its name.
+
+   The body is the container, and its width is the chart's, which switches where its names go at the same width,
+   600 pixels (TeamWeekBlock.NARROW_WIDTH). The block spans the whole row on one and on two columns, so at the
+   common windows the body is the dashboard's width less the card's padding, 2 × 16 pixels (2 × 18 on a touch
+   screen): at most 536 on one column (568), at least 681 on two (717); on three columns it spans two of them,
+   about 670 or more (1059). Each is more than a scrollbar's width away from 600. */
+.dashboard-team-week {
+    container: team-week / inline-size;
+}
+
+.dashboard-team-chart {
+    width: 100%;
+    height: calc(var(--dashboard-team-size, 1) * 2rem + 2.5rem);
+}
+
+@container team-week (width < 600px) {
+    .dashboard-team-chart {
+        height: calc(var(--dashboard-team-size, 1) * 3rem + 2.5rem);
+    }
+}

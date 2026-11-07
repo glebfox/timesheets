@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.dashboard;
 
+import com.glebfox.timesheets.app.TeamDashboardSupport;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
@@ -60,8 +61,9 @@ import java.util.Optional;
 
 /**
  * The dashboard: a header with a greeting, today's date, Log time, and Refresh, then the My time section and the My
- * team section, each a grid of {@link DashboardBlock}s. It loads everything it shows itself, through its blocks, so it
- * works in any host.
+ * team section, each a grid of {@link DashboardBlock}s. The My team section shows only to a user who may open the
+ * approval screen and approves on at least one project; for anyone else its blocks load nothing. It loads everything
+ * it shows itself, through its blocks, so it works in any host.
  * <p>
  * It refreshes when its host is ready and, in a host with a {@link WorkArea} whose initial layout holds it, each time
  * the initial layout is shown again, after the last tab closes; it loads nothing while a tab hides it.
@@ -98,6 +100,10 @@ public class DashboardFragment extends Fragment<Div> {
     private Metadata metadata;
     @Autowired
     private DialogWindows dialogWindows;
+    @Autowired
+    private ApprovalOpener approvalOpener;
+    @Autowired
+    private TeamDashboardSupport teamDashboardSupport;
 
     private @Nullable Registration workAreaStateRegistration;
 
@@ -129,7 +135,12 @@ public class DashboardFragment extends Fragment<Div> {
         updateHeader();
 
         refreshBlocks(myTimeBlocks);
-        refreshBlocks(myTeamBlocks);
+        // The team section is for a user who approves: it loads nothing for anyone else
+        if (isTeamPermitted()) {
+            refreshBlocks(myTeamBlocks);
+        } else {
+            myTeamBlocks.setVisible(false);
+        }
 
         // The headings tell the sections apart, so they show only when both sections do
         boolean bothSections = myTimeBlocks.isVisible() && myTeamBlocks.isVisible();
@@ -187,6 +198,14 @@ public class DashboardFragment extends Fragment<Div> {
             return appUser.getFirstName();
         }
         return user.getUsername();
+    }
+
+    /**
+     * Whether the current user sees the My team section: they may open the approval screen and approve on at least
+     * one project, so a user who approves nowhere sees none, Full access included.
+     */
+    private boolean isTeamPermitted() {
+        return approvalOpener.isPermitted() && teamDashboardSupport.approvesAnywhere();
     }
 
     private boolean isTimeEntryCreatePermitted() {
