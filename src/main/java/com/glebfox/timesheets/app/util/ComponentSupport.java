@@ -348,4 +348,25 @@ public class ComponentSupport {
                 ? messages.formatMessage(ComponentSupport.class, "totalHours.format", time.getHours())
                 : metadataTools.format(time);
     }
+
+    /**
+     * Formats where a week stands against its plan, as the calendar's week summary says it, such as "+2h over",
+     * "✓ On plan", "−4h short", or "10h to go".
+     *
+     * @param status the week's status
+     * @param total  the week's time spent and planned
+     * @return the note of the status
+     */
+    public String formatWeekStatusNote(WeekStatus status, FactAndPlan total) {
+        String difference = formatWorkTimeTotal(total.difference());
+
+        return switch (status) {
+            case OVER -> messages.formatMessage(ComponentSupport.class, "weekStatus.over.text", difference);
+            case ON_PLAN -> messages.getMessage(ComponentSupport.class, "weekStatus.onPlan.text");
+            case SHORT -> messages.formatMessage(ComponentSupport.class, "weekStatus.short.text", difference);
+            case IN_PROGRESS -> messages.formatMessage(ComponentSupport.class, "weekStatus.inProgress.text", difference);
+            case UPCOMING -> messages.getMessage(ComponentSupport.class, "weekStatus.upcoming.text");
+            case NO_WORKDAYS -> messages.getMessage(ComponentSupport.class, "weekStatus.noWorkdays.text");
+        };
+    }
 }

@@ -134,3 +134,115 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* Blocks */
+
+/* A block of a chart: its figures, if any, above the chart */
+.dashboard-chart-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+/* A block's main figure, such as the week's time spent, large, with a note beside it */
+.dashboard-figure {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+}
+
+.dashboard-figure-value {
+    font-size: var(--aura-font-size-xl);
+    line-height: var(--aura-line-height-xl);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.dashboard-figure-note {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* A chart draws into the box it is given and has no height of its own; Aura has no size token for one, so the
+   height is set here, enough for seven bars with two-line labels under them */
+.dashboard-chart {
+    width: 100%;
+    height: 12rem;
+}
+
+/* Time by project: the donut, with the total in its hole, and the list of projects beside it */
+.dashboard-projects-content {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-m);
+}
+
+.dashboard-donut {
+    position: relative;
+    flex: none;
+    width: 8rem;
+    height: 8rem;
+}
+
+.dashboard-donut-chart {
+    width: 100%;
+    height: 100%;
+}
+
+/* The total lies over the chart, so the pointer reaches the slices through it */
+.dashboard-donut-total {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font-size: var(--aura-font-size-l);
+    line-height: var(--aura-line-height-l);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.dashboard-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.dashboard-project-row {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* The slice's color, set from the controller: a dot as small as the smallest gap, as the approval screen's */
+.dashboard-project-row > .mark {
+    flex: none;
+    width: var(--vaadin-gap-s);
+    height: var(--vaadin-gap-s);
+    border-radius: 50%;
+}
+
+.dashboard-project-row > .name {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-project-row > .time {
+    flex: none;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* An empty block keeps some height, so it does not collapse to its title */
+.dashboard-projects > .grid-empty-state {
+    padding-block: var(--vaadin-padding-l);
+}

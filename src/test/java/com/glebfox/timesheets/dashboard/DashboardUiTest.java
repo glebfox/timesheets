@@ -63,7 +63,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@UiTest
+// The main view is named: by default, the extension looks it up once per class in a view registry that the previous
+// class's teardown has emptied, and then opens its own blank view instead
+@UiTest(initialView = MainView.class)
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
 public class DashboardUiTest {
 

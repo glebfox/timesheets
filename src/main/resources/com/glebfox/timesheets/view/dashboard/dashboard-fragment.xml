@@ -39,7 +39,11 @@
             <!-- Each section's blocks are the fragments of DashboardBlock, in the spec's order -->
             <h3 id="myTimeHeading" text="msg://myTimeHeading.text" classNames="dashboard-section-heading"
                 visible="false"/>
-            <div id="myTimeBlocks" classNames="dashboard-blocks"/>
+            <div id="myTimeBlocks" classNames="dashboard-blocks">
+                <fragment id="thisWeekBlock" class="com.glebfox.timesheets.view.dashboard.ThisWeekBlock"/>
+                <fragment id="recentWeeksBlock" class="com.glebfox.timesheets.view.dashboard.RecentWeeksBlock"/>
+                <fragment id="timeByProjectBlock" class="com.glebfox.timesheets.view.dashboard.TimeByProjectBlock"/>
+            </div>
 
             <h3 id="myTeamHeading" text="msg://myTeamHeading.text" classNames="dashboard-section-heading"
                 visible="false"/>

@@ -404,7 +404,7 @@ public class CalendarView extends StandardView {
         progress.setValue(getProgress(total));
         progress.setClassName("calendar-view-week-summary-progress");
 
-        Span note = new Span(getWeekStatusNote(status, total));
+        Span note = new Span(componentSupport.formatWeekStatusNote(status, total));
         note.setClassName("calendar-view-week-summary-note");
 
         Div weekSummary = new Div(totals, progress, note);
@@ -436,18 +436,6 @@ public class CalendarView extends StandardView {
         };
     }
 
-    private String getWeekStatusNote(WeekStatus status, FactAndPlan total) {
-        String difference = componentSupport.formatWorkTimeTotal(total.difference());
-
-        return switch (status) {
-            case OVER -> messageBundle.formatMessage("weekStatus.over.text", difference);
-            case ON_PLAN -> messageBundle.getMessage("weekStatus.onPlan.text");
-            case SHORT -> messageBundle.formatMessage("weekStatus.short.text", difference);
-            case IN_PROGRESS -> messageBundle.formatMessage("weekStatus.inProgress.text", difference);
-            case UPCOMING -> messageBundle.getMessage("weekStatus.upcoming.text");
-            case NO_WORKDAYS -> messageBundle.getMessage("weekStatus.noWorkdays.text");
-        };
-    }
 
     private String getTimeClassName(FactAndPlan factAndPlan) {
         if (factAndPlan.isInsufficient()) {
