@@ -44,6 +44,7 @@ import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.View;
+import io.jmix.flowui.view.ViewControllerUtils;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -224,6 +225,23 @@ public class DashboardUiTest {
         opened.close(StandardOutcome.CLOSE);
 
         assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(mainView);
+        assertThat(block.getRefreshes()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void hostReadyAgainKeepsOneRefreshPerShowTest() {
+        MainView mainView = mainView();
+        DashboardFragment dashboard = dashboard();
+        CountingTestBlock block = addBlock(dashboard, "myTimeBlocks");
+
+        // Navigating to the main view while it is open fires its ready event again for the same instance
+        ViewControllerUtils.fireEvent(mainView, new View.ReadyEvent(mainView));
+        ViewControllerUtils.fireEvent(mainView, new View.ReadyEvent(mainView));
+        int before = block.getRefreshes();
+
+        viewBuilders.view(mainView, TaskTypeListView.class).open();
+        UiTestUtils.<View<?>>getCurrentView().close(StandardOutcome.CLOSE);
+
         assertThat(block.getRefreshes()).isEqualTo(before + 1);
     }
 

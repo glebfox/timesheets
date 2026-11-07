@@ -25,6 +25,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.shared.Registration;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
 import io.jmix.core.Metadata;
@@ -45,6 +46,7 @@ import io.jmix.flowui.view.ViewComponent;
 import io.jmix.tabbedmode.app.main.HasWorkArea;
 import io.jmix.tabbedmode.component.workarea.WorkArea;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -97,14 +99,22 @@ public class DashboardFragment extends Fragment<Div> {
     @Autowired
     private DialogWindows dialogWindows;
 
+    private @Nullable Registration workAreaStateRegistration;
+
     @Subscribe(target = Target.HOST_CONTROLLER)
     public void onHostReady(final View.ReadyEvent event) {
         Optional<WorkArea> workArea = findWorkArea();
-        workArea.ifPresent(area -> area.addStateChangeListener(stateChangeEvent -> {
-            if (stateChangeEvent.getState() == WorkArea.State.INITIAL_LAYOUT) {
-                refresh();
-            }
-        }));
+        // The host's ready event fires again on each navigation to the host while it is open, so the listener is
+        // added once, or each show would refresh once per navigation
+        if (workAreaStateRegistration == null) {
+            workAreaStateRegistration = workArea
+                    .map(area -> area.addStateChangeListener(stateChangeEvent -> {
+                        if (stateChangeEvent.getState() == WorkArea.State.INITIAL_LAYOUT) {
+                            refresh();
+                        }
+                    }))
+                    .orElse(null);
+        }
 
         // A main view opened on a tab, such as by a link to a screen, shows the dashboard only once the tab closes
         if (workArea.map(area -> area.getState() == WorkArea.State.INITIAL_LAYOUT).orElse(true)) {
