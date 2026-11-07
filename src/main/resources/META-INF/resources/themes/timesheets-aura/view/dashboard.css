@@ -281,8 +281,9 @@ vaadin-button.dashboard-list-row {
     text-align: start;
 }
 
-/* The parts of a button row sit in the button's label, which is laid out as the Div row is: the label takes the
-   button's width, with the same gap, and the weight is the body's, not a tertiary button's */
+/* The parts of a button row sit in the button's label, which is laid out as the Div row is: the label, a block of
+   its own, is made a flex line that takes the button's width, with the same gap, and the weight is the body's, not
+   a tertiary button's */
 vaadin-button.dashboard-list-row,
 vaadin-button.row-open {
     font-weight: var(--aura-font-weight-regular);
@@ -290,6 +291,7 @@ vaadin-button.row-open {
 
 vaadin-button.dashboard-list-row::part(label),
 vaadin-button.row-open::part(label) {
+    display: flex;
     flex: 1 1 0;
     min-width: 0;
     align-items: center;
