@@ -377,6 +377,35 @@ vaadin-button.row-open {
     font-variant-numeric: tabular-nums;
 }
 
+/* The name takes what the date, the hours, and the badge leave, on one line, in the button and in the plain row */
+.row-open > .name {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row-open > :not(.name) {
+    flex: none;
+}
+
+/* Under the dashboard's first breakpoint the row has no room for Copy to today beside the entry, so it wraps to a
+   line of its own, at the row's end */
+@container dashboard (width < 600px) {
+    .dashboard-list-row:has(> .row-copy) {
+        flex-wrap: wrap;
+    }
+
+    .dashboard-list-row > .row-open {
+        flex-basis: 100%;
+    }
+
+    .dashboard-list-row > .row-copy {
+        margin-inline-start: auto;
+    }
+}
+
 /* A row of a person, in Waiting for my approval and Team away: the avatar keeps its size before the name */
 .dashboard-list-row > vaadin-avatar {
     flex: none;
