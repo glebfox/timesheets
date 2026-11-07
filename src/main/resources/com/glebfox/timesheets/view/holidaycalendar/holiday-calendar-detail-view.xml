@@ -50,7 +50,8 @@
                           minHeight="10rem" colspan="2"/>
             </formLayout>
 
-            <h4 id="daysTitle" text="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendar.days"/>
+            <h4 id="daysTitle" text="msg://com.glebfox.timesheets.entity.schedule/HolidayCalendar.days"
+                classNames="text-divider"/>
             <hbox id="daysButtonsPanel" classNames="buttons-panel">
                 <button id="dayCreateBtn" action="daysDataGrid.create"/>
                 <button id="dayEditBtn" action="daysDataGrid.edit"/>

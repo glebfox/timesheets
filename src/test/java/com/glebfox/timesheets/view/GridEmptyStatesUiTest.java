@@ -26,7 +26,7 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.absence.AbsenceListView;
 import com.glebfox.timesheets.view.absencetype.AbsenceTypeListView;
-import com.glebfox.timesheets.view.client.ClientLookupView;
+import com.glebfox.timesheets.view.client.ClientListView;
 import com.glebfox.timesheets.view.holidaycalendar.HolidayCalendarListView;
 import com.glebfox.timesheets.view.project.ProjectListView;
 import com.glebfox.timesheets.view.projectrole.ProjectRoleListView;
@@ -96,6 +96,8 @@ class GridEmptyStatesUiTest {
                         "absencesDataGrid", "ts:absences", "No absences", true),
                 arguments("absence types", listOpener(AbsenceTypeListView.class),
                         "absenceTypesDataGrid", "ts:absence-types", "No absence types", true),
+                arguments("clients", listOpener(ClientListView.class),
+                        "clientsDataGrid", "ts:clients", "No clients", true),
                 arguments("holiday calendars", listOpener(HolidayCalendarListView.class),
                         "holidayCalendarsDataGrid", "ts:holiday-calendars", "No holiday calendars", true),
                 arguments("projects", listOpener(ProjectListView.class),
@@ -114,8 +116,6 @@ class GridEmptyStatesUiTest {
                         "usersDataGrid", "ts:users", "No users", true),
                 arguments("work schedules", listOpener(WorkScheduleListView.class),
                         "workSchedulesDataGrid", "ts:work-schedules", "No work schedules", true),
-                arguments("client lookup", listOpener(ClientLookupView.class),
-                        "clientsDataGrid", "ts:clients", "No clients", true),
                 arguments("tag lookup", listOpener(TagLookupView.class),
                         "tagsDataGrid", "ts:tag", "No tags", true),
                 arguments("tag group lookup", listOpener(TagGroupLookupView.class),

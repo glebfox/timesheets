@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-.time-entry-detail-view .text-divider {
-    padding-top: var(--vaadin-padding-m);
-}
-
 /* Why the entry was rejected: the icon beside the title and the reason, on the surface of the error accent that the
    notice's aura-accent-red class gives it. Stretched to the form's width, whatever the reason's length: the content
    box lays its children out at their own width, and a long reason would widen the notice past the editor and scroll

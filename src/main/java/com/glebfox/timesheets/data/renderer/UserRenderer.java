@@ -17,33 +17,21 @@
 package com.glebfox.timesheets.data.renderer;
 
 import com.glebfox.timesheets.entity.user.User;
-import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.function.SerializableSupplier;
-import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.server.streams.DownloadResponse;
-import com.vaadin.flow.server.streams.InputStreamDownloadHandler;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.util.function.Function;
 
 /**
- * A renderer that generates a custom visual representation for a user item.
- * This class extends {@link ComponentRenderer} to create a UI component
- * representing a user with additional visual elements such as avatar, name, and an optional status badge.
+ * An {@link AvatarCellRenderer} for a user: the avatar, the full name with the username under it, or the username
+ * alone for a user without a name, and an optional status badge.
  *
  * @param <ITEM> the type of the items being rendered
  */
 @NullMarked
-public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
-
-    private final Function<ITEM, @Nullable User> valueProvider;
-    private final @Nullable Function<User, String> statusProvider;
+public class UserRenderer<ITEM> extends AvatarCellRenderer<ITEM> {
 
     /**
      * Creates a renderer that shows a user without a status badge.
@@ -65,94 +53,33 @@ public class UserRenderer<ITEM> extends ComponentRenderer<Div, ITEM> {
      */
     public UserRenderer(Function<ITEM, @Nullable User> valueProvider,
                         @Nullable Function<User, String> statusProvider) {
-        super(((SerializableSupplier<Div>) null));
-        this.valueProvider = valueProvider;
-        this.statusProvider = statusProvider;
+        super(item -> {
+            User user = valueProvider.apply(item);
+            return user == null ? null : createCell(user, statusProvider);
+        });
     }
 
-    @Nullable
-    @Override
-    public Div createComponent(ITEM item) {
-        User user = valueProvider.apply(item);
-        if (user == null) {
-            return null;
-        }
-
+    private static AvatarCell createCell(User user, @Nullable Function<User, String> statusProvider) {
         String fullName = getFullName(user);
-        String name = fullName.isEmpty() ? user.getUsername() : fullName;
-
-        Avatar avatar = createAvatar(name, user.getAvatar());
-        Div title = createTitle(name);
-        Badge activeBadge = createStatusBadge(user);
-
-        Div wrapper = new Div();
-        wrapper.setClassName("user-name-layout");
-        wrapper.add(avatar, title);
-        if (activeBadge != null) {
-            wrapper.add(activeBadge);
-        }
-
-        if (name.equals(fullName)) {
-            Div body = createBody(user.getUsername());
-            wrapper.add(body);
-        } else {
-            title.addClassNames("title-body");
-            if (activeBadge != null) {
-                activeBadge.addClassNames("title-suffix-body");
-            }
-        }
-
-        return wrapper;
+        boolean hasFullName = !fullName.isEmpty();
+        return new AvatarCell(
+                hasFullName ? fullName : user.getUsername(),
+                user.getAvatar(),
+                hasFullName ? user.getUsername() : null,
+                statusProvider != null ? createStatusBadge(user, statusProvider) : null);
     }
 
-    private String getFullName(User user) {
+    private static String getFullName(User user) {
         return String.format("%s %s",
                 (user.getFirstName() != null ? user.getFirstName() : ""),
                 (user.getLastName() != null ? user.getLastName() : "")
         ).trim();
     }
 
-    private Avatar createAvatar(String name, byte @Nullable [] data) {
-        Avatar avatar = new Avatar(name);
-        avatar.getElement().setAttribute("tabindex", "-1");
-
-        if (data != null) {
-            InputStreamDownloadHandler downloadHandler = DownloadHandler.fromInputStream(downloadEvent ->
-                    new DownloadResponse(new ByteArrayInputStream(data),
-                            "avatar.png", null, data.length));
-
-            avatar.setImageHandler(downloadHandler);
-        }
-
-        avatar.addClassName("prefix");
-        return avatar;
-    }
-
-    private Div createTitle(String fullName) {
-        Div fullNameDiv = new Div();
-        fullNameDiv.setText(fullName);
-        fullNameDiv.setClassName("title");
-        return fullNameDiv;
-    }
-
-    @Nullable
-    private Badge createStatusBadge(User user) {
-        if (statusProvider == null) {
-            return null;
-        }
-
-        Badge activeBadge = new Badge(statusProvider.apply(user));
-        activeBadge.setClassName("title-suffix");
-        activeBadge.addThemeVariants(BadgeVariant.SMALL,
+    private static Badge createStatusBadge(User user, Function<User, String> statusProvider) {
+        Badge badge = new Badge(statusProvider.apply(user));
+        badge.addThemeVariants(BadgeVariant.SMALL,
                 Boolean.TRUE.equals(user.getActive()) ? BadgeVariant.SUCCESS : BadgeVariant.ERROR);
-
-        return activeBadge;
-    }
-
-    private Div createBody(String username) {
-        Div usernameDiv = new Div();
-        usernameDiv.setText(username);
-        usernameDiv.setClassName("body");
-        return usernameDiv;
+        return badge;
     }
 }

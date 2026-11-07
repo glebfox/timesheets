@@ -62,7 +62,8 @@
                 </entityPicker>
             </formLayout>
 
-            <h4 id="tagsTitle" text="msg://com.glebfox.timesheets.entity.tag/TagGroup.tags"/>
+            <h4 id="tagsTitle" text="msg://com.glebfox.timesheets.entity.tag/TagGroup.tags"
+                classNames="text-divider"/>
             <hbox id="buttonsPanel" classNames="buttons-panel">
                 <button id="createBtn" action="tagsDataGrid.create"/>
                 <button id="editBtn" action="tagsDataGrid.edit"/>

@@ -14,44 +14,57 @@
  * limitations under the License.
  */
 
-.user-name-layout {
+.avatar-cell {
+    /* The cell is as wide as its content, but never wider than its column. In a narrower column the title track,
+       which has no minimum, gives up the width: the avatar and the badge keep their size, and the title and the
+       body line end with an ellipsis. When the content fits, nothing is cut and the badge stays right after the
+       title. */
     display: grid;
     grid-template: "prefix title title-suffix"
                    "prefix body body";
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     width: max-content;
+    max-width: 100%;
 }
 
-.user-name-layout > .prefix {
+.avatar-cell > .prefix {
     grid-area: prefix;
     align-self: center;
     margin-inline-end: var(--vaadin-padding-s);
 }
 
-.user-name-layout > .title {
+.avatar-cell > .title {
     grid-area: title;
     font-size: var(--aura-font-size-m);
     font-weight: var(--aura-font-weight-medium);
     color: var(--vaadin-text-color);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.user-name-layout > .title-suffix {
+.avatar-cell > .title-suffix {
     grid-area: title-suffix;
     margin-inline-start: var(--vaadin-padding-s);
 }
 
-.user-name-layout > .body {
+.avatar-cell > .body {
     grid-area: body;
     font-size: var(--aura-font-size-s);
     color: var(--vaadin-text-color-secondary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.user-name-layout > .title-body {
+.avatar-cell > .title-body {
     grid-row: title / body;
     align-self: center;
 }
 
-.user-name-layout > .title-suffix-body {
+.avatar-cell > .title-suffix-body {
     grid-row: title-suffix / body;
     align-self: center;
 }

@@ -44,50 +44,43 @@
                               dataContainer="clientDc" property="image"
                               label="msg://com.glebfox.timesheets.entity.client/Client.image"/>
 
-            <textField id="nameField"
-                       dataContainer="clientDc" property="name"
-                       label="msg://com.glebfox.timesheets.entity.client/Client.name"
-                       width="100%" maxWidth="30em">
-                <prefix>
-                    <icon icon="gravity-ui:office-badge"/>
-                </prefix>
-            </textField>
+            <formLayout id="nameForm"
+                        dataContainer="clientDc">
+                <textField id="nameField" property="name"
+                           label="msg://com.glebfox.timesheets.entity.client/Client.name">
+                    <prefix>
+                        <icon icon="gravity-ui:office-badge"/>
+                    </prefix>
+                </textField>
+            </formLayout>
 
-            <hr/>
-
-            <details id="contactInformationDetails"
-                     summaryText="msg://com.glebfox.timesheets.entity.client/Client.contactInformation"
-                     width="100%"
-                     opened="true"
-                     themeNames="bordered summary-filled non-collapsible">
-                <formLayout dataContainer="contactInformationDc">
-                    <responsiveSteps>
-                        <responsiveStep minWidth="0" columns="1"/>
-                        <responsiveStep minWidth="60em" columns="3"/>
-                    </responsiveSteps>
-                    <emailField id="emailField" property="email">
-                        <prefix>
-                            <icon icon="gravity-ui:envelope"/>
-                        </prefix>
-                    </emailField>
-                    <textField id="phoneField" property="phone">
-                        <prefix>
-                            <icon icon="gravity-ui:handset"/>
-                        </prefix>
-                    </textField>
-                    <textField id="urlField" property="url">
-                        <prefix>
-                            <icon icon="gravity-ui:link"/>
-                        </prefix>
-                    </textField>
-                    <textArea id="addressField" property="address"
-                              minRows="5" maxRows="5" colspan="3">
-                        <prefix>
-                            <icon icon="gravity-ui:map-pin"/>
-                        </prefix>
-                    </textArea>
-                </formLayout>
-            </details>
+            <h4 id="contactInformationTitle"
+                text="msg://com.glebfox.timesheets.entity.client/Client.contactInformation"
+                classNames="text-divider"/>
+            <formLayout id="contactInformationForm"
+                        dataContainer="contactInformationDc">
+                <emailField id="emailField" property="email">
+                    <prefix>
+                        <icon icon="gravity-ui:envelope"/>
+                    </prefix>
+                </emailField>
+                <textField id="phoneField" property="phone">
+                    <prefix>
+                        <icon icon="gravity-ui:handset"/>
+                    </prefix>
+                </textField>
+                <textField id="urlField" property="url">
+                    <prefix>
+                        <icon icon="gravity-ui:link"/>
+                    </prefix>
+                </textField>
+                <textArea id="addressField" property="address"
+                          minRows="5" maxRows="5" colspan="2">
+                    <prefix>
+                        <icon icon="gravity-ui:map-pin"/>
+                    </prefix>
+                </textArea>
+            </formLayout>
         </vbox>
 
         <hbox id="detailActions"
