@@ -1,0 +1,136 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The dashboard fills the initial layout below the menu toggle, from edge to edge of the work area, and scrolls on
+   its own, so the toggle stays in place. It pads as a view in a tab pads its content, and by more than a focus ring
+   reaches outside a button, so no ring is cut off at the scrolling edge; at the top, the initial layout's gap under
+   the toggle already separates it. */
+.jmix-initial-layout > .dashboard {
+    container-name: dashboard;
+    container-type: inline-size;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-l);
+
+    flex: 1 1 0;
+    align-self: stretch;
+    min-height: 0;
+    overflow: auto;
+    box-sizing: border-box;
+
+    margin: 0 calc(var(--_bar-padding-inline) * -1) calc(var(--_bar-padding-block) * -1);
+    padding: calc(var(--vaadin-focus-ring-width) + 2px) var(--vaadin-padding-l) var(--vaadin-padding-l);
+}
+
+/* Header */
+
+.dashboard-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vaadin-gap-m);
+}
+
+.dashboard-header-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.dashboard-greeting {
+    margin: 0;
+    font-size: var(--aura-font-size-xl);
+    line-height: var(--aura-line-height-xl);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.dashboard-today {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+}
+
+/* Sections */
+
+/* The gap above a heading parts the sections; the heading sits close to its own blocks */
+.dashboard-section-heading {
+    margin: 0 0 calc(var(--vaadin-gap-s) - var(--vaadin-gap-l));
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-m);
+    line-height: var(--aura-line-height-m);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+/* Each section is a grid of blocks: one column, two from 600 pixels of the dashboard's width, three from 1024. A
+   block of the class "wide" spans two columns where the grid has two or three, and one of the class "full" the
+   whole row always.
+
+   The dashboard is as wide as the work area less its padding, 2 × 16 pixels (2 × 18 on a touch screen), and less a
+   classic scrollbar, 15 pixels, where one shows. The navigation drawer is 256 pixels wide, and an overlay from 800
+   pixels of window width down, where the work area is the whole window. Its width at the common windows, worked out
+   from those sizes (Task 10's live check measures them), with the drawer open | collapsed:
+     - 1920: 1632 | 1888; 1680: 1392 | 1648; 1536: 1248 | 1504; 1440: 1152 | 1408; 1366: 1078 | 1334;
+     - 1280: 992 | 1248; 1024: 736 | 992;
+     - 800 and below, the drawer an overlay: 768 at 800, 736 at 768, 568 at 600, 448 at 480, 382 at 414, 358 at 390,
+       343 at 375, 328 at 360.
+   The nearest of these to 600 are 568 below and 717 (768 less a touch screen's padding and a scrollbar) above, and
+   to 1024 are 992 below and 1059 (1366 with the drawer open, less a touch screen's padding and a scrollbar) above,
+   each more than a scrollbar's width away, so a classic or an overlay scrollbar never moves a window across a
+   breakpoint. So a window of 1280 with the drawer open, or of
+   1024 with it collapsed, shows two columns; one of 1366 with the drawer open, or of 1280 with it collapsed, three. */
+.dashboard-blocks {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--vaadin-gap-m);
+}
+
+/* A block may narrow below its content's width, so a long text or a chart never widens its column */
+.dashboard-blocks > * {
+    min-width: 0;
+}
+
+/* Blocks are Aura cards: a surface background with a secondary border, rounded as a large container */
+.dashboard-blocks > vaadin-card {
+    --vaadin-card-border-radius: var(--vaadin-radius-l);
+}
+
+.dashboard-blocks > .full {
+    grid-column: 1 / -1;
+}
+
+@container dashboard (width >= 600px) {
+    .dashboard-blocks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-blocks > .wide {
+        grid-column: span 2;
+    }
+}
+
+@container dashboard (width >= 1024px) {
+    .dashboard-blocks {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
