@@ -26,6 +26,7 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
+import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.tasktype.TaskTypeListView;
@@ -37,6 +38,7 @@ import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
+import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
@@ -76,6 +78,8 @@ public class DashboardUiTest {
     SystemAuthenticator systemAuthenticator;
     @Autowired
     CurrentAuthentication currentAuthentication;
+    @Autowired
+    TimeSource timeSource;
     @Autowired
     Fragments fragments;
     @Autowired
@@ -135,8 +139,10 @@ public class DashboardUiTest {
         dashboard.refresh();
 
         HasText today = component(dashboard, "today");
-        int week = LocalDate.now().get(WeekFields.of(currentAuthentication.getLocale()).weekOfWeekBasedYear());
-        assertThat(today.getText()).contains(String.valueOf(LocalDate.now().getYear())).contains(" " + week);
+        // The user's today, which the header counts from as every block does
+        LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
+        int week = date.get(WeekFields.of(currentAuthentication.getLocale()).weekOfWeekBasedYear());
+        assertThat(today.getText()).contains(String.valueOf(date.getYear())).endsWith(" " + week);
     }
 
     @Test
@@ -168,7 +174,8 @@ public class DashboardUiTest {
             TimeEntry entry = editor.getEditedEntity();
             assertThat(entry.getUser()).isNotNull();
             assertThat(entry.getUser().getId()).isEqualTo(user.getId());
-            assertThat(entry.getDate()).isEqualTo(LocalDate.now());
+            // Dated by the user's today, as Copy to today and every block count, not by the server's
+            assertThat(entry.getDate()).isEqualTo(DashboardBlock.today(timeSource, currentAuthentication));
             editor.closeWithDiscard();
         });
     }

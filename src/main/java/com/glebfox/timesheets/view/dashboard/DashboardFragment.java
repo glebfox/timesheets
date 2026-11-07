@@ -155,10 +155,13 @@ public class DashboardFragment extends Fragment<Div> {
 
     @Subscribe(id = "logTimeButton", subject = "clickListener")
     public void onLogTimeButtonClick(final ClickEvent<JmixButton> event) {
+        // Dated by the user's today, as every block counts from it, not by the server's, as the editor would date it
+        LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
         dialogWindows.detail(FragmentUtils.getHostView(getParentController()), TimeEntry.class)
                 .withViewClass(TimeEntryDetailView.class)
                 .withViewConfigurer(editor -> editor.setOwnTimeEntry(true))
                 .newEntity()
+                .withInitializer(entry -> entry.setDate(date))
                 .withAfterCloseListener(closeEvent -> {
                     if (closeEvent.closedWith(StandardOutcome.SAVE)) {
                         refresh();
