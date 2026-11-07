@@ -40,6 +40,8 @@ import com.glebfox.timesheets.view.calendar.CalendarView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.collect.Lists;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.button.Button;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -109,6 +111,55 @@ public class CalendarUiTest {
     CalendarSupport calendarSupport;
 
     List<Object> entities = new ArrayList<>();
+
+    @Test
+    void showDateBeforeOpenTest() {
+        /* Given */
+        LocalDate date = LocalDate.now().minusMonths(3);
+        TimeEntry created = createTimeEntry();
+        TimeEntry timeEntry = dataManager.load(Id.of(created)).one();
+        timeEntry.setDate(date);
+        dataManager.save(timeEntry);
+
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* When */
+            viewBuilders.view(UiTestUtils.getCurrentView(), CalendarView.class)
+                    .withViewConfigurer(view -> view.showDate(date))
+                    .open();
+
+            /* Then */
+            CalendarView calendarView = UiTestUtils.getCurrentView();
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            assertThat(calendar.getInitialDate()).isEqualTo(date);
+
+            // The browser reports the dates of the month the calendar opened on
+            LocalDate monthStart = date.withDayOfMonth(1);
+            LocalDate monthEnd = monthStart.plusMonths(1);
+            ComponentUtil.fireEvent(calendar,
+                    new DatesSetEvent(calendar, true, monthStart.minusDays(7), monthEnd.plusDays(7),
+                            new DisplayModeInfo(monthStart.minusDays(7), monthEnd.plusDays(7), monthStart, monthEnd,
+                                    CalendarDisplayModes.DAY_GRID_MONTH)));
+            assertThat(findCalendarEvent(calendarView, timeEntry)).isNotNull();
+        });
+    }
+
+    @Test
+    void showDateAfterOpenTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            CalendarView calendarView = openCalendar();
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            // Drops what opening the calendar queued for the browser
+            browserCalls(calendar);
+            LocalDate date = LocalDate.now().plusMonths(1);
+
+            /* When */
+            calendarView.showDate(date);
+
+            /* Then */
+            assertThat(browserCalls(calendar))
+                    .anyMatch(call -> call.contains("navigateToDate") && call.contains("$0"));
+        });
+    }
 
     @Test
     void moveEditedTimeEntryTest() {
@@ -344,6 +395,18 @@ public class CalendarUiTest {
                         .removing(reloaded)
                         .setHint(PersistenceHints.SOFT_DELETION, false)
         );
+    }
+
+    /**
+     * Returns the calls to the calendar's browser side queued since the last check, as a response would send them.
+     */
+    private static List<String> browserCalls(FullCalendar calendar) {
+        UIInternals internals = UI.getCurrent().getInternals();
+        internals.getStateTree().runExecutionsBeforeClientResponse();
+        return internals.dumpPendingJavaScriptInvocations().stream()
+                .filter(invocation -> invocation.getOwner() == calendar.getElement().getNode())
+                .map(invocation -> invocation.getInvocation().getExpression())
+                .toList();
     }
 
     private CalendarView openCalendar() {

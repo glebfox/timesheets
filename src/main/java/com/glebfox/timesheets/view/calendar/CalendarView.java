@@ -297,6 +297,18 @@ public class CalendarView extends StandardView {
         resetDayCellBottomTextClassNames();
     }
 
+    /**
+     * Opens the calendar on the month of the date. The month, its header, the plan, and the entries follow from
+     * the dates the browser reports, as they do for any other move.
+     */
+    public void showDate(LocalDate date) {
+        if (calendar.isAttached()) {
+            calendar.navigateToDate(date);
+        } else {
+            calendar.setInitialDate(date);
+        }
+    }
+
     @Subscribe("calendar")
     private void onCalendarDatesSet(final DatesSetEvent event) {
         DisplayModeInfo displayModeInfo = event.getDisplayModeInfo();
