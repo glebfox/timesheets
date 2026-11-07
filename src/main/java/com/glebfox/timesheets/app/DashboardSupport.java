@@ -17,15 +17,18 @@
 package com.glebfox.timesheets.app;
 
 import com.glebfox.timesheets.app.util.Attention;
+import com.glebfox.timesheets.app.util.ComingUp;
 import com.glebfox.timesheets.app.util.DaySummary;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.MyWeek;
+import com.glebfox.timesheets.app.util.ProjectTime;
 import com.glebfox.timesheets.app.util.ShortDay;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
+import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.DataManager;
@@ -36,9 +39,13 @@ import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.Period;
+import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +61,11 @@ public class DashboardSupport {
      * How many weeks, the current one included, the recent weeks and the short weeks cover.
      */
     public static final int RECENT_WEEKS = 8;
+
+    /**
+     * How far ahead Coming up looks.
+     */
+    public static final Period COMING_UP_HORIZON = Period.ofMonths(6);
 
     private final DataManager dataManager;
     private final WorkPlanSupport workPlanSupport;
@@ -122,6 +134,82 @@ public class DashboardSupport {
         return new Attention(timeEntrySupport.getRejectedCount(), shortDays, shortWeeks);
     }
 
+    /**
+     * Loads the current user's time in the month by project.
+     *
+     * @param month the month
+     * @return the projects with time spent, the largest time first, then by project name
+     */
+    public List<ProjectTime> loadTimeByProject(YearMonth month) {
+        User user = effectiveUser();
+        // The constrained data manager: only the entries the user may read count
+        Map<Project, WorkTime> timeByProject = new LinkedHashMap<>();
+        dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.user.id = :userId and e.date >= :start and e.date <= :end")
+                .parameter("userId", user.getId())
+                .parameter("start", month.atDay(1))
+                .parameter("end", month.atEndOfMonth())
+                .fetchPlan(fetchPlan -> fetchPlan
+                        .addFetchPlan(FetchPlan.BASE)
+                        .add("task", task -> task.add("project", FetchPlan.INSTANCE_NAME)))
+                .list()
+                .forEach(entry -> {
+                    if (entry.getSpentTime() != null) {
+                        timeByProject.merge(entry.getTask().getProject(), entry.getSpentTime(), WorkTime::plus);
+                    }
+                });
+        return timeByProject.entrySet().stream()
+                .map(e -> new ProjectTime(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(ProjectTime::time).reversed()
+                        .thenComparing(t -> t.project().getName(), Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    /**
+     * Loads the current user's absences that have not ended and the days off of their holiday calendar,
+     * within {@link #COMING_UP_HORIZON} of the day.
+     *
+     * @param today the day to look ahead from, which counts as ahead
+     * @return the absences and the holidays, nearest first
+     */
+    public ComingUp loadComingUp(LocalDate today) {
+        WorkPlan plan = workPlanSupport.loadWorkPlan(effectiveUser(), today, today.plus(COMING_UP_HORIZON));
+        List<WorkPlan.AbsencePeriod> absences = plan.absences().stream()
+                .filter(absence -> !absence.lastDay().isBefore(today))
+                .sorted(Comparator.comparing(WorkPlan.AbsencePeriod::firstDay)
+                        .thenComparing(WorkPlan.AbsencePeriod::lastDay))
+                .toList();
+        List<ComingUp.Holiday> holidays = plan.holidayDayByDate().entrySet().stream()
+                .filter(e -> e.getValue().type() == HolidayCalendarDayType.DAY_OFF)
+                .map(e -> new ComingUp.Holiday(e.getKey(), e.getValue().name()))
+                .sorted(Comparator.comparing(ComingUp.Holiday::date))
+                .toList();
+        return new ComingUp(absences, holidays);
+    }
+
+    /**
+     * Loads the current user's latest entries, with each one's task, project, and status.
+     *
+     * @param limit how many entries to load
+     * @return the entries by date, the latest first; the entries of one date in the order of their ids, descending
+     */
+    public List<TimeEntry> loadRecentEntries(int limit) {
+        return dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.user.id = :userId order by e.date desc, e.id desc")
+                .parameter("userId", effectiveUser().getId())
+                .maxResults(limit)
+                .fetchPlan(fetchPlan -> fetchPlan
+                        .addFetchPlan(FetchPlan.BASE)
+                        .add("task", task -> task
+                                .addFetchPlan(FetchPlan.BASE)
+                                .add("project", FetchPlan.INSTANCE_NAME)))
+                .list();
+    }
+
+    private User effectiveUser() {
+        return (User) currentUserSubstitution.getEffectiveUser();
+    }
+
     private static LocalDate weekStart(LocalDate date, DayOfWeek firstDayOfWeek) {
         return date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek));
     }
@@ -145,7 +233,7 @@ public class DashboardSupport {
      * Loads the days of the range with one plan load and one entries load.
      */
     private List<DaySummary> loadDays(LocalDate start, LocalDate endExclusive) {
-        User user = (User) currentUserSubstitution.getEffectiveUser();
+        User user = effectiveUser();
         WorkPlan plan = workPlanSupport.loadWorkPlan(user, start, endExclusive);
 
         // The constrained data manager: only the entries the user may read count
