@@ -19,7 +19,6 @@ package com.glebfox.timesheets.view.dashboard;
 import com.glebfox.timesheets.view.approval.ApprovalOpening;
 import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
 import io.jmix.core.AccessManager;
-import io.jmix.flowui.accesscontext.UiShowViewContext;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -45,9 +44,7 @@ public class ApprovalOpener {
      * @return whether the current user may open the approval screen
      */
     public boolean isPermitted() {
-        UiShowViewContext context = new UiShowViewContext(TimeEntryApprovalView.ID);
-        accessManager.applyRegisteredConstraints(context);
-        return context.isPermitted();
+        return DashboardAccess.isViewPermitted(accessManager, TimeEntryApprovalView.ID);
     }
 
     /**

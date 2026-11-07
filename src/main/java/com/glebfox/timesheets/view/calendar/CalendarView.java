@@ -77,9 +77,11 @@ import java.util.List;
 import java.util.Map;
 
 @Route(value = "calendar", layout = MainView.class)
-@ViewController("ts_CalendarView")
+@ViewController(CalendarView.ID)
 @ViewDescriptor("calendar-view.xml")
 public class CalendarView extends StandardView {
+
+    public static final String ID = "ts_CalendarView";
 
     /**
      * The id of the calendar's data provider of the day marks, built by {@link CalendarSupport#createDayMarks}.
@@ -435,7 +437,6 @@ public class CalendarView extends StandardView {
             case NO_WORKDAYS -> "calendar-view-week-summary-no-workdays";
         };
     }
-
 
     private String getTimeClassName(FactAndPlan factAndPlan) {
         if (factAndPlan.isInsufficient()) {

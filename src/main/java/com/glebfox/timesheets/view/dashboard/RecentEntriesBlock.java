@@ -23,30 +23,21 @@ import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
-import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
-import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
-import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.TimeSource;
 import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
-import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponents;
-import io.jmix.flowui.accesscontext.UiEntityContext;
-import io.jmix.flowui.accesscontext.UiShowViewContext;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
-import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.flowui.kit.component.button.JmixButton;
-import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.ViewComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -63,11 +54,6 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
      */
     static final int LIMIT = 5;
 
-    /**
-     * The view id of the time entry editor, as the view policies of roles name it.
-     */
-    private static final String EDITOR_VIEW_ID = "ts_TimeEntry.detail";
-
     @ViewComponent
     private Div rows;
     @ViewComponent
@@ -80,11 +66,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
-    private DialogWindows dialogWindows;
-    @Autowired
-    private AccessManager accessManager;
-    @Autowired
-    private Metadata metadata;
+    private TimeEntryEditorOpener timeEntryEditorOpener;
     @Autowired
     private MetadataTools metadataTools;
     @Autowired
@@ -101,8 +83,8 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     @Override
     public void refresh() {
         List<TimeEntry> entries = dashboardSupport.loadRecentEntries(LIMIT);
-        boolean openPermitted = isEditorPermitted();
-        boolean copyPermitted = isCreatePermitted();
+        boolean openPermitted = timeEntryEditorOpener.isOpenPermitted();
+        boolean copyPermitted = timeEntryEditorOpener.isCreatePermitted();
 
         rows.removeAll();
         for (TimeEntry entry : entries) {
@@ -149,43 +131,12 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     }
 
     private void openEditor(TimeEntry entry) {
-        dialogWindows.detail(FragmentUtils.getHostView(getParentController()), TimeEntry.class)
-                .withViewClass(TimeEntryDetailView.class)
-                .withViewConfigurer(editor -> editor.setOwnTimeEntry(true))
-                .editEntity(entry)
-                .withAfterCloseListener(closeEvent -> {
-                    if (closeEvent.closedWith(StandardOutcome.SAVE)) {
-                        refreshDashboard();
-                    }
-                })
-                .open();
+        timeEntryEditorOpener.open(this, builder -> builder.editEntity(entry), this::refreshDashboard);
     }
 
     private void copyToToday(TimeEntry entry) {
         TimeEntry copy = timeEntrySupport.copy(entry);
         copy.setDate(DashboardBlock.today(timeSource, currentAuthentication));
-
-        dialogWindows.detail(FragmentUtils.getHostView(getParentController()), TimeEntry.class)
-                .withViewClass(TimeEntryDetailView.class)
-                .withViewConfigurer(editor -> editor.setOwnTimeEntry(true))
-                .newEntity(copy)
-                .withAfterCloseListener(closeEvent -> {
-                    if (closeEvent.closedWith(StandardOutcome.SAVE)) {
-                        refreshDashboard();
-                    }
-                })
-                .open();
-    }
-
-    private boolean isEditorPermitted() {
-        UiShowViewContext context = new UiShowViewContext(EDITOR_VIEW_ID);
-        accessManager.applyRegisteredConstraints(context);
-        return context.isPermitted();
-    }
-
-    private boolean isCreatePermitted() {
-        UiEntityContext context = new UiEntityContext(metadata.getClass(TimeEntry.class));
-        accessManager.applyRegisteredConstraints(context);
-        return context.isCreatePermitted();
+        timeEntryEditorOpener.open(this, builder -> builder.newEntity(copy), this::refreshDashboard);
     }
 }

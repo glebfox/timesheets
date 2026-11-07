@@ -18,7 +18,6 @@ package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.view.calendar.CalendarView;
 import io.jmix.core.AccessManager;
-import io.jmix.flowui.accesscontext.UiShowViewContext;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.tabbedmode.ViewBuilders;
@@ -33,11 +32,6 @@ import java.time.LocalDate;
 @Component("ts_CalendarOpener")
 public class CalendarOpener {
 
-    /**
-     * The calendar's view id, as the view policies of roles name it.
-     */
-    static final String CALENDAR_VIEW_ID = "ts_CalendarView";
-
     private final AccessManager accessManager;
     private final ViewBuilders viewBuilders;
 
@@ -50,9 +44,7 @@ public class CalendarOpener {
      * @return whether the current user may open the calendar
      */
     public boolean isPermitted() {
-        UiShowViewContext context = new UiShowViewContext(CALENDAR_VIEW_ID);
-        accessManager.applyRegisteredConstraints(context);
-        return context.isPermitted();
+        return DashboardAccess.isViewPermitted(accessManager, CalendarView.ID);
     }
 
     /**

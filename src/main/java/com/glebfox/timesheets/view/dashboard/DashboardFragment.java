@@ -17,9 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.TeamDashboardSupport;
-import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.user.User;
-import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
@@ -27,19 +25,14 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.shared.Registration;
-import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
-import io.jmix.core.Metadata;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
-import io.jmix.flowui.DialogWindows;
-import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.flowui.kit.component.button.JmixButton;
-import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Target;
 import io.jmix.flowui.view.View;
@@ -95,11 +88,7 @@ public class DashboardFragment extends Fragment<Div> {
     @Autowired
     private TimeSource timeSource;
     @Autowired
-    private AccessManager accessManager;
-    @Autowired
-    private Metadata metadata;
-    @Autowired
-    private DialogWindows dialogWindows;
+    private TimeEntryEditorOpener timeEntryEditorOpener;
     @Autowired
     private ApprovalOpener approvalOpener;
     @Autowired
@@ -157,17 +146,9 @@ public class DashboardFragment extends Fragment<Div> {
     public void onLogTimeButtonClick(final ClickEvent<JmixButton> event) {
         // Dated by the user's today, as every block counts from it, not by the server's, as the editor would date it
         LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
-        dialogWindows.detail(FragmentUtils.getHostView(getParentController()), TimeEntry.class)
-                .withViewClass(TimeEntryDetailView.class)
-                .withViewConfigurer(editor -> editor.setOwnTimeEntry(true))
-                .newEntity()
-                .withInitializer(entry -> entry.setDate(date))
-                .withAfterCloseListener(closeEvent -> {
-                    if (closeEvent.closedWith(StandardOutcome.SAVE)) {
-                        refresh();
-                    }
-                })
-                .open();
+        timeEntryEditorOpener.open(this,
+                builder -> builder.newEntity().withInitializer(entry -> entry.setDate(date)),
+                this::refresh);
     }
 
     private Optional<WorkArea> findWorkArea() {
@@ -192,7 +173,7 @@ public class DashboardFragment extends Fragment<Div> {
         int week = date.get(WeekFields.of(locale).weekOfWeekBasedYear());
         today.setText(messages.formatMessage(DashboardFragment.class, "dashboard.today", locale, dateText, week));
 
-        logTimeButton.setVisible(isTimeEntryCreatePermitted());
+        logTimeButton.setVisible(timeEntryEditorOpener.isCreatePermitted());
     }
 
     private String userName() {
@@ -209,12 +190,6 @@ public class DashboardFragment extends Fragment<Div> {
      */
     private boolean isTeamPermitted() {
         return approvalOpener.isPermitted() && teamDashboardSupport.approvesAnywhere();
-    }
-
-    private boolean isTimeEntryCreatePermitted() {
-        UiEntityContext context = new UiEntityContext(metadata.getClass(TimeEntry.class));
-        accessManager.applyRegisteredConstraints(context);
-        return context.isCreatePermitted();
     }
 
     private static void refreshBlocks(Div section) {

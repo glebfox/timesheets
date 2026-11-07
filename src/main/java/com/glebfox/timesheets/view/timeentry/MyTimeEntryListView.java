@@ -39,10 +39,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 @Route(value = "my-time-entries", layout = MainView.class)
-@ViewController("ts_TimeEntry.my")
+@ViewController(MyTimeEntryListView.ID)
 @ViewDescriptor("my-time-entry-list-view.xml")
 @DialogMode(width = "1024px", closeOnEsc = true)
 public class MyTimeEntryListView extends StandardView {
+
+    public static final String ID = "ts_TimeEntry.my";
 
     @ViewComponent
     private DataGrid<TimeEntry> timeEntriesDataGrid;
