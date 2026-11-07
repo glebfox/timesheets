@@ -246,3 +246,112 @@
 .dashboard-projects > .grid-empty-state {
     padding-block: var(--vaadin-padding-l);
 }
+
+/* Blocks of lists: Needs attention, Coming up, and Recent entries */
+.dashboard-list-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+.dashboard-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* A row is a line of a name that takes the room and a value; where it does something on a click, it is a button
+   that looks as a row, so the keyboard reaches it */
+.dashboard-list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    padding-block: var(--vaadin-padding-xs);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+vaadin-button.dashboard-list-row {
+    justify-content: flex-start;
+    height: auto;
+    margin: 0;
+    padding-inline: var(--vaadin-padding-xs);
+    text-align: start;
+}
+
+.dashboard-list-row > .name {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-list-row > .value {
+    flex: none;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.dashboard-list-row.rejected > .name {
+    color: var(--ts-danger-color);
+}
+
+/* A name with a second line under it, such as a kind of day off */
+.dashboard-list-row > .name > .title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-list-row > .name > .kind {
+    display: block;
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+.dashboard-list-more {
+    padding-inline: var(--vaadin-padding-xs);
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.dashboard-list-link {
+    align-self: flex-start;
+}
+
+/* An empty block keeps some height, so it does not collapse to its title */
+.dashboard-list-block > .grid-empty-state {
+    padding-block: var(--vaadin-padding-l);
+}
+
+/* A row of Recent entries: the button that opens the entry takes the row, and Copy to today sits at its end */
+.dashboard-list-row > .row-open {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    gap: var(--vaadin-gap-m);
+    min-width: 0;
+}
+
+vaadin-button.row-open {
+    justify-content: flex-start;
+    height: auto;
+    margin: 0;
+    text-align: start;
+}
+
+.row-open > .date {
+    flex: none;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.row-open > .value {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+}

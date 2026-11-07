@@ -41,8 +41,11 @@
                 visible="false"/>
             <div id="myTimeBlocks" classNames="dashboard-blocks">
                 <fragment id="thisWeekBlock" class="com.glebfox.timesheets.view.dashboard.ThisWeekBlock"/>
+                <fragment id="needsAttentionBlock" class="com.glebfox.timesheets.view.dashboard.NeedsAttentionBlock"/>
                 <fragment id="recentWeeksBlock" class="com.glebfox.timesheets.view.dashboard.RecentWeeksBlock"/>
                 <fragment id="timeByProjectBlock" class="com.glebfox.timesheets.view.dashboard.TimeByProjectBlock"/>
+                <fragment id="comingUpBlock" class="com.glebfox.timesheets.view.dashboard.ComingUpBlock"/>
+                <fragment id="recentEntriesBlock" class="com.glebfox.timesheets.view.dashboard.RecentEntriesBlock"/>
             </div>
 
             <h3 id="myTeamHeading" text="msg://myTeamHeading.text" classNames="dashboard-section-heading"

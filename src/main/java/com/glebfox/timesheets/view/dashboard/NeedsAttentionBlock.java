@@ -1,0 +1,191 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.glebfox.timesheets.view.dashboard;
+
+import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.util.Attention;
+import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.app.util.DateRangeFormatter;
+import com.glebfox.timesheets.app.util.PluralForms;
+import com.glebfox.timesheets.app.util.ShortDay;
+import com.glebfox.timesheets.app.util.WeekSummary;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
+import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.html.Div;
+import io.jmix.core.AccessManager;
+import io.jmix.core.Messages;
+import io.jmix.core.TimeSource;
+import io.jmix.core.metamodel.datatype.DatatypeFormatter;
+import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.flowui.UiComponents;
+import io.jmix.flowui.accesscontext.UiShowViewContext;
+import io.jmix.flowui.component.card.JmixCard;
+import io.jmix.flowui.fragment.Fragment;
+import io.jmix.flowui.fragment.FragmentDescriptor;
+import io.jmix.flowui.fragment.FragmentUtils;
+import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.view.Subscribe;
+import io.jmix.flowui.view.ViewComponent;
+import io.jmix.tabbedmode.ViewBuilders;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.function.Supplier;
+
+/**
+ * The Needs attention block of the dashboard: the current user's rejected entries, then the days of this and the
+ * previous week that are short, then the recent weeks that are short, at most {@link #MAX_ROWS} rows in all, and
+ * "and N more" for the rest. A short day or week opens the calendar on it, if the user may open the calendar. A link
+ * opens My time entries, if the user may open it. Nothing to show reads "All caught up".
+ */
+@FragmentDescriptor("needs-attention-block.xml")
+public class NeedsAttentionBlock extends Fragment<JmixCard> implements DashboardBlock {
+
+    /**
+     * How many rows the block shows; the rest of what needs attention is counted in "and N more".
+     */
+    static final int MAX_ROWS = 5;
+
+    /**
+     * The class of the "and N more" line.
+     */
+    static final String MORE = "dashboard-list-more";
+
+    /**
+     * The view id of My time entries, as the view policies of roles name it.
+     */
+    private static final String MY_TIME_ENTRIES_VIEW_ID = "ts_TimeEntry.my";
+
+    @ViewComponent
+    private Div rows;
+    @ViewComponent
+    private GridEmptyState emptyState;
+    @ViewComponent
+    private JmixButton myEntriesLink;
+
+    @Autowired
+    private DashboardSupport dashboardSupport;
+    @Autowired
+    private ComponentSupport componentSupport;
+    @Autowired
+    private DateRangeFormatter dateRangeFormatter;
+    @Autowired
+    private CalendarOpener calendarOpener;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private ViewBuilders viewBuilders;
+    @Autowired
+    private UiComponents uiComponents;
+    @Autowired
+    private Messages messages;
+    @Autowired
+    private DatatypeFormatter datatypeFormatter;
+    @Autowired
+    private TimeSource timeSource;
+    @Autowired
+    private CurrentAuthentication currentAuthentication;
+
+    @Override
+    public void refresh() {
+        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        Attention attention = dashboardSupport.loadAttention(today, componentSupport.getDaysOfWeek().getFirst());
+        boolean calendarPermitted = calendarOpener.isPermitted();
+
+        // The rows are made only for what the block shows
+        List<Supplier<Component>> all = new ArrayList<>();
+        if (attention.rejectedCount() > 0) {
+            all.add(() -> createRejectedRow(attention.rejectedCount()));
+        }
+        for (ShortDay day : attention.shortDays()) {
+            all.add(() -> createDayRow(day, calendarPermitted));
+        }
+        for (WeekSummary week : attention.shortWeeks()) {
+            all.add(() -> createWeekRow(week, calendarPermitted));
+        }
+
+        rows.removeAll();
+        all.stream().limit(MAX_ROWS).forEach(row -> rows.add(row.get()));
+        if (all.size() > MAX_ROWS) {
+            rows.add(createMore(all.size() - MAX_ROWS));
+        }
+
+        rows.setVisible(!all.isEmpty());
+        emptyState.setVisible(all.isEmpty());
+        myEntriesLink.setVisible(isMyTimeEntriesPermitted());
+    }
+
+    @Subscribe(id = "myEntriesLink", subject = "clickListener")
+    public void onMyEntriesLinkClick(final ClickEvent<JmixButton> event) {
+        if (isMyTimeEntriesPermitted()) {
+            viewBuilders.view(FragmentUtils.getHostView(getParentController()), MyTimeEntryListView.class).open();
+        }
+    }
+
+    private boolean isMyTimeEntriesPermitted() {
+        UiShowViewContext context = new UiShowViewContext(MY_TIME_ENTRIES_VIEW_ID);
+        accessManager.applyRegisteredConstraints(context);
+        return context.isPermitted();
+    }
+
+    private Component createRejectedRow(long count) {
+        Locale locale = currentAuthentication.getLocale();
+        Div row = DashboardRows.row(uiComponents, DashboardRows.part(uiComponents, "name",
+                messages.formatMessage(getClass(), PluralForms.key("needsAttentionBlock.rejected", count, locale),
+                        locale, count)));
+        row.addClassName("rejected");
+        return row;
+    }
+
+    private Component createDayRow(ShortDay day, boolean clickable) {
+        String name = messages.formatMessage(getClass(), "needsAttentionBlock.day",
+                componentSupport.formatDayOfWeekShort(day.date().getDayOfWeek()),
+                datatypeFormatter.formatLocalDate(day.date()));
+        return createShortRow(name, day.missing(), clickable, day.date());
+    }
+
+    private Component createWeekRow(WeekSummary week, boolean clickable) {
+        return createShortRow(dateRangeFormatter.formatDates(week.firstDay(), week.lastDay()),
+                week.total().difference(), clickable, week.firstDay());
+    }
+
+    private Component createShortRow(String name, WorkTime missing, boolean clickable, LocalDate date) {
+        Component[] parts = {
+                DashboardRows.part(uiComponents, "name", name),
+                DashboardRows.part(uiComponents, "value", messages.formatMessage(getClass(),
+                        "needsAttentionBlock.missing", componentSupport.formatWorkTimeTotal(missing)))
+        };
+        return clickable
+                ? DashboardRows.buttonRow(uiComponents, event -> calendarOpener.open(this, date), parts)
+                : DashboardRows.row(uiComponents, parts);
+    }
+
+    private Component createMore(int count) {
+        Locale locale = currentAuthentication.getLocale();
+        Div more = uiComponents.create(Div.class);
+        more.addClassName(MORE);
+        more.setText(messages.formatMessage(getClass(), PluralForms.key("needsAttentionBlock.more", count, locale),
+                locale, count));
+        return more;
+    }
+}
