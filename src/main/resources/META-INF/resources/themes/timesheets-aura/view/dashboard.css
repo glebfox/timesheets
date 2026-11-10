@@ -439,6 +439,9 @@ vaadin-button.row-open::part(label) {
     padding-block: 0;
 }
 
+/* A row shows a date of another year: every row's date column is as wide as the longest date with its year, so the
+   rows stay aligned; on a narrow card too, below, where the rows keep the same text size, so the width is the
+   longest such date's and no more, "30 нояб. 2025" */
 .dashboard-list.with-years > .recent-entry {
     --dashboard-date-width: 6.75em;
 }
@@ -536,6 +539,10 @@ vaadin-button.row-open::part(label) {
     .dashboard-list-row.recent-entry {
         --dashboard-date-width: 4.25em;
         --dashboard-time-width: 3.75em;
+    }
+
+    .dashboard-list.with-years > .recent-entry {
+        --dashboard-date-width: 6.625em;
     }
 
     .recent-entry > div.row-open,
