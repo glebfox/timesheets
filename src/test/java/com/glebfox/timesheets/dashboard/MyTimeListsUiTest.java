@@ -34,6 +34,7 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.TimeEntryApprovalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.dashboard.ComingUpBlock;
+import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.NeedsAttentionBlock;
 import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
@@ -43,6 +44,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
+import io.jmix.core.TimeSource;
+import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.fragment.Fragment;
@@ -78,6 +81,10 @@ public class MyTimeListsUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
+    TimeSource timeSource;
+    @Autowired
+    CurrentAuthentication currentAuthentication;
+    @Autowired
     ComponentSupport componentSupport;
     @Autowired
     DashboardSupport dashboardSupport;
@@ -93,11 +100,13 @@ public class MyTimeListsUiTest {
     void setUp() {
         prefix = "my-time-lists-" + UUID.randomUUID().toString().substring(0, 8);
         data = new ApprovalTestData(dataManager, prefix);
-        today = LocalDate.now();
         project = data.saveProject("project", data.saveClient());
         task = data.saveTask(project, data.saveTaskType());
         user = data.saveUser("user", "Chell", null);
         assignRole(user, FullAccessRole.CODE);
+        // The user's today, as the dashboard counts it: in the user's time zone, which may be a day off the JVM's
+        today = systemAuthenticator.withUser(user.getUsername(),
+                () -> DashboardBlock.today(timeSource, currentAuthentication));
     }
 
     @AfterEach

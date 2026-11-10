@@ -31,6 +31,7 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.calendar.CalendarView;
+import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardColors;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.RecentWeeksBlock;
@@ -59,6 +60,8 @@ import io.jmix.chartsflowui.kit.component.model.DataSet;
 import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
+import io.jmix.core.TimeSource;
+import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentUtils;
@@ -97,6 +100,10 @@ public class MyTimeChartsUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
+    TimeSource timeSource;
+    @Autowired
+    CurrentAuthentication currentAuthentication;
+    @Autowired
     ComponentSupport componentSupport;
 
     ApprovalTestData data;
@@ -109,12 +116,14 @@ public class MyTimeChartsUiTest {
     @BeforeEach
     void setUp() {
         data = new ApprovalTestData(dataManager, "my-time-charts-" + UUID.randomUUID().toString().substring(0, 8));
-        today = LocalDate.now();
         taskType = data.saveTaskType();
         project = data.saveProject("project", data.saveClient());
         task = data.saveTask(project, taskType);
         user = data.saveUser("user", "Chell", null);
         assignRole(user, FullAccessRole.CODE);
+        // The user's today, as the dashboard counts it: in the user's time zone, which may be a day off the JVM's
+        today = systemAuthenticator.withUser(user.getUsername(),
+                () -> DashboardBlock.today(timeSource, currentAuthentication));
     }
 
     @AfterEach
