@@ -17,14 +17,17 @@
 /* The dashboard fills the initial layout below the menu toggle, from edge to edge of the work area, and scrolls on
    its own, so the toggle stays in place. It pads as a view in a tab pads its content, and by more than a focus ring
    reaches outside a button, so no ring is cut off at the scrolling edge; at the top, the initial layout's gap under
-   the toggle already separates it. */
+   the toggle already separates it.
+
+   Its spacing grows in three steps, each clearly larger than the one before: inside a block, the card's padding;
+   between blocks, the grid's gap; between the header and the sections, this gap. */
 .jmix-initial-layout > .dashboard {
     container-name: dashboard;
     container-type: inline-size;
 
     display: flex;
     flex-direction: column;
-    gap: var(--vaadin-gap-l);
+    gap: var(--vaadin-gap-xl);
 
     flex: 1 1 0;
     align-self: stretch;
@@ -52,11 +55,10 @@
     min-width: 0;
 }
 
+/* The greeting is the largest text of the dashboard: Aura's size of an h2, which it is, a step above the section
+   headings and the blocks' figures */
 .dashboard-greeting {
     margin: 0;
-    font-size: var(--aura-font-size-xl);
-    line-height: var(--aura-line-height-xl);
-    font-weight: var(--aura-font-weight-semibold);
 }
 
 .dashboard-today {
@@ -73,13 +75,10 @@
 
 /* Sections */
 
-/* The gap above a heading parts the sections; the heading sits close to its own blocks */
+/* The gap above a heading parts the sections; the heading sits close to its own blocks. It keeps Aura's size of an
+   h3, which it is, larger than the titles of the blocks it groups */
 .dashboard-section-heading {
-    margin: 0 0 calc(var(--vaadin-gap-s) - var(--vaadin-gap-l));
-    color: var(--vaadin-text-color-secondary);
-    font-size: var(--aura-font-size-m);
-    line-height: var(--aura-line-height-m);
-    font-weight: var(--aura-font-weight-semibold);
+    margin: 0 0 calc(var(--vaadin-gap-s) - var(--vaadin-gap-xl));
 }
 
 /* Each section is a grid of blocks: one column, two from 600 pixels of the dashboard's width, three from 1024. A
@@ -102,7 +101,7 @@
 .dashboard-blocks {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--vaadin-gap-m);
+    gap: var(--vaadin-gap-l);
 }
 
 /* A block may narrow below its content's width, so a long text or a chart never widens its column */
@@ -110,9 +109,18 @@
     min-width: 0;
 }
 
-/* Blocks are Aura cards: a surface background with a secondary border, rounded as a large container */
+/* Blocks are Aura cards: a surface background with a secondary border, rounded as a large container. A card pads
+   less than the grid's gap, so the blocks stand apart. Its title is the smallest heading of the dashboard, set apart
+   from the rows by its weight, under a block's figure and a section's heading; its subtitle is a note, as the note
+   beside a figure */
 .dashboard-blocks > vaadin-card {
     --vaadin-card-border-radius: var(--vaadin-radius-l);
+    --vaadin-card-padding: var(--vaadin-padding-m);
+    --vaadin-card-title-font-size: var(--aura-font-size-m);
+    --vaadin-card-title-line-height: var(--aura-line-height-m);
+    --vaadin-card-title-font-weight: var(--aura-font-weight-semibold);
+    --vaadin-card-subtitle-font-size: var(--aura-font-size-s);
+    --vaadin-card-subtitle-line-height: var(--aura-line-height-s);
 }
 
 .dashboard-blocks > .full {
@@ -145,7 +153,7 @@
     min-width: 0;
 }
 
-/* A block's main figure, such as the week's time spent, large, with a note beside it */
+/* A block's main figure, such as the week's time spent, the largest text of its block, with a note beside it */
 .dashboard-figure {
     display: flex;
     flex-wrap: wrap;
@@ -199,8 +207,8 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    font-size: var(--aura-font-size-l);
-    line-height: var(--aura-line-height-l);
+    font-size: var(--aura-font-size-xl);
+    line-height: var(--aura-line-height-xl);
     font-weight: var(--aura-font-weight-semibold);
 }
 
@@ -228,12 +236,16 @@
     border-radius: 50%;
 }
 
+/* A long name takes a second line before it is cut, as the list has the donut's height to fill */
 .dashboard-project-row > .name {
     flex: 1 1 0;
     min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 .dashboard-project-row > .time {
@@ -247,8 +259,14 @@
     padding-block: var(--vaadin-padding-l);
 }
 
-/* Blocks of lists: Needs attention, Coming up, and Recent entries */
+/* Blocks of lists: Needs attention, Coming up, Recent entries, Waiting for my approval, and Team away.
+
+   A list has one left and one right edge, the card's content edges: a row's text, value, and avatar stand on them,
+   whether the row is plain or a button. A button, a row or a link, pads its text by the inset and reaches outside the
+   edges by the inset and its border, so its highlight extends outward and its text stays on the edge. */
 .dashboard-list-block {
+    --dashboard-row-inset: var(--vaadin-padding-s);
+
     display: flex;
     flex-direction: column;
     gap: var(--vaadin-gap-s);
@@ -262,30 +280,43 @@
 }
 
 /* A row is a line of a name that takes the room and a value; where it does something on a click, it is a button
-   that looks as a row, so the keyboard reaches it */
+   that looks as a row, so the keyboard reaches it. Every row of every list is as tall, a name with a line under it
+   or an avatar, so the lists step alike */
 .dashboard-list-row {
     display: flex;
     align-items: center;
     gap: var(--vaadin-gap-s);
     min-width: 0;
+    box-sizing: border-box;
+    min-height: calc(var(--aura-line-height-s) + var(--aura-line-height-xs) + 2 * var(--vaadin-padding-xs));
     padding-block: var(--vaadin-padding-xs);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
 }
 
-vaadin-button.dashboard-list-row {
+vaadin-button.dashboard-list-row,
+vaadin-button.row-open,
+vaadin-button.dashboard-list-link {
+    margin-inline: calc((var(--dashboard-row-inset) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-inline: var(--dashboard-row-inset);
+}
+
+/* A button's border counts in its height, so it pads less to be as tall as a Div row */
+vaadin-button.dashboard-list-row,
+vaadin-button.row-open {
     justify-content: flex-start;
     height: auto;
-    margin: 0;
-    padding-inline: var(--vaadin-padding-xs);
+    padding-block: calc(var(--vaadin-padding-xs) - var(--vaadin-button-border-width, 1px));
     text-align: start;
 }
 
 /* The parts of a button row sit in the button's label, which is laid out as the Div row is: the label, a block of
-   its own, is made a flex line that takes the button's width, with the same gap, and the weight is the body's, not
-   a tertiary button's */
+   its own, is made a flex line that takes the button's width, with the same gap, and the weight and the size are the
+   body's, not a tertiary button's. The label shows what overflows its line, such as a badge's or an avatar's edge:
+   a part that may be too long cuts itself */
 vaadin-button.dashboard-list-row,
 vaadin-button.row-open {
+    font-size: var(--aura-font-size-s);
     font-weight: var(--aura-font-weight-regular);
 }
 
@@ -296,10 +327,7 @@ vaadin-button.row-open::part(label) {
     min-width: 0;
     align-items: center;
     gap: var(--vaadin-gap-s);
-}
-
-vaadin-button.row-open::part(label) {
-    gap: var(--vaadin-gap-m);
+    overflow: visible;
 }
 
 .dashboard-list-row > .name {
@@ -334,8 +362,15 @@ vaadin-button.row-open::part(label) {
     line-height: var(--aura-line-height-xs);
 }
 
+/* A row of a person, in Waiting for my approval and Team away: the avatar keeps its size before the name, as tall as
+   the row's two lines, and stands on the content edge rather than reaching outside it */
+.dashboard-list-row > vaadin-avatar {
+    flex: none;
+    margin: 0;
+}
+
 .dashboard-list-more {
-    padding-inline: var(--vaadin-padding-xs);
+    padding-block: var(--vaadin-padding-xs);
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
@@ -350,65 +385,100 @@ vaadin-button.row-open::part(label) {
     padding-block: var(--vaadin-padding-l);
 }
 
-/* A row of Recent entries: the button that opens the entry takes the row, and Copy to today sits at its end */
-.dashboard-list-row > .row-open {
-    display: flex;
-    flex: 1 1 0;
-    align-items: center;
-    gap: var(--vaadin-gap-m);
-    min-width: 0;
+/* A row of Recent entries: the part that opens the entry takes the whole row, and Copy to today, an icon button,
+   lies over its end, so the highlight of the one covers the row and the other's sits inside it. */
+.dashboard-list-row.recent-entry {
+    --dashboard-copy-size: calc(var(--aura-line-height-s) + var(--aura-line-height-xs));
+
+    position: relative;
+    padding-block: 0;
 }
 
-vaadin-button.row-open {
-    justify-content: flex-start;
-    height: auto;
+.recent-entry > .row-open {
+    flex: 1 1 0;
+    align-self: stretch;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.recent-entry > div.row-open {
+    padding-block: var(--vaadin-padding-xs);
+}
+
+/* The open part leaves room for Copy to today at its end: the button's size and a gap, less the open part's border,
+   which the button's reach outside the edge makes up for */
+.recent-entry:has(> .row-copy) > .row-open {
+    padding-inline-end: calc(var(--dashboard-copy-size) + var(--vaadin-gap-s) - var(--vaadin-button-border-width, 1px));
+}
+
+/* Its icon stands on the content edge, as the rows' values do: the button, an icon centered in a square as tall as
+   the row's two lines, reaches outside the edge as far as the open part does */
+.recent-entry > .row-copy {
+    position: absolute;
+    inset-inline-end: calc((var(--dashboard-row-inset) + var(--vaadin-button-border-width, 1px)) * -1);
+    top: 50%;
+    translate: 0 -50%;
+    width: var(--dashboard-copy-size);
+    height: var(--dashboard-copy-size);
     margin: 0;
-    text-align: start;
+    padding: 0;
+}
+
+/* The parts of an entry are aligned columns, the same in every row, that keep the date, the name, the time, and the
+   status together: the date and the time as wide as their longest common text, and the name up to a width that
+   leaves room for the task and the project; on a wide card the rest of the row stays empty after the status, not
+   between the name and the time. A date with its year, from another year than the current, widens its column */
+.recent-entry > div.row-open,
+.recent-entry > vaadin-button.row-open::part(label) {
+    display: grid;
+    grid-template-columns:
+        minmax(max-content, 4.5em)
+        minmax(0, 24rem)
+        minmax(max-content, 4.5em)
+        max-content;
+    align-items: center;
+    column-gap: var(--vaadin-gap-m);
+}
+
+.recent-entry > div.row-open {
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
 }
 
 .row-open > .date {
-    flex: none;
     color: var(--vaadin-text-color-secondary);
     font-variant-numeric: tabular-nums;
 }
 
 .row-open > .value {
-    flex: none;
+    justify-self: end;
     font-variant-numeric: tabular-nums;
 }
 
-/* The name takes what the date, the hours, and the badge leave, on one line, in the button and in the plain row */
+/* The name, on one line, is the task, then its project, quieter: a name too long is cut from its end, so the task
+   stays */
 .row-open > .name {
-    flex: 1 1 0;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.row-open > :not(.name) {
-    flex: none;
+.row-open > .name > .project {
+    color: var(--vaadin-text-color-secondary);
 }
 
-/* Under the dashboard's first breakpoint the row has no room for Copy to today beside the entry, so it wraps to a
-   line of its own, at the row's end */
+/* On a narrow card the date and the time keep only their common text's width, so the name keeps more of the row */
 @container dashboard (width < 600px) {
-    .dashboard-list-row:has(> .row-copy) {
-        flex-wrap: wrap;
+    .recent-entry > div.row-open,
+    .recent-entry > vaadin-button.row-open::part(label) {
+        grid-template-columns:
+            minmax(max-content, 3.25em)
+            minmax(0, 24rem)
+            minmax(max-content, 3.75em)
+            max-content;
+        column-gap: var(--vaadin-gap-s);
     }
-
-    .dashboard-list-row > .row-open {
-        flex-basis: 100%;
-    }
-
-    .dashboard-list-row > .row-copy {
-        margin-inline-start: auto;
-    }
-}
-
-/* A row of a person, in Waiting for my approval and Team away: the avatar keeps its size before the name */
-.dashboard-list-row > vaadin-avatar {
-    flex: none;
 }
 
 /* Team this week: a bar per person, so the chart grows taller with the team. The block sets the number of people
@@ -416,8 +486,8 @@ vaadin-button.row-open {
 
    The body is the container, and its width is the chart's, which switches where its names go at the same width,
    600 pixels (TeamWeekBlock.NARROW_WIDTH). The block spans the whole row on one and on two columns, so at the
-   common windows the body is the dashboard's width less the card's padding, 2 × 16 pixels (2 × 18 on a touch
-   screen): at most 536 on one column (568), at least 681 on two (717); on three columns it spans two of them,
+   common windows the body is the dashboard's width less the card's padding and border, 2 × 13 pixels (2 × 15 on a
+   touch screen): at most 542 on one column (568), at least 687 on two (717); on three columns it spans two of them,
    about 670 or more (1059). Each is more than a scrollbar's width away from 600. */
 .dashboard-team-week {
     container: team-week / inline-size;

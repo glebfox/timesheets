@@ -40,6 +40,7 @@ import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
 import io.jmix.core.security.SystemAuthenticator;
@@ -247,6 +248,42 @@ public class MyTimeListsUiTest {
             assertThat(edited.getId()).isEqualTo(latest.getId());
             assertThat(edited.getId()).isNotEqualTo(older.getId());
             ((TimeEntryDetailView) dialog).closeWithDiscard();
+        });
+    }
+
+    @Test
+    void recentEntryNamesTaskBeforeProjectTest() {
+        data.saveEntryOf(task, user, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            RecentEntriesBlock block = block("recentEntriesBlock");
+            dashboard().refresh();
+
+            // The task first, so a narrow row that cuts the name keeps it, then the project, quieter
+            Component name = withClass(block, "name").getFirst();
+            List<Component> parts = name.getChildren().toList();
+            assertThat(parts).hasSize(2);
+            assertThat(parts.getFirst().getElement().getClassList()).contains("task");
+            assertThat(text(parts.getFirst())).isEqualTo(task.getName());
+            assertThat(parts.getLast().getElement().getClassList()).contains("project");
+            assertThat(text(parts.getLast())).isEqualTo(project.getName());
+            assertThat(text(name)).isEqualTo(task.getName() + " " + project.getName());
+        });
+    }
+
+    @Test
+    void copyToTodayIsAnIconButtonTest() {
+        data.saveEntryOf(task, user, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            RecentEntriesBlock block = block("recentEntriesBlock");
+            dashboard().refresh();
+
+            JmixButton copy = (JmixButton) withClass(block, "row-copy").getFirst();
+            assertThat(copy.getText()).isEmpty();
+            assertThat(copy.getIcon()).isNotNull();
+            assertThat(copy.getAriaLabel()).contains("Copy to today");
+            assertThat(Tooltip.forComponent(copy).getText()).isEqualTo("Copy to today");
         });
     }
 

@@ -25,10 +25,11 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.dom.Element;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
 import io.jmix.core.TimeSource;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -41,10 +42,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 
 /**
- * The Recent entries block of the dashboard: the current user's {@link #LIMIT} latest entries, each with its date,
- * task and project, time spent, and status. A click on a row opens the entry in the time entry editor, in a dialog,
- * if the user may open the editor; Copy to today opens the editor on a new entry copied from it and dated today, if
- * the user may create time entries. After a save in either, the dashboard reloads. No entries shows an empty state.
+ * The Recent entries block of the dashboard: the current user's {@link #LIMIT} latest entries, each on one line with
+ * its date, task and then project, time spent, and status. A click on a row opens the entry in the time entry
+ * editor, in a dialog, if the user may open the editor; Copy to today, an icon button with its name as the tooltip,
+ * opens the editor on a new entry copied from it and dated today, if the user may create time entries. After a save
+ * in either, the dashboard reloads. No entries shows an empty state.
  */
 @FragmentDescriptor("recent-entries-block.xml")
 public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardBlock {
@@ -74,7 +76,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     @Autowired
     private Messages messages;
     @Autowired
-    private DatatypeFormatter datatypeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -98,10 +100,8 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     private Component createRow(TimeEntry entry, boolean openPermitted, boolean copyPermitted) {
         WorkTime spent = entry.getSpentTime() != null ? entry.getSpentTime() : WorkTime.ZERO;
         Component[] parts = {
-                DashboardRows.part(uiComponents, "date", datatypeFormatter.formatLocalDate(entry.getDate())),
-                DashboardRows.part(uiComponents, "name", messages.formatMessage(getClass(),
-                        "recentEntriesBlock.task", metadataTools.format(entry.getTask().getProject()),
-                        entry.getTask().getName())),
+                DashboardRows.part(uiComponents, "date", dashboardDates.formatDate(entry.getDate())),
+                createName(entry),
                 DashboardRows.part(uiComponents, "value", componentSupport.formatWorkTimeTotal(spent)),
                 componentSupport.createTimeEntryStatusRender().createComponent(entry)
         };
@@ -119,15 +119,30 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
         }
 
         Div row = DashboardRows.row(uiComponents, main);
+        row.addClassName("recent-entry");
         if (copyPermitted) {
+            // An icon, as the action repeats on every row; its name is the tooltip and what a screen reader says
+            String copyText = messages.getMessage(getClass(), "recentEntriesBlock.copyToToday");
             JmixButton copyButton = DashboardRows.actionButton(uiComponents, event -> copyToToday(entry));
-            copyButton.addThemeName("small");
             copyButton.setIcon(GravityUiIcon.COPY.create());
-            copyButton.setText(messages.getMessage(getClass(), "recentEntriesBlock.copyToToday"));
+            copyButton.setAriaLabel(copyText);
+            copyButton.setTooltipText(copyText);
             copyButton.addClassName("row-copy");
             row.add(copyButton);
         }
         return row;
+    }
+
+    /**
+     * Creates the entry's name: its task first, so a narrow row that cuts the name keeps the task, then its project.
+     */
+    private Span createName(TimeEntry entry) {
+        Span name = uiComponents.create(Span.class);
+        name.addClassName("name");
+        name.add(DashboardRows.part(uiComponents, "task", entry.getTask().getName()));
+        name.getElement().appendChild(Element.createText(" "));
+        name.add(DashboardRows.part(uiComponents, "project", metadataTools.format(entry.getTask().getProject())));
+        return name;
     }
 
     private void openEditor(TimeEntry entry) {
