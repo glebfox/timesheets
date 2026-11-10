@@ -209,7 +209,8 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
 
     private String formatMonth(YearMonth month) {
         Locale locale = currentAuthentication.getLocale();
-        return StringUtils.capitalize(DateTimeFormatter.ofPattern("LLLL yyyy", locale).format(month));
+        // The month is always the current one, so it goes without its year, as every date on the dashboard does
+        return StringUtils.capitalize(DateTimeFormatter.ofPattern("LLLL", locale).format(month));
     }
 
     /**

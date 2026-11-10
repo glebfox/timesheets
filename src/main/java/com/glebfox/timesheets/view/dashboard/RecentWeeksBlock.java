@@ -18,7 +18,6 @@ package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
@@ -79,7 +78,7 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
-    private DateRangeFormatter dateRangeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private CalendarOpener calendarOpener;
     @Autowired
@@ -156,7 +155,7 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
     }
 
     private String formatTooltip(WeekSummary week, WeekStatus status) {
-        return "<b>" + DashboardCharts.escape(dateRangeFormatter.formatDates(week.firstDay(), week.lastDay()))
+        return "<b>" + DashboardCharts.escape(dashboardDates.formatDates(week.firstDay(), week.lastDay()))
                 + "</b><br>"
                 + DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.spent",
                 componentSupport.formatWorkTimeTotal(week.total().fact())))

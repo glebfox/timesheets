@@ -19,7 +19,6 @@ package com.glebfox.timesheets.view.dashboard;
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.util.Attention;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.ShortDay;
 import com.glebfox.timesheets.app.util.WeekSummary;
@@ -32,7 +31,6 @@ import com.vaadin.flow.component.html.Div;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -77,7 +75,7 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
-    private DateRangeFormatter dateRangeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private CalendarOpener calendarOpener;
     @Autowired
@@ -88,8 +86,6 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     private UiComponents uiComponents;
     @Autowired
     private Messages messages;
-    @Autowired
-    private DatatypeFormatter datatypeFormatter;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -148,12 +144,12 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     private Component createDayRow(ShortDay day, boolean clickable) {
         String name = messages.formatMessage(getClass(), "needsAttentionBlock.day",
                 componentSupport.formatDayOfWeekShort(day.date().getDayOfWeek()),
-                datatypeFormatter.formatLocalDate(day.date()));
+                dashboardDates.formatDate(day.date()));
         return createShortRow(name, day.missing(), clickable, day.date());
     }
 
     private Component createWeekRow(WeekSummary week, boolean clickable) {
-        return createShortRow(dateRangeFormatter.formatDates(week.firstDay(), week.lastDay()),
+        return createShortRow(dashboardDates.formatDates(week.firstDay(), week.lastDay()),
                 week.total().difference(), clickable, week.firstDay());
     }
 

@@ -19,7 +19,6 @@ package com.glebfox.timesheets.view.dashboard;
 import com.glebfox.timesheets.app.TeamDashboardSupport;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.PersonAbsence;
 import com.glebfox.timesheets.component.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
@@ -60,7 +59,7 @@ public class TeamAwayBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
-    private DateRangeFormatter dateRangeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private UiComponents uiComponents;
     @Autowired
@@ -94,6 +93,6 @@ public class TeamAwayBlock extends Fragment<JmixCard> implements DashboardBlock 
                 componentSupport.createAvatar(name, absence.user().getAvatar(), "avatar"),
                 text,
                 DashboardRows.part(uiComponents, "value",
-                        dateRangeFormatter.formatDates(absence.absence().firstDay(), absence.absence().lastDay())));
+                        dashboardDates.formatDates(absence.absence().firstDay(), absence.absence().lastDay())));
     }
 }

@@ -27,6 +27,7 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.dashboard.DashboardBlock;
+import com.glebfox.timesheets.view.dashboard.DashboardDates;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.tasktype.TaskTypeListView;
@@ -84,6 +85,8 @@ public class DashboardUiTest {
     Fragments fragments;
     @Autowired
     ViewBuilders viewBuilders;
+    @Autowired
+    DashboardDates dashboardDates;
 
     ApprovalTestData data;
 
@@ -142,7 +145,11 @@ public class DashboardUiTest {
         // The user's today, which the header counts from as every block does
         LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
         int week = date.get(WeekFields.of(currentAuthentication.getLocale()).weekOfWeekBasedYear());
-        assertThat(today.getText()).contains(String.valueOf(date.getYear())).endsWith(" " + week);
+        // The dashboard's short date, without the year, as it is the current one
+        assertThat(today.getText())
+                .contains(dashboardDates.formatDate(date))
+                .doesNotContain(String.valueOf(date.getYear()))
+                .endsWith(" " + week);
     }
 
     @Test

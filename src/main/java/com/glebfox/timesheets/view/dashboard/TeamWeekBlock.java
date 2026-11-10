@@ -20,7 +20,6 @@ import com.glebfox.timesheets.app.TeamDashboardSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.PersonWeek;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.component.approval.ApprovalRosterCard;
@@ -137,7 +136,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
-    private DateRangeFormatter dateRangeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private ApprovalOpener approvalOpener;
     @Autowired
@@ -355,7 +354,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         for (WorkPlan.AbsencePeriod absence : person.absences()) {
             tooltip.append("<br>").append(DashboardCharts.escape(messages.formatMessage(getClass(),
                     "teamWeekBlock.absence", absence.typeName(),
-                    dateRangeFormatter.formatDates(absence.firstDay(), absence.lastDay()))));
+                    dashboardDates.formatDates(absence.firstDay(), absence.lastDay()))));
         }
         return tooltip.toString();
     }

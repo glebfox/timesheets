@@ -31,7 +31,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.core.Messages;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -83,7 +82,7 @@ public class WaitingApprovalBlock extends Fragment<JmixCard> implements Dashboar
     @Autowired
     private Messages messages;
     @Autowired
-    private DatatypeFormatter datatypeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
@@ -105,7 +104,7 @@ public class WaitingApprovalBlock extends Fragment<JmixCard> implements Dashboar
         count.setText(String.valueOf(waiting.count()));
         note.setText(messages.formatMessage(getClass(),
                 PluralForms.key("waitingApprovalBlock.note", waiting.count(), locale), locale,
-                componentSupport.formatWorkTimeTotal(waiting.total()), datatypeFormatter.formatLocalDate(oldest)));
+                componentSupport.formatWorkTimeTotal(waiting.total()), dashboardDates.formatDate(oldest)));
 
         List<WaitingApproval.Person> people = waiting.people();
         people.stream().limit(MAX_ROWS).forEach(person -> rows.add(createPersonRow(person)));

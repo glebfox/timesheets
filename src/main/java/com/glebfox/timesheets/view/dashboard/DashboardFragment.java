@@ -46,8 +46,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.time.format.TextStyle;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.Optional;
@@ -93,6 +92,8 @@ public class DashboardFragment extends Fragment<Div> {
     private ApprovalOpener approvalOpener;
     @Autowired
     private TeamDashboardSupport teamDashboardSupport;
+    @Autowired
+    private DashboardDates dashboardDates;
 
     private @Nullable Registration workAreaStateRegistration;
 
@@ -167,11 +168,10 @@ public class DashboardFragment extends Fragment<Div> {
                 userName()));
 
         LocalDate date = now.toLocalDate();
-        String dateText = StringUtils.capitalize(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
-                .withLocale(locale)
-                .format(date));
+        String weekday = StringUtils.capitalize(date.getDayOfWeek().getDisplayName(TextStyle.FULL, locale));
         int week = date.get(WeekFields.of(locale).weekOfWeekBasedYear());
-        today.setText(messages.formatMessage(DashboardFragment.class, "dashboard.today", locale, dateText, week));
+        today.setText(messages.formatMessage(DashboardFragment.class, "dashboard.today", locale, weekday,
+                dashboardDates.formatDate(date), week));
 
         logTimeButton.setVisible(timeEntryEditorOpener.isCreatePermitted());
     }
