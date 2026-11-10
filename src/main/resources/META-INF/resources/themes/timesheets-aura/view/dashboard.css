@@ -349,6 +349,7 @@ vaadin-button.row-open {
 vaadin-button.dashboard-list-row,
 vaadin-button.row-open {
     font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
     font-weight: var(--aura-font-weight-regular);
 }
 
@@ -421,9 +422,21 @@ vaadin-button.row-open::part(label) {
    lies over its end, so the highlight of the one covers the row and the other's sits inside it. */
 .dashboard-list-row.recent-entry {
     --dashboard-copy-size: calc(var(--aura-line-height-s) + var(--aura-line-height-xs));
+    --dashboard-copy-icon-size: var(--aura-font-size-l);
+    /* How far Copy to today reaches outside the content edge: as far as its icon stands in from the square's edge, so
+       the icon stands on the content edge */
+    --dashboard-copy-reach: calc((var(--dashboard-copy-size) - var(--dashboard-copy-icon-size)) / 2);
+    /* The widths of the date and the time columns: the longest common date and time, and, when a row shows a date of
+       another year, the longest date with its year */
+    --dashboard-date-width: 4.5em;
+    --dashboard-time-width: 4.5em;
 
     position: relative;
     padding-block: 0;
+}
+
+.dashboard-list.with-years > .recent-entry {
+    --dashboard-date-width: 6.75em;
 }
 
 .recent-entry > .row-open {
@@ -437,17 +450,24 @@ vaadin-button.row-open::part(label) {
     padding-block: var(--vaadin-padding-xs);
 }
 
-/* The open part leaves room for Copy to today at its end: the button's size and a gap, less the open part's border,
-   which the button's reach outside the edge makes up for */
-.recent-entry:has(> .row-copy) > .row-open {
-    padding-inline-end: calc(var(--dashboard-copy-size) + var(--vaadin-gap-s) - var(--vaadin-button-border-width, 1px));
+/* The open part's text ends a gap before Copy to today: the button, which reaches outside the content edge by its
+   reach, and the gap; an open button pads from its own end, the inset outside the edge, and a plain open part from
+   the edge */
+.recent-entry:has(> .row-copy) > vaadin-button.row-open {
+    padding-inline-end: calc(var(--dashboard-row-inset) + var(--dashboard-copy-size) + var(--vaadin-gap-s)
+        - var(--dashboard-copy-reach));
 }
 
-/* Its icon stands on the content edge, as the rows' values do: the button, an icon centered in a square as tall as
-   the row's two lines, reaches outside the edge as far as the open part does */
+.recent-entry:has(> .row-copy) > div.row-open {
+    padding-inline-end: calc(var(--dashboard-copy-size) + var(--vaadin-gap-s) - var(--dashboard-copy-reach));
+}
+
+/* Copy to today is its icon centered in a square as tall as the row's two lines, which reaches outside the content
+   edge by the icon's margin in it, so the icon stands on the edge, as the rows' values do. The icon is drawn at its
+   whole size, so its box is the drawing's */
 .recent-entry > .row-copy {
     position: absolute;
-    inset-inline-end: calc((var(--dashboard-row-inset) + var(--vaadin-button-border-width, 1px)) * -1);
+    inset-inline-end: calc(var(--dashboard-copy-reach) * -1);
     top: 50%;
     translate: 0 -50%;
     width: var(--dashboard-copy-size);
@@ -456,17 +476,22 @@ vaadin-button.row-open::part(label) {
     padding: 0;
 }
 
+.recent-entry > .row-copy > vaadin-icon {
+    --vaadin-icon-size: var(--dashboard-copy-icon-size);
+    --vaadin-icon-visual-size: 100%;
+}
+
 /* The parts of an entry are aligned columns, the same in every row, that keep the date, the name, the time, and the
    status together: the date and the time as wide as their longest common text, and the name up to a width that
    leaves room for the task and the project; on a wide card the rest of the row stays empty after the status, not
-   between the name and the time. A date with its year, from another year than the current, widens its column */
+   between the name and the time */
 .recent-entry > div.row-open,
 .recent-entry > vaadin-button.row-open::part(label) {
     display: grid;
     grid-template-columns:
-        minmax(max-content, 4.5em)
+        minmax(max-content, var(--dashboard-date-width))
         minmax(0, 24rem)
-        minmax(max-content, 4.5em)
+        minmax(max-content, var(--dashboard-time-width))
         max-content;
     align-items: center;
     column-gap: var(--vaadin-gap-m);
@@ -500,16 +525,35 @@ vaadin-button.row-open::part(label) {
     color: var(--vaadin-text-color-secondary);
 }
 
-/* On a narrow card the date and the time keep only their common text's width, so the name keeps more of the row */
+/* On a narrow card the date and the time keep only their longest common text's width, and the project goes on a
+   second line under the task, smaller, each line cut on its own, so both keep the whole name column; the row is as
+   tall as before, as every row holds two lines */
 @container dashboard (width < 600px) {
+    .dashboard-list-row.recent-entry {
+        --dashboard-date-width: 4.25em;
+        --dashboard-time-width: 3.75em;
+    }
+
     .recent-entry > div.row-open,
     .recent-entry > vaadin-button.row-open::part(label) {
-        grid-template-columns:
-            minmax(max-content, 3.25em)
-            minmax(0, 24rem)
-            minmax(max-content, 3.75em)
-            max-content;
         column-gap: var(--vaadin-gap-s);
+    }
+
+    .row-open > .name {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .row-open > .name > .task,
+    .row-open > .name > .project {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .row-open > .name > .project {
+        font-size: var(--aura-font-size-xs);
+        line-height: var(--aura-line-height-xs);
     }
 }
 

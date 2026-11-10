@@ -281,6 +281,26 @@ public class MyTimeListsUiTest {
     }
 
     @Test
+    void recentEntriesWidenDatesOfAnotherYearTogetherTest() {
+        // The first day of the current year is in it whatever today is
+        data.saveEntryOf(task, user, today.withDayOfYear(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            RecentEntriesBlock block = block("recentEntriesBlock");
+            Component rows = FragmentUtils.getComponent(block, "rows");
+
+            dashboard().refresh();
+            assertThat(rows.getElement().getClassList()).doesNotContain("with-years");
+
+            // A date of another year shows its year, so every row's date column widens with it
+            data.saveEntryOf(task, user, today.minusYears(1), TimeEntryStatus.APPROVED, WorkTime.ofHours(2));
+            dashboard().refresh();
+            assertThat(withClass(block, "dashboard-list-row")).hasSize(2);
+            assertThat(rows.getElement().getClassList()).contains("with-years");
+        });
+    }
+
+    @Test
     void copyToTodayIsAnIconButtonTest() {
         data.saveEntryOf(task, user, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
 

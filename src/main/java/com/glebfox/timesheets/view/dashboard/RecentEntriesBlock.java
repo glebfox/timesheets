@@ -56,6 +56,12 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
      */
     static final int LIMIT = 5;
 
+    /**
+     * The class of the rows' container when a date of the rows shows its year, from another year than the current
+     * one, so the date column of every row is as wide as such a date and the rows stay aligned.
+     */
+    static final String WITH_YEARS = "with-years";
+
     @ViewComponent
     private Div rows;
     @ViewComponent
@@ -92,6 +98,8 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
         for (TimeEntry entry : entries) {
             rows.add(createRow(entry, openPermitted, copyPermitted));
         }
+        int currentYear = DashboardBlock.today(timeSource, currentAuthentication).getYear();
+        rows.setClassName(WITH_YEARS, entries.stream().anyMatch(entry -> entry.getDate().getYear() != currentYear));
 
         rows.setVisible(!entries.isEmpty());
         emptyState.setVisible(entries.isEmpty());
