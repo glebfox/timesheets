@@ -146,24 +146,24 @@
 /* The My team section fills every row: on two columns Waiting for my approval and Team away side by side, with Team
    this week under them across the row; on three, the two stacked in the first column, beside Team this week across
    the other two. One column keeps the blocks' order. Without Team this week, which hides for a team of nobody, the
-   other two flow as any blocks do. */
+   other two stand side by side, on two columns also where the grid has three. */
 @container dashboard (width >= 600px) {
     .dashboard-team-blocks:has(> .team-week-block:not([hidden])) {
         grid-template-areas:
             "waiting away"
             "week week";
+    }
 
-        & > .waiting-block {
-            grid-area: waiting;
-        }
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .waiting-block {
+        grid-area: waiting;
+    }
 
-        & > .team-week-block {
-            grid-area: week;
-        }
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .team-week-block {
+        grid-area: week;
+    }
 
-        & > .team-away-block {
-            grid-area: away;
-        }
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .team-away-block {
+        grid-area: away;
     }
 }
 
@@ -172,6 +172,10 @@
         grid-template-areas:
             "waiting week week"
             "away week week";
+    }
+
+    .dashboard-team-blocks:not(:has(> .team-week-block:not([hidden]))) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
