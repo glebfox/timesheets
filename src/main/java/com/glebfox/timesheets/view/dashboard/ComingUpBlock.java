@@ -18,14 +18,12 @@ package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.util.ComingUp;
-import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -34,11 +32,10 @@ import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.view.ViewComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDate;
-
 /**
  * The Coming up block of the dashboard: the current user's absences that have not ended, then the next days off of
- * their holiday calendar, each nearest first, at most {@link #MAX_ROWS} of each. Nothing coming shows an empty state.
+ * their holiday calendar, each nearest first, at most {@link #MAX_ROWS} of each; consecutive days off of one name are
+ * one row, with their range. Nothing coming shows an empty state.
  */
 @FragmentDescriptor("coming-up-block.xml")
 public class ComingUpBlock extends Fragment<JmixCard> implements DashboardBlock {
@@ -56,13 +53,11 @@ public class ComingUpBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private DashboardSupport dashboardSupport;
     @Autowired
-    private DateRangeFormatter dateRangeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private UiComponents uiComponents;
     @Autowired
     private Messages messages;
-    @Autowired
-    private DatatypeFormatter datatypeFormatter;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -83,13 +78,12 @@ public class ComingUpBlock extends Fragment<JmixCard> implements DashboardBlock 
 
     private Component createAbsenceRow(WorkPlan.AbsencePeriod absence) {
         return createRow(absence.typeName(), messages.getMessage(getClass(), "comingUpBlock.absence"),
-                dateRangeFormatter.formatDates(absence.firstDay(), absence.lastDay()));
+                dashboardDates.formatDates(absence.firstDay(), absence.lastDay()));
     }
 
     private Component createHolidayRow(ComingUp.Holiday holiday) {
-        LocalDate date = holiday.date();
         return createRow(holiday.name(), messages.getMessage(getClass(), "comingUpBlock.holiday"),
-                datatypeFormatter.formatLocalDate(date));
+                dashboardDates.formatDates(holiday.firstDay(), holiday.lastDay()));
     }
 
     private Component createRow(String name, String kind, String dates) {

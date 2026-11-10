@@ -23,7 +23,8 @@ import java.util.List;
  * What is ahead of a user: the absences that have not ended and the holidays that are days off.
  *
  * @param absences the absences that end on or after the day, nearest first
- * @param holidays the days off of the user's holiday calendar on or after the day, nearest first
+ * @param holidays the days off of the user's holiday calendar on or after the day, nearest first, consecutive days
+ *                 of one name as one holiday
  */
 public record ComingUp(List<WorkPlan.AbsencePeriod> absences, List<Holiday> holidays) {
 
@@ -33,11 +34,12 @@ public record ComingUp(List<WorkPlan.AbsencePeriod> absences, List<Holiday> holi
     }
 
     /**
-     * A holiday that is a day off.
+     * A holiday that is a day off, or consecutive days off of one name.
      *
-     * @param date the day
-     * @param name the name of the holiday
+     * @param firstDay the first day
+     * @param lastDay  the last day, the same as the first one for one day
+     * @param name     the name of the holiday
      */
-    public record Holiday(LocalDate date, String name) {
+    public record Holiday(LocalDate firstDay, LocalDate lastDay, String name) {
     }
 }

@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Computes what the dashboard shows of the current user's own time: this week, the recent weeks, what needs
@@ -167,7 +168,8 @@ public class DashboardSupport {
 
     /**
      * Loads the current user's absences that have not ended and the days off of their holiday calendar,
-     * within {@link #COMING_UP_HORIZON} of the day.
+     * within {@link #COMING_UP_HORIZON} of the day. Consecutive days off of one name, such as a holiday of several
+     * days, come as one holiday.
      *
      * @param today the day to look ahead from, which counts as ahead
      * @return the absences and the holidays, nearest first
@@ -179,12 +181,32 @@ public class DashboardSupport {
                 .sorted(Comparator.comparing(WorkPlan.AbsencePeriod::firstDay)
                         .thenComparing(WorkPlan.AbsencePeriod::lastDay))
                 .toList();
-        List<ComingUp.Holiday> holidays = plan.holidayDayByDate().entrySet().stream()
+        List<ComingUp.Holiday> days = plan.holidayDayByDate().entrySet().stream()
                 .filter(e -> e.getValue().type() == HolidayCalendarDayType.DAY_OFF)
-                .map(e -> new ComingUp.Holiday(e.getKey(), e.getValue().name()))
-                .sorted(Comparator.comparing(ComingUp.Holiday::date))
+                .map(e -> new ComingUp.Holiday(e.getKey(), e.getKey(), e.getValue().name()))
+                .sorted(Comparator.comparing(ComingUp.Holiday::firstDay))
                 .toList();
-        return new ComingUp(absences, holidays);
+        return new ComingUp(absences, mergeHolidays(days));
+    }
+
+    /**
+     * Joins each run of consecutive days of one name into one holiday.
+     *
+     * @param days holidays of one day each, by date
+     * @return the holidays, by their first day
+     */
+    private static List<ComingUp.Holiday> mergeHolidays(List<ComingUp.Holiday> days) {
+        List<ComingUp.Holiday> holidays = new ArrayList<>();
+        for (ComingUp.Holiday day : days) {
+            ComingUp.Holiday last = holidays.isEmpty() ? null : holidays.getLast();
+            if (last != null && last.lastDay().plusDays(1).equals(day.firstDay())
+                    && Objects.equals(last.name(), day.name())) {
+                holidays.set(holidays.size() - 1, new ComingUp.Holiday(last.firstDay(), day.lastDay(), last.name()));
+            } else {
+                holidays.add(day);
+            }
+        }
+        return holidays;
     }
 
     /**

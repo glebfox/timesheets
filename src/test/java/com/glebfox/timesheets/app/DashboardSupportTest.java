@@ -307,7 +307,26 @@ public class DashboardSupportTest {
 
         assertThat(comingUp.absences()).extracting(WorkPlan.AbsencePeriod::id)
                 .containsExactly(current.getId(), upcoming.getId());
-        assertThat(comingUp.holidays()).containsExactly(new ComingUp.Holiday(dayOff, "Day off next month"));
+        assertThat(comingUp.holidays()).containsExactly(new ComingUp.Holiday(dayOff, dayOff, "Day off next month"));
+    }
+
+    @Test
+    void comingUpMergesConsecutiveDaysOfOneHolidayTest() {
+        HolidayCalendar calendar = assignCalendar();
+        LocalDate first = today.plusDays(20);
+        for (int i = 0; i < 3; i++) {
+            saveHoliday(calendar, first.plusDays(i), HolidayCalendarDayType.DAY_OFF, "New Year holidays");
+        }
+        // The next day has another name, and the day after a gap the same name again: neither joins the run
+        saveHoliday(calendar, first.plusDays(3), HolidayCalendarDayType.DAY_OFF, "Christmas");
+        saveHoliday(calendar, first.plusDays(5), HolidayCalendarDayType.DAY_OFF, "New Year holidays");
+
+        ComingUp comingUp = asUser(() -> dashboardSupport.loadComingUp(today));
+
+        assertThat(comingUp.holidays()).containsExactly(
+                new ComingUp.Holiday(first, first.plusDays(2), "New Year holidays"),
+                new ComingUp.Holiday(first.plusDays(3), first.plusDays(3), "Christmas"),
+                new ComingUp.Holiday(first.plusDays(5), first.plusDays(5), "New Year holidays"));
     }
 
     @Test
