@@ -30,7 +30,8 @@ import java.time.LocalDate;
  * <p>
  * The block's root is a {@code card}, titled with its {@code title} attribute, so it takes Aura's card look. On the
  * section's grid it is one column wide; the class {@code wide} makes it two columns wide where the grid has two or
- * more, and the class {@code full} spans the whole row.
+ * more, and the class {@code full} spans the whole row. A section may place its blocks by classes of its own instead,
+ * as My team does, so that every row of its grid is full.
  * <p>
  * The dashboard calls {@link #refresh()} each time it is shown and on its Refresh button, except on the blocks of
  * the My team section for a user who does not see that section; a block loads nothing before, so it loads nothing on

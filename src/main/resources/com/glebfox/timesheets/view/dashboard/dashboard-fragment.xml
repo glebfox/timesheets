@@ -50,7 +50,8 @@
 
             <h3 id="myTeamHeading" text="msg://myTeamHeading.text" classNames="dashboard-section-heading"
                 visible="false"/>
-            <div id="myTeamBlocks" classNames="dashboard-blocks">
+            <!-- The stylesheet places the team's blocks by the classes of their cards, so every row is full -->
+            <div id="myTeamBlocks" classNames="dashboard-blocks dashboard-team-blocks">
                 <fragment id="waitingApprovalBlock" class="com.glebfox.timesheets.view.dashboard.WaitingApprovalBlock"/>
                 <fragment id="teamWeekBlock" class="com.glebfox.timesheets.view.dashboard.TeamWeekBlock"/>
                 <fragment id="teamAwayBlock" class="com.glebfox.timesheets.view.dashboard.TeamAwayBlock"/>

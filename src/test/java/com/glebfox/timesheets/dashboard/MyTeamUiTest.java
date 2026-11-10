@@ -80,6 +80,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,6 +153,18 @@ public class MyTeamUiTest {
             assertThat(component(dashboard, "myTimeHeading").isVisible()).isTrue();
             assertThat(component(dashboard, "myTeamHeading").isVisible()).isTrue();
         });
+    }
+
+    @Test
+    void teamBlocksNameTheirPlaceOnTheGridTest() {
+        // The stylesheet places the team's blocks by these classes, so every row of the grid is full
+        DashboardFragment dashboard = dashboard();
+
+        assertThat(component(dashboard, "myTeamBlocks").getElement().getClassList())
+                .contains("dashboard-blocks", "dashboard-team-blocks");
+        assertThat(cardClasses("waitingApprovalBlock")).contains("waiting-block");
+        assertThat(cardClasses("teamWeekBlock")).contains("team-week-block").doesNotContain("wide");
+        assertThat(cardClasses("teamAwayBlock")).contains("team-away-block");
     }
 
     @Test
@@ -505,6 +518,11 @@ public class MyTeamUiTest {
 
     private static Component component(Fragment<?> fragment, String id) {
         return FragmentUtils.getComponent(fragment, id);
+    }
+
+    private Set<String> cardClasses(String blockId) {
+        Fragment<?> block = block(blockId);
+        return block.getContent().getElement().getClassList();
     }
 
     private static Chart chart(Fragment<?> block) {

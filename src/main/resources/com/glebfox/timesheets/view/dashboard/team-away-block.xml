@@ -18,7 +18,8 @@
 <fragment xmlns="http://jmix.io/schema/flowui/fragment"
           xmlns:app="http://glebfox.com/schema/app-ui-components.xsd">
     <content>
-        <card id="root" title="msg://teamAwayBlock.title" subtitle="msg://teamAwayBlock.subtitle">
+        <card id="root" title="msg://teamAwayBlock.title" subtitle="msg://teamAwayBlock.subtitle"
+              classNames="team-away-block">
             <content>
                 <div id="body" classNames="dashboard-list-block">
                     <div id="rows" classNames="dashboard-list"/>

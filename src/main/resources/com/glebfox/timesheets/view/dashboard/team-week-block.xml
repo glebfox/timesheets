@@ -18,7 +18,7 @@
 <fragment xmlns="http://jmix.io/schema/flowui/fragment"
           xmlns:charts="http://jmix.io/schema/charts/ui">
     <content>
-        <card id="root" title="msg://teamWeekBlock.title" classNames="wide">
+        <card id="root" title="msg://teamWeekBlock.title" classNames="team-week-block">
             <content>
                 <div id="body" classNames="dashboard-chart-block dashboard-team-week">
                     <charts:chart id="chart" classNames="dashboard-team-chart"/>
