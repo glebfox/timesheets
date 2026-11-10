@@ -29,7 +29,6 @@ import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
-import io.jmix.core.metamodel.datatype.DatatypeFormatter;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.component.card.JmixCard;
@@ -38,13 +37,18 @@ import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.ViewComponent;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDate;
 import java.util.List;
 
 /**
  * The This week block of the dashboard: the week's time spent against its plan, and a bar per day of the time
- * spent, with the day's plan marked and a day off hatched and named. A click on a day opens the calendar on it.
+ * spent, with the day's plan marked and a day off hatched and named. A day's label puts the weekday over the day of
+ * the month, and on a chart narrower than {@link #NARROW_WIDTH} pixels the labels and the bars narrow so neighboring
+ * days keep apart. A click on a day opens the calendar on it.
  */
 @FragmentDescriptor("this-week-block.xml")
 public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock {
@@ -71,6 +75,22 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      */
     public static final String TOOLTIP = DashboardCharts.TOOLTIP;
 
+    /**
+     * The width of the chart, in pixels, below which a day's label and its bars take less of the day's column, so
+     * the labels and the bars of neighboring days keep apart, as on a phone.
+     */
+    static final int NARROW_WIDTH = 600;
+
+    /**
+     * The widest a day's label gets on a narrow chart, in pixels, before a line of it is cut with an ellipsis.
+     */
+    private static final int NARROW_LABEL_WIDTH = 36;
+
+    /**
+     * The gap between the bars of neighboring days on a narrow chart, as a share of the day's column.
+     */
+    private static final String NARROW_BAR_GAP = "40%";
+
     @ViewComponent
     private Span spentTotal;
     @ViewComponent
@@ -87,7 +107,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private Messages messages;
     @Autowired
-    private DatatypeFormatter datatypeFormatter;
+    private DashboardDates dashboardDates;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -104,6 +124,8 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 DashboardCharts.bar(OFF, DAY, OFF).withItemStyle(DashboardCharts.offDayStyle()),
                 DashboardCharts.bar(SPENT, DAY, SPENT),
                 DashboardCharts.planBar(DAY, PLAN));
+
+        chart.setNativeJson(narrowDaysJson());
     }
 
     @Override
@@ -165,12 +187,48 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                         day.date().getDayOfMonth(), offReason);
     }
 
+    /**
+     * Returns the options that narrow the days' labels and bars on a narrow chart: an ECharts media query on the
+     * chart's width, with the shared options as the default, so a chart that widens again puts them back. The Charts
+     * add-on has no API for media queries, so they go in as native JSON.
+     */
+    private static String narrowDaysJson() {
+        JsonNodeFactory json = JsonNodeFactory.instance;
+
+        ObjectNode wide = json.objectNode();
+        ObjectNode wideOption = wide.putObject("option");
+        wideOption.putArray("xAxis").addObject().putObject("axisLabel")
+                .put("width", DashboardCharts.CATEGORY_LABEL_WIDTH);
+        addBarCategoryGap(wideOption.putArray("series"), DashboardCharts.BAR_CATEGORY_GAP);
+
+        ObjectNode narrow = json.objectNode();
+        narrow.putObject("query").put("maxWidth", NARROW_WIDTH - 1);
+        ObjectNode narrowOption = narrow.putObject("option");
+        narrowOption.putArray("xAxis").addObject().putObject("axisLabel")
+                .put("width", NARROW_LABEL_WIDTH);
+        addBarCategoryGap(narrowOption.putArray("series"), NARROW_BAR_GAP);
+
+        ObjectNode root = json.objectNode();
+        ArrayNode media = root.putArray("media");
+        media.add(wide);
+        media.add(narrow);
+        return root.toString();
+    }
+
+    // The gap between the days is the last bar series' for the whole axis, as the bars overlap, and is set on each,
+    // matched by id, so no series keeps another
+    private static void addBarCategoryGap(ArrayNode series, String gap) {
+        for (String id : List.of(OFF, SPENT, PLAN)) {
+            series.addObject().put("id", id).put("barCategoryGap", gap);
+        }
+    }
+
     private String formatTooltip(DaySummary day) {
         StringBuilder tooltip = new StringBuilder()
                 .append("<b>")
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.day",
                         componentSupport.formatDayOfWeekShort(day.date().getDayOfWeek()),
-                        datatypeFormatter.formatLocalDate(day.date()))))
+                        dashboardDates.formatDate(day.date()))))
                 .append("</b><br>")
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.spent",
                         componentSupport.formatWorkTimeTotal(day.total().fact()))))

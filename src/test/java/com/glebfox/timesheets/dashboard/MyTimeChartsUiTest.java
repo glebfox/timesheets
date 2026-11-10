@@ -80,6 +80,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -158,6 +159,32 @@ public class MyTimeChartsUiTest {
             assertThat((String) wednesdayItem.getValue(ThisWeekBlock.TOOLTIP))
                     .contains(user.getUsername() + " &lt;vacation&gt;")
                     .doesNotContain(vacation.getName());
+        });
+    }
+
+    @Test
+    void thisWeekKeepsDaysApartOnNarrowChartTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            ThisWeekBlock block = block("thisWeekBlock");
+            dashboard().refresh();
+
+            // The weekday over the day of the month, so the labels of neighboring days do not run together
+            String label = (String) items(chart(block)).getFirst().getValue(ThisWeekBlock.DAY);
+            assertThat(label).contains("\n");
+
+            // ECharts media queries on the chart's width: the shared label width and bar gap by default, a narrower
+            // label and a wider gap between the days when narrow
+            JsonNode media = Objects.requireNonNull(chart(block).getNativeJson()).get("media");
+            assertThat(media.size()).isEqualTo(2);
+            assertThat(media.get(0).has("query")).isFalse();
+            assertThat(media.get(0).at("/option/xAxis/0/axisLabel/width").asInt()).isEqualTo(72);
+            assertThat(media.get(1).at("/query/maxWidth").asInt()).isEqualTo(599);
+            assertThat(media.get(1).at("/option/xAxis/0/axisLabel/width").asInt()).isLessThan(72);
+            JsonNode narrowSeries = media.get(1).at("/option/series");
+            assertThat(narrowSeries.size()).isEqualTo(3);
+            for (JsonNode series : narrowSeries) {
+                assertThat(series.get("barCategoryGap").asString()).isEqualTo("40%");
+            }
         });
     }
 

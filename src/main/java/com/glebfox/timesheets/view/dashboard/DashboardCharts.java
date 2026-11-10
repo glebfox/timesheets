@@ -58,7 +58,12 @@ public final class DashboardCharts {
     /**
      * The widest a category's label gets on a vertical bar chart, in pixels.
      */
-    private static final int CATEGORY_LABEL_WIDTH = 72;
+    static final int CATEGORY_LABEL_WIDTH = 72;
+
+    /**
+     * The gap between the bars of neighboring categories, as a share of a category's room: ECharts' default.
+     */
+    static final String BAR_CATEGORY_GAP = "20%";
 
     // The options are parsed in the browser into a function: arguments up to the first ")", the body from the first
     // "{" to the last "}"
