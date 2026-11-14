@@ -14,10 +14,272 @@
  * limitations under the License.
  */
 
-.jmix-login-main-layout jmix-login-form::part(form) {
-    --vaadin-login-form-border-radius: var(--vaadin-radius-l);
-    --vaadin-login-form-background: var(--aura-surface-color);
+/* The login page: the brand's blue sheet, its corner folded in mint as the mark's top strip is, with the logo,
+   beside (or, on a narrow window, under) a form without a card on the surface color.
+   The view's root layout is the page's scroll container (Jmix's jmix-view-layout rule), so the page scrolls as a
+   whole and neither the sheet nor the side may shrink below its content. */
 
-    box-shadow: var(--aura-shadow-s);
-    border: 1px solid var(--vaadin-border-color);
+.login-view {
+    display: flex;
+    flex-direction: column;
+    /* A vertical layout aligns its items to the start; the sheet and the side span the page */
+    align-items: stretch;
+    /* The fold's cut shows this color, so the sheet reads as lying on the side */
+    background: var(--aura-surface-color-solid);
+}
+
+/* ---------- The sheet ---------- */
+
+.login-view-sheet {
+    /* The fold's size and the logo's place, shared with the logo's forced-colors drawing below */
+    --_fold: 60px;
+    --_logo-width: 270px;
+    --_logo-left: 14px;
+    --_logo-bottom: 22px;
+
+    position: relative;
+    /* The logo is positioned, so the band has no content height of its own and would shrink instead of the page
+       scrolling */
+    flex: none;
+    height: 216px;
+    /* The brand blue in both themes, as the brand's guide asks of dark surfaces */
+    background: #0256A9;
+    clip-path: polygon(0 0, calc(100% - var(--_fold)) 0, 100% var(--_fold), 100% 100%, 0 100%);
+}
+
+/* The fold: the brand mark's folded corner, in mint, with its rounded inner corner, under the cut */
+.login-view-sheet::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--_fold);
+    height: var(--_fold);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='416 0 80 80'%3E%3Cpath d='M416 0L496 80H438Q416 80 416 58Z' fill='%2387F1AC'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%;
+}
+
+.login-view-logo {
+    position: absolute;
+    left: var(--_logo-left);
+    bottom: var(--_logo-bottom);
+    width: var(--_logo-width);
+    height: auto;
+}
+
+/* ---------- The side and the form ---------- */
+
+.login-view-side {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+    padding: 32px 24px 24px;
+}
+
+.login-view-column {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.login-view jmix-login-form {
+    /* Jmix's element replaces the styles of Vaadin's form, which make it a block */
+    display: block;
+    --vaadin-login-form-width: 100%;
+    --vaadin-login-form-padding: 0;
+    --vaadin-login-form-background: transparent;
+    --vaadin-login-form-title-font-size: 26px;
+    --vaadin-login-form-title-line-height: 1.2;
+}
+
+/* Aura styles the error block only on vaadin-login-form, so Jmix's element misses it
+   (https://github.com/jmix-framework/jmix/issues/6009): the same look, until Jmix fixes it */
+jmix-login-form::part(error-message) {
+    border-radius: var(--vaadin-radius-m);
+    padding: var(--vaadin-padding-m);
+    background: color-mix(in srgb, var(--aura-red) 10%, transparent);
+}
+
+jmix-login-form::part(error-message-title) {
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+/* ---------- The language switch ---------- */
+
+/* Two words in a row, the checked one in the text color and semibold. Each item keeps a little room around its word
+   for the focus ring, which the group gives back at its start so that the first word lines up with the form */
+.login-view-locale-switch {
+    --_item-padding: var(--vaadin-padding-xs);
+
+    width: 100%;
+    max-width: 400px;
+    /* At the page's foot while the page fits, following the form when it scrolls */
+    margin: auto auto 0;
+    padding: 24px 0 0;
+}
+
+.login-view-locale-switch::part(group-field) {
+    flex-direction: row;
+    gap: var(--vaadin-gap-m);
+    margin-inline-start: calc(var(--_item-padding) * -1);
+    padding: 0;
+    border: 0;
+}
+
+.login-view-locale-switch > vaadin-radio-button {
+    /* The input stretches over the gap between the radio and the label; without the radio there is none */
+    --vaadin-radio-button-gap: 0;
+    --vaadin-radio-button-label-color: var(--vaadin-text-color-secondary);
+    --vaadin-radio-button-label-font-size: var(--aura-font-size-s);
+    --vaadin-radio-button-label-font-weight: var(--aura-font-weight-regular);
+    position: relative;
+    padding: 0 var(--_item-padding);
+    border-radius: var(--vaadin-radius-s);
+}
+
+.login-view-locale-switch > vaadin-radio-button::part(radio) {
+    display: none;
+}
+
+/* A click anywhere on the word checks it */
+.login-view-locale-switch > vaadin-radio-button > input {
+    position: absolute;
+    inset: 0;
+}
+
+.login-view-locale-switch > vaadin-radio-button[checked] {
+    --vaadin-radio-button-label-color: var(--vaadin-text-color);
+    --vaadin-radio-button-label-font-weight: var(--aura-font-weight-semibold);
+}
+
+@media (any-hover: hover) {
+    .login-view-locale-switch > vaadin-radio-button:not([checked]):hover {
+        --vaadin-radio-button-label-color: var(--vaadin-text-color);
+    }
+}
+
+/* The hidden radio carried the focus ring */
+.login-view-locale-switch > vaadin-radio-button[focus-ring] {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: 0;
+}
+
+/* ---------- Narrow: the band grows with the window ---------- */
+
+@media (min-width: 600px) {
+    .login-view-sheet {
+        --_fold: 84px;
+        --_logo-width: 360px;
+        --_logo-left: 32px;
+        --_logo-bottom: 32px;
+
+        height: 280px;
+    }
+
+    .login-view-side {
+        padding: 56px 48px 40px;
+    }
+}
+
+/* A short window, such as a phone turned sideways: a low band, so the form starts on the first screen.
+   After the rule above, since a phone turned sideways matches both */
+@media (max-width: 1023px) and (max-height: 499px) {
+    .login-view-sheet {
+        --_fold: 48px;
+        --_logo-width: 200px;
+        --_logo-left: 14px;
+        --_logo-bottom: 16px;
+
+        height: 120px;
+    }
+
+    .login-view-side {
+        padding: 24px 24px 20px;
+    }
+}
+
+/* ---------- Wide: the sheet beside the form ---------- */
+
+@media (min-width: 1024px) {
+    .login-view {
+        display: grid;
+        grid-template-columns: clamp(440px, 42vw, 720px) minmax(0, 1fr);
+        /* One row, at least as tall as the page: the sheet and the side stretch over it, and it grows with the
+           side's content on a short window */
+        grid-auto-rows: auto;
+        align-content: stretch;
+    }
+
+    .login-view-sheet {
+        --_fold: clamp(88px, 8vw, 136px);
+        --_logo-width: min(78%, 540px);
+        --_logo-left: clamp(44px, 3.4vw, 72px);
+        --_logo-bottom: clamp(52px, 6.5vh, 88px);
+
+        height: auto;
+    }
+
+    .login-view-side {
+        position: relative;
+        flex-direction: row;
+        justify-content: center;
+        padding: 0;
+    }
+
+    /* Up to 560 pixels, 48 clear of the side's edges when narrower, centered in the side: near the sheet on a small
+       desktop, in the middle of the side on a large one. The form is centered in it vertically, at its left edge.
+       Its block padding keeps the form clear of the switch above it, so they never overlap on a short window */
+    .login-view-column {
+        display: flex;
+        align-items: center;
+        width: min(560px, 100% - 96px);
+        max-width: none;
+        margin: 0;
+        padding-block: 88px;
+    }
+
+    .login-view jmix-login-form {
+        --vaadin-login-form-width: 360px;
+        --vaadin-login-form-title-font-size: 30px;
+    }
+
+    .login-view-locale-switch {
+        position: absolute;
+        top: 36px;
+        right: 44px;
+        width: auto;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* ---------- Forced colors ---------- */
+
+/* The mode drops the sheet's blue, and the ivory logo would vanish on a light palette: the logo is drawn in the
+   system's text color through its own shape, and the fold, which is nothing but color, goes */
+@media (forced-colors: active) {
+    .login-view-sheet::before {
+        display: none;
+    }
+
+    /* The image keeps its place and its alternative text */
+    .login-view-logo {
+        opacity: 0;
+    }
+
+    .login-view-sheet::after {
+        content: "";
+        position: absolute;
+        left: var(--_logo-left);
+        bottom: var(--_logo-bottom);
+        width: var(--_logo-width);
+        aspect-ratio: 4;
+        background-color: CanvasText;
+        /* Relative to this file, so that it holds under a servlet context path */
+        mask: url('../../../assets/brand/logos/logo-mono-white.svg') no-repeat 0 0 / 100% 100%;
+    }
+
+    .login-view-locale-switch > vaadin-radio-button[checked] {
+        --vaadin-radio-button-label-color: Highlight;
+    }
 }
