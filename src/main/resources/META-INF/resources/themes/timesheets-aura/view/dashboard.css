@@ -19,9 +19,10 @@
    reaches outside a button, so no ring is cut off at the scrolling edge; at the top, the initial layout's gap under
    the toggle already separates it.
 
-   Its spacing grows in three steps, each clearly larger than the one before: inside a block, the card's padding,
-   16 pixels and the border; between blocks, the grid's gap, 24; between the header and the sections, this gap, 40,
-   Aura's largest gap and the next smaller one together, as Aura has no larger one. */
+   Its spacing grows in three steps, each clearly larger than the one before: inside a block, the card's padding and
+   its border; between blocks, the grid's gap; between the header and the sections, this gap, Aura's largest gap and
+   the next smaller one together, as Aura has no larger one. On a desktop they are 17, 24, and 40 pixels; a touch
+   screen scales each up. */
 .jmix-initial-layout > .dashboard {
     container-name: dashboard;
     container-type: inline-size;
@@ -260,9 +261,19 @@
     height: 12rem;
 }
 
-/* A chart draws in its root part, whose inline style inherits the chart's height property, not the height the
-   layout gives it, and redraws only when its own box changes size; the root takes the box's height instead, so a
-   chart that grows draws at the size it grows to */
+/* A chart's box is the size the layout gives it, never the size of what it drew last: otherwise its drawing, still
+   at the old size, would hold the box, and so the card, at that size, wider or taller than the card now has room
+   for, and the chart would never be told to redraw. The chart draws in its root part, whose inline style inherits
+   the chart's height property, not the height the layout gives it; the root takes the box's height instead, so a
+   chart that grows draws at the size it grows to. The chart redraws when its box changes size, which only a block
+   box reports: the element is inline unless its parent lays it out, as the donut's does not */
+.dashboard jmix-chart {
+    display: block;
+    contain: size;
+    overflow: hidden;
+    min-width: 0;
+}
+
 .dashboard jmix-chart::part(root) {
     height: 100% !important;
 }
@@ -489,8 +500,7 @@ vaadin-button.dashboard-list-row::part(label) {
    as a line of text and its padding.
 
    The columns are as wide as their content, with half the gap on either side of a cell, but the task's, which takes
-   the room left up to a width that holds a task and its project, so on a wide card the time, the status, and Copy to
-   today stay beside the name and the rest of the row stays empty after them. */
+   the room left, so the rows span the card and Copy to today ends each on the content edge. */
 vaadin-grid.dashboard-recent-entries {
     --vaadin-grid-background: transparent;
     --vaadin-grid-row-background-color: transparent;
@@ -504,15 +514,14 @@ vaadin-grid.dashboard-recent-entries {
     width: calc(100% + 2 * var(--dashboard-row-reach));
     max-width: none;
     margin-inline: calc(var(--dashboard-row-reach) * -1);
-    margin-block-end: calc(var(--dashboard-row-reach) * -1);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
 }
 
-/* An empty grid's state stands as far above its last line as below it, the grid's reach under the content edge
-   added */
-vaadin-grid.dashboard-recent-entries > .grid-empty-state {
-    padding-block-end: calc(var(--vaadin-padding-l) + var(--dashboard-row-reach));
+/* Its last row reaches below the content edge as a button row does; an empty grid does not, so its empty state
+   stands in the middle of the block, as the other blocks' do */
+vaadin-grid.dashboard-recent-entries:not(.empty) {
+    margin-block-end: calc(var(--dashboard-row-reach) * -1);
 }
 
 vaadin-grid.dashboard-recent-entries::part(first-column-cell) {
@@ -521,10 +530,6 @@ vaadin-grid.dashboard-recent-entries::part(first-column-cell) {
 
 vaadin-grid.dashboard-recent-entries::part(last-column-cell) {
     --dashboard-cell-end: var(--dashboard-row-reach);
-}
-
-vaadin-grid.dashboard-recent-entries::part(task-cell) {
-    max-width: 24rem;
 }
 
 vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content {
@@ -545,50 +550,54 @@ vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-ta
     overflow: visible;
 }
 
-/* The date and the time are quieter than the name, as the rows' values are, in figures of one width */
-vaadin-grid.dashboard-recent-entries::part(number-cell) {
+/* The date is quieter than the name, and the date and the time are in figures of one width */
+vaadin-grid.dashboard-recent-entries::part(date-cell) {
     color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+vaadin-grid.dashboard-recent-entries::part(time-cell) {
     font-variant-numeric: tabular-nums;
 }
 
 /* The name, on one line, is the task, then its project after a separator, quieter: a name too long is cut from its
    end, the project first, so the task stays */
-.recent-task {
+vaadin-grid.dashboard-recent-entries .recent-task {
     display: flex;
     align-items: baseline;
     column-gap: var(--vaadin-gap-s);
     min-width: 0;
 }
 
-.recent-task > .task,
-.recent-task > .project {
+vaadin-grid.dashboard-recent-entries .recent-task > .task,
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.recent-task > .task {
+vaadin-grid.dashboard-recent-entries .recent-task > .task {
     flex: 0 1 auto;
 }
 
 /* The link's box reaches outside the text by its padding and its border, which take no room in the row */
-.recent-task > vaadin-button.task {
+vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
     margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
     margin-inline-start: calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
     max-width: calc(100% + var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px));
 }
 
-.recent-task > .separator,
-.recent-task > .project {
+vaadin-grid.dashboard-recent-entries .recent-task > .separator,
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
     color: var(--vaadin-text-color-secondary);
 }
 
-.recent-task > .separator {
+vaadin-grid.dashboard-recent-entries .recent-task > .separator {
     flex: none;
 }
 
-.recent-task > .project {
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
     flex: 0 1000 auto;
 }
 
@@ -601,21 +610,42 @@ vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .row-copy)
         - (var(--dashboard-copy-size) - var(--dashboard-copy-icon-size)) / 2);
 }
 
-vaadin-button.row-copy {
+vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
     width: var(--dashboard-copy-size);
     height: var(--dashboard-copy-size);
     margin: 0;
     padding: 0;
 }
 
-vaadin-button.row-copy > vaadin-icon {
+vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     --vaadin-icon-size: var(--dashboard-copy-icon-size);
     --vaadin-icon-visual-size: 100%;
 }
 
-/* On a touch screen Copy to today keeps a target a finger can hit, and so every row is at least as tall */
+/* Copy to today's focus ring stands inside its box, so the grid, which cuts what reaches past it, keeps it whole on
+   the first and the last row */
+vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+}
+
+/* On a touch screen the task's link and Copy to today keep a target a finger can hit: Copy to today, and so every
+   row, at least as tall as one, and the link as tall within the row, reaching above and below its line by as much
+   as it grows, so the row does not grow with it */
 @media (pointer: coarse) {
-    vaadin-button.row-copy {
+    vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
+        min-height: 44px;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+        min-height: 44px;
+        margin-block: calc((1lh - 44px) / 2);
+    }
+
+    /* Without Copy to today, the task's cell keeps the row as tall as the link's target */
+    vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task) {
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
         min-height: 44px;
     }
 }
@@ -627,21 +657,21 @@ vaadin-button.row-copy > vaadin-icon {
         --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
     }
 
-    .recent-task {
+    vaadin-grid.dashboard-recent-entries .recent-task {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .recent-task > span.task,
-    .recent-task > .project {
+    vaadin-grid.dashboard-recent-entries .recent-task > span.task,
+    vaadin-grid.dashboard-recent-entries .recent-task > .project {
         max-width: 100%;
     }
 
-    .recent-task > .separator {
+    vaadin-grid.dashboard-recent-entries .recent-task > .separator {
         display: none;
     }
 
-    .recent-task > .project {
+    vaadin-grid.dashboard-recent-entries .recent-task > .project {
         font-size: var(--aura-font-size-xs);
         line-height: var(--aura-line-height-xs);
     }
