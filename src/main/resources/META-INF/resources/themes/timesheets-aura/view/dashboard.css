@@ -125,6 +125,12 @@
     --vaadin-card-title-font-weight: var(--aura-font-weight-semibold);
     --vaadin-card-subtitle-font-size: var(--aura-font-size-s);
     --vaadin-card-subtitle-line-height: var(--aura-line-height-s);
+
+    /* A card holds at least its title and three one-line rows, so a block with nothing to show, whose empty state
+       takes no room, does not collapse to a strip, and cards in a row are as tall as the tallest anyway */
+    min-height: calc(2 * (var(--vaadin-card-padding) + var(--vaadin-card-border-width, 1px))
+        + var(--vaadin-card-title-line-height) + var(--vaadin-gap-m)
+        + 3 * (var(--aura-line-height-s) + 2 * var(--vaadin-padding-block-container)));
 }
 
 .dashboard-blocks > .full {
@@ -211,12 +217,27 @@
     line-height: var(--aura-line-height-s);
 }
 
-/* An empty block's state is centered in the body, both ways, however tall the row makes the card, and it reads
-   quieter than data: the rows' size, regular, in the secondary color. It keeps some height, so a block alone in its
-   row does not collapse to its title */
+/* An empty block's state is centered on the whole card, both ways, so the states of the cards of one row stand on
+   one line whatever the cards' headers hold, and it reads quieter than data: the rows' size, regular, in the
+   secondary color. It lies over the card and lets the pointer through to the header's link. The empty grid of
+   Recent entries, whose state stays in the grid, stands in the middle of the body and moves up by half the
+   header, its title and the card's gap, so its state is in the middle of the card too */
 .dashboard .grid-empty-state {
-    flex: 1 1 auto;
     justify-content: center;
+}
+
+.dashboard-blocks > vaadin-card > div > .grid-empty-state {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+vaadin-grid.dashboard-recent-entries.empty {
+    margin-block: auto;
+    translate: 0 calc((var(--vaadin-card-title-line-height) + var(--vaadin-gap-m)) / -2);
+}
+
+vaadin-grid.dashboard-recent-entries > .grid-empty-state {
     padding-block: var(--vaadin-padding-l);
 }
 
@@ -269,11 +290,11 @@
    for, and the chart would never be told to redraw. The chart draws in its root part, whose inline style inherits
    the chart's height property, not the height the layout gives it; the root takes the box's height instead, so a
    chart that grows draws at the size it grows to. The chart redraws when its box changes size, which only a block
-   box reports: the element is inline unless its parent lays it out, as the donut's does not */
+   box reports: the element is inline unless its parent lays it out, as the donut's does not. What it draws beyond
+   its box shows, so a tooltip wider than a small chart, as the donut's, shows whole */
 .dashboard jmix-chart {
     display: block;
     contain: size;
-    overflow: hidden;
     min-width: 0;
 }
 
@@ -500,12 +521,13 @@ vaadin-button.dashboard-list-row::part(label) {
    pads its text as a row does; the status and Copy to today, taller than a line, sit in the middle of a row as tall
    as a line of text and its padding.
 
-   The columns are as wide as their content, with half the gap on either side of a cell, but the task's, which takes
-   the room left, so the rows span the card and Copy to today ends each on the content edge. */
+   The columns are as wide as their content, with half the rows' gap on either side of a cell, but the task's, which
+   takes the room left, so the rows span the card and Copy to today ends each on the content edge. The gap is the
+   same at every width, so the widths the grid measured once stay right when the card narrows or widens. */
 vaadin-grid.dashboard-recent-entries {
     --vaadin-grid-background: transparent;
     --vaadin-grid-row-background-color: transparent;
-    --dashboard-cell-gap: calc(var(--vaadin-gap-m) / 2);
+    --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
     --dashboard-cell-start: var(--dashboard-cell-gap);
     --dashboard-cell-end: var(--dashboard-cell-gap);
     /* Copy to today: its icon centered in a box as tall as a row */
@@ -661,13 +683,9 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     }
 }
 
-/* On a narrow card the cells part by the smaller gap, and the project goes on a second line under the task, smaller,
-   each line cut on its own, so both keep the whole name column */
+/* On a narrow card the project goes on a second line under the task, smaller, each line cut on its own, so both keep
+   the whole name column */
 @container dashboard (width < 600px) {
-    vaadin-grid.dashboard-recent-entries {
-        --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
-    }
-
     vaadin-grid.dashboard-recent-entries .recent-task {
         flex-direction: column;
         align-items: flex-start;
