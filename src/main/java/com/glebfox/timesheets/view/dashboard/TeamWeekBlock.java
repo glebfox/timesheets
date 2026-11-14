@@ -306,7 +306,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         ArrayNode media = root.putArray("media");
         media.add(wide);
         media.add(narrow);
-        return root.toString();
+        return DashboardCharts.nativeJson(root);
     }
 
     /**

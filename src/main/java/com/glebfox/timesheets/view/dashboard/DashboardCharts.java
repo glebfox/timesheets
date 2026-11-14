@@ -32,6 +32,8 @@ import io.jmix.chartsflowui.kit.component.model.shared.AbstractTooltip;
 import io.jmix.chartsflowui.kit.component.model.shared.Decal;
 import io.jmix.chartsflowui.kit.component.model.shared.Overflow;
 import org.springframework.web.util.HtmlUtils;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.charset.StandardCharsets;
 
@@ -114,6 +116,29 @@ public final class DashboardCharts {
                         .withTrigger(AbstractTooltip.Trigger.ITEM)
                         .withConfine(true)
                         .withFormatterFunction(ITEM_TOOLTIP_FORMATTER));
+        chart.setNativeJson(nativeJson(JsonNodeFactory.instance.objectNode()));
+    }
+
+    /**
+     * The class of a chart's tooltip, which the stylesheet keeps out of the page's width.
+     */
+    static final String TOOLTIP_CLASS = "dashboard-chart-tooltip";
+
+    /**
+     * Returns the chart's native options: the given ones, such as media queries, and the tooltip drawn on the page's
+     * body rather than in the chart, so the chart clips what it draws to its box, and a tooltip wider than the chart,
+     * as the donut's, still shows whole; the tooltip has the class {@link #TOOLTIP_CLASS}. The Charts add-on has no
+     * API for where the tooltip goes or its class, so they go in as native JSON; a chart takes one native JSON, so
+     * every chart of the dashboard sets its own through this.
+     *
+     * @param root the chart's other native options, or an empty object
+     * @return the native JSON
+     */
+    static String nativeJson(ObjectNode root) {
+        root.putObject("tooltip")
+                .put("appendTo", "body")
+                .put("className", TOOLTIP_CLASS);
+        return root.toString();
     }
 
     /**
@@ -211,6 +236,7 @@ public final class DashboardCharts {
                                 .withType(AbstractTooltip.AxisPointer.IndicatorType.SHADOW))
                         .withConfine(true)
                         .withFormatterFunction(AXIS_TOOLTIP_FORMATTER));
+        chart.setNativeJson(nativeJson(JsonNodeFactory.instance.objectNode()));
     }
 
     private static <A extends AbstractCartesianAxis<A>> A categoryAxis(A axis, int labelWidth) {

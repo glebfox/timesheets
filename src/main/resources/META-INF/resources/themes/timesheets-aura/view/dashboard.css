@@ -290,16 +290,24 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
    for, and the chart would never be told to redraw. The chart draws in its root part, whose inline style inherits
    the chart's height property, not the height the layout gives it; the root takes the box's height instead, so a
    chart that grows draws at the size it grows to. The chart redraws when its box changes size, which only a block
-   box reports: the element is inline unless its parent lays it out, as the donut's does not. What it draws beyond
-   its box shows, so a tooltip wider than a small chart, as the donut's, shows whole */
+   box reports: the element is inline unless its parent lays it out, as the donut's does not. What it still draws
+   at its old size while the window narrows stays inside its box, so the dashboard never scrolls sideways; its
+   tooltip is drawn on the page's body, so it shows whole however small the chart */
 .dashboard jmix-chart {
     display: block;
     contain: size;
+    overflow: hidden;
     min-width: 0;
 }
 
 .dashboard jmix-chart::part(root) {
     height: 100% !important;
+}
+
+/* A chart's tooltip lies on the page's body, where it stays, hidden, after it last showed; it is placed against the
+   window, so it never widens the page, which does not scroll itself. ECharts places it with an inline style */
+.dashboard-chart-tooltip {
+    position: fixed !important;
 }
 
 /* Time by project: the donut, with the total in its hole, and the list of projects beside it, in the middle of a

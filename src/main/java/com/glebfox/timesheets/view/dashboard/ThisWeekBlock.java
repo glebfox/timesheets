@@ -212,7 +212,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         ArrayNode media = root.putArray("media");
         media.add(wide);
         media.add(narrow);
-        return root.toString();
+        return DashboardCharts.nativeJson(root);
     }
 
     // The gap between the days is the last bar series' for the whole axis, as the bars overlap, and is set on each,
