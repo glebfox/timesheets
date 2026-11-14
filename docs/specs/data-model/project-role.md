@@ -7,7 +7,7 @@ A catalog entry naming the role a participant plays in a project, such as "Devel
 ## Attributes
 
 - **Name** — required; unique among non-deleted roles (`docs/guidelines/database.md`).
-- **Type** — required: Manager, Approver, Member, or Observer. Manager and Approver decide which [time entries](time-entry.md) a participant approves on the project ([approval screen](../views/approval.md#which-entries-it-shows)); Member and Observer have no behavior. The type also colors the role's badge on screens.
+- **Type** — required: Manager, Approver, Member, or Observer. Manager and Approver decide which [time entries](time-entry.md) a participant approves on the project ([approval screen](../views/approval.md#which-entries-it-shows)) and whom the dashboard's My team shows ([dashboard](../views/dashboard.md#the-people)); Member and Observer have no behavior. The type also colors the role's badge on screens.
 - **Description** — optional.
 
 ## Deletion

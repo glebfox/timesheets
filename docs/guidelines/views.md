@@ -51,6 +51,8 @@ A side dialog, such as the reject dialog of the approval screen, is a component 
 
 In this app the `urlQueryParameters` facet does nothing: the tabbed-mode add-on registers `NoopUrlQueryParametersFacetImpl` in place of the framework's facet, so a list's filter and pagination are not kept in the URL. A reload of the browser page keeps them all the same, since tabbed mode restores the open view; the browser's back and forward buttons create the view again, with an empty filter. The list descriptors keep the facet for when the add-on supports it.
 
+So a screen that another one opens in a given state, such as the calendar on a date or the approval screen on a person, takes the state through a public method of its controller, which the opener calls in the view configurer of `ViewBuilders`, before the view is shown. See `CalendarView.showDate` and `TimeEntryApprovalView.setOpening`.
+
 ## Avatar images in tabbed mode
 
 Tabbed mode disables the content of a tab that is not selected, and Vaadin answers 403 to the image request of a disabled `Avatar` ([vaadin/flow#22772](https://github.com/vaadin/flow/issues/22772)), though it serves `Image` and `IFrame` sources while disabled. An avatar rendered just before its tab is disabled, such as one in a grid's avatar cell or in the project editor's client field when another tab opens, then never gets its image. So every avatar built from stored image bytes takes its image handler from `AvatarImages.handler(...)` in `app/util/`, which serves disabled requests; `ComponentSupport.createAvatar`, the avatar cell, and the main view's user menu do.

@@ -4,7 +4,7 @@ Source: `view/calendar/`, `app/CalendarSupport.java`, `app/WorkPlanSupport.java`
 
 `calendar`, the first item of menu Timesheets. The current user's own [time entries](../data-model/time-entry.md) laid out on a month, with the time spent per day, per week, and for the month against the time their [work schedule](../data-model/work-schedule.md) plans, and their absences across their days.
 
-Other screens open it on a given date, and it shows that date's month instead of the current one.
+The [dashboard](dashboard.md) opens it on a given date, from a day, a week, or a short day or week, and it then shows that date's month instead of the current one.
 
 ## Month
 

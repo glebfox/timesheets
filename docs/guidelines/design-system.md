@@ -83,6 +83,8 @@ In a dialog, Tab stops on every option of a radio button group, a `segmented-gro
 
 **Forced colors.** Forced-colors (high contrast) mode drops background fills and box shadows, and draws a transparent border in the text color. So a card or row whose selection is only a fill, such as the approval screen's roster card and week card, marks it there as Vaadin's side nav marks its current item: the selected one has a border, or an outline where the part has no border all round, and text in `Highlight`, and a transparent border on the others takes `Canvas`. A system color that a rule sets explicitly survives the mode, so these rules need no `forced-color-adjust: none`. The mode stands for the user's own palette, each system color in its role, so the project's colors never come back in it: a part that is nothing but a color repeating what text says, such as the approval screen's status bars, dots, lines, and entry stripes, is left to disappear. A drawing whose shape tells what no text does, such as the roster's fingerprint, takes system colors, as Vaadin's progress bar draws its value in `CanvasText`; the mode leaves an SVG's `fill` as the author set it, so such a drawing sets it itself.
 
+**Charts.** A chart of the Charts add-on draws on a canvas and takes literal colors in its options, never the theme's custom properties, so it is the one place where colors are literals. When the theme switches, the add-on redraws the chart in ECharts' own light or dark theme, which colors its axis labels and grid lines, while the colors set in the options stay; each is one literal for both themes ([decision 0021](../decisions/0021-the-dashboards-charts-color-statuses-as-the-app-does-in-one-color-for-both-themes.md)). A fill, of a bar or a slice, is written in hex or `rgba()`: ECharts lightens a fill under the pointer through a color parser that reads no `oklch()`, and a fill it cannot read vanishes while hovered. A line's, a hatching's, or a label's color is drawn as written. See `DashboardColors`.
+
 ---
 
 ## 3. Typography
@@ -147,9 +149,9 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 ## 5. Responsive Behavior
 
-- **Mobile** (< 640px): Single column, stacked layouts, full-width cards
-- **Tablet** (640–1024px): Two-column grid, side-by-side content
-- **Desktop** (> 1024px): Multi-column grid
+- **Narrow** (< 600px): one column, stacked layouts, full-width cards.
+- **Medium** (600–1023px): two columns.
+- **Wide** (1024px and more): three columns, as the dashboard's grid.
 
 A container query styles the descendants of its container, never the container itself, so what changes under the query sits inside the container. As the approval figures go from four in a row to two, their row is the container, a wrapping flex container, and each figure changes its `flex-basis`; a grid that is itself the container cannot change its own columns.
 

@@ -4,7 +4,7 @@ Source: `view/approval/`, `component/approval/`, `app/TimeEntryApprovalSupport.j
 
 `approve-time-entries`, in menu Project Management after Time entries. The screen where the managers and approvers of projects review the [time entries](../data-model/time-entry.md) logged on them, person by person, in a week or a month, and approve or reject them. Who may open it: [Time entries: approval](../roles/time-entry-approval.md). Which entries a user sees on it is decided by their project roles, not by the security role. The screen is laid out for a desktop width and has no layout for a phone.
 
-Other screens open it in a given state: a mode, a period, which people the roster shows, and a person. It then shows that mode, period, and roster switch instead of the remembered mode, the default period, and Needs review, and selects the person when the roster shows them, otherwise the first person shown. A mode given this way is not remembered as the user's choice.
+The [dashboard](dashboard.md#my-team) opens it in a given state: a mode, a period, which people the roster shows, and a person. It then shows that mode, period, and roster switch instead of the remembered mode, the default period, and Needs review, and selects the person when the roster shows them, otherwise the first person shown. A mode given this way is not remembered as the user's choice.
 
 ## Which entries it shows
 
