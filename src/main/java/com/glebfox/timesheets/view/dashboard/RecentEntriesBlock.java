@@ -36,24 +36,26 @@ import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.component.grid.DataGrid;
+import io.jmix.flowui.component.grid.DataGridColumn;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.Install;
+import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Supply;
 import io.jmix.flowui.view.ViewComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The Recent entries block of the dashboard: the current user's {@link #LIMIT} latest entries, in a grid without a
  * header, a row each, with its date, its task and then its project, time spent, status, and Copy to today. A click on
  * the task opens the entry in the time entry editor, in a dialog, if the user may open the editor; otherwise the task
  * is plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new entry copied
- * from it and dated today, if the user may create time entries; otherwise its column is hidden. After a save in
+ * from it and dated today, if the user may create time entries; otherwise the grid has no such column. Enter on a
+ * cell presses its button. After a save in
  * either, the dashboard reloads. No entries shows the grid's empty state.
  */
 @FragmentDescriptor("recent-entries-block.xml")
@@ -65,14 +67,55 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     static final int LIMIT = 5;
 
     /**
-     * The part name of the task column's cells, by which the stylesheet caps the column's width.
+     * The part name of the date column's cells, by which the stylesheet sets their text apart.
      */
-    static final String TASK_CELL_PART = "task-cell";
+    static final String DATE_CELL_PART = "date-cell";
 
     /**
-     * The part name of the date and the time columns' cells, by which the stylesheet sets their text apart.
+     * The part name of the time column's cells, by which the stylesheet sets their figures.
      */
-    static final String NUMBER_CELL_PART = "number-cell";
+    static final String TIME_CELL_PART = "time-cell";
+
+    /**
+     * The class of the grid while it has no rows and shows its empty state.
+     */
+    static final String EMPTY = "empty";
+
+    /**
+     * The key of the Copy to today column, which the grid has only while the user may create time entries.
+     */
+    static final String COPY_COLUMN = "copy";
+
+    /**
+     * Makes Enter on a cell that holds a button press the button at once, as a click does. The grid would otherwise
+     * take the first Enter to move the focus into the cell, onto the button, and only a second one would press it.
+     * The buttons are out of the Tab order, so Tab enters the grid once and leaves it with the next; the arrows move
+     * between cells, and a screen reader still reads each button's name in its cell. The handler runs before the
+     * grid's own, in the capture phase, and is added once per element in the browser.
+     */
+    private static final String ENTER_PRESSES_CELL_BUTTON = """
+            if (this.__enterPressesCellButton) {
+                return;
+            }
+            this.__enterPressesCellButton = true;
+            this.addEventListener('keydown', event => {
+                if (event.key !== 'Enter' || event.repeat || this.interacting) {
+                    return;
+                }
+                const cell = event.composedPath()[0];
+                if (!cell.part || !cell.part.contains('body-cell')) {
+                    return;
+                }
+                const slot = cell.querySelector('slot');
+                const content = slot && slot.assignedElements()[0];
+                const button = content && content.querySelector('vaadin-button');
+                if (button) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    button.click();
+                }
+            }, true);
+            """;
 
     @ViewComponent
     private DataGrid<TimeEntry> entriesGrid;
@@ -102,14 +145,25 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
 
     private boolean openPermitted;
 
+    @Subscribe
+    public void onReady(final Fragment.ReadyEvent event) {
+        // Each time the grid is attached, as after a reload of the page, which builds its element again
+        entriesGrid.addAttachListener(attachEvent -> entriesGrid.getElement().executeJs(ENTER_PRESSES_CELL_BUTTON));
+    }
+
     @Override
     public void refresh() {
         List<TimeEntry> entries = dashboardSupport.loadRecentEntries(LIMIT);
         openPermitted = timeEntryEditorOpener.isOpenPermitted();
-        Objects.requireNonNull(entriesGrid.getColumnByKey("copy"))
-                .setVisible(timeEntryEditorOpener.isCreatePermitted());
+        // Removed rather than hidden: a hidden column keeps the browser from sizing the others to their content
+        // after a reload of the page. The user's permissions hold for the session, which the dashboard lives in
+        DataGridColumn<TimeEntry> copyColumn = entriesGrid.getColumnByKey(COPY_COLUMN);
+        if (copyColumn != null && !timeEntryEditorOpener.isCreatePermitted()) {
+            entriesGrid.removeColumn(copyColumn);
+        }
 
         entriesDc.setItems(entries);
+        entriesGrid.setClassName(EMPTY, entries.isEmpty());
         // The browser sizes the auto-width columns to the rows it shows first, while a date of another year, which
         // shows its year, or a wider status may come only with a later refresh
         entriesGrid.recalculateColumnWidths();
@@ -122,17 +176,12 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
 
     @Install(to = "entriesGrid.date", subject = "partNameGenerator")
     private String entriesGridDatePartNameGenerator(final TimeEntry entry) {
-        return NUMBER_CELL_PART;
+        return DATE_CELL_PART;
     }
 
     @Supply(to = "entriesGrid.task", subject = "renderer")
     private Renderer<TimeEntry> entriesGridTaskRenderer() {
         return new ComponentRenderer<>(this::createTaskCell);
-    }
-
-    @Install(to = "entriesGrid.task", subject = "partNameGenerator")
-    private String entriesGridTaskPartNameGenerator(final TimeEntry entry) {
-        return TASK_CELL_PART;
     }
 
     @Supply(to = "entriesGrid.spent", subject = "renderer")
@@ -143,7 +192,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
 
     @Install(to = "entriesGrid.spent", subject = "partNameGenerator")
     private String entriesGridSpentPartNameGenerator(final TimeEntry entry) {
-        return NUMBER_CELL_PART;
+        return TIME_CELL_PART;
     }
 
     @Supply(to = "entriesGrid.status", subject = "renderer")
@@ -171,6 +220,8 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
             JmixButton task = uiComponents.create(JmixButton.class);
             task.addClassNames("link-button", "task");
             task.setText(taskName);
+            // Enter on the cell presses it, so the Tab order skips it
+            task.setTabIndex(-1);
             task.addClickListener(event -> openEditor(entry));
             cell.add(task);
         } else {
@@ -196,6 +247,8 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
         copyButton.setAriaLabel(copyText);
         copyButton.setTooltipText(copyText);
         copyButton.addClassName("row-copy");
+        // Enter on the cell presses it, so the Tab order skips it
+        copyButton.setTabIndex(-1);
         copyButton.addClickListener(event -> copyToToday(entry));
         return copyButton;
     }

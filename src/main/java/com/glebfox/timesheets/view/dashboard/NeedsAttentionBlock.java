@@ -118,7 +118,8 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
 
         rows.setVisible(!all.isEmpty());
         emptyState.setVisible(all.isEmpty());
-        myEntriesLink.setVisible(isMyTimeEntriesPermitted());
+        // Left out of the header, not hidden in it: a hidden link would still keep its place beside the title
+        getContent().setHeaderSuffix(isMyTimeEntriesPermitted() ? myEntriesLink : null);
     }
 
     @Subscribe(id = "myEntriesLink", subject = "clickListener")

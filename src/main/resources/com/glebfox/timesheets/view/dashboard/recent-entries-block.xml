@@ -26,8 +26,7 @@
             <content>
                 <div id="body" classNames="dashboard-list-block">
                     <!-- A list that keeps its columns aligned: no header, no borders, every row shown. The task
-                         column grows up to a width the stylesheet sets, so the time, the status, and Copy to today
-                         stay beside the name rather than at the card's far end -->
+                         column takes the room the others leave, so the rows span the card -->
                     <dataGrid id="entriesGrid"
                               dataContainer="entriesDc"
                               classNames="dashboard-recent-entries"

@@ -338,6 +338,8 @@ public class MyTimeListsUiTest {
             JmixButton copy = (JmixButton) cell(block, "copy", rows(block).getFirst());
             assertThat(copy.getElement().getClassList()).contains("row-copy");
             assertThat(copy.getText()).isEmpty();
+            // Out of the Tab order: Enter on its cell presses it
+            assertThat(copy.getTabIndex()).isEqualTo(-1);
             assertThat(copy.getIcon()).isNotNull();
             assertThat(copy.getAriaLabel()).contains("Copy to today");
             assertThat(Tooltip.forComponent(copy).getText()).isEqualTo("Copy to today");
@@ -405,18 +407,45 @@ public class MyTimeListsUiTest {
     }
 
     @Test
-    void copyHiddenWithoutCreatePermissionTest() {
-        // May read time entries, and may not create them
+    void plainRowsWithoutEditorAndCreatePermissionTest() {
+        // May read time entries, and may neither create them nor open the editor or My time entries
         User approver = data.saveUser("approver", "Ap", "Prover");
         assignRole(approver, TimeEntryApprovalRole.CODE);
         data.saveEntryOf(task, approver, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
 
         systemAuthenticator.runWithUser(approver.getUsername(), () -> {
             RecentEntriesBlock block = block("recentEntriesBlock");
+            NeedsAttentionBlock attention = block("needsAttentionBlock");
             dashboard().refresh();
 
             assertThat(rows(block)).hasSize(1);
-            assertThat(Objects.requireNonNull(entriesGrid(block).getColumnByKey("copy")).isVisible()).isFalse();
+            // No Copy to today column at all, and the task is plain text, not a link
+            assertThat(entriesGrid(block).getColumnByKey("copy")).isNull();
+            Component name = cell(block, "task", rows(block).getFirst());
+            Component taskPart = name.getChildren().findFirst().orElseThrow();
+            assertThat(taskPart).isNotInstanceOf(JmixButton.class);
+            assertThat(text(taskPart)).isEqualTo(task.getName());
+            // The header keeps no place for the link it does not show
+            assertThat(attention.getContent().getHeaderSuffix()).isNull();
+        });
+    }
+
+    @Test
+    void savingEntryOpenedFromTaskRefreshesDashboardTest() {
+        data.saveEntryOf(task, user, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            RecentEntriesBlock block = block("recentEntriesBlock");
+            dashboard().refresh();
+            assertThat(text(cell(block, "spent", rows(block).getFirst()))).isEqualTo("1h");
+
+            ((JmixButton) withClass(cell(block, "task", rows(block).getFirst()), "task").getFirst()).click();
+            TimeEntryDetailView editor = UiTestUtils.getLastOpenedViewDialog();
+            Objects.requireNonNull(editor.getEditedEntity()).setSpentTime(WorkTime.ofHours(4));
+            UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
+
+            assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(editor);
+            assertThat(text(cell(block, "spent", rows(block).getFirst()))).isEqualTo("4h");
         });
     }
 
@@ -436,6 +465,7 @@ public class MyTimeListsUiTest {
             assertThat(recent.isVisible()).isTrue();
             assertThat(isEmptyStateShown(comingUp)).isTrue();
             assertThat(rows(recent)).isEmpty();
+            assertThat(entriesGrid(recent).getClassNames()).contains("empty");
             assertThat(entriesGrid(recent).getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
         });
     }
