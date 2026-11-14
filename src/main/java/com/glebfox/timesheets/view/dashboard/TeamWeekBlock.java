@@ -220,7 +220,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                         DashboardCharts.hours(person.plan())))
                 .max()
                 .orElse(0);
-        double offLength = Math.max(1, DashboardCharts.fitHoursAxis(DashboardCharts.xAxis(chart), longest));
+        double offLength = DashboardCharts.fitHoursAxis(DashboardCharts.xAxis(chart), longest);
 
         Set<String> names = new HashSet<>();
         List<MapDataItem> items = people.stream()

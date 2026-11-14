@@ -77,20 +77,6 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
      */
     static final int MAX_PROJECTS = 6;
 
-    /**
-     * The donut's size, in pixels: 8rem, as the stylesheet sets it on the donut.
-     */
-    private static final int DONUT_DIAMETER = 128;
-
-    /**
-     * The palette of the slices: the Charts add-on's default, ECharts 6's nine colors, the same in the light and the
-     * dark theme. It is set on the chart explicitly so the list's color marks match the slices.
-     */
-    private static final List<Color> PALETTE = List.of(
-            new Color("#5070dd"), new Color("#b6d634"), new Color("#505372"),
-            new Color("#ff994d"), new Color("#0ca8df"), new Color("#ffd10a"),
-            new Color("#fb628b"), new Color("#785db0"), new Color("#3fbe95"));
-
     @ViewComponent
     private Div projects;
     @ViewComponent
@@ -117,8 +103,7 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
 
     @Subscribe
     public void onReady(final ReadyEvent event) {
-        DashboardCharts.setUpDonutChart(chart, DONUT_DIAMETER);
-        chart.setColorPalette(PALETTE.toArray(Color[]::new));
+        DashboardCharts.setUpDonutChart(chart);
 
         // The list beside the donut names the slices, so the slices carry no labels
         PieSeries series = new PieSeries()
@@ -163,9 +148,16 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
                 .withCategoryField(PROJECT)
                 .withValueFields(HOURS, TOOLTIP)));
 
+        // A slice's color is its slot's, by size, and the list's marks repeat it
+        List<Color> colors = new ArrayList<>();
+        for (int i = 0; i < slices.size(); i++) {
+            colors.add(slices.get(i).other() ? DashboardColors.OTHER_PROJECT_SLICE : DashboardColors.ofProject(i));
+        }
+        chart.setColorPalette(colors.toArray(Color[]::new));
+
         projectList.removeAll();
         for (int i = 0; i < slices.size(); i++) {
-            projectList.add(createRow(slices.get(i), PALETTE.get(i % PALETTE.size())));
+            projectList.add(createRow(slices.get(i), colors.get(i)));
         }
     }
 
@@ -173,13 +165,13 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
         List<Slice> slices = new ArrayList<>();
         int shown = projectTimes.size() > MAX_PROJECTS ? MAX_PROJECTS - 1 : projectTimes.size();
         for (ProjectTime projectTime : projectTimes.subList(0, shown)) {
-            slices.add(new Slice(Objects.toString(projectTime.project().getName(), ""), projectTime.time()));
+            slices.add(new Slice(Objects.toString(projectTime.project().getName(), ""), projectTime.time(), false));
         }
         if (shown < projectTimes.size()) {
             WorkTime otherTime = projectTimes.subList(shown, projectTimes.size()).stream()
                     .map(ProjectTime::time)
                     .reduce(WorkTime.ZERO, WorkTime::plus);
-            slices.add(new Slice(messages.getMessage(getClass(), "timeByProjectBlock.other"), otherTime));
+            slices.add(new Slice(messages.getMessage(getClass(), "timeByProjectBlock.other"), otherTime, true));
         }
         return slices;
     }
@@ -221,6 +213,6 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
     /**
      * A slice of the donut: a project, or Other, and its time.
      */
-    private record Slice(String name, WorkTime time) {
+    private record Slice(String name, WorkTime time, boolean other) {
     }
 }

@@ -32,6 +32,7 @@ import com.glebfox.timesheets.entity.user.User;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import io.jmix.core.Messages;
@@ -194,6 +195,20 @@ public class ComponentSupport {
     public Badge createBadge(String text, BadgeStyle style) {
         Badge badge = new Badge(text);
         style.applyTo(badge);
+        return badge;
+    }
+
+    /**
+     * Creates the badge of a count of the current user's rejected time entries, as the main menu's My time entries
+     * item and the dashboard's Needs attention show it: the number, in the error color.
+     *
+     * @param count the number of rejected entries, more than zero
+     * @return a new badge
+     */
+    public Badge createRejectedCountBadge(long count) {
+        Badge badge = new Badge();
+        badge.setNumber(Math.toIntExact(count));
+        badge.addThemeVariants(BadgeVariant.ERROR);
         return badge;
     }
 

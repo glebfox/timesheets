@@ -20,6 +20,8 @@ import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import io.jmix.chartsflowui.kit.component.model.shared.Color;
 
+import java.util.List;
+
 /**
  * The colors that the dashboard's charts give the statuses of weeks and of time entries, and the marks they draw.
  * <p>
@@ -86,7 +88,41 @@ public final class DashboardColors {
      */
     public static final Color TRANSPARENT = new Color("transparent");
 
+    /**
+     * The colors of the projects in Time by project, a slot each by the project's size, the largest first, so the
+     * largest project is always blue; picked to tell apart and to sit well together. The ratios are against the
+     * light and the dark card's surface; against the dark card's solid surface the brown is 2.97:1.
+     */
+    private static final List<Color> PROJECTS = List.of(
+            // 4.19:1 light, 3.70:1 dark
+            new Color("#5070DD"),
+            // 3.18:1 light, 4.87:1 dark
+            new Color("#6C9900"),
+            // 4.62:1 light, 3.36:1 dark
+            new Color("#D80087"),
+            // 4.91:1 light, 3.16:1 dark
+            new Color("#A25A1B"),
+            // 3.48:1 light, 4.46:1 dark
+            new Color("#B46CAB"),
+            // 3.44:1 light, 4.52:1 dark
+            new Color("#F34800"));
+
+    /**
+     * The projects that Time by project counts together as Other: the neutral. 3.72:1 light, 4.17:1 dark.
+     */
+    public static final Color OTHER_PROJECT_SLICE = NEUTRAL;
+
     private DashboardColors() {
+    }
+
+    /**
+     * Returns the color of a project in Time by project by its place among the projects, the largest first.
+     *
+     * @param slot the project's place, from zero
+     * @return the color; the slots repeat beyond the last
+     */
+    public static Color ofProject(int slot) {
+        return PROJECTS.get(slot % PROJECTS.size());
     }
 
     /**

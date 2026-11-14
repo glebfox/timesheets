@@ -19,7 +19,6 @@ package com.glebfox.timesheets.view.dashboard;
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.util.Attention;
 import com.glebfox.timesheets.app.util.ComponentSupport;
-import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.ShortDay;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
@@ -46,7 +45,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -100,7 +98,7 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
         // The rows are made only for what the block shows
         List<Supplier<Component>> all = new ArrayList<>();
         if (attention.rejectedCount() > 0) {
-            all.add(() -> createRejectedRow(attention.rejectedCount()));
+            all.add(() -> createRejectedRow(attention.rejectedCount(), isMyTimeEntriesPermitted()));
         }
         for (ShortDay day : attention.shortDays()) {
             all.add(() -> createDayRow(day, calendarPermitted));
@@ -124,6 +122,15 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
 
     @Subscribe(id = "myEntriesLink", subject = "clickListener")
     public void onMyEntriesLinkClick(final ClickEvent<JmixButton> event) {
+        openMyTimeEntries();
+    }
+
+    /**
+     * Opens the current user's time entries, if the user may open them; otherwise does nothing. The list opens
+     * with its filter empty: it has no way to be opened filtered by status, and in tabbed mode its URL query
+     * parameters are not read.
+     */
+    public void openMyTimeEntries() {
         if (isMyTimeEntriesPermitted()) {
             viewBuilders.view(FragmentUtils.getHostView(getParentController()), MyTimeEntryListView.class).open();
         }
@@ -133,13 +140,19 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
         return DashboardAccess.isViewPermitted(accessManager, MyTimeEntryListView.ID);
     }
 
-    private Component createRejectedRow(long count) {
-        Locale locale = currentAuthentication.getLocale();
-        Div row = DashboardRows.row(uiComponents, DashboardRows.part(uiComponents, "name",
-                messages.formatMessage(getClass(), PluralForms.key("needsAttentionBlock.rejected", count, locale),
-                        locale, count)));
-        row.addClassName("rejected");
-        return row;
+    /**
+     * Creates the row of the rejected entries: their name, and their number in the badge the main menu's My time
+     * entries item shows, which opens the user's entries where the user may open them.
+     */
+    private Component createRejectedRow(long count, boolean clickable) {
+        Component[] parts = {
+                DashboardRows.part(uiComponents, "name", messages.getMessage(getClass(),
+                        "needsAttentionBlock.rejected")),
+                componentSupport.createRejectedCountBadge(count)
+        };
+        return clickable
+                ? DashboardRows.buttonRow(uiComponents, event -> openMyTimeEntries(), parts)
+                : DashboardRows.row(uiComponents, parts);
     }
 
     private Component createDayRow(ShortDay day, boolean clickable) {

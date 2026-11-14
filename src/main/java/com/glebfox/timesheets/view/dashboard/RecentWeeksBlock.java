@@ -154,7 +154,8 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
 
     /**
      * Returns the legend's items: the statuses of the weeks with time spent, in the order of {@link WeekStatus},
-     * and the plan, if any week has one.
+     * and the plan, if any week has one. A week with time spent always has workdays, and the weeks shown are never
+     * upcoming, so the bundles name only the other four statuses.
      */
     private List<DashboardLegend.Item> legendItems(LocalDate today) {
         Set<WeekStatus> shown = EnumSet.noneOf(WeekStatus.class);

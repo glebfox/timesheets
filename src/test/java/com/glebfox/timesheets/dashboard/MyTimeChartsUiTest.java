@@ -57,6 +57,8 @@ import com.vaadin.flow.component.internal.UIInternals;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
+import io.jmix.chartsflowui.kit.component.model.shared.Color;
+import io.jmix.chartsflowui.kit.component.model.Tooltip;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisLabel;
 import io.jmix.chartsflowui.kit.component.model.axis.YAxis;
 import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
@@ -238,15 +240,43 @@ public class MyTimeChartsUiTest {
         assertThat(axisEnd(12)).isEqualTo("15 by 5");
         assertThat(axisEnd(40)).isEqualTo("50 by 10");
         assertThat(axisEnd(41)).isEqualTo("50 by 10");
-        assertThat(axisEnd(51)).isEqualTo("60 by 20");
-        // Nothing above zero: the axis is left to ECharts
-        assertThat(axisEnd(0)).isEqualTo("null by null");
+        // A fraction of an hour, and a value a hair below a step: at least half a step stays above it
+        assertThat(axisEnd(0.25)).isEqualTo("1 by 1");
+        assertThat(axisEnd(9.98)).isEqualTo("12 by 2");
+        assertThat(axisEnd(51)).isEqualTo("80 by 20");
+        // Nothing above zero: an hour, set explicitly, so an end from earlier data does not stay
+        assertThat(axisEnd(0)).isEqualTo("1 by 1");
     }
 
     private static String axisEnd(double largest) {
         YAxis axis = new YAxis();
         DashboardCharts.fitHoursAxis(axis, largest);
         return axis.getMax() + " by " + axis.getInterval();
+    }
+
+    @Test
+    void recentWeeksLegendKeepsStatusOrderTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            LocalDate previousWeekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()))
+                    .minusWeeks(1);
+            LocalDate previousMonday = previousWeekStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+            // A short week before an over week: the legend still lists Over first, as WeekStatus orders them
+            data.saveEntryOf(task, user, previousMonday.minusWeeks(2), TimeEntryStatus.NEW, WorkTime.ofHours(4));
+            for (int day = 0; day < 5; day++) {
+                data.saveEntryOf(task, user, previousMonday.plusDays(day), TimeEntryStatus.NEW, WorkTime.ofHours(9));
+            }
+
+            RecentWeeksBlock block = block("recentWeeksBlock");
+            dashboard().refresh();
+
+            assertThat(legend(block)).containsExactly(
+                    "bar:" + messages.getMessage(RecentWeeksBlock.class, "recentWeeksBlock.legend.OVER"),
+                    "bar:" + messages.getMessage(RecentWeeksBlock.class, "recentWeeksBlock.legend.SHORT"),
+                    "plan:" + messages.getMessage(RecentWeeksBlock.class, "chart.legend.plan"));
+            // Each mark in its series' color
+            assertThat(legendColors(block)).containsExactly(DashboardColors.of(WeekStatus.OVER).getValue(),
+                    DashboardColors.of(WeekStatus.SHORT).getValue(), DashboardColors.PLAN.getValue());
+        });
     }
 
     @Test
@@ -319,6 +349,31 @@ public class MyTimeChartsUiTest {
 
             assertThat(isShown(block, chart(block))).isTrue();
             assertThat(isShown(block, FragmentUtils.getComponent(block, "emptyState"))).isFalse();
+
+            // A slice's color is its slot's by size, Other's the neutral, and the list's marks repeat them
+            List<Color> expected = List.of(DashboardColors.ofProject(0), DashboardColors.ofProject(1),
+                    DashboardColors.ofProject(2), DashboardColors.ofProject(3), DashboardColors.ofProject(4),
+                    DashboardColors.OTHER_PROJECT_SLICE);
+            assertThat(chart(block).getColorPalette()).containsExactlyElementsOf(expected);
+            assertThat(FragmentUtils.getComponent(block, "projectList").getChildren()
+                    .map(row -> row.getChildren().findFirst().orElseThrow().getElement().getStyle()
+                            .get("background-color"))
+                    .toList())
+                    .containsExactlyElementsOf(expected.stream().map(Color::getValue).toList());
+        });
+    }
+
+    @Test
+    void timeByProjectTooltipStandsUnderTheDonutTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            TimeByProjectBlock block = block("timeByProjectBlock");
+            dashboard().refresh();
+
+            // Its top left corner at the chart's bottom left one, whatever the donut's size, and a gap below it
+            Tooltip tooltip = Objects.requireNonNull(chart(block).getTooltip());
+            assertThat(Objects.requireNonNull(tooltip.getPosition()).getCoordinates()).containsExactly("0", "100%");
+            assertThat(tooltip.getExtraCssText()).contains("margin-top");
+            assertThat(tooltip.getConfine()).isNotEqualTo(Boolean.TRUE);
         });
     }
 
@@ -451,6 +506,16 @@ public class MyTimeChartsUiTest {
 
     private static Chart chart(Fragment<?> block) {
         return (Chart) FragmentUtils.getComponent(block, "chart");
+    }
+
+    /**
+     * Returns the colors of the marks of the block's legend, in their order.
+     */
+    static List<String> legendColors(Fragment<?> block) {
+        return FragmentUtils.getComponent(block, "legend").getChildren()
+                .map(item -> item.getChildren().findFirst().orElseThrow().getElement().getStyle()
+                        .get("--dashboard-mark-color"))
+                .toList();
     }
 
     /**

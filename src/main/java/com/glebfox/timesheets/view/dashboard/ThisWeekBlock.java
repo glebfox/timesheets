@@ -164,7 +164,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                         DashboardCharts.hours(day.total().plan())))
                 .max()
                 .orElse(0);
-        double offHeight = Math.max(1, DashboardCharts.fitHoursAxis(DashboardCharts.yAxis(chart), largest));
+        double offHeight = DashboardCharts.fitHoursAxis(DashboardCharts.yAxis(chart), largest);
         List<MapDataItem> items = days.stream()
                 .map(day -> new MapDataItem()
                         .add(DAY, formatDayLabel(day, today))
@@ -203,7 +203,9 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 ? messages.formatMessage(getClass(), "thisWeekBlock.dayLabel", weekday, day.date().getDayOfMonth())
                 : messages.formatMessage(getClass(), "thisWeekBlock.offDayLabel", weekday,
                         day.date().getDayOfMonth(), offReason);
-        // ECharts' rich text styles a line at a time
+        // ECharts' rich text styles a line at a time. A brace or a bar in a holiday's or an absence's name, such as
+        // "{a|b}", can only change how the label looks: ECharts draws the label as text on its canvas, so nothing in
+        // it is ever run or parsed as HTML
         return day.date().equals(today)
                 ? Arrays.stream(label.split("\n", -1))
                         .map(line -> "{" + TODAY_STYLE + "|" + line + "}")

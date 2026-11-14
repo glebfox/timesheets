@@ -286,7 +286,8 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
 }
 
 /* A chart with its legend under it: the two share the chart's height, so the legend, on one line or two, takes
-   its room from the chart and never makes the card taller than the cards beside it */
+   its room from the chart and never makes the card taller than the cards beside it. Team this week, whose height
+   follows its rows, is the exception below */
 .dashboard-chart-area {
     flex: 1 0 auto;
     display: flex;
@@ -382,6 +383,12 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
     font-family: var(--aura-font-family) !important;
     font-size: var(--aura-font-size-s) !important;
     line-height: var(--aura-line-height-s) !important;
+    /* A long name wraps rather than running past the window: the tooltip is never wider than the window less the
+       dashboard's padding on both sides, which a tooltip on the content edge then clears */
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    max-width: min(20rem, calc(100vw - 2 * var(--vaadin-padding-l)));
+    box-sizing: border-box;
 }
 
 .dashboard-chart-tooltip b {
@@ -569,8 +576,11 @@ vaadin-button.dashboard-list-row::part(label) {
     font-variant-numeric: tabular-nums;
 }
 
-.dashboard-list-row.rejected > .name {
-    color: var(--ts-danger-color);
+/* A count badge, such as the rejected entries', keeps its size at the row's end and takes no more height than a line
+   of text, so its row is as tall as the others */
+.dashboard-list-row > vaadin-badge {
+    flex: none;
+    margin-block: calc(var(--vaadin-padding-xs) / -2);
 }
 
 /* A name with a second line under it, such as a kind of day off */
@@ -816,12 +826,19 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     container: team-week / inline-size;
 }
 
+/* The rows are the chart's own, so the legend adds to its height rather than taking from it: the block spans its
+   row, and its height follows the team anyway */
 .dashboard-team-chart-area {
+    height: auto;
+}
+
+.dashboard-team-chart-area > .dashboard-chart {
+    flex: 1 0 auto;
     height: calc(var(--dashboard-team-size, 1) * 2rem + 2.5rem);
 }
 
 @container team-week (width < 600px) {
-    .dashboard-team-chart-area {
+    .dashboard-team-chart-area > .dashboard-chart {
         height: calc(var(--dashboard-team-size, 1) * 3rem + 2.5rem);
     }
 }

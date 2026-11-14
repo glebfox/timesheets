@@ -74,9 +74,12 @@ public final class DashboardCharts {
     static final String BAR_CATEGORY_GAP = "20%";
 
     /**
-     * The gap between the donut and its tooltip under it, in pixels.
+     * Where the donut's tooltip stands: its top left corner at the chart's bottom left one, and a gap below the
+     * donut, so the place does not depend on the donut's size.
      */
-    private static final int DONUT_TOOLTIP_GAP = 8;
+    static final String DONUT_TOOLTIP_LEFT = "0";
+    static final String DONUT_TOOLTIP_TOP = "100%";
+    static final String DONUT_TOOLTIP_GAP = "margin-top: var(--vaadin-gap-s);";
 
     /**
      * The most steps the hours axis is divided into, its top step above the largest value included.
@@ -123,17 +126,18 @@ public final class DashboardCharts {
 
     /**
      * Sets up a donut chart: transparent over the card, with a tooltip on the slice under the pointer. The tooltip
-     * stands at a fixed place under the donut, its left edge on the donut's, so it never covers the total in the
-     * donut's hole or the list of slices beside the donut.
+     * stands at a fixed place under the donut, its left edge on the donut's and a small gap below it, so it never
+     * covers the total in the donut's hole or the list of slices beside the donut.
      *
-     * @param chart    the chart
-     * @param diameter the donut's size, in pixels, as the stylesheet sets it
+     * @param chart the chart
      */
-    public static void setUpDonutChart(Chart chart, int diameter) {
+    public static void setUpDonutChart(Chart chart) {
         chart.withBackgroundColor(DashboardColors.TRANSPARENT)
                 .withTooltip(new Tooltip()
                         .withTrigger(AbstractTooltip.Trigger.ITEM)
-                        .withPosition("0", String.valueOf(diameter + DONUT_TOOLTIP_GAP))
+                        .withPosition(DONUT_TOOLTIP_LEFT, DONUT_TOOLTIP_TOP)
+                        // ECharts adds the text to the tooltip's inline style; the gap is a theme token
+                        .withExtraCssText(DONUT_TOOLTIP_GAP)
                         .withFormatterFunction(ITEM_TOOLTIP_FORMATTER));
         chart.setNativeJson(nativeJson(JsonNodeFactory.instance.objectNode()));
     }
@@ -240,23 +244,21 @@ public final class DashboardCharts {
     }
 
     /**
-     * Sets the hours axis to end a step above the largest value it shows, so the tallest bar or plan mark never
-     * reaches the top grid line, in steps of 1, 2, or 5 hours times a power of ten; without a value above zero, the
-     * axis is left to ECharts.
+     * Sets the hours axis to end above the largest value it shows by at least half a step, so the tallest bar or plan
+     * mark never reaches the top grid line, in steps of 1, 2, or 5 hours times a power of ten. Without a value above
+     * zero the axis shows one hour: an explicit end every time, since the add-on merges new options into the chart's
+     * old ones, and an end left out would keep the one before.
      *
      * @param axis    the hours axis
      * @param largest the largest value the axis shows, in hours
-     * @return the axis' top, in hours, or the largest value if it is not above zero
+     * @return the axis' end, in hours
      */
-    public static double fitHoursAxis(AbstractAxis<?> axis, double largest) {
-        if (largest <= 0) {
-            axis.setMax(null);
-            axis.setInterval(null);
-            return largest;
-        }
-
-        int step = hoursAxisStep(largest);
+    public static int fitHoursAxis(AbstractAxis<?> axis, double largest) {
+        int step = largest > 0 ? hoursAxisStep(largest) : 1;
         int top = ((int) Math.floor(largest / step) + 1) * step;
+        if (top - largest < step / 2.0) {
+            top += step;
+        }
         axis.setMax(String.valueOf(top));
         axis.setInterval(step);
         return top;

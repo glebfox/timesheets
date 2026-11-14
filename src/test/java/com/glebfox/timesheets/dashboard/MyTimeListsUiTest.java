@@ -42,6 +42,7 @@ import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
@@ -149,11 +150,22 @@ public class MyTimeListsUiTest {
 
             List<Component> rows = withClass(block, "dashboard-list-row");
             assertThat(rows).hasSize(5);
-            assertThat(text(rows.getFirst())).contains("1 rejected entry");
+            // The rejected entries first, their number only in the menu's badge, a row that opens them
+            assertThat(text(rows.getFirst())).isEqualTo("Rejected entries");
+            assertThat(rows.getFirst()).isInstanceOf(JmixButton.class);
+            Badge badge = (Badge) rows.getFirst().getChildren()
+                    .filter(Badge.class::isInstance)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(badge.getNumber()).isEqualTo(1);
+            assertThat(badge.getThemeNames()).contains("error");
             List<Component> more = withClass(block, "dashboard-list-more");
             assertThat(more).hasSize(1);
             assertThat(text(more.getFirst())).contains(String.valueOf(expectedMore));
             assertThat(isEmptyStateShown(block)).isFalse();
+
+            ((JmixButton) rows.getFirst()).click();
+            assertThat(UiTestUtils.<View<?>>getCurrentView()).isInstanceOf(MyTimeEntryListView.class);
         });
     }
 
