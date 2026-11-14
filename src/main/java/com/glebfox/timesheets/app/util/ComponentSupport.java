@@ -307,7 +307,8 @@ public class ComponentSupport {
     /**
      * Creates a {@link Renderer} for rendering items based on a specified {@link Task} provider.
      * The renderer generates a visual representation that includes the task's name prominently
-     * and its associated project below in a smaller, secondary style.
+     * and its associated project below in a smaller, secondary style. Each line ends with an ellipsis
+     * where it does not fit.
      *
      * @param <ITEM>        the type of the items being rendered
      * @param valueProvider a function that extracts {@link Task} instances from the given items
@@ -316,7 +317,7 @@ public class ComponentSupport {
      */
     public <ITEM> Renderer<ITEM> createTaskWithProjectRenderer(Function<ITEM, Task> valueProvider) {
         String template = "${item.name}" +
-                "<div class=\"secondary-text\">" +
+                "<div class=\"secondary-text truncate\">" +
                 "  ${item.project}" +
                 "</div>";
 
