@@ -42,7 +42,9 @@ import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
@@ -273,12 +275,12 @@ public class MyTimeListsUiTest {
             assertThat(text(cell(block, "spent", rows.getFirst()))).isEqualTo("3h");
             assertThat(text(cell(block, "spent", rows.getLast()))).isEqualTo("1h");
 
-            // The name is the link that opens the entry, the cell's only element, so Space on the cell presses it
-            Component link = cell(block, "task", rows.getFirst());
-            assertThat(link).isInstanceOf(JmixButton.class);
+            // The task is the link that opens the entry, on a click of the pointer
+            Component name = cell(block, "task", rows.getFirst());
+            JmixButton link = (JmixButton) name.getChildren().findFirst().orElseThrow();
             assertThat(link.getElement().getClassList()).contains("link-button");
-            assertThat(((JmixButton) link).getTabIndex()).isEqualTo(-1);
-            ((JmixButton) link).click();
+            assertThat(link.getTabIndex()).isEqualTo(-1);
+            clickWithCount(link, 1);
 
             View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
             assertThat(dialog).isInstanceOf(TimeEntryDetailView.class);
@@ -286,6 +288,33 @@ public class MyTimeListsUiTest {
             assertThat(edited.getId()).isEqualTo(latest.getId());
             assertThat(edited.getId()).isNotEqualTo(older.getId());
             ((TimeEntryDetailView) dialog).closeWithDiscard();
+        });
+    }
+
+    @Test
+    void recentEntryOpensOnceOnlyFromLinkOrKeyboardTest() {
+        data.saveEntryOf(task, user, today.minusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            RecentEntriesBlock block = block("recentEntriesBlock");
+            dashboard().refresh();
+            Component name = cell(block, "task", rows(block).getFirst());
+            JmixButton link = (JmixButton) name.getChildren().findFirst().orElseThrow();
+            int dialogs = UiTestUtils.getOpenedViewDialogs().size();
+
+            // A click of the pointer on the project or the cell's empty room does nothing
+            clickWithCount(name, 1);
+            assertThat(UiTestUtils.getOpenedViewDialogs()).hasSize(dialogs);
+
+            // The click that reaches the link's cell from no pointer, as Space on the cell or Enter on the link, opens
+            // the entry, once; a click from no pointer on the link itself leaves the opening to the cell
+            clickWithCount(link, 0);
+            assertThat(UiTestUtils.getOpenedViewDialogs()).hasSize(dialogs);
+            clickWithCount(name, 0);
+            assertThat(UiTestUtils.getOpenedViewDialogs()).hasSize(dialogs + 1);
+            View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
+            assertThat(dialog).isInstanceOf(TimeEntryDetailView.class);
+            ((TimeEntryDetailView) Objects.requireNonNull(dialog)).closeWithDiscard();
         });
     }
 
@@ -441,7 +470,7 @@ public class MyTimeListsUiTest {
             dashboard().refresh();
             assertThat(text(cell(block, "spent", rows(block).getFirst()))).isEqualTo("1h");
 
-            ((JmixButton) cell(block, "task", rows(block).getFirst())).click();
+            clickWithCount(cell(block, "task", rows(block).getFirst()), 0);
             TimeEntryDetailView editor = UiTestUtils.getLastOpenedViewDialog();
             Objects.requireNonNull(editor.getEditedEntity()).setSpentTime(WorkTime.ofHours(4));
             UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
@@ -503,6 +532,15 @@ public class MyTimeListsUiTest {
         Renderer<TimeEntry> renderer = Objects.requireNonNull(entriesGrid(block).getColumnByKey(columnKey))
                 .getRenderer();
         return ((ComponentRenderer<? extends Component, TimeEntry>) renderer).createComponent(row);
+    }
+
+    /**
+     * Fires a click on the component as the browser sends it, with the number of clicks of the pointer, 0 for a click
+     * from no pointer, such as the one the grid sends on Space.
+     */
+    private static <C extends Component> void clickWithCount(C component, int clickCount) {
+        ComponentUtil.fireEvent(component,
+                new ClickEvent<>(component, true, 0, 0, 0, 0, clickCount, 0, false, false, false, false));
     }
 
     private static Stream<Component> descendants(Component root) {

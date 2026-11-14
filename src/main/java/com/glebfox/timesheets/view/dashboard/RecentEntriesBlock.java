@@ -25,6 +25,7 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
@@ -50,13 +51,13 @@ import java.util.List;
 /**
  * The Recent entries block of the dashboard: the current user's {@link #LIMIT} latest entries, in a grid without a
  * header, a row each, with its date, its task and then its project, time spent, status, and Copy to today. A click on
- * the task and its project opens the entry in the time entry editor, in a dialog, if the user may open the editor;
- * otherwise they are plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new
- * entry copied from it and dated today, if the user may create time entries; otherwise the grid has no such column.
- * After a save in either, the dashboard reloads. No entries shows the grid's empty state.
+ * the task opens the entry in the time entry editor, in a dialog, if the user may open the editor; otherwise it is
+ * plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new entry copied from
+ * it and dated today, if the user may create time entries; otherwise the grid has no such column. After a save in
+ * either, the dashboard reloads. No entries shows the grid's empty state.
  * <p>
- * Each button is the first element of its cell, so Space on the cell presses it, as the grid presses a cell's first
- * element; the buttons are out of the Tab order, so Tab enters the grid once and leaves it with the next.
+ * Space on a cell clicks its first element, as the grid does, which opens the entry or copies it; the buttons are out
+ * of the Tab order, so Tab enters the grid once and leaves it with the next.
  */
 @FragmentDescriptor("recent-entries-block.xml")
 public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardBlock {
@@ -171,32 +172,44 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     /**
      * Creates the task cell: the task, then its project, quieter. On a wide card both stand on one line, the project
      * after a separator; on a narrow one the project goes on a line of its own under the task. A name too long is cut
-     * from its end, the project first, so the task stays. If the user may open the editor, the cell is a link that
-     * opens the entry and fills the cell, the first and only element of the cell, which Space on the cell presses.
+     * from its end, the project first, so the task stays.
+     * <p>
+     * If the user may open the editor, the task is a link that opens the entry. The cell's first element, which Space
+     * on the cell clicks, is the cell itself, as a component has one root; so the cell opens the entry on a click
+     * that comes from no pointer, as that one, or Enter on the focused link, both of which reach the cell, and the
+     * link on a pointer's click, so a click on the project or the cell's empty room does nothing, and no click opens
+     * the entry twice.
      */
     private Component createTaskCell(TimeEntry entry) {
-        Component[] parts = {
-                DashboardRows.part(uiComponents, "task", entry.getTask().getName()),
-                DashboardRows.part(uiComponents, "separator", "·"),
-                DashboardRows.part(uiComponents, "project", metadataTools.format(entry.getTask().getProject()))
-        };
-        parts[1].getElement().setAttribute("aria-hidden", "true");
-
-        if (openPermitted) {
-            JmixButton link = uiComponents.create(JmixButton.class);
-            link.addClassNames("link-button", "recent-task");
-            for (Component part : parts) {
-                link.getElement().appendChild(part.getElement());
-            }
-            // Space on the cell presses it, so the Tab order skips it
-            link.setTabIndex(-1);
-            link.addClickListener(event -> openEditor(entry));
-            return link;
-        }
-
         Div cell = uiComponents.create(Div.class);
         cell.addClassName("recent-task");
-        cell.add(parts);
+
+        String taskName = entry.getTask().getName();
+        if (openPermitted) {
+            JmixButton link = uiComponents.create(JmixButton.class);
+            link.addClassNames("link-button", "task");
+            link.setText(taskName);
+            // Space on the cell presses it, so the Tab order skips it
+            link.setTabIndex(-1);
+            link.addClickListener(event -> {
+                if (event.getClickCount() > 0) {
+                    openEditor(entry);
+                }
+            });
+            cell.add(link);
+            cell.addClickListener(event -> {
+                if (event.getClickCount() == 0) {
+                    openEditor(entry);
+                }
+            });
+        } else {
+            cell.add(DashboardRows.part(uiComponents, "task", taskName));
+        }
+
+        Span separator = DashboardRows.part(uiComponents, "separator", "·");
+        separator.getElement().setAttribute("aria-hidden", "true");
+        cell.add(separator, DashboardRows.part(uiComponents, "project",
+                metadataTools.format(entry.getTask().getProject())));
         return cell;
     }
 
