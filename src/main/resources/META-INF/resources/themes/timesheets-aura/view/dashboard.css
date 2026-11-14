@@ -555,34 +555,23 @@ vaadin-grid.dashboard-recent-entries::part(time-cell) {
 }
 
 /* The name, on one line, is the task, then its project after a separator, quieter: a name too long is cut from its
-   end, the project first, so the task stays. Where it opens the entry, the name is a link that fills its cell, the
-   cell's only element, from the top of the row to its bottom, so the row is its target, and its text stands where
-   the cell's text would; the link's padding takes the row's air */
-vaadin-grid.dashboard-recent-entries div.recent-task,
-vaadin-grid.dashboard-recent-entries vaadin-button.recent-task::part(label) {
+   end, the project first, so the task stays. Where it opens the entry, the task is a link as wide as its text, which
+   starts where its cell starts, and whose padding and border take no room in the row */
+vaadin-grid.dashboard-recent-entries .recent-task {
     display: flex;
-    flex: 1 1 auto;
     align-items: baseline;
     column-gap: var(--vaadin-gap-s);
     min-width: 0;
+}
+
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task) {
     overflow: visible;
 }
 
-vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> vaadin-button.recent-task) {
-    display: flex;
-    align-items: stretch;
-    padding-block: 0;
-    overflow: visible;
-}
-
-vaadin-grid.dashboard-recent-entries vaadin-button.recent-task {
-    flex: 1 1 auto;
-    justify-content: flex-start;
-    min-width: 0;
-    height: auto;
-    margin-inline-start: calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
-    padding-block: calc(var(--dashboard-row-padding) - var(--vaadin-button-border-width, 1px));
-    text-align: start;
+vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+    margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
+    margin-inline-start: calc(var(--dashboard-cell-start) * -1);
+    max-width: calc(100% + var(--dashboard-cell-start));
 }
 
 vaadin-grid.dashboard-recent-entries .recent-task > .task,
@@ -632,21 +621,39 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     --vaadin-icon-visual-size: 100%;
 }
 
-/* Copy to today's own focus ring, while the keyboard works in its cell, stands inside its box, so the grid, which
-   cuts what reaches past it, keeps it whole on the first and the last row and at the row's end */
-vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
-    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
-}
-
 /* On a touch screen the task's link and Copy to today keep a target a finger can hit, and so every row with them is
-   at least as tall as one; the link, which fills its row, never reaches into another */
+   at least as tall as one. The link stands in its row from top to bottom, never reaching into another: on one line
+   in the middle of the row, as the other cells' text; on two lines its text keeps its place on the first, and the
+   link reaches down over the project under it */
 @media (pointer: coarse) {
     vaadin-grid.dashboard-recent-entries {
         --dashboard-copy-height: 44px;
     }
 
-    vaadin-grid.dashboard-recent-entries vaadin-button.recent-task {
+    vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task > vaadin-button.task) {
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
         min-height: 44px;
+        padding-block: 0;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+        min-height: 44px;
+        margin-block: 0;
+    }
+
+    @container dashboard (width < 600px) {
+        vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task > vaadin-button.task) {
+            align-items: flex-start;
+            padding-block-end: var(--dashboard-row-padding);
+        }
+
+        vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+            align-items: flex-start;
+            padding-block-start: calc(var(--dashboard-row-padding) - var(--vaadin-button-border-width, 1px));
+            margin-block-end: calc(var(--dashboard-row-padding) + var(--aura-line-height-s) - 44px);
+        }
     }
 }
 
@@ -657,8 +664,7 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
         --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
     }
 
-    vaadin-grid.dashboard-recent-entries div.recent-task,
-    vaadin-grid.dashboard-recent-entries vaadin-button.recent-task::part(label) {
+    vaadin-grid.dashboard-recent-entries .recent-task {
         flex-direction: column;
         align-items: flex-start;
     }
