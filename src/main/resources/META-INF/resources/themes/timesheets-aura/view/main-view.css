@@ -69,6 +69,17 @@ html:not([theme='dark']) .jmix-main-view-application-logo-dark {
     scrollbar-width: thin;
 }
 
+/* The list menu renders a separator as a bare <hr> and styles none of it. */
+.jmix-main-view-navigation .jmix-list-menu hr {
+    display: block;
+    align-self: stretch;
+    height: 1px;
+    border: 0;
+    padding: 0;
+    margin: var(--vaadin-padding-s) calc(var(--vaadin-radius-m) / 2);
+    background-color: var(--vaadin-border-color);
+}
+
 .jmix-main-view-footer {
     display: flex;
     padding: var(--vaadin-padding-block-container) var(--vaadin-padding-inline-container);
