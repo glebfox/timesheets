@@ -42,10 +42,10 @@ import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
 import com.glebfox.timesheets.view.main.MainView;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
-import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
@@ -159,6 +159,10 @@ public class MyTimeListsUiTest {
                     .orElseThrow();
             assertThat(badge.getNumber()).isEqualTo(1);
             assertThat(badge.getThemeNames()).contains("error");
+            // The Rejected status' icon before the name, the row colored as an error
+            assertThat(rows.getFirst().getChildren().findFirst().orElseThrow().getElement().getAttribute("icon"))
+                    .isEqualTo("gravity-ui:circle-exclamation");
+            assertThat(rows.getFirst().getElement().getClassList()).contains("rejected");
             List<Component> more = withClass(block, "dashboard-list-more");
             assertThat(more).hasSize(1);
             assertThat(text(more.getFirst())).contains(String.valueOf(expectedMore));

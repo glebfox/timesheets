@@ -91,7 +91,7 @@ public final class DashboardColors {
     /**
      * The colors of the projects in Time by project, a slot each by the project's size, the largest first, so the
      * largest project is always blue; picked to tell apart and to sit well together. The ratios are against the
-     * light and the dark card's surface; against the dark card's solid surface the brown is 2.97:1.
+     * light and the dark card's surface, and each stays at 3:1 or more against the extremes too.
      */
     private static final List<Color> PROJECTS = List.of(
             // 4.19:1 light, 3.70:1 dark
@@ -100,8 +100,8 @@ public final class DashboardColors {
             new Color("#6C9900"),
             // 4.62:1 light, 3.36:1 dark
             new Color("#D80087"),
-            // 4.91:1 light, 3.16:1 dark
-            new Color("#A25A1B"),
+            // 4.73:1 light, 3.28:1 dark; 3.09:1 against the dark card's solid surface
+            new Color("#A65C1C"),
             // 3.48:1 light, 4.46:1 dark
             new Color("#B46CAB"),
             // 3.44:1 light, 4.52:1 dark

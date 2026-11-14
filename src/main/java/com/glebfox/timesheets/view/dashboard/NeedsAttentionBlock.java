@@ -22,11 +22,13 @@ import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.ShortDay;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
+import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
@@ -60,6 +62,11 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
      * How many rows the block shows; the rest of what needs attention is counted in "and N more".
      */
     static final int MAX_ROWS = 5;
+
+    /**
+     * The class of the rejected entries' row, which the stylesheet colors as an error.
+     */
+    static final String REJECTED = "rejected";
 
     @ViewComponent
     private Div rows;
@@ -141,18 +148,24 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     }
 
     /**
-     * Creates the row of the rejected entries: their name, and their number in the badge the main menu's My time
-     * entries item shows, which opens the user's entries where the user may open them.
+     * Creates the row of the rejected entries: the icon of the Rejected status and their name, in the error color,
+     * and their number in the badge the main menu's My time entries item shows; it opens the user's entries where
+     * the user may open them.
      */
     private Component createRejectedRow(long count, boolean clickable) {
+        Icon icon = GravityUiIcon.CIRCLE_EXCLAMATION.create();
+        icon.addClassName("icon");
         Component[] parts = {
+                icon,
                 DashboardRows.part(uiComponents, "name", messages.getMessage(getClass(),
                         "needsAttentionBlock.rejected")),
                 componentSupport.createRejectedCountBadge(count)
         };
-        return clickable
+        Component row = clickable
                 ? DashboardRows.buttonRow(uiComponents, event -> openMyTimeEntries(), parts)
                 : DashboardRows.row(uiComponents, parts);
+        row.getElement().getClassList().add(REJECTED);
+        return row;
     }
 
     private Component createDayRow(ShortDay day, boolean clickable) {

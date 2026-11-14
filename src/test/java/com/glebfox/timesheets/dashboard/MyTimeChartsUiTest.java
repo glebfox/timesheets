@@ -57,11 +57,11 @@ import com.vaadin.flow.component.internal.UIInternals;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
-import io.jmix.chartsflowui.kit.component.model.shared.Color;
 import io.jmix.chartsflowui.kit.component.model.Tooltip;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisLabel;
 import io.jmix.chartsflowui.kit.component.model.axis.YAxis;
 import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
+import io.jmix.chartsflowui.kit.component.model.shared.Color;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
 import io.jmix.core.Messages;
@@ -233,7 +233,7 @@ public class MyTimeChartsUiTest {
     }
 
     @Test
-    void hoursAxisEndsAStepAboveTheLargestValueTest() {
+    void hoursAxisEndsAtLeastHalfAStepAboveTheLargestValueTest() {
         assertThat(axisEnd(1)).isEqualTo("2 by 1");
         assertThat(axisEnd(8)).isEqualTo("10 by 2");
         assertThat(axisEnd(9)).isEqualTo("10 by 2");
