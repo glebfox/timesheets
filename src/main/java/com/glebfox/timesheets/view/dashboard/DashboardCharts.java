@@ -20,8 +20,10 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.kit.component.model.Grid;
 import io.jmix.chartsflowui.kit.component.model.Tooltip;
+import io.jmix.chartsflowui.kit.component.model.axis.AbstractAxis;
 import io.jmix.chartsflowui.kit.component.model.axis.AbstractCartesianAxis;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisLabel;
+import io.jmix.chartsflowui.kit.component.model.axis.AxisLine;
 import io.jmix.chartsflowui.kit.component.model.axis.AxisType;
 import io.jmix.chartsflowui.kit.component.model.axis.XAxis;
 import io.jmix.chartsflowui.kit.component.model.axis.YAxis;
@@ -30,17 +32,21 @@ import io.jmix.chartsflowui.kit.component.model.series.Encode;
 import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
 import io.jmix.chartsflowui.kit.component.model.shared.AbstractTooltip;
 import io.jmix.chartsflowui.kit.component.model.shared.Decal;
+import io.jmix.chartsflowui.kit.component.model.shared.LineStyle;
 import io.jmix.chartsflowui.kit.component.model.shared.Overflow;
 import org.springframework.web.util.HtmlUtils;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * The options that the dashboard's bar charts share: a category per bar on the x axis, hours on the y axis, a
  * tooltip that shows the text each row carries, and the plan marked as a dashed outline over the bar of time
- * spent.
+ * spent. The axes' labels and the grid's lines take the colors of ECharts' theme, which the Charts add-on switches
+ * between light and dark with the application's theme; only the axis line has a color of the dashboard's own,
+ * {@link DashboardColors#AXIS_LINE}.
  * <p>
  * Each row of a chart's data set carries its tooltip, ready-made in HTML, in the {@link #TOOLTIP} field: the
  * text and its formats come from the server, in the user's locale, so the browser only shows it.
@@ -66,6 +72,16 @@ public final class DashboardCharts {
      * The gap between the bars of neighboring categories, as a share of a category's room: ECharts' default.
      */
     static final String BAR_CATEGORY_GAP = "20%";
+
+    /**
+     * The gap between the donut and its tooltip under it, in pixels.
+     */
+    private static final int DONUT_TOOLTIP_GAP = 8;
+
+    /**
+     * The most steps the hours axis is divided into, its top step above the largest value included.
+     */
+    private static final int HOURS_AXIS_STEPS = 5;
 
     // The options are parsed in the browser into a function: arguments up to the first ")", the body from the first
     // "{" to the last "}"
@@ -106,15 +122,18 @@ public final class DashboardCharts {
     }
 
     /**
-     * Sets up a donut chart: transparent over the card, with a tooltip on the slice under the pointer.
+     * Sets up a donut chart: transparent over the card, with a tooltip on the slice under the pointer. The tooltip
+     * stands at a fixed place under the donut, its left edge on the donut's, so it never covers the total in the
+     * donut's hole or the list of slices beside the donut.
      *
-     * @param chart the chart
+     * @param chart    the chart
+     * @param diameter the donut's size, in pixels, as the stylesheet sets it
      */
-    public static void setUpDonutChart(Chart chart) {
+    public static void setUpDonutChart(Chart chart, int diameter) {
         chart.withBackgroundColor(DashboardColors.TRANSPARENT)
                 .withTooltip(new Tooltip()
                         .withTrigger(AbstractTooltip.Trigger.ITEM)
-                        .withConfine(true)
+                        .withPosition("0", String.valueOf(diameter + DONUT_TOOLTIP_GAP))
                         .withFormatterFunction(ITEM_TOOLTIP_FORMATTER));
         chart.setNativeJson(nativeJson(JsonNodeFactory.instance.objectNode()));
     }
@@ -206,6 +225,61 @@ public final class DashboardCharts {
     }
 
     /**
+     * Returns the chart's x axis, which every bar chart of the dashboard has: {@link #setUpBarChart} and
+     * {@link #setUpHorizontalBarChart} add it.
+     */
+    public static XAxis xAxis(Chart chart) {
+        return Objects.requireNonNull(chart.getXAxes()).getFirst();
+    }
+
+    /**
+     * Returns the chart's y axis, as {@link #xAxis} the x axis.
+     */
+    public static YAxis yAxis(Chart chart) {
+        return Objects.requireNonNull(chart.getYAxes()).getFirst();
+    }
+
+    /**
+     * Sets the hours axis to end a step above the largest value it shows, so the tallest bar or plan mark never
+     * reaches the top grid line, in steps of 1, 2, or 5 hours times a power of ten; without a value above zero, the
+     * axis is left to ECharts.
+     *
+     * @param axis    the hours axis
+     * @param largest the largest value the axis shows, in hours
+     * @return the axis' top, in hours, or the largest value if it is not above zero
+     */
+    public static double fitHoursAxis(AbstractAxis<?> axis, double largest) {
+        if (largest <= 0) {
+            axis.setMax(null);
+            axis.setInterval(null);
+            return largest;
+        }
+
+        int step = hoursAxisStep(largest);
+        int top = ((int) Math.floor(largest / step) + 1) * step;
+        axis.setMax(String.valueOf(top));
+        axis.setInterval(step);
+        return top;
+    }
+
+    /**
+     * Returns the step of the hours axis: the smallest of 1, 2, or 5 hours times a power of ten that divides the
+     * largest value into {@link #HOURS_AXIS_STEPS} steps or fewer.
+     */
+    private static int hoursAxisStep(double largest) {
+        double rawStep = largest / HOURS_AXIS_STEPS;
+        int magnitude = 1;
+        while (true) {
+            for (int multiple : new int[]{1, 2, 5}) {
+                if (multiple * magnitude >= rawStep) {
+                    return multiple * magnitude;
+                }
+            }
+            magnitude *= 10;
+        }
+    }
+
+    /**
      * Returns the time in hours, the unit of the hours axis.
      */
     public static double hours(WorkTime time) {
@@ -248,13 +322,20 @@ public final class DashboardCharts {
         label.setWidth(labelWidth);
 
         return axis.withType(AxisType.CATEGORY)
-                .withAxisLabel(label);
+                .withAxisLabel(label)
+                .withAxisLine(axisLine());
     }
 
     private static <A extends AbstractCartesianAxis<A>> A hoursAxis(A axis, String hoursAxisLabel) {
         return axis.withType(AxisType.VALUE)
                 .withMinInterval(1)
-                .withAxisLabel(new AxisLabel().withFormatter(hoursAxisLabel));
+                .withAxisLabel(new AxisLabel().withFormatter(hoursAxisLabel))
+                .withAxisLine(axisLine());
+    }
+
+    // The line, and the ticks, which take its color
+    private static AxisLine axisLine() {
+        return new AxisLine().withLineStyle(new LineStyle().withColor(DashboardColors.AXIS_LINE));
     }
 
     private static BarSeries bar(String id, Encode encode) {

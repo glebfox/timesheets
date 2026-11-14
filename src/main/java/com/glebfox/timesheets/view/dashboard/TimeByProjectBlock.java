@@ -78,6 +78,11 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
     static final int MAX_PROJECTS = 6;
 
     /**
+     * The donut's size, in pixels: 8rem, as the stylesheet sets it on the donut.
+     */
+    private static final int DONUT_DIAMETER = 128;
+
+    /**
      * The palette of the slices: the Charts add-on's default, ECharts 6's nine colors, the same in the light and the
      * dark theme. It is set on the chart explicitly so the list's color marks match the slices.
      */
@@ -112,7 +117,7 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
 
     @Subscribe
     public void onReady(final ReadyEvent event) {
-        DashboardCharts.setUpDonutChart(chart);
+        DashboardCharts.setUpDonutChart(chart, DONUT_DIAMETER);
         chart.setColorPalette(PALETTE.toArray(Color[]::new));
 
         // The list beside the donut names the slices, so the slices carry no labels

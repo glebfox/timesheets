@@ -285,6 +285,68 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
     height: 12rem;
 }
 
+/* A chart with its legend under it: the two share the chart's height, so the legend, on one line or two, takes
+   its room from the chart and never makes the card taller than the cards beside it */
+.dashboard-chart-area {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+    height: 12rem;
+}
+
+.dashboard-chart-area > .dashboard-chart {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+}
+
+/* The legend: a line of items that wraps, each a mark as the chart draws its series and the series' name, quieter
+   than the data, in the rows' size */
+.dashboard-chart-legend {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--vaadin-gap-m);
+    row-gap: var(--vaadin-gap-xs);
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.dashboard-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    white-space: nowrap;
+}
+
+/* The mark takes its colors from the controller, the chart's literals: a square filled as a bar, a dashed outline
+   as the plan, or hatched as other projects and time off */
+.dashboard-legend-item > .mark {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--vaadin-gap-m);
+    height: var(--vaadin-gap-m);
+    background-color: var(--dashboard-mark-color);
+}
+
+.dashboard-legend-item > .mark.plan {
+    background-color: transparent;
+    border: 1px dashed var(--dashboard-mark-color);
+}
+
+.dashboard-legend-item > .mark.other-projects {
+    background-image: repeating-linear-gradient(45deg,
+        var(--dashboard-mark-stripe) 0 1.5px, transparent 1.5px 3.5px);
+}
+
+.dashboard-legend-item > .mark.off {
+    background-image: repeating-linear-gradient(-45deg,
+        var(--dashboard-mark-stripe) 0 1.5px, transparent 1.5px 4px);
+}
+
 /* A chart's box is the size the layout gives it, never the size of what it drew last: otherwise its drawing, still
    at the old size, would hold the box, and so the card, at that size, wider or taller than the card now has room
    for, and the chart would never be told to redraw. The chart draws in its root part, whose inline style inherits
@@ -305,9 +367,25 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
 }
 
 /* A chart's tooltip lies on the page's body, where it stays, hidden, after it last showed; it is placed against the
-   window, so it never widens the page, which does not scroll itself. ECharts places it with an inline style */
+   window, so it never widens the page, which does not scroll itself. ECharts places and styles it with an inline
+   style, in the colors of its own theme; the dashboard's look overrides those, as Aura draws a popover: the
+   surface, its outline and shadow instead of a border, the text color, and the rows' font. They follow the theme
+   the moment it switches, as they are the theme's custom properties */
 .dashboard-chart-tooltip {
     position: fixed !important;
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m) !important;
+    border: none !important;
+    border-radius: var(--vaadin-radius-m) !important;
+    background-color: var(--aura-surface-color-solid) !important;
+    box-shadow: var(--aura-overlay-outline-shadow), var(--aura-overlay-shadow) !important;
+    color: var(--vaadin-text-color) !important;
+    font-family: var(--aura-font-family) !important;
+    font-size: var(--aura-font-size-s) !important;
+    line-height: var(--aura-line-height-s) !important;
+}
+
+.dashboard-chart-tooltip b {
+    font-weight: var(--aura-font-weight-semibold);
 }
 
 /* Time by project: the donut, with the total in its hole, and the list of projects beside it, in the middle of a
@@ -726,7 +804,8 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
 }
 
 /* Team this week: a bar per person, so the chart grows taller with the team. The block sets the number of people
-   on the chart, and each has a row; where the names stand above the bars, each row is taller to hold its name.
+   on the chart's area, the chart and its legend, and each has a row; where the names stand above the bars, each row
+   is taller to hold its name.
 
    The body is the container, and its width is the chart's, which switches where its names go at the same width,
    600 pixels (TeamWeekBlock.NARROW_WIDTH). The block spans the whole row on one and on two columns, so at the
@@ -737,14 +816,12 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     container: team-week / inline-size;
 }
 
-.dashboard-team-chart {
-    flex: 1 0 auto;
-    width: 100%;
+.dashboard-team-chart-area {
     height: calc(var(--dashboard-team-size, 1) * 2rem + 2.5rem);
 }
 
 @container team-week (width < 600px) {
-    .dashboard-team-chart {
+    .dashboard-team-chart-area {
         height: calc(var(--dashboard-team-size, 1) * 3rem + 2.5rem);
     }
 }

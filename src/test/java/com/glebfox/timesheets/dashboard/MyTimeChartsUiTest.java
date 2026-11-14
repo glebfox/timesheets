@@ -57,9 +57,12 @@ import com.vaadin.flow.component.internal.UIInternals;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
+import io.jmix.chartsflowui.kit.component.model.axis.AxisLabel;
+import io.jmix.chartsflowui.kit.component.model.axis.YAxis;
 import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
+import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
@@ -105,6 +108,8 @@ public class MyTimeChartsUiTest {
     CurrentAuthentication currentAuthentication;
     @Autowired
     ComponentSupport componentSupport;
+    @Autowired
+    Messages messages;
 
     ApprovalTestData data;
     LocalDate today;
@@ -198,6 +203,53 @@ public class MyTimeChartsUiTest {
     }
 
     @Test
+    void thisWeekMarksTodayAndLeavesHeadroomTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            ThisWeekBlock block = block("thisWeekBlock");
+            dashboard().refresh();
+
+            // Today's label, a line at a time, in the rich text style that sets it apart; the other days' plain
+            LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()));
+            List<MapDataItem> items = items(chart(block));
+            for (int i = 0; i < items.size(); i++) {
+                String label = (String) items.get(i).getValue(ThisWeekBlock.DAY);
+                if (weekStart.plusDays(i).equals(today)) {
+                    assertThat(Objects.requireNonNull(label).split("\n")).allMatch(line -> line.startsWith("{today|") && line.endsWith("}"));
+                } else {
+                    assertThat(label).doesNotContain("{");
+                }
+            }
+            AxisLabel dayLabel = Objects.requireNonNull(DashboardCharts.xAxis(chart(block)).getAxisLabel());
+            assertThat(dayLabel.getRichStyles()).containsKey(ThisWeekBlock.TODAY_STYLE);
+            assertThat(dayLabel.getRichStyles().get(ThisWeekBlock.TODAY_STYLE).getFontWeight()).isEqualTo("600");
+
+            // The plan's 8 hours a day: the axis ends a step above, at 10 hours in steps of 2
+            YAxis hours = DashboardCharts.yAxis(chart(block));
+            assertThat(hours.getMax()).isEqualTo("10");
+            assertThat(hours.getInterval()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void hoursAxisEndsAStepAboveTheLargestValueTest() {
+        assertThat(axisEnd(1)).isEqualTo("2 by 1");
+        assertThat(axisEnd(8)).isEqualTo("10 by 2");
+        assertThat(axisEnd(9)).isEqualTo("10 by 2");
+        assertThat(axisEnd(12)).isEqualTo("15 by 5");
+        assertThat(axisEnd(40)).isEqualTo("50 by 10");
+        assertThat(axisEnd(41)).isEqualTo("50 by 10");
+        assertThat(axisEnd(51)).isEqualTo("60 by 20");
+        // Nothing above zero: the axis is left to ECharts
+        assertThat(axisEnd(0)).isEqualTo("null by null");
+    }
+
+    private static String axisEnd(double largest) {
+        YAxis axis = new YAxis();
+        DashboardCharts.fitHoursAxis(axis, largest);
+        return axis.getMax() + " by " + axis.getInterval();
+    }
+
+    @Test
     void recentWeeksColorsByStatusTest() {
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             LocalDate previousWeekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()))
@@ -226,6 +278,16 @@ public class MyTimeChartsUiTest {
                     .extracting(style -> style.getColor())
                     .isEqualTo(DashboardColors.of(WeekStatus.SHORT));
             assertThat(shortSeries.getStack()).isNotNull();
+
+            // The legend names only the statuses the weeks show, and the plan
+            assertThat(legend(block)).containsExactly(
+                    "bar:" + messages.getMessage(RecentWeeksBlock.class, "recentWeeksBlock.legend.SHORT"),
+                    "plan:" + messages.getMessage(RecentWeeksBlock.class, "chart.legend.plan"));
+
+            // A week's plan of 40 hours: the axis ends a step above, at 50 hours in steps of 10
+            YAxis hours = DashboardCharts.yAxis(chart);
+            assertThat(hours.getMax()).isEqualTo("50");
+            assertThat(hours.getInterval()).isEqualTo(10);
         });
     }
 
@@ -389,6 +451,26 @@ public class MyTimeChartsUiTest {
 
     private static Chart chart(Fragment<?> block) {
         return (Chart) FragmentUtils.getComponent(block, "chart");
+    }
+
+    /**
+     * Returns the items of the block's legend, each as its mark's kind and its text, such as {@code plan:Plan}.
+     */
+    static List<String> legend(Fragment<?> block) {
+        Component legend = FragmentUtils.getComponent(block, "legend");
+        if (!legend.isVisible()) {
+            return List.of();
+        }
+        return legend.getChildren()
+                .map(item -> {
+                    List<Component> parts = item.getChildren().toList();
+                    String mark = parts.get(0).getElement().getClassList().stream()
+                            .filter(className -> !className.equals("mark"))
+                            .findFirst()
+                            .orElse("");
+                    return mark + ":" + parts.get(1).getElement().getText();
+                })
+                .toList();
     }
 
     @SuppressWarnings("unchecked")

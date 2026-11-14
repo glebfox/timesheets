@@ -40,6 +40,7 @@ import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
 import com.glebfox.timesheets.view.dashboard.DashboardBlock;
+import com.glebfox.timesheets.view.dashboard.DashboardCharts;
 import com.glebfox.timesheets.view.dashboard.DashboardColors;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.TeamWeekBlock;
@@ -55,6 +56,7 @@ import io.jmix.chartsflowui.kit.component.model.series.AbstractSeries;
 import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
+import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
@@ -110,6 +112,8 @@ public class MyTeamUiTest {
     ComponentSupport componentSupport;
     @Autowired
     TeamDashboardSupport teamDashboardSupport;
+    @Autowired
+    Messages messages;
 
     ApprovalTestData data;
     LocalDate today;
@@ -392,6 +396,18 @@ public class MyTeamUiTest {
                 assertThat(Objects.requireNonNull(series.getItemStyle()).getColor()).as(status.name())
                         .isEqualTo(DashboardColors.of(status));
             }
+
+            // The legend names what the bars show, in their order, and the plan; no one is Closed or away
+            assertThat(MyTimeChartsUiTest.legend(block)).containsExactly(
+                    "bar:" + messages.getMessage(TeamWeekBlock.class, "teamWeekBlock.legend.APPROVED"),
+                    "bar:" + messages.getMessage(TeamWeekBlock.class, "teamWeekBlock.legend.NEW"),
+                    "bar:" + messages.getMessage(TeamWeekBlock.class, "teamWeekBlock.legend.REJECTED"),
+                    "other-projects:" + messages.getMessage(TeamWeekBlock.class,
+                            "teamWeekBlock.legend.otherProjects"),
+                    "plan:" + messages.getMessage(TeamWeekBlock.class, "chart.legend.plan"));
+
+            // A plan of 40 hours: the hours axis ends a step beyond, at 50
+            assertThat(DashboardCharts.xAxis(chart).getMax()).isEqualTo("50");
         });
     }
 
@@ -406,8 +422,9 @@ public class MyTeamUiTest {
             Chart chart = chart(block);
             // The first person on top
             assertThat(Objects.requireNonNull(chart.getYAxes()).getFirst().getInverse()).isTrue();
-            // The chart grows taller with the team: the stylesheet sizes it by the number of people
-            assertThat(chart.getStyle().get("--dashboard-team-size")).isEqualTo("1");
+            // The chart grows taller with the team: the stylesheet sizes its area by the number of people
+            assertThat(component(block, "chartArea").getElement().getStyle().get("--dashboard-team-size"))
+                    .isEqualTo("1");
 
             // ECharts media queries on the chart's width: beside the bars by default, above them when narrow
             JsonNode media = Objects.requireNonNull(chart.getNativeJson()).get("media");
@@ -417,6 +434,9 @@ public class MyTeamUiTest {
             assertThat(media.get(1).at("/query/maxWidth").asInt()).isEqualTo(599);
             assertThat(media.get(1).at("/option/yAxis/0/axisLabel/inside").asBoolean()).isTrue();
             assertThat(media.get(1).at("/option/yAxis/0/axisLabel/verticalAlign").asString()).isEqualTo("bottom");
+            // Above the bars the names start on the axis, so its line is hidden there
+            assertThat(media.get(0).at("/option/yAxis/0/axisLine/show").asBoolean()).isTrue();
+            assertThat(media.get(1).at("/option/yAxis/0/axisLine/show").asBoolean()).isFalse();
         });
     }
 
@@ -436,6 +456,9 @@ public class MyTeamUiTest {
             assertThat((Double) row.getValue(TeamWeekBlock.OFF)).isPositive();
             assertThat(row.getValue(TeamWeekBlock.OFF_LABEL)).isEqualTo(vacation.getName());
             assertThat((String) row.getValue(TeamWeekBlock.TOOLTIP)).contains(vacation.getName());
+            // Absent the whole week, so nothing planned: the legend names only the absence
+            assertThat(MyTimeChartsUiTest.legend(block)).containsExactly(
+                    "off:" + messages.getMessage(TeamWeekBlock.class, "teamWeekBlock.legend.absence"));
         });
     }
 

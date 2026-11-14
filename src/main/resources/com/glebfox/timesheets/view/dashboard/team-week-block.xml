@@ -21,7 +21,10 @@
         <card id="root" title="msg://teamWeekBlock.title" classNames="team-week-block">
             <content>
                 <div id="body" classNames="dashboard-chart-block dashboard-team-week">
-                    <charts:chart id="chart" classNames="dashboard-team-chart"/>
+                    <div id="chartArea" classNames="dashboard-chart-area dashboard-team-chart-area">
+                        <charts:chart id="chart" classNames="dashboard-chart"/>
+                        <div id="legend" classNames="dashboard-chart-legend"/>
+                    </div>
                 </div>
             </content>
         </card>

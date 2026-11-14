@@ -21,6 +21,7 @@ import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
+import com.vaadin.flow.component.html.Div;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
@@ -30,6 +31,7 @@ import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
@@ -41,8 +43,10 @@ import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * The Last 8 weeks block of the dashboard: a bar per week, the current one and the ones before it, of the time
@@ -72,6 +76,8 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
 
     @ViewComponent
     private Chart chart;
+    @ViewComponent
+    private Div legend;
 
     @Autowired
     private DashboardSupport dashboardSupport;
@@ -83,6 +89,8 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
     private CalendarOpener calendarOpener;
     @Autowired
     private Messages messages;
+    @Autowired
+    private UiComponents uiComponents;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -135,6 +143,38 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
                 .withDataProvider(new ListChartItems<>(items))
                 .withCategoryField(WEEK)
                 .withValueFields(valueFields.toArray(String[]::new))));
+
+        DashboardCharts.fitHoursAxis(DashboardCharts.yAxis(chart), weeks.stream()
+                .mapToDouble(week -> Math.max(DashboardCharts.hours(week.total().fact()),
+                        DashboardCharts.hours(week.total().plan())))
+                .max()
+                .orElse(0));
+        DashboardLegend.show(legend, legendItems(today), uiComponents);
+    }
+
+    /**
+     * Returns the legend's items: the statuses of the weeks with time spent, in the order of {@link WeekStatus},
+     * and the plan, if any week has one.
+     */
+    private List<DashboardLegend.Item> legendItems(LocalDate today) {
+        Set<WeekStatus> shown = EnumSet.noneOf(WeekStatus.class);
+        boolean planned = false;
+        for (WeekSummary week : weeks) {
+            if (week.total().fact().toMinutes() > 0) {
+                shown.add(week.getStatus(today));
+            }
+            planned |= week.total().plan().toMinutes() > 0;
+        }
+
+        List<DashboardLegend.Item> items = new ArrayList<>();
+        for (WeekStatus status : shown) {
+            items.add(DashboardLegend.bar(DashboardColors.of(status),
+                    messages.getMessage(getClass(), "recentWeeksBlock.legend." + status.name())));
+        }
+        if (planned) {
+            items.add(DashboardLegend.plan(messages.getMessage(getClass(), "chart.legend.plan")));
+        }
+        return items;
     }
 
     /**

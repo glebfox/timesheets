@@ -23,10 +23,12 @@ import io.jmix.chartsflowui.kit.component.model.shared.Color;
 /**
  * The colors that the dashboard's charts give the statuses of weeks and of time entries, and the marks they draw.
  * <p>
- * A chart draws on a canvas and takes literal colors, not the theme's custom properties, and it is not redrawn
- * with other colors when the user switches the theme. So each color is one literal for both themes, picked close
- * to the token the calendar or the approval screen uses for the same status, and with a contrast of at least 3:1
- * (WCAG 1.4.11) against the card's surface in both themes. The ratios beside each color are against the light
+ * A chart draws on a canvas and takes literal colors, not the theme's custom properties. When the user switches
+ * the theme, the Charts add-on draws the chart again in ECharts' own light or dark theme, which colors what the
+ * dashboard leaves to it, such as the axes' labels and the grid's lines, but the colors set here stay as they are.
+ * So each color is one literal for both themes, picked close to the token the calendar or the approval screen uses
+ * for the same status, and with a contrast of at least 3:1 (WCAG 1.4.11) against the card's surface in both
+ * themes. The ratios beside each color are against the light
  * card's surface, about {@code #F6F8FA}, and the dark one, about {@code #1C1F24}: Aura's card surface over the
  * work area's, computed from {@code aura.css}. Against the extremes, pure white and the dark card's solid surface
  * {@code #21242A}, each stays at 3:1 or more as well.
@@ -72,6 +74,12 @@ public final class DashboardColors {
      * tooltip names the segment.
      */
     public static final Color OTHER_PROJECTS_STRIPE = new Color("rgba(255, 255, 255, 0.45)");
+
+    /**
+     * The line of an axis: the neutral, partly transparent, so it comes out about as Aura's border color,
+     * {@code --vaadin-border-color}, over the card in both themes. Decorative: the labels beside it carry the values.
+     */
+    public static final Color AXIS_LINE = new Color("rgba(125, 128, 134, 0.4)");
 
     /**
      * A chart's background, so the card's surface shows through in either theme.

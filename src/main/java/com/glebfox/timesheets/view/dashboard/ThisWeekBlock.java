@@ -27,6 +27,7 @@ import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
+import io.jmix.chartsflowui.kit.component.model.shared.RichStyle;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
@@ -42,7 +43,10 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * The This week block of the dashboard: the week's time spent against its plan, and a bar per day of the time
@@ -91,6 +95,15 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      */
     private static final String NARROW_BAR_GAP = "40%";
 
+    /**
+     * The rich text style of today's label, which stands out from the other days' by its weight: semibold, as
+     * Aura's {@code --aura-font-weight-semibold}. It keeps the color of the other labels, ECharts' theme's, which
+     * the Charts add-on switches with the application's theme; a color of its own would be one literal for both
+     * themes.
+     */
+    public static final String TODAY_STYLE = "today";
+    private static final String TODAY_FONT_WEIGHT = "600";
+
     @ViewComponent
     private Span spentTotal;
     @ViewComponent
@@ -118,6 +131,9 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Subscribe
     public void onReady(final ReadyEvent event) {
         DashboardCharts.setUpBarChart(chart, messages.getMessage(getClass(), "chart.hoursAxisLabel"));
+        RichStyle todayStyle = new RichStyle();
+        todayStyle.setFontWeight(TODAY_FONT_WEIGHT);
+        Objects.requireNonNull(DashboardCharts.xAxis(chart).getAxisLabel()).addRichStyle(TODAY_STYLE, todayStyle);
 
         // A day off is hatched over the whole height of the chart, behind the time spent on it, if any
         chart.withSeries(
@@ -141,15 +157,17 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 componentSupport.formatWorkTimeTotal(total.plan()),
                 componentSupport.formatWeekStatusNote(summary.getStatus(today), total)));
 
-        // A day off is hatched up to the tallest bar, so it reads as the whole day
-        double offHeight = Math.max(1, days.stream()
+        // The axis ends a step above the tallest bar, and a day off is hatched up to the axis' top, so it reads as
+        // the whole day
+        double largest = days.stream()
                 .mapToDouble(day -> Math.max(DashboardCharts.hours(day.total().fact()),
                         DashboardCharts.hours(day.total().plan())))
                 .max()
-                .orElse(0));
+                .orElse(0);
+        double offHeight = Math.max(1, DashboardCharts.fitHoursAxis(DashboardCharts.yAxis(chart), largest));
         List<MapDataItem> items = days.stream()
                 .map(day -> new MapDataItem()
-                        .add(DAY, formatDayLabel(day))
+                        .add(DAY, formatDayLabel(day, today))
                         .add(SPENT, DashboardCharts.hours(day.total().fact()))
                         .add(PLAN, DashboardCharts.hours(day.total().plan()))
                         .add(OFF, day.offReason() != null ? offHeight : 0.0)
@@ -178,13 +196,19 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         }
     }
 
-    private String formatDayLabel(DaySummary day) {
+    private String formatDayLabel(DaySummary day, LocalDate today) {
         String weekday = componentSupport.formatDayOfWeekShort(day.date().getDayOfWeek());
         String offReason = day.offReason();
-        return offReason == null
+        String label = offReason == null
                 ? messages.formatMessage(getClass(), "thisWeekBlock.dayLabel", weekday, day.date().getDayOfMonth())
                 : messages.formatMessage(getClass(), "thisWeekBlock.offDayLabel", weekday,
                         day.date().getDayOfMonth(), offReason);
+        // ECharts' rich text styles a line at a time
+        return day.date().equals(today)
+                ? Arrays.stream(label.split("\n", -1))
+                        .map(line -> "{" + TODAY_STYLE + "|" + line + "}")
+                        .collect(Collectors.joining("\n"))
+                : label;
     }
 
     /**

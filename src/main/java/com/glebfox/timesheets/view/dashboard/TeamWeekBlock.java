@@ -27,6 +27,7 @@ import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.view.approval.ApprovalOpening;
 import com.glebfox.timesheets.view.approval.ApprovalRosterScope;
+import com.vaadin.flow.component.html.Div;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
@@ -39,6 +40,7 @@ import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
@@ -111,7 +113,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     static final int NARROW_WIDTH = 600;
 
     /**
-     * The custom property of the chart's element that holds the number of people.
+     * The custom property of the chart's area, the chart with its legend, that holds the number of people.
      */
     static final String TEAM_SIZE_PROPERTY = "--dashboard-team-size";
 
@@ -140,7 +142,11 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     private static final int NARROW_NAME_WIDTH = 280;
 
     @ViewComponent
+    private Div chartArea;
+    @ViewComponent
     private Chart chart;
+    @ViewComponent
+    private Div legend;
 
     @Autowired
     private TeamDashboardSupport teamDashboardSupport;
@@ -152,6 +158,8 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     private ApprovalOpener approvalOpener;
     @Autowired
     private Messages messages;
+    @Autowired
+    private UiComponents uiComponents;
     @Autowired
     private TimeSource timeSource;
     @Autowired
@@ -205,12 +213,14 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
             return;
         }
 
-        // A week of absence is hatched up to the longest bar, so it reads as the whole week
-        double offLength = Math.max(1, people.stream()
+        // The axis ends a step beyond the longest bar, and a week of absence is hatched up to the axis' end, so it
+        // reads as the whole week
+        double longest = people.stream()
                 .mapToDouble(person -> Math.max(DashboardCharts.hours(spent(person)),
                         DashboardCharts.hours(person.plan())))
                 .max()
-                .orElse(0));
+                .orElse(0);
+        double offLength = Math.max(1, DashboardCharts.fitHoursAxis(DashboardCharts.xAxis(chart), longest));
 
         Set<String> names = new HashSet<>();
         List<MapDataItem> items = people.stream()
@@ -239,7 +249,35 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .withValueFields(valueFields.toArray(String[]::new))));
 
         // A one-off value from the data: the stylesheet sizes the chart by it
-        chart.getStyle().set(TEAM_SIZE_PROPERTY, String.valueOf(people.size()));
+        chartArea.getStyle().set(TEAM_SIZE_PROPERTY, String.valueOf(people.size()));
+
+        DashboardLegend.show(legend, legendItems(), uiComponents);
+    }
+
+    /**
+     * Returns the legend's items: the statuses with time spent, in the order the bars stack them, other projects,
+     * the plan, and a week of absence, each only if some person's bar shows it.
+     */
+    private List<DashboardLegend.Item> legendItems() {
+        List<DashboardLegend.Item> items = new ArrayList<>();
+        for (TimeEntryStatus status : STATUS_ORDER) {
+            if (people.stream().anyMatch(person ->
+                    person.approvable().getOrDefault(status, WorkTime.ZERO).toMinutes() > 0)) {
+                items.add(DashboardLegend.bar(DashboardColors.of(status),
+                        messages.getMessage(getClass(), "teamWeekBlock.legend." + status.name())));
+            }
+        }
+        if (people.stream().anyMatch(person -> person.otherProjects().toMinutes() > 0)) {
+            items.add(DashboardLegend.otherProjects(
+                    messages.getMessage(getClass(), "teamWeekBlock.legend.otherProjects")));
+        }
+        if (people.stream().anyMatch(person -> person.plan().toMinutes() > 0)) {
+            items.add(DashboardLegend.plan(messages.getMessage(getClass(), "chart.legend.plan")));
+        }
+        if (people.stream().anyMatch(TeamWeekBlock::isWeekOff)) {
+            items.add(DashboardLegend.off(messages.getMessage(getClass(), "teamWeekBlock.legend.absence")));
+        }
+        return items;
     }
 
     /**
@@ -275,13 +313,17 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     /**
      * Returns the options that move the names above the bars on a narrow chart: an ECharts media query on the
      * chart's width, with the names beside the bars as the default, so a chart that widens again puts them back.
-     * The Charts add-on has no API for media queries, so they go in as native JSON.
+     * Above the bars the names start where the bars do, so the axis' line and ticks, which would run through their
+     * first letters, are hidden there. The Charts add-on has no API for media queries, so they go in as native JSON.
      */
     private static String narrowNamesJson() {
         JsonNodeFactory json = JsonNodeFactory.instance;
 
         ObjectNode wide = json.objectNode();
-        wide.putObject("option").putArray("yAxis").addObject().putObject("axisLabel")
+        ObjectNode wideAxis = wide.putObject("option").putArray("yAxis").addObject();
+        wideAxis.putObject("axisLine").put("show", true);
+        wideAxis.putObject("axisTick").put("show", true);
+        wideAxis.putObject("axisLabel")
                 .put("inside", false)
                 .put("align", "right")
                 .put("verticalAlign", "middle")
@@ -291,7 +333,10 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
 
         ObjectNode narrow = json.objectNode();
         narrow.putObject("query").put("maxWidth", NARROW_WIDTH - 1);
-        ObjectNode narrowLabel = narrow.putObject("option").putArray("yAxis").addObject().putObject("axisLabel")
+        ObjectNode narrowAxis = narrow.putObject("option").putArray("yAxis").addObject();
+        narrowAxis.putObject("axisLine").put("show", false);
+        narrowAxis.putObject("axisTick").put("show", false);
+        ObjectNode narrowLabel = narrowAxis.putObject("axisLabel")
                 .put("inside", true)
                 .put("align", "left")
                 .put("verticalAlign", "bottom")
