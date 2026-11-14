@@ -25,7 +25,6 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
@@ -42,7 +41,6 @@ import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.Install;
-import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Supply;
 import io.jmix.flowui.view.ViewComponent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +50,13 @@ import java.util.List;
 /**
  * The Recent entries block of the dashboard: the current user's {@link #LIMIT} latest entries, in a grid without a
  * header, a row each, with its date, its task and then its project, time spent, status, and Copy to today. A click on
- * the task opens the entry in the time entry editor, in a dialog, if the user may open the editor; otherwise the task
- * is plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new entry copied
- * from it and dated today, if the user may create time entries; otherwise the grid has no such column. Enter on a
- * cell presses its button. After a save in
- * either, the dashboard reloads. No entries shows the grid's empty state.
+ * the task and its project opens the entry in the time entry editor, in a dialog, if the user may open the editor;
+ * otherwise they are plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new
+ * entry copied from it and dated today, if the user may create time entries; otherwise the grid has no such column.
+ * After a save in either, the dashboard reloads. No entries shows the grid's empty state.
+ * <p>
+ * Each button is the first element of its cell, so Space on the cell presses it, as the grid presses a cell's first
+ * element; the buttons are out of the Tab order, so Tab enters the grid once and leaves it with the next.
  */
 @FragmentDescriptor("recent-entries-block.xml")
 public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardBlock {
@@ -86,37 +86,6 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
      */
     static final String COPY_COLUMN = "copy";
 
-    /**
-     * Makes Enter on a cell that holds a button press the button at once, as a click does. The grid would otherwise
-     * take the first Enter to move the focus into the cell, onto the button, and only a second one would press it.
-     * The buttons are out of the Tab order, so Tab enters the grid once and leaves it with the next; the arrows move
-     * between cells, and a screen reader still reads each button's name in its cell. The handler runs before the
-     * grid's own, in the capture phase, and is added once per element in the browser.
-     */
-    private static final String ENTER_PRESSES_CELL_BUTTON = """
-            if (this.__enterPressesCellButton) {
-                return;
-            }
-            this.__enterPressesCellButton = true;
-            this.addEventListener('keydown', event => {
-                if (event.key !== 'Enter' || event.repeat || this.interacting) {
-                    return;
-                }
-                const cell = event.composedPath()[0];
-                if (!cell.part || !cell.part.contains('body-cell')) {
-                    return;
-                }
-                const slot = cell.querySelector('slot');
-                const content = slot && slot.assignedElements()[0];
-                const button = content && content.querySelector('vaadin-button');
-                if (button) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    button.click();
-                }
-            }, true);
-            """;
-
     @ViewComponent
     private DataGrid<TimeEntry> entriesGrid;
     @ViewComponent
@@ -144,12 +113,6 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     private CurrentAuthentication currentAuthentication;
 
     private boolean openPermitted;
-
-    @Subscribe
-    public void onReady(final Fragment.ReadyEvent event) {
-        // Each time the grid is attached, as after a reload of the page, which builds its element again
-        entriesGrid.addAttachListener(attachEvent -> entriesGrid.getElement().executeJs(ENTER_PRESSES_CELL_BUTTON));
-    }
 
     @Override
     public void refresh() {
@@ -206,32 +169,34 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     }
 
     /**
-     * Creates the task cell: the task, which opens the entry if the user may open the editor, then its project,
-     * quieter. On a wide card both stand on one line, the project after a separator; on a narrow one the project
-     * goes on a line of its own under the task. A name too long is cut from its end, the project first, so the task
-     * stays.
+     * Creates the task cell: the task, then its project, quieter. On a wide card both stand on one line, the project
+     * after a separator; on a narrow one the project goes on a line of its own under the task. A name too long is cut
+     * from its end, the project first, so the task stays. If the user may open the editor, the cell is a link that
+     * opens the entry and fills the cell, the first and only element of the cell, which Space on the cell presses.
      */
     private Component createTaskCell(TimeEntry entry) {
-        Div cell = uiComponents.create(Div.class);
-        cell.addClassName("recent-task");
+        Component[] parts = {
+                DashboardRows.part(uiComponents, "task", entry.getTask().getName()),
+                DashboardRows.part(uiComponents, "separator", "·"),
+                DashboardRows.part(uiComponents, "project", metadataTools.format(entry.getTask().getProject()))
+        };
+        parts[1].getElement().setAttribute("aria-hidden", "true");
 
-        String taskName = entry.getTask().getName();
         if (openPermitted) {
-            JmixButton task = uiComponents.create(JmixButton.class);
-            task.addClassNames("link-button", "task");
-            task.setText(taskName);
-            // Enter on the cell presses it, so the Tab order skips it
-            task.setTabIndex(-1);
-            task.addClickListener(event -> openEditor(entry));
-            cell.add(task);
-        } else {
-            cell.add(DashboardRows.part(uiComponents, "task", taskName));
+            JmixButton link = uiComponents.create(JmixButton.class);
+            link.addClassNames("link-button", "recent-task");
+            for (Component part : parts) {
+                link.getElement().appendChild(part.getElement());
+            }
+            // Space on the cell presses it, so the Tab order skips it
+            link.setTabIndex(-1);
+            link.addClickListener(event -> openEditor(entry));
+            return link;
         }
 
-        Span separator = DashboardRows.part(uiComponents, "separator", "·");
-        separator.getElement().setAttribute("aria-hidden", "true");
-        cell.add(separator, DashboardRows.part(uiComponents, "project",
-                metadataTools.format(entry.getTask().getProject())));
+        Div cell = uiComponents.create(Div.class);
+        cell.addClassName("recent-task");
+        cell.add(parts);
         return cell;
     }
 
@@ -247,7 +212,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
         copyButton.setAriaLabel(copyText);
         copyButton.setTooltipText(copyText);
         copyButton.addClassName("row-copy");
-        // Enter on the cell presses it, so the Tab order skips it
+        // Space on the cell presses it, as it is the cell's first element, so the Tab order skips it
         copyButton.setTabIndex(-1);
         copyButton.addClickListener(event -> copyToToday(entry));
         return copyButton;

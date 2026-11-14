@@ -273,10 +273,12 @@ public class MyTimeListsUiTest {
             assertThat(text(cell(block, "spent", rows.getFirst()))).isEqualTo("3h");
             assertThat(text(cell(block, "spent", rows.getLast()))).isEqualTo("1h");
 
-            // The task is the link that opens the entry
-            Component task = withClass(cell(block, "task", rows.getFirst()), "task").getFirst();
-            assertThat(task.getElement().getClassList()).contains("link-button");
-            ((JmixButton) task).click();
+            // The name is the link that opens the entry, the cell's only element, so Space on the cell presses it
+            Component link = cell(block, "task", rows.getFirst());
+            assertThat(link).isInstanceOf(JmixButton.class);
+            assertThat(link.getElement().getClassList()).contains("link-button");
+            assertThat(((JmixButton) link).getTabIndex()).isEqualTo(-1);
+            ((JmixButton) link).click();
 
             View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
             assertThat(dialog).isInstanceOf(TimeEntryDetailView.class);
@@ -338,7 +340,7 @@ public class MyTimeListsUiTest {
             JmixButton copy = (JmixButton) cell(block, "copy", rows(block).getFirst());
             assertThat(copy.getElement().getClassList()).contains("row-copy");
             assertThat(copy.getText()).isEmpty();
-            // Out of the Tab order: Enter on its cell presses it
+            // Out of the Tab order: it is its cell's only element, so Space on the cell presses it
             assertThat(copy.getTabIndex()).isEqualTo(-1);
             assertThat(copy.getIcon()).isNotNull();
             assertThat(copy.getAriaLabel()).contains("Copy to today");
@@ -422,8 +424,8 @@ public class MyTimeListsUiTest {
             // No Copy to today column at all, and the task is plain text, not a link
             assertThat(entriesGrid(block).getColumnByKey("copy")).isNull();
             Component name = cell(block, "task", rows(block).getFirst());
+            assertThat(name).isNotInstanceOf(JmixButton.class);
             Component taskPart = name.getChildren().findFirst().orElseThrow();
-            assertThat(taskPart).isNotInstanceOf(JmixButton.class);
             assertThat(text(taskPart)).isEqualTo(task.getName());
             // The header keeps no place for the link it does not show
             assertThat(attention.getContent().getHeaderSuffix()).isNull();
@@ -439,7 +441,7 @@ public class MyTimeListsUiTest {
             dashboard().refresh();
             assertThat(text(cell(block, "spent", rows(block).getFirst()))).isEqualTo("1h");
 
-            ((JmixButton) withClass(cell(block, "task", rows(block).getFirst()), "task").getFirst()).click();
+            ((JmixButton) cell(block, "task", rows(block).getFirst())).click();
             TimeEntryDetailView editor = UiTestUtils.getLastOpenedViewDialog();
             Objects.requireNonNull(editor.getEditedEntity()).setSpentTime(WorkTime.ofHours(4));
             UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
