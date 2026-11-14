@@ -507,8 +507,8 @@ vaadin-grid.dashboard-recent-entries {
     --dashboard-cell-gap: calc(var(--vaadin-gap-m) / 2);
     --dashboard-cell-start: var(--dashboard-cell-gap);
     --dashboard-cell-end: var(--dashboard-cell-gap);
-    /* Copy to today: its icon centered in a square as tall as a row */
-    --dashboard-copy-size: calc(var(--aura-line-height-s) + 2 * var(--dashboard-row-padding));
+    /* Copy to today: its icon centered in a box as tall as a row */
+    --dashboard-copy-height: calc(var(--aura-line-height-s) + 2 * var(--dashboard-row-padding));
     --dashboard-copy-icon-size: var(--aura-font-size-l);
 
     width: calc(100% + 2 * var(--dashboard-row-reach));
@@ -544,12 +544,6 @@ vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> vaadin-bad
     padding-block: 0;
 }
 
-/* The task cell lets the link's box reach outside its padding, so the link's text stands where the cell's text
-   would, and its focus ring shows whole; each part of the name cuts itself */
-vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task) {
-    overflow: visible;
-}
-
 /* The date is quieter than the name, and the date and the time are in figures of one width */
 vaadin-grid.dashboard-recent-entries::part(date-cell) {
     color: var(--vaadin-text-color-secondary);
@@ -561,12 +555,34 @@ vaadin-grid.dashboard-recent-entries::part(time-cell) {
 }
 
 /* The name, on one line, is the task, then its project after a separator, quieter: a name too long is cut from its
-   end, the project first, so the task stays */
-vaadin-grid.dashboard-recent-entries .recent-task {
+   end, the project first, so the task stays. Where it opens the entry, the name is a link that fills its cell, the
+   cell's only element, from the top of the row to its bottom, so the row is its target, and its text stands where
+   the cell's text would; the link's padding takes the row's air */
+vaadin-grid.dashboard-recent-entries div.recent-task,
+vaadin-grid.dashboard-recent-entries vaadin-button.recent-task::part(label) {
     display: flex;
+    flex: 1 1 auto;
     align-items: baseline;
     column-gap: var(--vaadin-gap-s);
     min-width: 0;
+    overflow: visible;
+}
+
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> vaadin-button.recent-task) {
+    display: flex;
+    align-items: stretch;
+    padding-block: 0;
+    overflow: visible;
+}
+
+vaadin-grid.dashboard-recent-entries vaadin-button.recent-task {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    min-width: 0;
+    height: auto;
+    margin-inline-start: calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-block: calc(var(--dashboard-row-padding) - var(--vaadin-button-border-width, 1px));
+    text-align: start;
 }
 
 vaadin-grid.dashboard-recent-entries .recent-task > .task,
@@ -581,16 +597,10 @@ vaadin-grid.dashboard-recent-entries .recent-task > .task {
     flex: 0 1 auto;
 }
 
-/* The link's box reaches outside the text by its padding and its border, which take no room in the row */
-vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
-    margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
-    margin-inline-start: calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
-    max-width: calc(100% + var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px));
-}
-
 vaadin-grid.dashboard-recent-entries .recent-task > .separator,
 vaadin-grid.dashboard-recent-entries .recent-task > .project {
     color: var(--vaadin-text-color-secondary);
+    font-weight: var(--aura-font-weight-regular);
 }
 
 vaadin-grid.dashboard-recent-entries .recent-task > .separator {
@@ -601,18 +611,18 @@ vaadin-grid.dashboard-recent-entries .recent-task > .project {
     flex: 0 1000 auto;
 }
 
-/* Copy to today reaches outside the content edge by its icon's margin in its square, so the icon stands on the
-   edge, as the rows' values do, and keeps to the end of its column, however wide the column was measured. The icon
-   is drawn at its whole size, so its box is the drawing's */
+/* Copy to today fills its cell, without padding, so the grid's focus ring on the cell outlines the button. It ends
+   at the row's end, where the rows' frame ends, and its icon stands in it by the row's reach on either side, so the
+   icon stands on the content edge, as the rows' values do; it keeps to the end of its column, however wide the
+   column was measured. The icon is drawn at its whole size, so its box is the drawing's */
 vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .row-copy) {
     justify-content: flex-end;
-    padding-inline-end: calc(var(--dashboard-cell-end)
-        - (var(--dashboard-copy-size) - var(--dashboard-copy-icon-size)) / 2);
+    padding-inline: 0;
 }
 
 vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
-    width: var(--dashboard-copy-size);
-    height: var(--dashboard-copy-size);
+    width: calc(var(--dashboard-copy-icon-size) + 2 * var(--dashboard-row-reach));
+    height: var(--dashboard-copy-height);
     margin: 0;
     padding: 0;
 }
@@ -622,30 +632,20 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
     --vaadin-icon-visual-size: 100%;
 }
 
-/* Copy to today's focus ring stands inside its box, so the grid, which cuts what reaches past it, keeps it whole on
-   the first and the last row */
+/* Copy to today's own focus ring, while the keyboard works in its cell, stands inside its box, so the grid, which
+   cuts what reaches past it, keeps it whole on the first and the last row and at the row's end */
 vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
     outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
 }
 
-/* On a touch screen the task's link and Copy to today keep a target a finger can hit: Copy to today, and so every
-   row, at least as tall as one, and the link as tall within the row, reaching above and below its line by as much
-   as it grows, so the row does not grow with it */
+/* On a touch screen the task's link and Copy to today keep a target a finger can hit, and so every row with them is
+   at least as tall as one; the link, which fills its row, never reaches into another */
 @media (pointer: coarse) {
-    vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
-        min-height: 44px;
+    vaadin-grid.dashboard-recent-entries {
+        --dashboard-copy-height: 44px;
     }
 
-    vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
-        min-height: 44px;
-        margin-block: calc((1lh - 44px) / 2);
-    }
-
-    /* Without Copy to today, the task's cell keeps the row as tall as the link's target */
-    vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task) {
-        display: flex;
-        align-items: center;
-        box-sizing: border-box;
+    vaadin-grid.dashboard-recent-entries vaadin-button.recent-task {
         min-height: 44px;
     }
 }
@@ -657,12 +657,13 @@ vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
         --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
     }
 
-    vaadin-grid.dashboard-recent-entries .recent-task {
+    vaadin-grid.dashboard-recent-entries div.recent-task,
+    vaadin-grid.dashboard-recent-entries vaadin-button.recent-task::part(label) {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    vaadin-grid.dashboard-recent-entries .recent-task > span.task,
+    vaadin-grid.dashboard-recent-entries .recent-task > .task,
     vaadin-grid.dashboard-recent-entries .recent-task > .project {
         max-width: 100%;
     }
