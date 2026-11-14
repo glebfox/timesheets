@@ -282,8 +282,10 @@ jmix-login-form::part(error-message-title) {
         width: var(--_logo-width);
         aspect-ratio: 4;
         background-color: CanvasText;
-        /* Relative to this file, so that it holds under a servlet context path */
-        mask: url('../../../assets/brand/logos/logo-mono-white.svg') no-repeat 0 0 / 100% 100%;
+        /* A copy of the brand's assets/brand/logos/logo-mono-white.svg next to this file: a production build inlines
+           this file into styles.css and rewrites only the url()s that point inside the theme's folder, so a url()
+           into the brand's collection would climb above a servlet context path (ThemeStylesheetUrlsTest) */
+        mask: url('login-view-logo-mask.svg') no-repeat 0 0 / 100% 100%;
     }
 
     .login-view-locale-switch > vaadin-radio-button[checked] {
