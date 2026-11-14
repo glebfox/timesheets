@@ -78,6 +78,11 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     static final String TIME_CELL_PART = "time-cell";
 
     /**
+     * The part name of the task column's cells, the one column the stylesheet lets narrow below its content.
+     */
+    static final String TASK_CELL_PART = "task-cell";
+
+    /**
      * The class of the grid while it has no rows and shows its empty state.
      */
     static final String EMPTY = "empty";
@@ -146,6 +151,11 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     @Supply(to = "entriesGrid.task", subject = "renderer")
     private Renderer<TimeEntry> entriesGridTaskRenderer() {
         return new ComponentRenderer<>(this::createTaskCell);
+    }
+
+    @Install(to = "entriesGrid.task", subject = "partNameGenerator")
+    private String entriesGridTaskPartNameGenerator(final TimeEntry entry) {
+        return TASK_CELL_PART;
     }
 
     @Supply(to = "entriesGrid.spent", subject = "renderer")

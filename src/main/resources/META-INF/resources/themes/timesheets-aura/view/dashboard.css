@@ -547,6 +547,17 @@ vaadin-grid.dashboard-recent-entries:not(.empty) {
     margin-block-end: calc(var(--dashboard-row-reach) * -1);
 }
 
+/* A column is never narrower than its content, whatever width the grid measured for it: the measure stays as it
+   was when a screen changes its sizes, as when a touch screen's larger padding comes in. The task's column, which
+   takes the room left, narrows below its content and cuts it */
+vaadin-grid.dashboard-recent-entries::part(body-cell) {
+    min-width: max-content;
+}
+
+vaadin-grid.dashboard-recent-entries::part(task-cell) {
+    min-width: 0;
+}
+
 vaadin-grid.dashboard-recent-entries::part(first-column-cell) {
     --dashboard-cell-start: var(--dashboard-row-reach);
 }
