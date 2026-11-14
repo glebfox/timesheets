@@ -304,23 +304,28 @@ vaadin-grid.dashboard-recent-entries > .grid-empty-state {
 }
 
 /* The legend: a line of items that wraps, each a mark as the chart draws its series and the series' name, quieter
-   than the data, in the rows' size */
+   than the data, in the rows' size. The items flow as text, so the lines are balanced, two and two rather than three
+   and one; each item pads its line by half the gap between lines, which the legend takes back at its edges */
 .dashboard-chart-legend {
     flex: none;
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: var(--vaadin-gap-m);
-    row-gap: var(--vaadin-gap-xs);
+    margin-block: calc(var(--vaadin-gap-xs) / -2);
     color: var(--vaadin-text-color-secondary);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
+    text-wrap: balance;
 }
 
 .dashboard-legend-item {
     display: inline-flex;
     align-items: center;
     gap: var(--vaadin-gap-s);
+    margin-block: calc(var(--vaadin-gap-xs) / 2);
+    vertical-align: top;
     white-space: nowrap;
+}
+
+.dashboard-legend-item:not(:last-child) {
+    margin-inline-end: var(--vaadin-gap-m);
 }
 
 /* The mark takes its colors from the controller, the chart's literals: a square filled as a bar, a dashed outline

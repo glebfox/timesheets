@@ -69,6 +69,20 @@ public final class DashboardCharts {
     static final int CATEGORY_LABEL_WIDTH = 72;
 
     /**
+     * The space around a bar chart's grid, in pixels, outside its axis labels.
+     */
+    static final int GRID_SIDE = 8;
+    static final int GRID_TOP = 12;
+    static final int GRID_BOTTOM = 8;
+
+    /**
+     * ECharts' gap between an axis and its labels, and the size of their font, in pixels: its defaults, which the
+     * dashboard keeps.
+     */
+    static final int AXIS_LABEL_MARGIN = 8;
+    static final int AXIS_LABEL_FONT_SIZE = 12;
+
+    /**
      * The gap between the bars of neighboring categories, as a share of a category's room: ECharts' default.
      */
     static final String BAR_CATEGORY_GAP = "20%";
@@ -299,10 +313,10 @@ public final class DashboardCharts {
     private static void setUpChart(Chart chart) {
         chart.withBackgroundColor(DashboardColors.TRANSPARENT)
                 .withGrid(new Grid()
-                        .withLeft("8")
-                        .withRight("8")
-                        .withTop("12")
-                        .withBottom("8")
+                        .withLeft(String.valueOf(GRID_SIDE))
+                        .withRight(String.valueOf(GRID_SIDE))
+                        .withTop(String.valueOf(GRID_TOP))
+                        .withBottom(String.valueOf(GRID_BOTTOM))
                         // The axis labels fit inside the grid's box, as ECharts' former containLabel did
                         .withOuterBoundsMode(Grid.OuterBoundsMode.SAME)
                         .withOuterBoundsContain(Grid.OuterBoundsContain.AXIS_LABEL))

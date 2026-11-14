@@ -437,6 +437,10 @@ public class MyTeamUiTest {
             // Above the bars the names start on the axis, so its line is hidden there
             assertThat(media.get(0).at("/option/yAxis/0/axisLine/show").asBoolean()).isTrue();
             assertThat(media.get(1).at("/option/yAxis/0/axisLine/show").asBoolean()).isFalse();
+            // There the grid takes the whole width, and the hours' end labels align to its ends
+            assertThat(media.get(1).at("/option/grid/0/left").asInt()).isZero();
+            assertThat(media.get(1).at("/option/xAxis/0/axisLabel/alignMinLabel").asString()).isEqualTo("left");
+            assertThat(media.get(0).at("/option/grid/0/outerBoundsMode").asString()).isEqualTo("same");
         });
     }
 

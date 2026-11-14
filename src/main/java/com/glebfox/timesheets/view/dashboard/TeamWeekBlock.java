@@ -314,7 +314,10 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      * Returns the options that move the names above the bars on a narrow chart: an ECharts media query on the
      * chart's width, with the names beside the bars as the default, so a chart that widens again puts them back.
      * Above the bars the names start where the bars do, so the axis' line and ticks, which would run through their
-     * first letters, are hidden there. The Charts add-on has no API for media queries, so they go in as native JSON.
+     * first letters, are hidden there, and the names, the bars, and the hours' first label start on the card's
+     * content edge and the last label ends on the other: the grid takes the chart's whole width, with room below for
+     * the hours' labels, and the end labels align to the ends instead of centering on them. The Charts add-on has no
+     * API for media queries, so they go in as native JSON.
      */
     private static String narrowNamesJson() {
         JsonNodeFactory json = JsonNodeFactory.instance;
@@ -346,6 +349,27 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         narrowLabel.putArray("padding").add(0).add(0).add(NARROW_BAR_MAX_WIDTH / 2 + 4).add(0);
         addBarMaxWidth(((ObjectNode) wide.get("option")).putArray("series"), BAR_MAX_WIDTH);
         addBarMaxWidth(((ObjectNode) narrow.get("option")).putArray("series"), NARROW_BAR_MAX_WIDTH);
+
+        // The grid as every bar chart has it, sized around its labels
+        ((ObjectNode) wide.get("option")).putArray("grid").addObject()
+                .put("left", DashboardCharts.GRID_SIDE)
+                .put("right", DashboardCharts.GRID_SIDE)
+                .put("bottom", DashboardCharts.GRID_BOTTOM)
+                .put("outerBoundsMode", "same");
+        ObjectNode wideHoursLabel = ((ObjectNode) wide.get("option")).putArray("xAxis").addObject()
+                .putObject("axisLabel");
+        wideHoursLabel.putNull("alignMinLabel");
+        wideHoursLabel.putNull("alignMaxLabel");
+
+        ((ObjectNode) narrow.get("option")).putArray("grid").addObject()
+                .put("left", 0)
+                .put("right", 0)
+                .put("bottom", DashboardCharts.GRID_BOTTOM + DashboardCharts.AXIS_LABEL_MARGIN
+                        + DashboardCharts.AXIS_LABEL_FONT_SIZE)
+                .put("outerBoundsMode", "none");
+        ((ObjectNode) narrow.get("option")).putArray("xAxis").addObject().putObject("axisLabel")
+                .put("alignMinLabel", "left")
+                .put("alignMaxLabel", "right");
 
         ObjectNode root = json.objectNode();
         ArrayNode media = root.putArray("media");
