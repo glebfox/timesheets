@@ -52,8 +52,8 @@ import java.util.function.Supplier;
 /**
  * The Needs attention block of the dashboard: the current user's rejected entries, then the days of this and the
  * previous week that are short, then the recent weeks that are short, at most {@link #MAX_ROWS} rows in all, and
- * "and N more" for the rest. A short day or week opens the calendar on it, if the user may open the calendar. A link
- * opens My time entries, if the user may open it. Nothing to show reads "All caught up".
+ * "and N more" for the rest. A short day or week opens the calendar on it, if the user may open the calendar. A link in
+ * the card's header opens My time entries, if the user may open it. Nothing to show reads "All caught up".
  */
 @FragmentDescriptor("needs-attention-block.xml")
 public class NeedsAttentionBlock extends Fragment<JmixCard> implements DashboardBlock {

@@ -25,12 +25,13 @@
                     <app:gridEmptyState id="emptyState"
                                         icon="ts:my-time-entries"
                                         text="msg://needsAttentionBlock.emptyState"/>
-                    <button id="myEntriesLink"
-                            text="msg://needsAttentionBlock.myEntriesLink"
-                            themeNames="tertiary"
-                            classNames="dashboard-list-link"/>
                 </div>
             </content>
+            <headerSuffix>
+                <button id="myEntriesLink"
+                        text="msg://needsAttentionBlock.entriesLink"
+                        classNames="link-button"/>
+            </headerSuffix>
         </card>
     </content>
 </fragment>

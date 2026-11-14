@@ -281,7 +281,10 @@ public class MyTeamUiTest {
             WaitingApprovalBlock block = block("waitingApprovalBlock");
             dashboard().refresh();
 
+            // A link in the card's header, beside the title
             JmixButton link = (JmixButton) component(block, "approvalLink");
+            assertThat(block.getContent().getHeaderSuffix()).isSameAs(link);
+            assertThat(link.getText()).isEqualTo("Approve");
             assertThat(link.isVisible()).isTrue();
             link.click();
 

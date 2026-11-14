@@ -29,12 +29,13 @@
                     <app:gridEmptyState id="emptyState"
                                         icon="ts:approve-time-entries"
                                         text="msg://waitingApprovalBlock.emptyState"/>
-                    <button id="approvalLink"
-                            text="msg://waitingApprovalBlock.approvalLink"
-                            themeNames="tertiary"
-                            classNames="dashboard-list-link"/>
                 </div>
             </content>
+            <headerSuffix>
+                <button id="approvalLink"
+                        text="msg://waitingApprovalBlock.approveLink"
+                        classNames="link-button"/>
+            </headerSuffix>
         </card>
     </content>
 </fragment>

@@ -50,7 +50,7 @@ import java.util.Locale;
  * The Waiting for my approval block of the dashboard: the number of New entries the current user approves, their
  * time, and the date of the oldest, then the {@link #MAX_ROWS} people with the most of them, and "and N more" for the
  * rest. A click on a person opens the approval screen on the month of their oldest waiting entry, with them selected;
- * the link below opens it as the menu does. Nothing waiting shows an empty state.
+ * the link in the card's header opens it as the menu does. Nothing waiting shows an empty state.
  */
 @FragmentDescriptor("waiting-approval-block.xml")
 public class WaitingApprovalBlock extends Fragment<JmixCard> implements DashboardBlock {
