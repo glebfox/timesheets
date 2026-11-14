@@ -140,6 +140,13 @@ jmix-login-form::part(error-message-title) {
     display: none;
 }
 
+/* The baseline guides that line a field up with its neighbors: the switch stands alone. The item's guide would keep
+   the radio's column open before the word, and the group's has a transparent border that forced colors draw */
+.login-view-locale-switch::before,
+.login-view-locale-switch > vaadin-radio-button::before {
+    display: none;
+}
+
 /* A click anywhere on the word checks it */
 .login-view-locale-switch > vaadin-radio-button > input {
     position: absolute;
