@@ -39,7 +39,7 @@ Saving a change to the date, user, task, spent time, description, or tags of an 
 
 ### Own and general entries
 
-An *own* entry is opened from My time entries, from My tasks, or by Copy in My time entries. Its user is the current user and cannot be changed.
+An *own* entry is opened from My time entries, from My tasks, from the calendar, by Copy in My time entries, and from the dashboard by Log time, a recent entry's task, and Copy to today. Its user is the current user and cannot be changed.
 
 A *general* entry is opened from Time entries. While it is being created:
 
@@ -49,7 +49,7 @@ A *general* entry is opened from Time entries. While it is being created:
 
 When an existing general entry is edited, the user field starts locked and the same task–user interplay applies.
 
-The task drop-down and its picker offer only tasks [bookable](../data-model/task.md#bookable-tasks) for the entry's user: the drop-down filters by task name, the picker by project and by name. A task chosen before the editor opened, as by Create time entry in My tasks or by Copy, is locked.
+The task drop-down and its picker offer only tasks [bookable](../data-model/task.md#bookable-tasks) for the entry's user: the drop-down filters by task name, the picker by project and by name. A task chosen before the editor opened, as by Create time entry in My tasks, by Copy, or by Copy to today on the dashboard, is locked.
 
 ### Tags
 

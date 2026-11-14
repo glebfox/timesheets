@@ -77,9 +77,11 @@ import java.util.List;
 import java.util.Map;
 
 @Route(value = "calendar", layout = MainView.class)
-@ViewController("ts_CalendarView")
+@ViewController(CalendarView.ID)
 @ViewDescriptor("calendar-view.xml")
 public class CalendarView extends StandardView {
+
+    public static final String ID = "ts_CalendarView";
 
     /**
      * The id of the calendar's data provider of the day marks, built by {@link CalendarSupport#createDayMarks}.
@@ -297,6 +299,18 @@ public class CalendarView extends StandardView {
         resetDayCellBottomTextClassNames();
     }
 
+    /**
+     * Opens the calendar on the month of the date. The month, its header, the plan, and the entries follow from
+     * the dates the browser reports, as they do for any other move.
+     */
+    public void showDate(LocalDate date) {
+        if (calendar.isAttached()) {
+            calendar.navigateToDate(date);
+        } else {
+            calendar.setInitialDate(date);
+        }
+    }
+
     @Subscribe("calendar")
     private void onCalendarDatesSet(final DatesSetEvent event) {
         DisplayModeInfo displayModeInfo = event.getDisplayModeInfo();
@@ -392,7 +406,7 @@ public class CalendarView extends StandardView {
         progress.setValue(getProgress(total));
         progress.setClassName("calendar-view-week-summary-progress");
 
-        Span note = new Span(getWeekStatusNote(status, total));
+        Span note = new Span(componentSupport.formatWeekStatusNote(status, total));
         note.setClassName("calendar-view-week-summary-note");
 
         Div weekSummary = new Div(totals, progress, note);
@@ -421,19 +435,6 @@ public class CalendarView extends StandardView {
             case IN_PROGRESS -> "calendar-view-week-summary-in-progress";
             case UPCOMING -> "calendar-view-week-summary-upcoming";
             case NO_WORKDAYS -> "calendar-view-week-summary-no-workdays";
-        };
-    }
-
-    private String getWeekStatusNote(WeekStatus status, FactAndPlan total) {
-        String difference = componentSupport.formatWorkTimeTotal(total.difference());
-
-        return switch (status) {
-            case OVER -> messageBundle.formatMessage("weekStatus.over.text", difference);
-            case ON_PLAN -> messageBundle.getMessage("weekStatus.onPlan.text");
-            case SHORT -> messageBundle.formatMessage("weekStatus.short.text", difference);
-            case IN_PROGRESS -> messageBundle.formatMessage("weekStatus.inProgress.text", difference);
-            case UPCOMING -> messageBundle.getMessage("weekStatus.upcoming.text");
-            case NO_WORKDAYS -> messageBundle.getMessage("weekStatus.noWorkdays.text");
         };
     }
 

@@ -23,7 +23,7 @@ Three things change a status:
 
 None of them records who changed the status, or when ([decision 0009](../../decisions/0009-who-approved-or-rejected-an-entry-is-left-to-the-audit-add-on.md)).
 
-Apart from the approval screen and the rule above, Rejected is the only status with behavior attached: the entry's user sees their count of Rejected entries in the main menu ([main view](../views/main.md)), and the editor and the lists show the rejection reason ([time entries](../views/time-entries.md)).
+Apart from the approval screen, the dashboard's team blocks, and the rule above, Rejected is the only status with behavior attached: the entry's user sees their count of Rejected entries in the main menu ([main view](../views/main.md)) and in the dashboard's Needs attention ([dashboard](../views/dashboard.md#needs-attention)), and the editor and the lists show the rejection reason ([time entries](../views/time-entries.md)).
 
 After an entry is created or deleted, or its status changes, whatever saves it, the rule above included, the open sessions of the entry's user are told to refresh that count, whether or not that user is deleted. A change that moves an entry to another user tells only the new user, and only if the status changed too.
 

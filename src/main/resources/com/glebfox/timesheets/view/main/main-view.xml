@@ -88,6 +88,7 @@
                 <drawerToggle id="initialLayoutDrawerToggle"
                               classNames="jmix-main-view-drawer-toggle"
                               ariaLabel="msg://drawerToggle.ariaLabel"/>
+                <fragment id="dashboard" class="com.glebfox.timesheets.view.dashboard.DashboardFragment"/>
             </initialLayout>
         </workArea>
     </appLayout>

@@ -1,0 +1,862 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The dashboard fills the initial layout below the menu toggle, from edge to edge of the work area, and scrolls on
+   its own, so the toggle stays in place. It pads as a view in a tab pads its content, and by more than a focus ring
+   reaches outside a button, so no ring is cut off at the scrolling edge; at the top, the initial layout's gap under
+   the toggle already separates it.
+
+   Its spacing grows in three steps, each clearly larger than the one before: inside a block, the card's padding and
+   its border; between blocks, the grid's gap; between the header and the sections, this gap, Aura's largest gap and
+   the next smaller one together, as Aura has no larger one. On a desktop they are 17, 24, and 40 pixels; a touch
+   screen scales each up. */
+.jmix-initial-layout > .dashboard {
+    container-name: dashboard;
+    container-type: inline-size;
+
+    --dashboard-section-gap: calc(var(--vaadin-gap-xl) + var(--vaadin-gap-l));
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--dashboard-section-gap);
+
+    flex: 1 1 0;
+    align-self: stretch;
+    min-height: 0;
+    overflow: auto;
+    box-sizing: border-box;
+
+    margin: 0 calc(var(--_bar-padding-inline) * -1) calc(var(--_bar-padding-block) * -1);
+    padding: calc(var(--vaadin-focus-ring-width) + 2px) var(--vaadin-padding-l) var(--vaadin-padding-l);
+}
+
+/* Header */
+
+.dashboard-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--vaadin-gap-m);
+}
+
+.dashboard-header-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* The greeting is the largest text of the dashboard: Aura's size of an h2, which it is, a step above the section
+   headings and the blocks' figures */
+.dashboard-greeting {
+    margin: 0;
+}
+
+.dashboard-today {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+}
+
+/* Sections */
+
+/* The gap above a heading parts the sections; the heading sits close to its own blocks. It keeps Aura's size of an
+   h3, which it is, larger than the titles of the blocks it groups */
+.dashboard-section-heading {
+    margin: 0 0 calc(var(--vaadin-gap-s) - var(--dashboard-section-gap));
+}
+
+/* Each section is a grid of blocks: one column, two from 600 pixels of the dashboard's width, three from 1024. A
+   block of the class "wide" spans two columns where the grid has two or three, and one of the class "full" the
+   whole row always.
+
+   The dashboard is as wide as the work area less its padding, 2 × 16 pixels (2 × 18 on a touch screen), and less a
+   classic scrollbar, 15 pixels, where one shows. The navigation drawer is 256 pixels wide, and an overlay from 800
+   pixels of window width down, where the work area is the whole window. Its width at the common windows, worked out
+   from those sizes (Task 10's live check measures them), with the drawer open | collapsed:
+     - 1920: 1632 | 1888; 1680: 1392 | 1648; 1536: 1248 | 1504; 1440: 1152 | 1408; 1366: 1078 | 1334;
+     - 1280: 992 | 1248; 1024: 736 | 992;
+     - 800 and below, the drawer an overlay: 768 at 800, 736 at 768, 568 at 600, 448 at 480, 382 at 414, 358 at 390,
+       343 at 375, 328 at 360.
+   The nearest of these to 600 are 568 below and 717 (768 less a touch screen's padding and a scrollbar) above, and
+   to 1024 are 992 below and 1059 (1366 with the drawer open, less a touch screen's padding and a scrollbar) above,
+   each more than a scrollbar's width away, so a classic or an overlay scrollbar never moves a window across a
+   breakpoint. So a window of 1280 with the drawer open, or of
+   1024 with it collapsed, shows two columns; one of 1366 with the drawer open, or of 1280 with it collapsed, three. */
+.dashboard-blocks {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--vaadin-gap-xl);
+}
+
+/* A block may narrow below its content's width, so a long text or a chart never widens its column */
+.dashboard-blocks > * {
+    min-width: 0;
+}
+
+/* Blocks are Aura cards: a surface background with a secondary border, rounded as a large container. A card pads
+   less than the grid's gap, so the blocks stand apart. Its title is the smallest heading of the dashboard, set apart
+   from the rows by its weight, under a block's figure and a section's heading; its subtitle is a note, as the note
+   beside a figure */
+.dashboard-blocks > vaadin-card {
+    --vaadin-card-border-radius: var(--vaadin-radius-l);
+    --vaadin-card-padding: var(--vaadin-padding-l);
+    --vaadin-card-title-font-size: var(--aura-font-size-m);
+    --vaadin-card-title-line-height: var(--aura-line-height-m);
+    --vaadin-card-title-font-weight: var(--aura-font-weight-semibold);
+    --vaadin-card-subtitle-font-size: var(--aura-font-size-s);
+    --vaadin-card-subtitle-line-height: var(--aura-line-height-s);
+
+    /* A card holds at least its title and three one-line rows, so a block with nothing to show, whose empty state
+       takes no room, does not collapse to a strip, and cards in a row are as tall as the tallest anyway */
+    min-height: calc(2 * (var(--vaadin-card-padding) + var(--vaadin-card-border-width, 1px))
+        + var(--vaadin-card-title-line-height) + var(--vaadin-gap-m)
+        + 3 * (var(--aura-line-height-s) + 2 * var(--vaadin-padding-block-container)));
+}
+
+.dashboard-blocks > .full {
+    grid-column: 1 / -1;
+}
+
+@container dashboard (width >= 600px) {
+    .dashboard-blocks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-blocks > .wide {
+        grid-column: span 2;
+    }
+}
+
+@container dashboard (width >= 1024px) {
+    .dashboard-blocks {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* The My team section fills every row: on two columns Waiting for my approval and Team away side by side, with Team
+   this week under them across the row; on three, the two stacked in the first column, beside Team this week across
+   the other two. One column keeps the blocks' order. Without Team this week, which hides for a team of nobody, the
+   other two stand side by side, on two columns also where the grid has three. */
+@container dashboard (width >= 600px) {
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) {
+        grid-template-areas:
+            "waiting away"
+            "week week";
+    }
+
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .waiting-block {
+        grid-area: waiting;
+    }
+
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .team-week-block {
+        grid-area: week;
+    }
+
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) > .team-away-block {
+        grid-area: away;
+    }
+}
+
+@container dashboard (width >= 1024px) {
+    .dashboard-team-blocks:has(> .team-week-block:not([hidden])) {
+        grid-template-areas:
+            "waiting week week"
+            "away week week";
+    }
+
+    .dashboard-team-blocks:not(:has(> .team-week-block:not([hidden]))) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Blocks */
+
+/* A block's body fills the card below its title, to the height the grid's row gives the card, so a chart grows into
+   it and an empty state centers in it */
+.dashboard-blocks > vaadin-card::part(content) {
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-chart-block,
+.dashboard-projects,
+.dashboard-list-block {
+    flex: 1 1 auto;
+}
+
+/* A link in a card's header, such as My entries: its text, not its box, ends on the content edge, as the rows'
+   values do, and it is no taller than the title's line, so the title stays level with the titles of cards without
+   one. Its padding beside the text is a focus ring wider than a link's own, so the ring does not hug the text */
+.dashboard-blocks > vaadin-card > vaadin-button.link-button[slot='header-suffix'] {
+    --dashboard-link-padding: calc(var(--vaadin-padding-xs) + var(--vaadin-focus-ring-width));
+
+    margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
+    margin-inline-end: calc((var(--dashboard-link-padding) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-inline: var(--dashboard-link-padding);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* An empty block's state is centered on the whole card, both ways, so the states of the cards of one row stand on
+   one line whatever the cards' headers hold, and it reads quieter than data: the rows' size, regular, in the
+   secondary color. It lies over the card and lets the pointer through to the header's link. The empty grid of
+   Recent entries, whose state stays in the grid, stands in the middle of the body and moves up by half the
+   header, its title and the card's gap, so its state is in the middle of the card too */
+.dashboard .grid-empty-state {
+    justify-content: center;
+}
+
+.dashboard-blocks > vaadin-card > div > .grid-empty-state {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+vaadin-grid.dashboard-recent-entries.empty {
+    margin-block: auto;
+    translate: 0 calc((var(--vaadin-card-title-line-height) + var(--vaadin-gap-m)) / -2);
+}
+
+vaadin-grid.dashboard-recent-entries > .grid-empty-state {
+    padding-block: var(--vaadin-padding-l);
+}
+
+.dashboard .grid-empty-state > .heading {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+    font-weight: var(--aura-font-weight-regular);
+}
+
+/* A block of a chart: its figures, if any, above the chart */
+.dashboard-chart-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+/* A block's main figure, such as the week's time spent, the largest text of its block, with a note beside it */
+.dashboard-figure {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+}
+
+.dashboard-figure-value {
+    font-size: var(--aura-font-size-xl);
+    line-height: var(--aura-line-height-xl);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.dashboard-figure-note {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* A chart draws into the box it is given and has no height of its own; Aura has no size token for one, so the
+   height is set here, enough for seven bars with two-line labels under them. Where a taller block beside it
+   stretches the card, the chart grows to the card's bottom, and draws itself again at that size */
+.dashboard-chart {
+    flex: 1 0 auto;
+    width: 100%;
+    height: 12rem;
+}
+
+/* A chart with its legend under it: the two share the chart's height, so the legend, on one line or two, takes
+   its room from the chart and never makes the card taller than the cards beside it. Team this week, whose height
+   follows its rows, is the exception below */
+.dashboard-chart-area {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    min-width: 0;
+    height: 12rem;
+}
+
+.dashboard-chart-area > .dashboard-chart {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+}
+
+/* The legend: a line of items that wraps, each a mark as the chart draws its series and the series' name, quieter
+   than the data, in the rows' size. The items flow as text, so the lines are balanced, two and two rather than three
+   and one; each item pads its line by half the gap between lines, which the legend takes back at its edges */
+.dashboard-chart-legend {
+    flex: none;
+    margin-block: calc(var(--vaadin-gap-xs) / -2);
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+    text-wrap: balance;
+}
+
+.dashboard-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    margin-block: calc(var(--vaadin-gap-xs) / 2);
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.dashboard-legend-item:not(:last-child) {
+    margin-inline-end: var(--vaadin-gap-m);
+}
+
+/* The mark takes its colors from the controller, the chart's literals: a square filled as a bar, a dashed outline
+   as the plan, or hatched as other projects and time off */
+.dashboard-legend-item > .mark {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--vaadin-gap-m);
+    height: var(--vaadin-gap-m);
+    background-color: var(--dashboard-mark-color);
+}
+
+.dashboard-legend-item > .mark.plan {
+    background-color: transparent;
+    border: 1px dashed var(--dashboard-mark-color);
+}
+
+.dashboard-legend-item > .mark.other-projects {
+    background-image: repeating-linear-gradient(45deg,
+        var(--dashboard-mark-stripe) 0 1.5px, transparent 1.5px 3.5px);
+}
+
+.dashboard-legend-item > .mark.off {
+    background-image: repeating-linear-gradient(-45deg,
+        var(--dashboard-mark-stripe) 0 1.5px, transparent 1.5px 4px);
+}
+
+/* A chart's box is the size the layout gives it, never the size of what it drew last: otherwise its drawing, still
+   at the old size, would hold the box, and so the card, at that size, wider or taller than the card now has room
+   for, and the chart would never be told to redraw. The chart draws in its root part, whose inline style inherits
+   the chart's height property, not the height the layout gives it; the root takes the box's height instead, so a
+   chart that grows draws at the size it grows to. The chart redraws when its box changes size, which only a block
+   box reports: the element is inline unless its parent lays it out, as the donut's does not. What it still draws
+   at its old size while the window narrows stays inside its box, so the dashboard never scrolls sideways; its
+   tooltip is drawn on the page's body, so it shows whole however small the chart */
+.dashboard jmix-chart {
+    display: block;
+    contain: size;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.dashboard jmix-chart::part(root) {
+    height: 100% !important;
+}
+
+/* A chart's tooltip lies on the page's body, where it stays, hidden, after it last showed; it is placed against the
+   window, so it never widens the page, which does not scroll itself. ECharts places and styles it with an inline
+   style, in the colors of its own theme; the dashboard's look overrides those, as Aura draws a popover: the
+   surface, its outline and shadow instead of a border, the text color, and the rows' font. They follow the theme
+   the moment it switches, as they are the theme's custom properties */
+.dashboard-chart-tooltip {
+    position: fixed !important;
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m) !important;
+    border: none !important;
+    border-radius: var(--vaadin-radius-m) !important;
+    background-color: var(--aura-surface-color-solid) !important;
+    box-shadow: var(--aura-overlay-outline-shadow), var(--aura-overlay-shadow) !important;
+    color: var(--vaadin-text-color) !important;
+    font-family: var(--aura-font-family) !important;
+    font-size: var(--aura-font-size-s) !important;
+    line-height: var(--aura-line-height-s) !important;
+    /* A long name wraps rather than running past the window: the tooltip is never wider than the window less the
+       dashboard's padding on both sides, which a tooltip on the content edge then clears */
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    max-width: min(20rem, calc(100vw - 2 * var(--vaadin-padding-l)));
+    box-sizing: border-box;
+}
+
+.dashboard-chart-tooltip b {
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+/* Time by project: the donut, with the total in its hole, and the list of projects beside it, in the middle of a
+   card the row stretches; the donut keeps its size, so the list keeps its width for the names */
+.dashboard-projects {
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-projects-content {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-m);
+}
+
+.dashboard-donut {
+    position: relative;
+    flex: none;
+    width: 8rem;
+    height: 8rem;
+}
+
+.dashboard-donut-chart {
+    width: 100%;
+    height: 100%;
+}
+
+/* The total lies over the chart, so the pointer reaches the slices through it */
+.dashboard-donut-total {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font-size: var(--aura-font-size-xl);
+    line-height: var(--aura-line-height-xl);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.dashboard-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.dashboard-project-row {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* The slice's color, set from the controller: a dot as small as the smallest gap, as the approval screen's */
+.dashboard-project-row > .mark {
+    flex: none;
+    width: var(--vaadin-gap-s);
+    height: var(--vaadin-gap-s);
+    border-radius: 50%;
+}
+
+/* A long name takes a second line before it is cut, as the list has the donut's height to fill */
+.dashboard-project-row > .name {
+    flex: 1 1 0;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-project-row > .time {
+    flex: none;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Blocks of lists: Needs attention, Coming up, Recent entries, Waiting for my approval, and Team away.
+
+   A list has one left and one right edge, the card's content edges: a row's text, value, and avatar stand on them,
+   whether the row is plain or a button. A button row pads its text by the inset and reaches outside the edges by its
+   reach, the inset and its border, so its highlight extends outward and its text stays on the edge. Its frame then
+   stands as far from the card's outer edge on the left, the right, and, for the last row of a card, the bottom, and
+   its corners follow the card's at that distance.
+
+   Every row pads its text by the same space above and below, a grid cell's, so the air around the text is the same
+   in every list, whether a row holds one line, two, or an avatar. */
+.dashboard-list-block {
+    --dashboard-row-inset: var(--vaadin-padding-s);
+    --dashboard-row-reach: calc(var(--dashboard-row-inset) + var(--vaadin-button-border-width, 1px));
+    --dashboard-row-padding: var(--vaadin-padding-block-container);
+    /* The distance from a row's frame to the card's outer edge, and so the frame's radius */
+    --dashboard-row-gap: calc(var(--vaadin-card-padding) + var(--vaadin-card-border-width, 1px)
+        - var(--dashboard-row-reach));
+    --dashboard-row-radius: calc(var(--vaadin-radius-l) - var(--dashboard-row-gap));
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+.dashboard-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* A row is a line of a name that takes the room and a value; where it does something on a click, it is a button
+   that looks as a row, so the keyboard reaches it */
+.dashboard-list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    min-width: 0;
+    box-sizing: border-box;
+    padding-block: var(--dashboard-row-padding);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* A button's border counts in its height, so it pads less to be as tall as a Div row */
+vaadin-button.dashboard-list-row {
+    justify-content: flex-start;
+    height: auto;
+    margin-inline: calc(var(--dashboard-row-reach) * -1);
+    padding-inline: var(--dashboard-row-inset);
+    padding-block: calc(var(--dashboard-row-padding) - var(--vaadin-button-border-width, 1px));
+    border-radius: var(--dashboard-row-radius);
+    text-align: start;
+}
+
+/* The last row of a card reaches below the content edge as far as it reaches beside it */
+.dashboard-list > vaadin-button.dashboard-list-row:last-child {
+    margin-block-end: calc(var(--dashboard-row-reach) * -1);
+}
+
+/* On a touch screen a row that does something keeps a target a finger can hit */
+@media (pointer: coarse) {
+    vaadin-button.dashboard-list-row {
+        min-height: 44px;
+    }
+}
+
+/* The parts of a button row sit in the button's label, which is laid out as the Div row is: the label, a block of
+   its own, is made a flex line that takes the button's width, with the same gap, and the weight and the size are the
+   body's, not a tertiary button's. The label shows what overflows its line, such as an avatar's edge: a part that
+   may be too long cuts itself */
+vaadin-button.dashboard-list-row {
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+    font-weight: var(--aura-font-weight-regular);
+}
+
+vaadin-button.dashboard-list-row::part(label) {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
+    overflow: visible;
+}
+
+.dashboard-list-row > .name {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-list-row > .value {
+    flex: none;
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The rejected entries' row: the Rejected status' icon on the content edge, as tall as a line of text, with the row's
+   gap before the name, both in the error color, which a hovered or focused row keeps */
+.dashboard-list-row > vaadin-icon.icon {
+    flex: none;
+    --vaadin-icon-size: var(--aura-line-height-s);
+}
+
+.dashboard-list-row.rejected > vaadin-icon.icon,
+.dashboard-list-row.rejected > .name {
+    --vaadin-icon-color: var(--ts-danger-color);
+    color: var(--ts-danger-color);
+}
+
+/* A count badge, such as the rejected entries', keeps its size at the row's end and takes no more height than a line
+   of text, so its row is as tall as the others */
+.dashboard-list-row > vaadin-badge {
+    flex: none;
+    margin-block: calc(var(--vaadin-padding-xs) / -2);
+}
+
+/* A name with a second line under it, such as a kind of day off */
+.dashboard-list-row > .name > .title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-list-row > .name > .kind {
+    display: block;
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-xs);
+    line-height: var(--aura-line-height-xs);
+}
+
+/* A row of a person, in Waiting for my approval and Team away: the avatar keeps its size before the name, as tall as
+   the row's two lines, and stands on the content edge rather than reaching outside it */
+.dashboard-list-row > vaadin-avatar {
+    flex: none;
+    margin: 0;
+}
+
+.dashboard-list-more {
+    padding-block: var(--dashboard-row-padding);
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* Recent entries: a grid without a header, borders, or a background of its own, so it reads as the other lists do.
+   It reaches outside the content edges as a button row does, so its rows' frame stands where theirs does, and the
+   first and the last column pad their outer side by the same reach, so the text stands on the content edges. A cell
+   pads its text as a row does; the status and Copy to today, taller than a line, sit in the middle of a row as tall
+   as a line of text and its padding.
+
+   The columns are as wide as their content, with half the rows' gap on either side of a cell, but the task's, which
+   takes the room left, so the rows span the card and Copy to today ends each on the content edge. The gap is the
+   same at every width, so the widths the grid measured once stay right when the card narrows or widens. */
+vaadin-grid.dashboard-recent-entries {
+    --vaadin-grid-background: transparent;
+    --vaadin-grid-row-background-color: transparent;
+    --dashboard-cell-gap: calc(var(--vaadin-gap-s) / 2);
+    --dashboard-cell-start: var(--dashboard-cell-gap);
+    --dashboard-cell-end: var(--dashboard-cell-gap);
+    /* Copy to today: its icon centered in a box as tall as a row */
+    --dashboard-copy-height: calc(var(--aura-line-height-s) + 2 * var(--dashboard-row-padding));
+    --dashboard-copy-icon-size: var(--aura-font-size-l);
+
+    width: calc(100% + 2 * var(--dashboard-row-reach));
+    max-width: none;
+    margin-inline: calc(var(--dashboard-row-reach) * -1);
+    font-size: var(--aura-font-size-s);
+    line-height: var(--aura-line-height-s);
+}
+
+/* Its last row reaches below the content edge as a button row does; an empty grid does not, so its empty state
+   stands in the middle of the block, as the other blocks' do */
+vaadin-grid.dashboard-recent-entries:not(.empty) {
+    margin-block-end: calc(var(--dashboard-row-reach) * -1);
+}
+
+/* A column is never narrower than its content, whatever width the grid measured for it: the measure stays as it
+   was when a screen changes its sizes, as when a touch screen's larger padding comes in. The task's column, which
+   takes the room left, narrows below its content and cuts it */
+vaadin-grid.dashboard-recent-entries::part(body-cell) {
+    min-width: max-content;
+}
+
+vaadin-grid.dashboard-recent-entries::part(task-cell) {
+    min-width: 0;
+}
+
+vaadin-grid.dashboard-recent-entries::part(first-column-cell) {
+    --dashboard-cell-start: var(--dashboard-row-reach);
+}
+
+vaadin-grid.dashboard-recent-entries::part(last-column-cell) {
+    --dashboard-cell-end: var(--dashboard-row-reach);
+}
+
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content {
+    padding-block: var(--dashboard-row-padding);
+    padding-inline: var(--dashboard-cell-start) var(--dashboard-cell-end);
+}
+
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> vaadin-badge, > .row-copy) {
+    display: flex;
+    align-items: center;
+    min-height: calc(var(--aura-line-height-s) + 2 * var(--dashboard-row-padding));
+    padding-block: 0;
+}
+
+/* The date is quieter than the name, and the date and the time are in figures of one width */
+vaadin-grid.dashboard-recent-entries::part(date-cell) {
+    color: var(--vaadin-text-color-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+vaadin-grid.dashboard-recent-entries::part(time-cell) {
+    font-variant-numeric: tabular-nums;
+}
+
+/* The name, on one line, is the task, then its project after a separator, quieter: a name too long is cut from its
+   end, the project first, so the task stays. Where it opens the entry, the task is a link as wide as its text, which
+   starts where its cell starts and pads its text by the cell's padding, so the text stands where the project's does
+   under it; its padding and border take no room in the row, so the separator stands midway */
+vaadin-grid.dashboard-recent-entries .recent-task {
+    display: flex;
+    align-items: baseline;
+    column-gap: var(--vaadin-gap-s);
+    min-width: 0;
+}
+
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task) {
+    overflow: visible;
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+    margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
+    margin-inline: calc(var(--dashboard-cell-start) * -1)
+        calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-inline-start: calc(var(--dashboard-cell-start) - var(--vaadin-button-border-width, 1px));
+    max-width: calc(100% + var(--dashboard-cell-start));
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > .task,
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > .task {
+    flex: 0 1 auto;
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > .separator,
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
+    color: var(--vaadin-text-color-secondary);
+    font-weight: var(--aura-font-weight-regular);
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > .separator {
+    flex: none;
+}
+
+vaadin-grid.dashboard-recent-entries .recent-task > .project {
+    flex: 0 1000 auto;
+}
+
+/* Copy to today fills its cell, without padding, so the grid's focus ring on the cell outlines the button. It ends
+   at the row's end, where the rows' frame ends, and its icon stands in it by the row's reach on either side, so the
+   icon stands on the content edge, as the rows' values do; it keeps to the end of its column, however wide the
+   column was measured. The icon is drawn at its whole size, so its box is the drawing's */
+vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .row-copy) {
+    justify-content: flex-end;
+    padding-inline: 0;
+}
+
+vaadin-grid.dashboard-recent-entries vaadin-button.row-copy {
+    width: calc(var(--dashboard-copy-icon-size) + 2 * var(--dashboard-row-reach));
+    height: var(--dashboard-copy-height);
+    margin: 0;
+    padding: 0;
+}
+
+vaadin-grid.dashboard-recent-entries vaadin-button.row-copy > vaadin-icon {
+    --vaadin-icon-size: var(--dashboard-copy-icon-size);
+    --vaadin-icon-visual-size: 100%;
+}
+
+/* On a touch screen the task's link and Copy to today keep a target a finger can hit, and so every row with them is
+   at least as tall as one. The link stands in its row from top to bottom, never reaching into another: on one line
+   in the middle of the row, as the other cells' text; on two lines its text keeps its place on the first, and the
+   link reaches down over the project under it */
+@media (pointer: coarse) {
+    vaadin-grid.dashboard-recent-entries {
+        --dashboard-copy-height: 44px;
+    }
+
+    vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task > vaadin-button.task) {
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+        min-height: 44px;
+        padding-block: 0;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+        min-height: 44px;
+        margin-block: 0;
+    }
+
+    @container dashboard (width < 600px) {
+        vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-task > vaadin-button.task) {
+            align-items: flex-start;
+            padding-block-end: var(--dashboard-row-padding);
+        }
+
+        vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
+            align-items: flex-start;
+            padding-block-start: calc(var(--dashboard-row-padding) - var(--vaadin-button-border-width, 1px));
+            margin-block-end: calc(var(--dashboard-row-padding) + var(--aura-line-height-s) - 44px);
+        }
+    }
+}
+
+/* On a narrow card the project goes on a second line under the task, smaller, each line cut on its own, so both keep
+   the whole name column */
+@container dashboard (width < 600px) {
+    vaadin-grid.dashboard-recent-entries .recent-task {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > .task,
+    vaadin-grid.dashboard-recent-entries .recent-task > .project {
+        max-width: 100%;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > .separator {
+        display: none;
+    }
+
+    vaadin-grid.dashboard-recent-entries .recent-task > .project {
+        font-size: var(--aura-font-size-xs);
+        line-height: var(--aura-line-height-xs);
+    }
+}
+
+/* Team this week: a bar per person, so the chart grows taller with the team. The block sets the number of people
+   on the chart's area, the chart and its legend, and each has a row; where the names stand above the bars, each row
+   is taller to hold its name.
+
+   The body is the container, and its width is the chart's, which switches where its names go at the same width,
+   600 pixels (TeamWeekBlock.NARROW_WIDTH). The block spans the whole row on one and on two columns, so at the
+   common windows the body is the dashboard's width less the card's padding and border, 2 × 17 pixels (more on a
+   touch screen): at most 534 on one column (568), at least 683 on two (717) less what a touch screen pads more; on
+   three columns it spans two of them, about 670 or more (1059). Each is more than a scrollbar's width away from 600. */
+.dashboard-team-week {
+    container: team-week / inline-size;
+}
+
+/* The rows are the chart's own, so the legend adds to its height rather than taking from it: the block spans its
+   row, and its height follows the team anyway */
+.dashboard-team-chart-area {
+    height: auto;
+}
+
+.dashboard-team-chart-area > .dashboard-chart {
+    flex: 1 0 auto;
+    height: calc(var(--dashboard-team-size, 1) * 2rem + 2.5rem);
+}
+
+@container team-week (width < 600px) {
+    .dashboard-team-chart-area > .dashboard-chart {
+        height: calc(var(--dashboard-team-size, 1) * 3rem + 2.5rem);
+    }
+}

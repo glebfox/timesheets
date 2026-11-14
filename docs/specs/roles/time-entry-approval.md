@@ -16,7 +16,7 @@ It grants no signing in: a holder also needs a role that does, such as [UI: mini
 
 ## What it does not decide
 
-The role only lets a holder open the screen and change the status and the rejection reason. Whose entries a holder sees and approves is decided by their roles on projects, not by this role: a holder who is no Manager or Approver on any project sees an empty screen ([approval](../views/approval.md#which-entries-it-shows)). The role grants no project screens, yet the screen still offers a holder the projects they approve on; a holder does not see the Projects or Time entries lists unless another role grants them.
+The role only lets a holder open the screen and change the status and the rejection reason. Whose entries a holder sees and approves is decided by their roles on projects, not by this role: a holder who is no Manager or Approver on any project sees an empty screen ([approval](../views/approval.md#which-entries-it-shows)). The role grants no project screens, yet the screen still offers a holder the projects they approve on; a holder does not see the Projects or Time entries lists unless another role grants them. On the [dashboard](../views/dashboard.md#my-team), a holder who approves on at least one project also sees My team, whose blocks open the approval screen; a holder who approves nowhere sees none. Team this week and Team away show a holder the people's time on other projects, their plans, and their absences with types, which neither this role nor User: read only grants ([decision 0020](../../decisions/0020-the-dashboard-shows-an-approver-their-teams-other-time-plans-and-absences.md)).
 
 ## With Edit active time entries
 
@@ -24,7 +24,7 @@ A holder of the row-level role [Edit active time entries](edit-active-time-entri
 
 ## Holders
 
-- The demo user `mossman`, in the `dev` demo data only, with [UI: minimal access](ui-minimal.md) and [Work schedule management](work-schedule-management.md). She is the Approver of the Borealis Recovery project and approves nowhere else.
+- The demo user `mossman`, in the `dev` demo data only, with [UI: minimal access](ui-minimal.md) and [Work schedule management](work-schedule-management.md). She is the Approver of the Borealis Recovery project and approves nowhere else. She sees My team for the people of Borealis Recovery.
 
 Holders of [Full access](system-full-access.md) can open the screen without it, and the rule of the screen still narrows what they see to the projects where they are a Manager or an Approver.
 

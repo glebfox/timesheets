@@ -1,0 +1,294 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.glebfox.timesheets.app;
+
+import com.glebfox.timesheets.app.util.Attention;
+import com.glebfox.timesheets.app.util.ComingUp;
+import com.glebfox.timesheets.app.util.DaySummary;
+import com.glebfox.timesheets.app.util.FactAndPlan;
+import com.glebfox.timesheets.app.util.MyWeek;
+import com.glebfox.timesheets.app.util.ProjectTime;
+import com.glebfox.timesheets.app.util.ShortDay;
+import com.glebfox.timesheets.app.util.WeekStatus;
+import com.glebfox.timesheets.app.util.WeekSummary;
+import com.glebfox.timesheets.app.util.WorkPlan;
+import com.glebfox.timesheets.datatype.WorkTime;
+import com.glebfox.timesheets.entity.schedule.HolidayCalendarDayType;
+import com.glebfox.timesheets.entity.project.Project;
+import com.glebfox.timesheets.entity.timeentry.TimeEntry;
+import com.glebfox.timesheets.entity.user.User;
+import io.jmix.core.DataManager;
+import io.jmix.core.FetchPlan;
+import io.jmix.core.usersubstitution.CurrentUserSubstitution;
+import org.jspecify.annotations.Nullable;
+import org.springframework.stereotype.Component;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Computes what the dashboard shows of the current user's own time: this week, the recent weeks, what needs
+ * attention, the time by project, what is coming up, and the recent entries. The current user is the effective user, the substituted one when a substitution is active.
+ * Weeks are whole, across month and year boundaries.
+ */
+@Component("ts_DashboardSupport")
+public class DashboardSupport {
+
+    /**
+     * How many weeks, the current one included, the recent weeks and the short weeks cover.
+     */
+    public static final int RECENT_WEEKS = 8;
+
+    /**
+     * How far ahead Coming up looks.
+     */
+    public static final Period COMING_UP_HORIZON = Period.ofMonths(6);
+
+    private final DataManager dataManager;
+    private final WorkPlanSupport workPlanSupport;
+    private final TimeEntrySupport timeEntrySupport;
+    private final CurrentUserSubstitution currentUserSubstitution;
+
+    public DashboardSupport(DataManager dataManager,
+                            WorkPlanSupport workPlanSupport,
+                            TimeEntrySupport timeEntrySupport,
+                            CurrentUserSubstitution currentUserSubstitution) {
+        this.dataManager = dataManager;
+        this.workPlanSupport = workPlanSupport;
+        this.timeEntrySupport = timeEntrySupport;
+        this.currentUserSubstitution = currentUserSubstitution;
+    }
+
+    /**
+     * Loads the week that contains the day, with each of its seven days.
+     *
+     * @param today          the day to find the week of
+     * @param firstDayOfWeek the day the weeks start on
+     * @return the week
+     */
+    public MyWeek loadMyWeek(LocalDate today, DayOfWeek firstDayOfWeek) {
+        LocalDate start = weekStart(today, firstDayOfWeek);
+        List<DaySummary> days = loadDays(start, start.plusWeeks(1));
+        return new MyWeek(toWeek(days.subList(0, 7)), days);
+    }
+
+    /**
+     * Loads whole weeks, the last one containing the day.
+     *
+     * @param today          the day the last week contains
+     * @param firstDayOfWeek the day the weeks start on
+     * @param count          how many weeks to load
+     * @return the weeks, oldest first, each of seven days whatever month or year the days belong to
+     */
+    public List<WeekSummary> loadRecentWeeks(LocalDate today, DayOfWeek firstDayOfWeek, int count) {
+        LocalDate end = weekStart(today, firstDayOfWeek).plusWeeks(1);
+        return toWeeks(loadDays(end.minusWeeks(count), end));
+    }
+
+    /**
+     * Loads what needs attention: the rejected entries, the days of the current and the previous week
+     * before the day that are short, and the recent weeks that are short.
+     *
+     * @param today          the day to look back from; it is never a short day
+     * @param firstDayOfWeek the day the weeks start on
+     * @return the figures, with no truncation
+     */
+    public Attention loadAttention(LocalDate today, DayOfWeek firstDayOfWeek) {
+        LocalDate end = weekStart(today, firstDayOfWeek).plusWeeks(1);
+        List<DaySummary> days = loadDays(end.minusWeeks(RECENT_WEEKS), end);
+
+        LocalDate shortDaysStart = end.minusWeeks(2);
+        List<ShortDay> shortDays = days.stream()
+                .filter(day -> !day.date().isBefore(shortDaysStart) && day.date().isBefore(today))
+                .filter(day -> day.total().isInsufficient())
+                .map(day -> new ShortDay(day.date(), day.total().difference()))
+                .toList()
+                .reversed();
+        List<WeekSummary> shortWeeks = toWeeks(days).reversed().stream()
+                .filter(week -> week.getStatus(today) == WeekStatus.SHORT)
+                .toList();
+
+        return new Attention(timeEntrySupport.getRejectedCount(), shortDays, shortWeeks);
+    }
+
+    /**
+     * Loads the current user's time in the month by project.
+     *
+     * @param month the month
+     * @return the projects with time spent, the largest time first, then by project name
+     */
+    public List<ProjectTime> loadTimeByProject(YearMonth month) {
+        User user = effectiveUser();
+        // The constrained data manager: only the entries the user may read count
+        Map<Project, WorkTime> timeByProject = new LinkedHashMap<>();
+        dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.user.id = :userId and e.date >= :start and e.date <= :end")
+                .parameter("userId", user.getId())
+                .parameter("start", month.atDay(1))
+                .parameter("end", month.atEndOfMonth())
+                .fetchPlan(fetchPlan -> fetchPlan
+                        .addFetchPlan(FetchPlan.BASE)
+                        .add("task", task -> task.add("project", FetchPlan.INSTANCE_NAME)))
+                .list()
+                .forEach(entry -> {
+                    if (entry.getSpentTime() != null) {
+                        timeByProject.merge(entry.getTask().getProject(), entry.getSpentTime(), WorkTime::plus);
+                    }
+                });
+        return timeByProject.entrySet().stream()
+                .map(e -> new ProjectTime(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing(ProjectTime::time).reversed()
+                        .thenComparing(t -> t.project().getName(), Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    /**
+     * Loads the current user's absences that have not ended and the days off of their holiday calendar,
+     * within {@link #COMING_UP_HORIZON} of the day. Consecutive days off of one name, such as a holiday of several
+     * days, come as one holiday.
+     *
+     * @param today the day to look ahead from, which counts as ahead
+     * @return the absences and the holidays, nearest first
+     */
+    public ComingUp loadComingUp(LocalDate today) {
+        WorkPlan plan = workPlanSupport.loadWorkPlan(effectiveUser(), today, today.plus(COMING_UP_HORIZON));
+        List<WorkPlan.AbsencePeriod> absences = plan.absences().stream()
+                .filter(absence -> !absence.lastDay().isBefore(today))
+                .sorted(Comparator.comparing(WorkPlan.AbsencePeriod::firstDay)
+                        .thenComparing(WorkPlan.AbsencePeriod::lastDay))
+                .toList();
+        List<ComingUp.Holiday> days = plan.holidayDayByDate().entrySet().stream()
+                .filter(e -> e.getValue().type() == HolidayCalendarDayType.DAY_OFF)
+                .map(e -> new ComingUp.Holiday(e.getKey(), e.getKey(), e.getValue().name()))
+                .sorted(Comparator.comparing(ComingUp.Holiday::firstDay))
+                .toList();
+        return new ComingUp(absences, mergeHolidays(days));
+    }
+
+    /**
+     * Joins each run of consecutive days of one name into one holiday.
+     *
+     * @param days holidays of one day each, by date
+     * @return the holidays, by their first day
+     */
+    private static List<ComingUp.Holiday> mergeHolidays(List<ComingUp.Holiday> days) {
+        List<ComingUp.Holiday> holidays = new ArrayList<>();
+        for (ComingUp.Holiday day : days) {
+            ComingUp.Holiday last = holidays.isEmpty() ? null : holidays.getLast();
+            if (last != null && last.lastDay().plusDays(1).equals(day.firstDay())
+                    && Objects.equals(last.name(), day.name())) {
+                holidays.set(holidays.size() - 1, new ComingUp.Holiday(last.firstDay(), day.lastDay(), last.name()));
+            } else {
+                holidays.add(day);
+            }
+        }
+        return holidays;
+    }
+
+    /**
+     * Loads the current user's latest entries, with each one's task, project, and status.
+     *
+     * @param limit how many entries to load
+     * @return the entries by date, the latest first; the entries of one date in the order of their ids, descending
+     */
+    public List<TimeEntry> loadRecentEntries(int limit) {
+        return dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.user.id = :userId order by e.date desc, e.id desc")
+                .parameter("userId", effectiveUser().getId())
+                .maxResults(limit)
+                .fetchPlan(fetchPlan -> fetchPlan
+                        .addFetchPlan(FetchPlan.BASE)
+                        .add("task", task -> task
+                                .addFetchPlan(FetchPlan.BASE)
+                                .add("project", FetchPlan.INSTANCE_NAME)))
+                .list();
+    }
+
+    private User effectiveUser() {
+        return (User) currentUserSubstitution.getEffectiveUser();
+    }
+
+    private static LocalDate weekStart(LocalDate date, DayOfWeek firstDayOfWeek) {
+        return date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek));
+    }
+
+    private static List<WeekSummary> toWeeks(List<DaySummary> days) {
+        List<WeekSummary> weeks = new ArrayList<>();
+        for (int i = 0; i < days.size(); i += 7) {
+            weeks.add(toWeek(days.subList(i, i + 7)));
+        }
+        return weeks;
+    }
+
+    private static WeekSummary toWeek(List<DaySummary> weekDays) {
+        FactAndPlan total = weekDays.stream()
+                .map(DaySummary::total)
+                .reduce(FactAndPlan.ZERO, FactAndPlan::plus);
+        return new WeekSummary(weekDays.getFirst().date(), weekDays.getLast().date(), total);
+    }
+
+    /**
+     * Loads the days of the range with one plan load and one entries load.
+     */
+    private List<DaySummary> loadDays(LocalDate start, LocalDate endExclusive) {
+        User user = effectiveUser();
+        WorkPlan plan = workPlanSupport.loadWorkPlan(user, start, endExclusive);
+
+        // The constrained data manager: only the entries the user may read count
+        Map<LocalDate, WorkTime> spentByDay = new HashMap<>();
+        dataManager.load(TimeEntry.class)
+                .query("select e from ts_TimeEntry e where e.user.id = :userId and e.date >= :start and e.date < :end")
+                .parameter("userId", user.getId())
+                .parameter("start", start)
+                .parameter("end", endExclusive)
+                .fetchPlan(FetchPlan.BASE)
+                .list()
+                .forEach(entry -> {
+                    if (entry.getSpentTime() != null) {
+                        spentByDay.merge(entry.getDate(), entry.getSpentTime(), WorkTime::plus);
+                    }
+                });
+
+        return start.datesUntil(endExclusive)
+                .map(date -> new DaySummary(date,
+                        new FactAndPlan(spentByDay.getOrDefault(date, WorkTime.ZERO), plan.getPlannedTime(date)),
+                        findOffReason(plan, date)))
+                .toList();
+    }
+
+    @Nullable
+    private static String findOffReason(WorkPlan plan, LocalDate date) {
+        return plan.absences().stream()
+                .filter(absence -> absence.includes(date))
+                .findFirst()
+                .map(WorkPlan.AbsencePeriod::typeName)
+                .orElseGet(() -> plan.findHolidayDay(date)
+                        .filter(holiday -> holiday.type() == HolidayCalendarDayType.DAY_OFF)
+                        .map(WorkPlan.HolidayDay::name)
+                        .orElse(null));
+    }
+}

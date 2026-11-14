@@ -74,6 +74,7 @@ dependencies {
     implementation 'io.jmix.translations:jmix-translations-ru'
     implementation 'io.jmix.tabbedmode:jmix-tabbedmode-flowui-starter'
     implementation 'io.jmix.fullcalendar:jmix-fullcalendar-flowui-starter'
+    implementation 'io.jmix.charts:jmix-charts-flowui-starter'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
 

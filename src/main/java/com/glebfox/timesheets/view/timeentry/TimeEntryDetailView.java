@@ -64,11 +64,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Route(value = "time-entries/:id", layout = MainView.class)
-@ViewController("ts_TimeEntry.detail")
+@ViewController(TimeEntryDetailView.ID)
 @ViewDescriptor("time-entry-detail-view.xml")
 @EditedEntityContainer("timeEntryDc")
 @DialogMode(width = "640px", closeOnEsc = true)
 public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
+
+    public static final String ID = "ts_TimeEntry.detail";
 
     @ViewComponent
     private JmixSelect<TimeEntryStatus> statusField;

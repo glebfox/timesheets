@@ -34,6 +34,7 @@ import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
+import com.glebfox.timesheets.view.approval.ApprovalOpening;
 import com.glebfox.timesheets.view.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
 import com.vaadin.flow.component.ClickEvent;
@@ -270,6 +271,64 @@ public class TimeEntryApprovalViewUiTest {
 
             assertThat(modeField(reopened).getValue()).isEqualTo(ApprovalMode.WEEK);
             assertThat(reopened.getPeriod()).isEqualTo(lastWeek);
+        });
+    }
+
+    @Test
+    void openingSelectsPersonInMonthTest() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openWith(new ApprovalOpening(ApprovalMode.MONTH,
+                    ApprovalPeriod.monthOf(YearMonth.from(cidWaiting.getDate())), ApprovalRosterScope.NEEDS_REVIEW,
+                    cid));
+
+            assertThat(view.getPeriod()).isEqualTo(ApprovalPeriod.monthOf(OCTOBER));
+            assertThat(modeField(view).getValue()).isEqualTo(ApprovalMode.MONTH);
+            assertThat(scopeField(view).getValue()).isEqualTo(ApprovalRosterScope.NEEDS_REVIEW);
+            assertThat(view.getSelectedPerson()).isNotNull();
+            assertThat(view.getSelectedPerson().getId()).isEqualTo(cid.getId());
+        });
+    }
+
+    @Test
+    void openingSelectsPersonInWeekWithEveryoneTest() {
+        asAdmin(() -> {
+            ApprovalPeriod week = ApprovalPeriod.weekOf(OCTOBER.atDay(6), firstDayOfWeek());
+
+            TimeEntryApprovalView view = openWith(
+                    new ApprovalOpening(ApprovalMode.WEEK, week, ApprovalRosterScope.EVERYONE, bob));
+
+            assertThat(view.getPeriod()).isEqualTo(week);
+            assertThat(modeField(view).getValue()).isEqualTo(ApprovalMode.WEEK);
+            assertThat(scopeField(view).getValue()).isEqualTo(ApprovalRosterScope.EVERYONE);
+            assertThat(view.getSelectedPerson()).isNotNull();
+            assertThat(view.getSelectedPerson().getId()).isEqualTo(bob.getId());
+        });
+    }
+
+    @Test
+    void openingDoesNotRememberModeTest() {
+        asAdmin(() -> {
+            modeField(open()).setValue(ApprovalMode.WEEK);
+            UiTestUtils.getCurrentView().close(StandardOutcome.CLOSE);
+
+            TimeEntryApprovalView opened = openWith(new ApprovalOpening(ApprovalMode.MONTH,
+                    ApprovalPeriod.monthOf(OCTOBER), ApprovalRosterScope.NEEDS_REVIEW, ann));
+            assertThat(modeField(opened).getValue()).isEqualTo(ApprovalMode.MONTH);
+            opened.close(StandardOutcome.CLOSE);
+
+            assertThat(modeField(open()).getValue()).isEqualTo(ApprovalMode.WEEK);
+        });
+    }
+
+    @Test
+    void openingWithPersonNotShownTest() {
+        User dan = saveUser("dan", "Dan", "Dale");
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openWith(new ApprovalOpening(ApprovalMode.MONTH,
+                    ApprovalPeriod.monthOf(OCTOBER), ApprovalRosterScope.NEEDS_REVIEW, dan));
+
+            assertThat(view.getSelectedPerson()).isNotNull();
+            assertThat(view.getSelectedPerson().getId()).isEqualTo(ann.getId());
         });
     }
 
@@ -749,6 +808,13 @@ public class TimeEntryApprovalViewUiTest {
 
     private TimeEntryApprovalView open() {
         viewBuilders.view(UiTestUtils.getCurrentView(), TimeEntryApprovalView.class).open();
+        return UiTestUtils.getCurrentView();
+    }
+
+    private TimeEntryApprovalView openWith(ApprovalOpening opening) {
+        viewBuilders.view(UiTestUtils.getCurrentView(), TimeEntryApprovalView.class)
+                .withViewConfigurer(view -> view.setOpening(opening))
+                .open();
         return UiTestUtils.getCurrentView();
     }
 

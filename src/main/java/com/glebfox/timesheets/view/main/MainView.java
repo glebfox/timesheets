@@ -18,6 +18,7 @@ package com.glebfox.timesheets.view.main;
 
 import com.glebfox.timesheets.app.TimeEntrySupport;
 import com.glebfox.timesheets.app.util.AvatarImages;
+import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.google.common.base.Strings;
@@ -25,7 +26,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.badge.Badge;
-import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.router.Route;
@@ -55,6 +55,8 @@ public class MainView extends StandardTabbedModeMainView {
     private UiComponents uiComponents;
     @Autowired
     private TimeEntrySupport timeEntrySupport;
+    @Autowired
+    private ComponentSupport componentSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
 
@@ -161,12 +163,7 @@ public class MainView extends StandardTabbedModeMainView {
     private void updateRejectedTimeEntries() {
         long count = timeEntrySupport.getRejectedCount();
 
-        Badge badge = null;
-        if (count > 0) {
-            badge = new Badge();
-            badge.setNumber(Math.toIntExact(count));
-            badge.addThemeVariants(BadgeVariant.ERROR);
-        }
+        Badge badge = count > 0 ? componentSupport.createRejectedCountBadge(count) : null;
 
         ListMenu.MenuItem teMenuItem = menu.getMenuItem("ts_TimeEntry.my");
         // Can be 'null' if menu item isn't permitted by security

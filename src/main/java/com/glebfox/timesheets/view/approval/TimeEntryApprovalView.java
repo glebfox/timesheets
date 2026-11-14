@@ -205,6 +205,9 @@ public class TimeEntryApprovalView extends StandardView {
     private DayOfWeek firstDayOfWeek;
     private ApprovalPeriodTitle periodTitles;
     private ApprovalRejectDialog rejectDialog;
+    // Set by another screen before the view is shown; null when the user opens it
+    @Nullable
+    private ApprovalOpening opening;
 
     private List<Project> projectsToApprove = List.of();
     // Null until the view is shown
@@ -250,9 +253,30 @@ public class TimeEntryApprovalView extends StandardView {
         modeField.setValue(loadMode());
     }
 
+    /**
+     * Opens the screen in a given state, instead of the remembered mode, the default period, and the roster's
+     * default switch. Called before the view is shown.
+     *
+     * @param opening the mode, the period, the roster's switch, and the person to select
+     */
+    public void setOpening(ApprovalOpening opening) {
+        this.opening = opening;
+    }
+
     @Subscribe
     public void onBeforeShow(final BeforeShowEvent event) {
-        setPeriod(defaultPeriod(Objects.requireNonNull(modeField.getValue())));
+        if (opening == null) {
+            setPeriod(defaultPeriod(Objects.requireNonNull(modeField.getValue())));
+            return;
+        }
+
+        // Both fields report their values before there is a period, so neither saves the mode nor shows the roster
+        rosterScopeField.setValue(opening.scope());
+        modeField.setValue(opening.mode());
+        setPeriod(opening.period());
+        if (findShown(opening.person().getId()).isPresent()) {
+            selectPerson(opening.person());
+        }
     }
 
     private void initRoster() {

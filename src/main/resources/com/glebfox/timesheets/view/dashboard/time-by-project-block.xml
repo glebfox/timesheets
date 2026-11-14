@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<fragment xmlns="http://jmix.io/schema/flowui/fragment"
+          xmlns:app="http://glebfox.com/schema/app-ui-components.xsd"
+          xmlns:charts="http://jmix.io/schema/charts/ui">
+    <content>
+        <!-- The subtitle names the month, so the controller sets it -->
+        <card id="root" title="msg://timeByProjectBlock.title">
+            <content>
+                <div id="body" classNames="dashboard-projects">
+                    <div id="projects" classNames="dashboard-projects-content">
+                        <div id="donut" classNames="dashboard-donut">
+                            <charts:chart id="chart" classNames="dashboard-donut-chart"/>
+                            <span id="total" classNames="dashboard-donut-total"/>
+                        </div>
+                        <div id="projectList" classNames="dashboard-project-list"/>
+                    </div>
+                    <app:gridEmptyState id="emptyState"
+                                        icon="ts:projects"
+                                        text="msg://timeByProjectBlock.emptyState"/>
+                </div>
+            </content>
+        </card>
+    </content>
+</fragment>

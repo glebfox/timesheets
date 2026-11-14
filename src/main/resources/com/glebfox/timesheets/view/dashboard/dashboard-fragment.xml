@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  ~ Copyright 2026 Gleb Gorelov
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<fragment xmlns="http://jmix.io/schema/flowui/fragment">
+    <content>
+        <div id="root" classNames="dashboard">
+            <div id="header" classNames="dashboard-header">
+                <div id="headerText" classNames="dashboard-header-text">
+                    <h2 id="greeting" classNames="dashboard-greeting"/>
+                    <span id="today" classNames="dashboard-today"/>
+                </div>
+                <div id="headerActions" classNames="dashboard-header-actions">
+                    <button id="logTimeButton"
+                            text="msg://logTimeButton.text"
+                            icon="CREATE_ACTION"
+                            themeNames="primary"/>
+                    <button id="refreshButton"
+                            icon="REFRESH_ACTION"
+                            ariaLabel="msg://refreshButton.tooltip">
+                        <tooltip text="msg://refreshButton.tooltip"/>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Each section's blocks are the fragments of DashboardBlock, in the spec's order -->
+            <h3 id="myTimeHeading" text="msg://myTimeHeading.text" classNames="dashboard-section-heading"
+                visible="false"/>
+            <div id="myTimeBlocks" classNames="dashboard-blocks">
+                <fragment id="thisWeekBlock" class="com.glebfox.timesheets.view.dashboard.ThisWeekBlock"/>
+                <fragment id="needsAttentionBlock" class="com.glebfox.timesheets.view.dashboard.NeedsAttentionBlock"/>
+                <fragment id="recentWeeksBlock" class="com.glebfox.timesheets.view.dashboard.RecentWeeksBlock"/>
+                <fragment id="timeByProjectBlock" class="com.glebfox.timesheets.view.dashboard.TimeByProjectBlock"/>
+                <fragment id="comingUpBlock" class="com.glebfox.timesheets.view.dashboard.ComingUpBlock"/>
+                <fragment id="recentEntriesBlock" class="com.glebfox.timesheets.view.dashboard.RecentEntriesBlock"/>
+            </div>
+
+            <h3 id="myTeamHeading" text="msg://myTeamHeading.text" classNames="dashboard-section-heading"
+                visible="false"/>
+            <!-- The stylesheet places the team's blocks by the classes of their cards, so every row is full -->
+            <div id="myTeamBlocks" classNames="dashboard-blocks dashboard-team-blocks">
+                <fragment id="waitingApprovalBlock" class="com.glebfox.timesheets.view.dashboard.WaitingApprovalBlock"/>
+                <fragment id="teamWeekBlock" class="com.glebfox.timesheets.view.dashboard.TeamWeekBlock"/>
+                <fragment id="teamAwayBlock" class="com.glebfox.timesheets.view.dashboard.TeamAwayBlock"/>
+            </div>
+        </div>
+    </content>
+</fragment>
