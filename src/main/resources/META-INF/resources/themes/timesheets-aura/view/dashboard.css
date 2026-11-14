@@ -200,10 +200,13 @@
 
 /* A link in a card's header, such as My entries: its text, not its box, ends on the content edge, as the rows'
    values do, and it is no taller than the title's line, so the title stays level with the titles of cards without
-   one */
+   one. Its padding beside the text is a focus ring wider than a link's own, so the ring does not hug the text */
 .dashboard-blocks > vaadin-card > vaadin-button.link-button[slot='header-suffix'] {
+    --dashboard-link-padding: calc(var(--vaadin-padding-xs) + var(--vaadin-focus-ring-width));
+
     margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
-    margin-inline-end: calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
+    margin-inline-end: calc((var(--dashboard-link-padding) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-inline: var(--dashboard-link-padding);
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
 }
@@ -278,8 +281,8 @@
     height: 100% !important;
 }
 
-/* Time by project: the donut, with the total in its hole, and the list of projects beside it. The donut grows with
-   a card the row stretches, as a chart does, while it leaves the list most of the width */
+/* Time by project: the donut, with the total in its hole, and the list of projects beside it, in the middle of a
+   card the row stretches; the donut keeps its size, so the list keeps its width for the names */
 .dashboard-projects {
     display: flex;
     flex-direction: column;
@@ -295,10 +298,8 @@
 .dashboard-donut {
     position: relative;
     flex: none;
-    align-self: stretch;
-    aspect-ratio: 1;
-    min-height: 8rem;
-    max-width: 40%;
+    width: 8rem;
+    height: 8rem;
 }
 
 .dashboard-donut-chart {
@@ -556,7 +557,8 @@ vaadin-grid.dashboard-recent-entries::part(time-cell) {
 
 /* The name, on one line, is the task, then its project after a separator, quieter: a name too long is cut from its
    end, the project first, so the task stays. Where it opens the entry, the task is a link as wide as its text, which
-   starts where its cell starts, and whose padding and border take no room in the row */
+   starts where its cell starts and pads its text by the cell's padding, so the text stands where the project's does
+   under it; its padding and border take no room in the row, so the separator stands midway */
 vaadin-grid.dashboard-recent-entries .recent-task {
     display: flex;
     align-items: baseline;
@@ -570,7 +572,9 @@ vaadin-grid.dashboard-recent-entries > vaadin-grid-cell-content:has(> .recent-ta
 
 vaadin-grid.dashboard-recent-entries .recent-task > vaadin-button.task {
     margin-block: calc(var(--vaadin-button-border-width, 1px) * -1);
-    margin-inline-start: calc(var(--dashboard-cell-start) * -1);
+    margin-inline: calc(var(--dashboard-cell-start) * -1)
+        calc((var(--vaadin-padding-xs) + var(--vaadin-button-border-width, 1px)) * -1);
+    padding-inline-start: calc(var(--dashboard-cell-start) - var(--vaadin-button-border-width, 1px));
     max-width: calc(100% + var(--dashboard-cell-start));
 }
 
