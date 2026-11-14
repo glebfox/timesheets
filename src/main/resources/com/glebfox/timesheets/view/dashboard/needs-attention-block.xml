@@ -23,7 +23,7 @@
                 <div id="body" classNames="dashboard-list-block">
                     <div id="rows" classNames="dashboard-list"/>
                     <app:gridEmptyState id="emptyState"
-                                        icon="ts:my-time-entries"
+                                        icon="ts:approve-time-entries"
                                         text="msg://needsAttentionBlock.emptyState"/>
                 </div>
             </content>
