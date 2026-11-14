@@ -42,12 +42,14 @@
        scrolling */
     flex: none;
     height: 216px;
-    /* The brand blue in both themes, as the brand's guide asks of dark surfaces */
-    background: #0256A9;
+    /* The brand blue in both themes, as the brand's guide asks of dark surfaces: the light theme's accent, since the
+       dark theme's is purple */
+    background: var(--ts-primary-color-light);
     clip-path: polygon(0 0, calc(100% - var(--_fold)) 0, 100% var(--_fold), 100% 100%, 0 100%);
 }
 
-/* The fold: the brand mark's folded corner, in mint, with its rounded inner corner, under the cut */
+/* The fold: the brand mark's folded corner, with its rounded inner corner, under the cut. The mark's path gives its
+   shape, and the brand's mint its color */
 .login-view-sheet::before {
     content: "";
     position: absolute;
@@ -55,7 +57,8 @@
     right: 0;
     width: var(--_fold);
     height: var(--_fold);
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='416 0 80 80'%3E%3Cpath d='M416 0L496 80H438Q416 80 416 58Z' fill='%2387F1AC'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%;
+    background-color: var(--ts-brand-mint-color);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='416 0 80 80'%3E%3Cpath d='M416 0L496 80H438Q416 80 416 58Z'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%;
 }
 
 .login-view-logo {
