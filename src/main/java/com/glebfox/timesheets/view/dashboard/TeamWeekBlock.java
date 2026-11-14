@@ -118,9 +118,20 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     private static final String SPENT_STACK = "spent";
 
     /**
-     * The thickness of a bar, in pixels: fixed, so a name above it clears it at any number of people.
+     * The thickness of a bar: half the row it stands in, so the bars keep their proportion to the rows when a taller
+     * block beside the chart stretches it, up to {@link #BAR_MAX_WIDTH} pixels.
      */
-    private static final int BAR_WIDTH = 16;
+    private static final String BAR_WIDTH = "50%";
+
+    /**
+     * The thickest a bar gets, in pixels, when a stretched chart gives each person a tall row.
+     */
+    private static final int BAR_MAX_WIDTH = 28;
+
+    /**
+     * The thickest a bar gets, in pixels, on a narrow chart, where the names stand above the bars and clear them.
+     */
+    private static final int NARROW_BAR_MAX_WIDTH = 16;
 
     /**
      * The widest a name beside its bar gets, in pixels, and above it, on a narrow chart.
@@ -177,7 +188,9 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                                 .withDashArrayX(1, 0)
                                 .withDashArrayY(2, 3)
                                 .withRotation(Math.PI / 4))));
-        chart.addSeries(DashboardCharts.horizontalPlanBar(PERSON, PLAN).withBarWidth(String.valueOf(BAR_WIDTH)));
+        chart.addSeries(DashboardCharts.horizontalPlanBar(PERSON, PLAN)
+                .withBarWidth(BAR_WIDTH)
+                .withBarMaxWidth(String.valueOf(BAR_MAX_WIDTH)));
 
         chart.setNativeJson(narrowNamesJson());
     }
@@ -255,7 +268,8 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
 
     private static BarSeries bar(String field) {
         return DashboardCharts.horizontalBar(field, PERSON, field)
-                .withBarWidth(String.valueOf(BAR_WIDTH));
+                .withBarWidth(BAR_WIDTH)
+                .withBarMaxWidth(String.valueOf(BAR_MAX_WIDTH));
     }
 
     /**
@@ -283,14 +297,27 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .put("verticalAlign", "bottom")
                 .put("margin", 0)
                 .put("width", NARROW_NAME_WIDTH);
-        // The name's bottom edge clears the bar, which is centered on the row, by a few pixels
-        narrowLabel.putArray("padding").add(0).add(0).add(BAR_WIDTH / 2 + 4).add(0);
+        // The name's bottom edge clears the bar, which is centered on the row and no thicker there, by a few pixels
+        narrowLabel.putArray("padding").add(0).add(0).add(NARROW_BAR_MAX_WIDTH / 2 + 4).add(0);
+        addBarMaxWidth(((ObjectNode) wide.get("option")).putArray("series"), BAR_MAX_WIDTH);
+        addBarMaxWidth(((ObjectNode) narrow.get("option")).putArray("series"), NARROW_BAR_MAX_WIDTH);
 
         ObjectNode root = json.objectNode();
         ArrayNode media = root.putArray("media");
         media.add(wide);
         media.add(narrow);
         return root.toString();
+    }
+
+    /**
+     * Sets the thickest a bar gets on every series of the chart, by its id.
+     */
+    private static void addBarMaxWidth(ArrayNode series, int maxWidth) {
+        List<String> ids = new ArrayList<>(List.of(OFF));
+        STATUS_ORDER.forEach(status -> ids.add(status.name()));
+        ids.add(OTHER);
+        ids.add(PLAN);
+        ids.forEach(id -> series.addObject().put("id", id).put("barMaxWidth", maxWidth));
     }
 
     private DayOfWeek firstDayOfWeek() {
