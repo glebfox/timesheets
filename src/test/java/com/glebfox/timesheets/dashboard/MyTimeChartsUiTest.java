@@ -205,12 +205,15 @@ public class MyTimeChartsUiTest {
                 assertThat(series.getStack()).isEqualTo(ThisWeekBlock.SPENT);
             }
 
-            // The tooltip says where the day stands, in the words of a week's status; a short day is still to go
-            // today and upcoming ahead
-            WeekStatus mondayNote = monday.isBefore(today) ? WeekStatus.SHORT
-                    : monday.equals(today) ? WeekStatus.IN_PROGRESS : WeekStatus.UPCOMING;
+            // The colors themselves, as the app gives these statuses
+            assertThat(DashboardColors.of(WeekStatus.ON_PLAN).getValue()).isEqualTo("#009B31");
+            assertThat(DashboardColors.of(WeekStatus.SHORT).getValue()).isEqualTo("#DB373A");
+            assertThat(DashboardColors.of(WeekStatus.OVER).getValue()).isEqualTo("#6468F0");
+
+            // The tooltip says where the day stands, in the words of a week's status; a short day is short today
+            // and ahead too, as its bar says
             assertThat((String) items.get(mondayIndex).getValue(ThisWeekBlock.TOOLTIP)).contains(
-                    componentSupport.formatWeekStatusNote(mondayNote,
+                    componentSupport.formatWeekStatusNote(WeekStatus.SHORT,
                             new FactAndPlan(WorkTime.of(6, 30), WorkTime.ofHours(8))));
             assertThat((String) items.get(mondayIndex + 1).getValue(ThisWeekBlock.TOOLTIP)).contains(
                     componentSupport.formatWeekStatusNote(WeekStatus.OVER,
@@ -218,6 +221,26 @@ public class MyTimeChartsUiTest {
             assertThat((String) items.get(mondayIndex + 3).getValue(ThisWeekBlock.TOOLTIP)).contains(
                     componentSupport.formatWeekStatusNote(WeekStatus.ON_PLAN,
                             new FactAndPlan(WorkTime.ofHours(8), WorkTime.ofHours(8))));
+        });
+    }
+
+    @Test
+    void thisWeekDayWithoutPlanIsNeutralTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()));
+            // Saturday falls within the week whether it starts on Sunday or on Monday, and plans nothing
+            LocalDate saturday = weekStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+            data.saveEntryOf(task, user, saturday, TimeEntryStatus.NEW, WorkTime.ofHours(3));
+
+            ThisWeekBlock block = block("thisWeekBlock");
+            dashboard().refresh();
+
+            MapDataItem item = items(chart(block)).get((int) (saturday.toEpochDay() - weekStart.toEpochDay()));
+            assertThat(item.getValue(ThisWeekBlock.PLAN)).isEqualTo(0.0);
+            // The neutral, as the calendar leaves such a day uncolored, and no status line in its tooltip: its day,
+            // its time spent, and its plan
+            assertDayStatus(item, WeekStatus.NO_WORKDAYS, 3.0);
+            assertThat(((String) item.getValue(ThisWeekBlock.TOOLTIP)).split("<br>")).hasSize(3);
         });
     }
 

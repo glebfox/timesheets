@@ -188,7 +188,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                             .add(SPENT, DashboardCharts.hours(day.total().fact()))
                             .add(PLAN, DashboardCharts.hours(day.total().plan()))
                             .add(OFF, day.offReason() != null ? offHeight : 0.0)
-                            .add(TOOLTIP, formatTooltip(day, today));
+                            .add(TOOLTIP, formatTooltip(day));
                     WeekStatus colorStatus = colorStatusOf(day);
                     for (WeekStatus status : DAY_STATUSES) {
                         item.add(spentField(status),
@@ -213,7 +213,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      * Returns the field of a row, and the id of the series, of the time spent on a day of the status.
      */
     public static String spentField(WeekStatus status) {
-        return SPENT + "." + status.name();
+        return SPENT + "_" + status.name();
     }
 
     /**
@@ -233,17 +233,11 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
 
     /**
      * Returns where a day stands against its plan, worded as a week's status is, or nothing for a day that plans
-     * nothing: as a week, a day short of its plan is still to go today and upcoming ahead.
+     * nothing. Unlike a week, a day short of its plan is short today and ahead too, as its bar says.
      */
-    private static @Nullable WeekStatus noteStatusOf(DaySummary day, LocalDate today) {
+    private static @Nullable WeekStatus noteStatusOf(DaySummary day) {
         WeekStatus status = colorStatusOf(day);
-        if (status != WeekStatus.SHORT) {
-            return status == WeekStatus.NO_WORKDAYS ? null : status;
-        }
-        if (day.date().equals(today)) {
-            return WeekStatus.IN_PROGRESS;
-        }
-        return day.date().isAfter(today) ? WeekStatus.UPCOMING : WeekStatus.SHORT;
+        return status == WeekStatus.NO_WORKDAYS ? null : status;
     }
 
     /**
@@ -318,7 +312,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         }
     }
 
-    private String formatTooltip(DaySummary day, LocalDate today) {
+    private String formatTooltip(DaySummary day) {
         StringBuilder tooltip = new StringBuilder()
                 .append("<b>")
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.day",
@@ -331,7 +325,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.planned",
                         componentSupport.formatWorkTimeTotal(day.total().plan()))));
         // Where the day stands, in words, so its bar's color is not the only sign of it
-        WeekStatus status = noteStatusOf(day, today);
+        WeekStatus status = noteStatusOf(day);
         if (status != null) {
             tooltip.append("<br>").append(DashboardCharts.escape(
                     componentSupport.formatWeekStatusNote(status, day.total())));
