@@ -164,12 +164,14 @@ public class MyTimeChartsUiTest {
             assertThat(items).hasSize(7);
             int mondayIndex = (int) (monday.toEpochDay() - weekStart.toEpochDay());
             MapDataItem mondayItem = items.get(mondayIndex);
-            assertThat(mondayItem.getValue(ThisWeekBlock.SPENT)).isEqualTo(6.5);
+            assertDayStatus(mondayItem, WeekStatus.SHORT, 6.5);
             assertThat(mondayItem.getValue(ThisWeekBlock.PLAN)).isEqualTo(8.0);
             assertThat((String) mondayItem.getValue(ThisWeekBlock.DAY)).doesNotContain(vacation.getName());
 
             MapDataItem wednesdayItem = items.get(mondayIndex + 2);
-            assertThat(wednesdayItem.getValue(ThisWeekBlock.SPENT)).isEqualTo(0.0);
+            for (WeekStatus status : ThisWeekBlock.DAY_STATUSES) {
+                assertThat(wednesdayItem.getValue(ThisWeekBlock.spentField(status))).isEqualTo(0.0);
+            }
             assertThat(wednesdayItem.getValue(ThisWeekBlock.PLAN)).isEqualTo(0.0);
             assertThat((String) wednesdayItem.getValue(ThisWeekBlock.DAY)).contains(vacation.getName());
             // The axis label is drawn as text; the tooltip is HTML, so the name is escaped there
@@ -202,7 +204,9 @@ public class MyTimeChartsUiTest {
                 BarSeries series = chart(block).getSeries(ThisWeekBlock.spentField(status));
                 assertThat(Objects.requireNonNull(series.getItemStyle()).getColor()).as(status.name())
                         .isEqualTo(DashboardColors.of(status));
-                assertThat(series.getStack()).isEqualTo(ThisWeekBlock.SPENT);
+                BarSeries onPlan = chart(block).getSeries(ThisWeekBlock.spentField(WeekStatus.ON_PLAN));
+                // One stack for every status
+                assertThat(series.getStack()).isNotNull().isEqualTo(onPlan.getStack());
             }
 
             // The colors themselves, as the app gives these statuses
@@ -221,6 +225,35 @@ public class MyTimeChartsUiTest {
             assertThat((String) items.get(mondayIndex + 3).getValue(ThisWeekBlock.TOOLTIP)).contains(
                     componentSupport.formatWeekStatusNote(WeekStatus.ON_PLAN,
                             new FactAndPlan(WorkTime.ofHours(8), WorkTime.ofHours(8))));
+        });
+    }
+
+    @Test
+    void thisWeekDrawsAbsenceNamesLiterallyTest() {
+        // A name with the axis labels' rich text markup in it
+        AbsenceType leave = data.save(dataManager.create(AbsenceType.class),
+                type -> type.setName(user.getUsername() + " {today|leave}"));
+
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()));
+            LocalDate wednesday = weekStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.WEDNESDAY));
+            data.save(dataManager.create(Absence.class), absence -> {
+                absence.setUser(user);
+                absence.setType(leave);
+                absence.setFirstDay(wednesday);
+                absence.setLastDay(wednesday);
+            });
+
+            ThisWeekBlock block = block("thisWeekBlock");
+            dashboard().refresh();
+
+            // Its braces are full-width ones, which ECharts does not read as markup
+            String label = (String) items(chart(block)).get((int) (wednesday.toEpochDay() - weekStart.toEpochDay()))
+                    .getValue(ThisWeekBlock.DAY);
+            assertThat(label).contains(user.getUsername() + " \uFF5Btoday|leave\uFF5D");
+            if (!wednesday.equals(today)) {
+                assertThat(label).doesNotContain("{");
+            }
         });
     }
 

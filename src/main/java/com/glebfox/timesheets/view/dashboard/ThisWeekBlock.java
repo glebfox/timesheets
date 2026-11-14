@@ -66,13 +66,9 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      */
     public static final String DAY = "day";
     /**
-     * The field of a row that holds the time spent on the day, in hours.
-     */
-    public static final String SPENT = "spent";
-    /**
      * The statuses a day's bar is colored by, as the calendar colors a day's time: short of its plan, on it, over it,
      * or, on a day that plans nothing, such as a weekend or an absence, none, in the neutral. A day's time spent is
-     * in the field of its status, {@link #SPENT} followed by the status' name, and zero in the others.
+     * in the field of its status, {@link #spentField}, and zero in the others.
      */
     public static final List<WeekStatus> DAY_STATUSES = List.of(WeekStatus.ON_PLAN, WeekStatus.OVER, WeekStatus.SHORT,
             WeekStatus.NO_WORKDAYS);
@@ -106,6 +102,11 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      * The gap between the bars of neighboring days on a narrow chart, as a share of the day's column.
      */
     private static final String NARROW_BAR_GAP = "40%";
+
+    /**
+     * The stack of the time spent: the series of the day statuses, of which each day fills one.
+     */
+    private static final String SPENT_STACK = "spent";
 
     /**
      * The rich text style of today's label, which stands out from the other days' by its weight: semibold, as
@@ -152,7 +153,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         // The time spent, in its day's color: a series per status, in one stack, so each day shows one of them
         for (WeekStatus status : DAY_STATUSES) {
             chart.addSeries(DashboardCharts.bar(spentField(status), DAY, spentField(status))
-                    .withStack(SPENT)
+                    .withStack(SPENT_STACK)
                     .withItemStyle(new ItemStyleWithDecal().withColor(DashboardColors.of(status))));
         }
         chart.addSeries(DashboardCharts.planBar(DAY, PLAN));
@@ -185,7 +186,6 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .map(day -> {
                     MapDataItem item = new MapDataItem()
                             .add(DAY, formatDayLabel(day, today))
-                            .add(SPENT, DashboardCharts.hours(day.total().fact()))
                             .add(PLAN, DashboardCharts.hours(day.total().plan()))
                             .add(OFF, day.offReason() != null ? offHeight : 0.0)
                             .add(TOOLTIP, formatTooltip(day));
@@ -204,7 +204,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     }
 
     private static String[] valueFields() {
-        List<String> fields = new ArrayList<>(List.of(SPENT, PLAN, OFF, TOOLTIP));
+        List<String> fields = new ArrayList<>(List.of(PLAN, OFF, TOOLTIP));
         DAY_STATUSES.forEach(status -> fields.add(spentField(status)));
         return fields.toArray(String[]::new);
     }
@@ -213,7 +213,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      * Returns the field of a row, and the id of the series, of the time spent on a day of the status.
      */
     public static String spentField(WeekStatus status) {
-        return SPENT + "_" + status.name();
+        return "spent_" + status.name();
     }
 
     /**
@@ -229,6 +229,15 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
             return WeekStatus.OVER;
         }
         return total.isMatch() ? WeekStatus.ON_PLAN : WeekStatus.SHORT;
+    }
+
+    /**
+     * Returns a text for an axis label that ECharts draws as it is. The axis has a rich text style, so ECharts reads
+     * {@code {name|text}} in its labels as markup, which has no escape; the text's braces are replaced by the
+     * full-width ones, U+FF5B and U+FF5D, which look the same and are no markup.
+     */
+    static String literalLabelText(String text) {
+        return text.replace('{', '\uFF5B').replace('}', '\uFF5D');
     }
 
     /**
@@ -263,10 +272,10 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         String label = offReason == null
                 ? messages.formatMessage(getClass(), "thisWeekBlock.dayLabel", weekday, day.date().getDayOfMonth())
                 : messages.formatMessage(getClass(), "thisWeekBlock.offDayLabel", weekday,
-                        day.date().getDayOfMonth(), offReason);
-        // ECharts' rich text styles a line at a time. A brace or a bar in a holiday's or an absence's name, such as
-        // "{a|b}", can only change how the label looks: ECharts draws the label as text on its canvas, so nothing in
-        // it is ever run or parsed as HTML
+                        day.date().getDayOfMonth(), literalLabelText(offReason));
+        // ECharts' rich text styles a line at a time. A holiday's or an absence's name comes with its braces
+        // replaced, so it never reads as markup; and ECharts draws a label as text on its canvas, so nothing in it is
+        // ever run or parsed as HTML
         return day.date().equals(today)
                 ? Arrays.stream(label.split("\n", -1))
                         .map(line -> "{" + TODAY_STYLE + "|" + line + "}")
