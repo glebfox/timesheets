@@ -16,9 +16,12 @@
 
 package com.glebfox.timesheets.view.login;
 
+import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
 import com.vaadin.flow.i18n.LocaleChangeObserver;
 import com.vaadin.flow.router.Route;
@@ -27,6 +30,7 @@ import io.jmix.core.CoreProperties;
 import io.jmix.core.MessageTools;
 import io.jmix.core.security.AccessDeniedException;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
+import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.kit.component.ComponentUtils;
 import io.jmix.flowui.kit.component.loginform.JmixLoginI18n;
 import io.jmix.flowui.view.*;
@@ -68,6 +72,9 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     @ViewComponent
     private JmixLoginForm login;
 
+    @ViewComponent
+    private JmixRadioButtonGroup<Locale> localeSwitch;
+
     @Value("${ui.login.defaultUsername:}")
     private String defaultUsername;
 
@@ -85,9 +92,18 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
                 .collect(Collectors.toMap(Function.identity(), messageTools::getLocaleDisplayName, (s1, s2) -> s1,
                         LinkedHashMap::new));
 
+        // The form keeps its items although its list is hidden: setSelectedLocale accepts only a locale among them
         ComponentUtils.setItemsMap(login, locales);
+        ComponentUtils.setItemsMap(localeSwitch, locales);
+        // Set after the items: setItemsMap sets an item label generator, which replaces the renderer with a text one
+        localeSwitch.setRenderer(new ComponentRenderer<>(locale -> {
+            Span label = new Span(locales.get(locale));
+            label.getElement().setAttribute("lang", locale.toLanguageTag());
+            return label;
+        }));
 
         login.setSelectedLocale(VaadinSession.getCurrent().getLocale());
+        localeSwitch.setValue(login.getSelectedLocale());
     }
 
     private void initDefaultCredentials() {
@@ -97,6 +113,15 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
 
         if (StringUtils.isNotBlank(defaultPassword)) {
             login.setPassword(defaultPassword);
+        }
+    }
+
+    @Subscribe("localeSwitch")
+    public void onLocaleSwitchComponentValueChange(
+            final ComponentValueChangeEvent<JmixRadioButtonGroup<Locale>, Locale> event) {
+        // The form ignores the locale it already has, so the value set when the view opens changes nothing
+        if (event.getValue() != null) {
+            login.setSelectedLocale(event.getValue());
         }
     }
 
@@ -137,5 +162,8 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         loginI18n.setErrorMessage(errorMessage);
 
         login.setI18n(loginI18n);
+
+        // The descriptor's text is resolved once, when the view is created
+        localeSwitch.setAriaLabel(messageBundle.getMessage("localeSwitch.ariaLabel"));
     }
 }

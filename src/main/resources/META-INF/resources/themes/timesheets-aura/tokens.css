@@ -39,6 +39,9 @@
     --ts-warning-color-dark: oklch(0.89 0.2 98);
     --ts-warning-color: light-dark(var(--ts-warning-color-light), var(--ts-warning-color-dark));
 
+    /* The brand's mint (#87F1AC), the same in both themes, as the brand's colors are */
+    --ts-brand-mint-color: oklch(0.876 0.139 153.9);
+
     --aura-accent-color-light: var(--ts-primary-color-light);
     --aura-accent-color-dark: var(--ts-primary-color-dark);
 }

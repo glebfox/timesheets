@@ -18,19 +18,33 @@
 <view xmlns="http://jmix.io/schema/flowui/view"
       focusComponent="login"
       title="msg://LoginView.title">
-    <layout justifyContent="CENTER" alignItems="CENTER" classNames="jmix-login-main-layout">
-        <loginForm id="login"
-                   forgotPasswordButtonVisible="false">
-            <form title="msg://loginForm.headerTitle"
-                  username="msg://loginForm.username"
-                  password="msg://loginForm.password"
-                  rememberMe="msg://loginForm.rememberMe"
-                  submit="msg://loginForm.submit"
-                  forgotPassword="msg://loginForm.forgotPassword"/>
-            <errorMessage title="msg://loginForm.errorTitle"
-                          message="msg://loginForm.badCredentials"
-                          username="msg://loginForm.errorUsername"
-                          password="msg://loginForm.errorPassword"/>
-        </loginForm>
+    <layout classNames="login-view" padding="false" spacing="false">
+        <div id="sheet" classNames="login-view-sheet">
+            <image id="logo"
+                   resource="assets/brand/logos/logo-dark.svg"
+                   alternateText="msg://logo.alternateText"
+                   classNames="login-view-logo"/>
+        </div>
+        <main id="side" classNames="login-view-side">
+            <div id="column" classNames="login-view-column">
+                <loginForm id="login"
+                           forgotPasswordButtonVisible="false"
+                           localesVisible="false">
+                    <form title="msg://loginForm.headerTitle"
+                          username="msg://loginForm.username"
+                          password="msg://loginForm.password"
+                          rememberMe="msg://loginForm.rememberMe"
+                          submit="msg://loginForm.submit"
+                          forgotPassword="msg://loginForm.forgotPassword"/>
+                    <errorMessage title="msg://loginForm.errorTitle"
+                                  message="msg://loginForm.badCredentials"
+                                  username="msg://loginForm.errorUsername"
+                                  password="msg://loginForm.errorPassword"/>
+                </loginForm>
+            </div>
+            <radioButtonGroup id="localeSwitch"
+                              classNames="login-view-locale-switch"
+                              ariaLabel="msg://localeSwitch.ariaLabel"/>
+        </main>
     </layout>
 </view>

@@ -36,6 +36,8 @@ The IDE's Jmix inspection does not resolve the actions of the project's own `@Ac
 
 It does not resolve the class of a component that a descriptor declares with the generic `component` element either. On an `@Install` to such a component, such as `personPanel` on the approval screen, it reports "Unable to find installation point for delegate" as an error and the method as never used, and it reports the component's own `add…Listener` and `set…` methods that `@Subscribe` and `@Install` reach as never used. These are false in the same way.
 
+The IDE's CSS inspection does not know Vaadin's and Jmix's custom elements. On a theme stylesheet's selector of one, such as `vaadin-radio-button` or `jmix-login-form` in `view/login-view.css`, it reports "Selector matches unknown element" as a warning. These are false: the elements exist at runtime, and Aura's own stylesheets select them the same way.
+
 ## Local overrides in `.jmix/conf`
 
 Jmix reads a resource from `jmix.core.conf-dir` (`.jmix/conf/` in the project directory by default) before the classpath, both at runtime and in tests. While Jmix Studio is open, its hot deploy writes changed resources there, and compiled classes too; the directory is gitignored. A copy there wins over the checked-out file even when it is stale: after a branch switch, or after an edit the copy does not have yet. Typical symptoms:
@@ -66,6 +68,7 @@ Measuring in a live check, in any browser:
 Driving the app with Playwright:
 
 - its `colorScheme` emulation is lost after a reload or a new login, so a check of a theme sets it again after each;
+- its forced-colors emulation, `emulateMedia({ forcedColors: 'active' })`, really forces the system's colors, on a light or a dark palette by its `colorScheme`; the Claude desktop app's built-in browser cannot emulate forced colors;
 - its Chromium draws classic scrollbars, so a scrolling panel measures narrower than on a Mac with overlay scrollbars (`docs/guidelines/design-system.md`).
 
 A running app picks up Java changes only after a restart, and a change under `src/main/frontend/`, such as an iconset, also only after a restart, which rebuilds the development bundle; descriptor and CSS changes reach it after `./gradlew processResources`, then a logout and login, because in tabbed mode a plain reload keeps the old view instance. A changed message bundle does not: the app caches the bundles it has read until a restart, or until it finds an empty file named `io.jmix.core.Messages#clearCache` in `.jmix/temp/triggers/`, which it checks every five seconds and then deletes; after `./gradlew processResources` and such a file, a new text shows after a logout and login. The `live-checker` agent runs a live check against the app the developer has running.
