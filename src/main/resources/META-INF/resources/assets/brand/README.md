@@ -32,7 +32,7 @@ The primary blue is `#0256A9`, matching the sRGB approximation of the applicatio
 
 Lettering is outlined from Instrument Sans, the application's typeface: weight 700 for the wordmark and 450 for the tagline. Its unmodified source font and OFL license are in `scripts/brand/fonts/` for reproducible exports. No font installation is required to display the finished assets.
 
-The assets are served under `/assets/brand/`. The IDE project icon at `.idea/icon.svg` uses the dark app tile at 64 px. The application icon at `src/main/resources/META-INF/resources/icons/icon.png` is an exact copy of the dark 512 px app tile. Browser favicon configuration is separate from this asset collection.
+The assets are served under `/assets/brand/`. The IDE project icon at `.idea/icon.svg` uses the dark app tile at 64 px. The application icon at `src/main/resources/META-INF/resources/icons/icon.png` is an exact copy of the dark 512 px app tile. The login page's high-contrast logo, `src/main/resources/META-INF/resources/themes/timesheets-aura/view/login-view-logo-mask.svg`, is an exact copy of `logos/logo-mono-white.svg`, kept in the theme's folder for the login stylesheet's `url()`. Neither the generator nor the verifier knows it: copy the logo there again after a regeneration that changes it; `ThemeStylesheetUrlsTest` fails while the two differ. Browser favicon configuration is separate from this asset collection.
 
 ## Rebuild and verify
 
