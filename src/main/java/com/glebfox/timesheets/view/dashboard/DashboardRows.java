@@ -96,7 +96,7 @@ final class DashboardRows {
     /**
      * Creates a tertiary button that holds the parts, and runs the listener on a click.
      */
-    static JmixButton actionButton(UiComponents uiComponents,
+    private static JmixButton actionButton(UiComponents uiComponents,
                                    ComponentEventListener<ClickEvent<Button>> listener,
                                    Component... parts) {
         JmixButton button = uiComponents.create(JmixButton.class);

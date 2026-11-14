@@ -17,14 +17,35 @@
 
 <fragment xmlns="http://jmix.io/schema/flowui/fragment"
           xmlns:app="http://glebfox.com/schema/app-ui-components.xsd">
+    <data>
+        <!-- The block loads the entries itself, on each refresh of the dashboard -->
+        <collection id="entriesDc" class="com.glebfox.timesheets.entity.timeentry.TimeEntry"/>
+    </data>
     <content>
         <card id="root" title="msg://recentEntriesBlock.title" classNames="full">
             <content>
                 <div id="body" classNames="dashboard-list-block">
-                    <div id="rows" classNames="dashboard-list"/>
-                    <app:gridEmptyState id="emptyState"
-                                        icon="ts:my-time-entries"
-                                        text="msg://recentEntriesBlock.emptyState"/>
+                    <!-- A list that keeps its columns aligned: no header, no borders, every row shown. The task
+                         column grows up to a width the stylesheet sets, so the time, the status, and Copy to today
+                         stay beside the name rather than at the card's far end -->
+                    <dataGrid id="entriesGrid"
+                              dataContainer="entriesDc"
+                              classNames="dashboard-recent-entries"
+                              themeNames="no-header no-border no-row-borders"
+                              allRowsVisible="true"
+                              selectionMode="NONE">
+                        <columns sortable="false">
+                            <column key="date" autoWidth="true" flexGrow="0"/>
+                            <column key="task" width="0" flexGrow="1"/>
+                            <column key="spent" autoWidth="true" flexGrow="0" textAlign="END"/>
+                            <column key="status" autoWidth="true" flexGrow="0"/>
+                            <column key="copy" autoWidth="true" flexGrow="0"/>
+                        </columns>
+                        <emptyStateComponent>
+                            <app:gridEmptyState icon="ts:my-time-entries"
+                                                text="msg://recentEntriesBlock.emptyState"/>
+                        </emptyStateComponent>
+                    </dataGrid>
                 </div>
             </content>
         </card>

@@ -20,6 +20,7 @@ import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.util.Attention;
 import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.absence.Absence;
 import com.glebfox.timesheets.entity.absence.AbsenceType;
@@ -39,15 +40,19 @@ import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.NeedsAttentionBlock;
 import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
 import com.glebfox.timesheets.view.main.MainView;
+import com.glebfox.timesheets.view.timeentry.MyTimeEntryListView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.shared.Tooltip;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.data.renderer.Renderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
+import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentUtils;
 import io.jmix.flowui.kit.component.button.JmixButton;
@@ -65,6 +70,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -145,7 +151,7 @@ public class MyTimeListsUiTest {
             List<Component> more = withClass(block, "dashboard-list-more");
             assertThat(more).hasSize(1);
             assertThat(text(more.getFirst())).contains(String.valueOf(expectedMore));
-            assertThat(isShown(block, "emptyState")).isFalse();
+            assertThat(isEmptyStateShown(block)).isFalse();
         });
     }
 
@@ -167,7 +173,7 @@ public class MyTimeListsUiTest {
             assertThat(block.isVisible()).isTrue();
             assertThat(withClass(block, "dashboard-list-row")).isEmpty();
             assertThat(withClass(block, "dashboard-list-more")).isEmpty();
-            assertThat(isShown(block, "emptyState")).isTrue();
+            assertThat(isEmptyStateShown(block)).isTrue();
         });
     }
 
@@ -187,6 +193,25 @@ public class MyTimeListsUiTest {
     }
 
     @Test
+    void attentionLinkInHeaderOpensMyTimeEntriesTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            NeedsAttentionBlock block = block("needsAttentionBlock");
+            dashboard().refresh();
+
+            // A link in the card's header, beside the title
+            JmixButton link = (JmixButton) FragmentUtils.getComponent(block, "myEntriesLink");
+            assertThat(block.getContent().getHeaderSuffix()).isSameAs(link);
+            assertThat(link.getText()).isEqualTo("My entries");
+            assertThat(link.getElement().getClassList()).contains("link-button");
+            assertThat(link.isVisible()).isTrue();
+
+            link.click();
+            View<?> opened = UiTestUtils.getCurrentView();
+            assertThat(opened).isInstanceOf(MyTimeEntryListView.class);
+        });
+    }
+
+    @Test
     void comingUpEmptyStateTest() {
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             ComingUpBlock block = block("comingUpBlock");
@@ -194,7 +219,7 @@ public class MyTimeListsUiTest {
 
             assertThat(block.isVisible()).isTrue();
             assertThat(withClass(block, "dashboard-list-row")).isEmpty();
-            assertThat(isShown(block, "emptyState")).isTrue();
+            assertThat(isEmptyStateShown(block)).isTrue();
         });
     }
 
@@ -229,7 +254,7 @@ public class MyTimeListsUiTest {
             assertThat(text(rows.get(0))).contains("leave in 5 days");
             assertThat(text(rows.get(1))).contains("leave in 12 days");
             assertThat(text(rows.get(2))).contains("leave in 30 days");
-            assertThat(isShown(block, "emptyState")).isFalse();
+            assertThat(isEmptyStateShown(block)).isFalse();
         });
     }
 
@@ -243,13 +268,15 @@ public class MyTimeListsUiTest {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
 
-            List<Component> rows = withClass(block, "dashboard-list-row");
-            assertThat(rows).hasSize(2);
-            assertThat(text(rows.getFirst())).contains("3h");
-            assertThat(text(rows.getLast())).contains("1h");
+            List<TimeEntry> rows = rows(block);
+            assertThat(rows).extracting(TimeEntry::getId).containsExactly(latest.getId(), older.getId());
+            assertThat(text(cell(block, "spent", rows.getFirst()))).isEqualTo("3h");
+            assertThat(text(cell(block, "spent", rows.getLast()))).isEqualTo("1h");
 
-            JmixButton open = (JmixButton) withClass(rows.getFirst(), "row-open").getFirst();
-            open.click();
+            // The task is the link that opens the entry
+            Component task = withClass(cell(block, "task", rows.getFirst()), "task").getFirst();
+            assertThat(task.getElement().getClassList()).contains("link-button");
+            ((JmixButton) task).click();
 
             View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
             assertThat(dialog).isInstanceOf(TimeEntryDetailView.class);
@@ -268,35 +295,35 @@ public class MyTimeListsUiTest {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
 
-            // The task first, so a narrow row that cuts the name keeps it, then the project, quieter
-            Component name = withClass(block, "name").getFirst();
+            // The task first, so a narrow row that cuts the name keeps it, then the project, quieter, in one cell
+            Component name = cell(block, "task", rows(block).getFirst());
             List<Component> parts = name.getChildren().toList();
-            assertThat(parts).hasSize(2);
+            assertThat(parts).hasSize(3);
             assertThat(parts.getFirst().getElement().getClassList()).contains("task");
             assertThat(text(parts.getFirst())).isEqualTo(task.getName());
+            assertThat(parts.get(1).getElement().getClassList()).contains("separator");
             assertThat(parts.getLast().getElement().getClassList()).contains("project");
             assertThat(text(parts.getLast())).isEqualTo(project.getName());
-            assertThat(text(name)).isEqualTo(task.getName() + " " + project.getName());
         });
     }
 
     @Test
-    void recentEntriesWidenDatesOfAnotherYearTogetherTest() {
-        // The first day of the current year is in it whatever today is
-        data.saveEntryOf(task, user, today.withDayOfYear(1), TimeEntryStatus.NEW, WorkTime.ofHours(1));
+    void recentEntriesListLatestFirstTest() {
+        TimeEntry thisYear = data.saveEntryOf(task, user, today.withDayOfYear(1), TimeEntryStatus.NEW,
+                WorkTime.ofHours(1));
+        TimeEntry lastYear = data.saveEntryOf(task, user, today.minusYears(1), TimeEntryStatus.APPROVED,
+                WorkTime.ofHours(2));
 
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             RecentEntriesBlock block = block("recentEntriesBlock");
-            Component rows = FragmentUtils.getComponent(block, "rows");
-
             dashboard().refresh();
-            assertThat(rows.getElement().getClassList()).doesNotContain("with-years");
 
-            // A date of another year shows its year, so every row's date column widens with it
-            data.saveEntryOf(task, user, today.minusYears(1), TimeEntryStatus.APPROVED, WorkTime.ofHours(2));
-            dashboard().refresh();
-            assertThat(withClass(block, "dashboard-list-row")).hasSize(2);
-            assertThat(rows.getElement().getClassList()).contains("with-years");
+            // A date of another year shows its year; the date column takes the width of the widest date
+            assertThat(rows(block)).extracting(TimeEntry::getId).containsExactly(thisYear.getId(), lastYear.getId());
+            assertThat(text(cell(block, "date", rows(block).getLast())))
+                    .contains(String.valueOf(lastYear.getDate().getYear()));
+            assertThat(text(cell(block, "date", rows(block).getFirst())))
+                    .doesNotContain(String.valueOf(thisYear.getDate().getYear()));
         });
     }
 
@@ -308,7 +335,8 @@ public class MyTimeListsUiTest {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
 
-            JmixButton copy = (JmixButton) withClass(block, "row-copy").getFirst();
+            JmixButton copy = (JmixButton) cell(block, "copy", rows(block).getFirst());
+            assertThat(copy.getElement().getClassList()).contains("row-copy");
             assertThat(copy.getText()).isEmpty();
             assertThat(copy.getIcon()).isNotNull();
             assertThat(copy.getAriaLabel()).contains("Copy to today");
@@ -340,9 +368,8 @@ public class MyTimeListsUiTest {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
 
-            List<Component> copies = withClass(block, "row-copy");
-            assertThat(copies).hasSize(1);
-            ((JmixButton) copies.getFirst()).click();
+            assertThat(rows(block)).hasSize(1);
+            ((JmixButton) cell(block, "copy", rows(block).getFirst())).click();
 
             View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
             assertThat(dialog).isInstanceOf(TimeEntryDetailView.class);
@@ -366,14 +393,14 @@ public class MyTimeListsUiTest {
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
-            assertThat(withClass(block, "dashboard-list-row")).hasSize(1);
+            assertThat(rows(block)).hasSize(1);
 
-            ((JmixButton) withClass(block, "row-copy").getFirst()).click();
+            ((JmixButton) cell(block, "copy", rows(block).getFirst())).click();
             View<?> dialog = UiTestUtils.getLastOpenedViewDialog();
             UiTestUtils.<JmixButton>getComponent(dialog, "saveAndCloseBtn").click();
 
             assertThat(UiTestUtils.getOpenedViewDialogs()).doesNotContain(dialog);
-            assertThat(withClass(block, "dashboard-list-row")).hasSize(2);
+            assertThat(rows(block)).hasSize(2);
         });
     }
 
@@ -388,8 +415,8 @@ public class MyTimeListsUiTest {
             RecentEntriesBlock block = block("recentEntriesBlock");
             dashboard().refresh();
 
-            assertThat(withClass(block, "dashboard-list-row")).hasSize(1);
-            assertThat(withClass(block, "row-copy")).isEmpty();
+            assertThat(rows(block)).hasSize(1);
+            assertThat(Objects.requireNonNull(entriesGrid(block).getColumnByKey("copy")).isVisible()).isFalse();
         });
     }
 
@@ -407,9 +434,9 @@ public class MyTimeListsUiTest {
             assertThat(attention.isVisible()).isTrue();
             assertThat(comingUp.isVisible()).isTrue();
             assertThat(recent.isVisible()).isTrue();
-            assertThat(isShown(comingUp, "emptyState")).isTrue();
-            assertThat(isShown(recent, "emptyState")).isTrue();
-            assertThat(withClass(recent, "dashboard-list-row")).isEmpty();
+            assertThat(isEmptyStateShown(comingUp)).isTrue();
+            assertThat(rows(recent)).isEmpty();
+            assertThat(entriesGrid(recent).getEmptyStateComponent()).isInstanceOf(GridEmptyState.class);
         });
     }
 
@@ -428,6 +455,24 @@ public class MyTimeListsUiTest {
         return (T) FragmentUtils.getComponent(dashboard(), id);
     }
 
+    @SuppressWarnings("unchecked")
+    private static DataGrid<TimeEntry> entriesGrid(RecentEntriesBlock block) {
+        return (DataGrid<TimeEntry>) FragmentUtils.getComponent(block, "entriesGrid");
+    }
+
+    private static List<TimeEntry> rows(RecentEntriesBlock block) {
+        return List.copyOf(Objects.requireNonNull(entriesGrid(block).getItems()).getItems());
+    }
+
+    /**
+     * Renders the cell of the column with the key for the row, as the grid renders it in the browser.
+     */
+    private static Component cell(RecentEntriesBlock block, String columnKey, TimeEntry row) {
+        Renderer<TimeEntry> renderer = Objects.requireNonNull(entriesGrid(block).getColumnByKey(columnKey))
+                .getRenderer();
+        return ((ComponentRenderer<? extends Component, TimeEntry>) renderer).createComponent(row);
+    }
+
     private static Stream<Component> descendants(Component root) {
         return root.getChildren().flatMap(child -> Stream.concat(Stream.of(child), descendants(child)));
     }
@@ -442,10 +487,10 @@ public class MyTimeListsUiTest {
     }
 
     /**
-     * Whether the block's component with the id and every parent of it up to the block are visible.
+     * Whether the block's empty state and every parent of it up to the block are visible.
      */
-    private static boolean isShown(Fragment<?> block, String id) {
-        Component current = FragmentUtils.getComponent(block, id);
+    private static boolean isEmptyStateShown(Fragment<?> block) {
+        Component current = FragmentUtils.getComponent(block, "emptyState");
         while (current != null) {
             if (!current.isVisible()) {
                 return false;
