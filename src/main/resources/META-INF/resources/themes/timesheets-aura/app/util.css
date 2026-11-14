@@ -48,6 +48,17 @@
     font-size: var(--aura-font-size-s);
 }
 
+/*
+ * One line of text that ends with an ellipsis where it does not fit. A grid cell cuts only its own inline text
+ * with an ellipsis: text-overflow is not inherited, so a block line inside a cell, such as a second line under
+ * a name, is cut hard without this class.
+ */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .margin-inline-m {
     margin-inline: var(--vaadin-vertical-layout-padding, var(--vaadin-padding-m));
 }
