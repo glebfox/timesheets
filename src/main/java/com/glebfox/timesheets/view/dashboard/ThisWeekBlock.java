@@ -21,12 +21,14 @@ import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.DaySummary;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.MyWeek;
+import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
 import com.vaadin.flow.component.html.Span;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.event.ChartClickEvent;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
+import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
 import io.jmix.chartsflowui.kit.component.model.shared.RichStyle;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
@@ -37,12 +39,14 @@ import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.ViewComponent;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -65,6 +69,14 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
      * The field of a row that holds the time spent on the day, in hours.
      */
     public static final String SPENT = "spent";
+    /**
+     * The statuses a day's bar is colored by, as the calendar colors a day's time: short of its plan, on it, over it,
+     * or, on a day that plans nothing, such as a weekend or an absence, none, in the neutral. A day's time spent is
+     * in the field of its status, {@link #SPENT} followed by the status' name, and zero in the others.
+     */
+    public static final List<WeekStatus> DAY_STATUSES = List.of(WeekStatus.ON_PLAN, WeekStatus.OVER, WeekStatus.SHORT,
+            WeekStatus.NO_WORKDAYS);
+
     /**
      * The field of a row that holds the day's plan, in hours.
      */
@@ -136,10 +148,14 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
         Objects.requireNonNull(DashboardCharts.xAxis(chart).getAxisLabel()).addRichStyle(TODAY_STYLE, todayStyle);
 
         // A day off is hatched over the whole height of the chart, behind the time spent on it, if any
-        chart.withSeries(
-                DashboardCharts.bar(OFF, DAY, OFF).withItemStyle(DashboardCharts.offDayStyle()),
-                DashboardCharts.bar(SPENT, DAY, SPENT),
-                DashboardCharts.planBar(DAY, PLAN));
+        chart.addSeries(DashboardCharts.bar(OFF, DAY, OFF).withItemStyle(DashboardCharts.offDayStyle()));
+        // The time spent, in its day's color: a series per status, in one stack, so each day shows one of them
+        for (WeekStatus status : DAY_STATUSES) {
+            chart.addSeries(DashboardCharts.bar(spentField(status), DAY, spentField(status))
+                    .withStack(SPENT)
+                    .withItemStyle(new ItemStyleWithDecal().withColor(DashboardColors.of(status))));
+        }
+        chart.addSeries(DashboardCharts.planBar(DAY, PLAN));
 
         chart.setNativeJson(narrowDaysJson());
     }
@@ -166,17 +182,68 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .orElse(0);
         double offHeight = DashboardCharts.fitHoursAxis(DashboardCharts.yAxis(chart), largest);
         List<MapDataItem> items = days.stream()
-                .map(day -> new MapDataItem()
-                        .add(DAY, formatDayLabel(day, today))
-                        .add(SPENT, DashboardCharts.hours(day.total().fact()))
-                        .add(PLAN, DashboardCharts.hours(day.total().plan()))
-                        .add(OFF, day.offReason() != null ? offHeight : 0.0)
-                        .add(TOOLTIP, formatTooltip(day)))
+                .map(day -> {
+                    MapDataItem item = new MapDataItem()
+                            .add(DAY, formatDayLabel(day, today))
+                            .add(SPENT, DashboardCharts.hours(day.total().fact()))
+                            .add(PLAN, DashboardCharts.hours(day.total().plan()))
+                            .add(OFF, day.offReason() != null ? offHeight : 0.0)
+                            .add(TOOLTIP, formatTooltip(day, today));
+                    WeekStatus colorStatus = colorStatusOf(day);
+                    for (WeekStatus status : DAY_STATUSES) {
+                        item.add(spentField(status),
+                                status == colorStatus ? DashboardCharts.hours(day.total().fact()) : 0.0);
+                    }
+                    return item;
+                })
                 .toList();
         chart.setDataSet(new DataSet().withSource(new DataSet.Source<MapDataItem>()
                 .withDataProvider(new ListChartItems<>(items))
                 .withCategoryField(DAY)
-                .withValueFields(SPENT, PLAN, OFF, TOOLTIP)));
+                .withValueFields(valueFields())));
+    }
+
+    private static String[] valueFields() {
+        List<String> fields = new ArrayList<>(List.of(SPENT, PLAN, OFF, TOOLTIP));
+        DAY_STATUSES.forEach(status -> fields.add(spentField(status)));
+        return fields.toArray(String[]::new);
+    }
+
+    /**
+     * Returns the field of a row, and the id of the series, of the time spent on a day of the status.
+     */
+    public static String spentField(WeekStatus status) {
+        return SPENT + "." + status.name();
+    }
+
+    /**
+     * Returns the status a day's bar is colored by, as the calendar colors the day's time: a day that plans nothing
+     * has none; otherwise the time is short of the plan, on it, or over it, today and the days ahead included.
+     */
+    static WeekStatus colorStatusOf(DaySummary day) {
+        FactAndPlan total = day.total();
+        if (total.plan().toMinutes() == 0) {
+            return WeekStatus.NO_WORKDAYS;
+        }
+        if (total.isExcess()) {
+            return WeekStatus.OVER;
+        }
+        return total.isMatch() ? WeekStatus.ON_PLAN : WeekStatus.SHORT;
+    }
+
+    /**
+     * Returns where a day stands against its plan, worded as a week's status is, or nothing for a day that plans
+     * nothing: as a week, a day short of its plan is still to go today and upcoming ahead.
+     */
+    private static @Nullable WeekStatus noteStatusOf(DaySummary day, LocalDate today) {
+        WeekStatus status = colorStatusOf(day);
+        if (status != WeekStatus.SHORT) {
+            return status == WeekStatus.NO_WORKDAYS ? null : status;
+        }
+        if (day.date().equals(today)) {
+            return WeekStatus.IN_PROGRESS;
+        }
+        return day.date().isAfter(today) ? WeekStatus.UPCOMING : WeekStatus.SHORT;
     }
 
     /**
@@ -244,12 +311,14 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     // The gap between the days is the last bar series' for the whole axis, as the bars overlap, and is set on each,
     // matched by id, so no series keeps another
     private static void addBarCategoryGap(ArrayNode series, String gap) {
-        for (String id : List.of(OFF, SPENT, PLAN)) {
+        List<String> ids = new ArrayList<>(List.of(OFF, PLAN));
+        DAY_STATUSES.forEach(status -> ids.add(spentField(status)));
+        for (String id : ids) {
             series.addObject().put("id", id).put("barCategoryGap", gap);
         }
     }
 
-    private String formatTooltip(DaySummary day) {
+    private String formatTooltip(DaySummary day, LocalDate today) {
         StringBuilder tooltip = new StringBuilder()
                 .append("<b>")
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.day",
@@ -261,6 +330,12 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
                 .append("<br>")
                 .append(DashboardCharts.escape(messages.formatMessage(getClass(), "chart.tooltip.planned",
                         componentSupport.formatWorkTimeTotal(day.total().plan()))));
+        // Where the day stands, in words, so its bar's color is not the only sign of it
+        WeekStatus status = noteStatusOf(day, today);
+        if (status != null) {
+            tooltip.append("<br>").append(DashboardCharts.escape(
+                    componentSupport.formatWeekStatusNote(status, day.total())));
+        }
         String offReason = day.offReason();
         if (offReason != null) {
             tooltip.append("<br>").append(DashboardCharts.escape(offReason));

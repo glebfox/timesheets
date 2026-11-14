@@ -18,6 +18,7 @@ package com.glebfox.timesheets.dashboard;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.absence.Absence;
@@ -179,6 +180,55 @@ public class MyTimeChartsUiTest {
     }
 
     @Test
+    void thisWeekColorsDaysByStatusTest() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek()));
+            // Monday to Thursday fall within the week whether it starts on Sunday or on Monday
+            LocalDate monday = weekStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
+            data.saveEntryOf(task, user, monday, TimeEntryStatus.NEW, WorkTime.of(6, 30));
+            data.saveEntryOf(task, user, monday.plusDays(1), TimeEntryStatus.NEW, WorkTime.ofHours(9));
+            data.saveEntryOf(task, user, monday.plusDays(3), TimeEntryStatus.NEW, WorkTime.ofHours(8));
+
+            ThisWeekBlock block = block("thisWeekBlock");
+            dashboard().refresh();
+
+            List<MapDataItem> items = items(chart(block));
+            int mondayIndex = (int) (monday.toEpochDay() - weekStart.toEpochDay());
+            // Each day's time in the field of its status, as the calendar colors the day: short, over, on plan
+            assertDayStatus(items.get(mondayIndex), WeekStatus.SHORT, 6.5);
+            assertDayStatus(items.get(mondayIndex + 1), WeekStatus.OVER, 9.0);
+            assertDayStatus(items.get(mondayIndex + 3), WeekStatus.ON_PLAN, 8.0);
+            for (WeekStatus status : ThisWeekBlock.DAY_STATUSES) {
+                BarSeries series = chart(block).getSeries(ThisWeekBlock.spentField(status));
+                assertThat(Objects.requireNonNull(series.getItemStyle()).getColor()).as(status.name())
+                        .isEqualTo(DashboardColors.of(status));
+                assertThat(series.getStack()).isEqualTo(ThisWeekBlock.SPENT);
+            }
+
+            // The tooltip says where the day stands, in the words of a week's status; a short day is still to go
+            // today and upcoming ahead
+            WeekStatus mondayNote = monday.isBefore(today) ? WeekStatus.SHORT
+                    : monday.equals(today) ? WeekStatus.IN_PROGRESS : WeekStatus.UPCOMING;
+            assertThat((String) items.get(mondayIndex).getValue(ThisWeekBlock.TOOLTIP)).contains(
+                    componentSupport.formatWeekStatusNote(mondayNote,
+                            new FactAndPlan(WorkTime.of(6, 30), WorkTime.ofHours(8))));
+            assertThat((String) items.get(mondayIndex + 1).getValue(ThisWeekBlock.TOOLTIP)).contains(
+                    componentSupport.formatWeekStatusNote(WeekStatus.OVER,
+                            new FactAndPlan(WorkTime.ofHours(9), WorkTime.ofHours(8))));
+            assertThat((String) items.get(mondayIndex + 3).getValue(ThisWeekBlock.TOOLTIP)).contains(
+                    componentSupport.formatWeekStatusNote(WeekStatus.ON_PLAN,
+                            new FactAndPlan(WorkTime.ofHours(8), WorkTime.ofHours(8))));
+        });
+    }
+
+    private static void assertDayStatus(MapDataItem item, WeekStatus expected, double hours) {
+        for (WeekStatus status : ThisWeekBlock.DAY_STATUSES) {
+            assertThat(item.getValue(ThisWeekBlock.spentField(status))).as(status.name())
+                    .isEqualTo(status == expected ? hours : 0.0);
+        }
+    }
+
+    @Test
     void thisWeekKeepsDaysApartOnNarrowChartTest() {
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             ThisWeekBlock block = block("thisWeekBlock");
@@ -197,7 +247,8 @@ public class MyTimeChartsUiTest {
             assertThat(media.get(1).at("/query/maxWidth").asInt()).isEqualTo(599);
             assertThat(media.get(1).at("/option/xAxis/0/axisLabel/width").asInt()).isLessThan(72);
             JsonNode narrowSeries = media.get(1).at("/option/series");
-            assertThat(narrowSeries.size()).isEqualTo(3);
+            // The day off, the time spent in a series per status, and the plan
+            assertThat(narrowSeries.size()).isEqualTo(2 + ThisWeekBlock.DAY_STATUSES.size());
             for (JsonNode series : narrowSeries) {
                 assertThat(series.get("barCategoryGap").asString()).isEqualTo("40%");
             }
