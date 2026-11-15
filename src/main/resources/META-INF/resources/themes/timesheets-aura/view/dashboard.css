@@ -590,8 +590,8 @@ vaadin-button.dashboard-list-row::part(label) {
 
 .dashboard-list-row.rejected > vaadin-icon.icon,
 .dashboard-list-row.rejected > .name {
-    --vaadin-icon-color: var(--ts-danger-color);
-    color: var(--ts-danger-color);
+    --vaadin-icon-color: var(--aura-red-text);
+    color: var(--aura-red-text);
 }
 
 /* A count badge, such as the rejected entries', keeps its size at the row's end and takes no more height than a line

@@ -7,7 +7,7 @@
 ## 1. Theme
 
 - **Base theme:** Vaadin Aura, with the Jmix Aura additions.
-- **Custom CSS:** `src/main/resources/META-INF/resources/themes/timesheets-aura/styles.css`. It imports the project tokens (`tokens.css`), the accent remapping (`color.css`), and per-view, per-component, and app-wide files from `view/`, `component/`, and `app/`.
+- **Custom CSS:** `src/main/resources/META-INF/resources/themes/timesheets-aura/styles.css`. It imports the project tokens (`tokens.css`) and per-view, per-component, and app-wide files from `view/`, `component/`, and `app/`.
 
 **Aura and Lumo are two different, incompatible design systems.** This project uses **Aura**. Do not use `--lumo-*` CSS variables — they belong to the Lumo theme and must not be mixed with Aura. Use `--aura-*` variables for Aura-specific properties (typography, shadows) and `--vaadin-*` variables for base properties shared across all themes (spacing, radius, colors).
 
@@ -17,25 +17,31 @@ Lumo's utility classes, such as `text-secondary`, `text-s`, `font-bold`, or `p-m
 
 Project-specific values are `--ts-*` custom properties defined in `tokens.css`.
 
-**Light and dark.** The theme picked with the user menu's theme switch, Light, Dark, or System, which follows the system's setting, reaches the stylesheets through the root element: Jmix's `color-scheme-switching-support.js`, which `TimesheetsApplication` loads, sets `color-scheme` and a `theme` attribute of `light` or `dark` on `<html>`. A color follows it with `light-dark()`, as the project colors in `tokens.css` do. What is not a color, such as the drawer's logo, which has an image for each theme, keys on `html[theme='dark']`. A `prefers-color-scheme` media query sees only the system's setting and misses a theme the user picked.
+**Light and dark.** The theme picked with the user menu's theme switch, Light, Dark, or System, which follows the system's setting, reaches the stylesheets through the root element: Jmix's `color-scheme-switching-support.js`, which `TimesheetsApplication` loads, sets `color-scheme` and a `theme` attribute of `light` or `dark` on `<html>`. Aura's own colors switch on `color-scheme`, and so does a project color that differs between the themes, with `light-dark()`, as the backdrop's colors in `tokens.css` do; a status color has one value for both themes (below). An image cannot follow `color-scheme`, so the drawer's logo is the brand's SVG put inline with Jmix's `svg` element, and `view/main-view.css` colors its parts with `light-dark()`: the generator marks the strips and the lettering `ink` and the mint corner `fold`, and a fill set by a stylesheet wins over the file's own `fill` attribute. Nothing keys on the `theme` attribute that the same script sets for Lumo. A `prefers-color-scheme` media query sees only the system's setting and misses a theme the user picked.
 
 ---
 
 ## 2. Color Palette
 
-Aura computes all color variations automatically from a small set of base properties. Override these instead of hard-coding hex values.
+Aura computes all color variations automatically from a small set of base properties, and `tokens.css` sets them to the project's colors instead of hard-coding colors in rules:
 
-| Token | Default | Usage |
-|-------|---------|-------|
-| `--aura-accent-color-light` | Blue | Primary actions, focus rings, selection highlights (light mode) |
-| `--aura-accent-color-dark` | Blue | Primary actions, focus rings, selection highlights (dark mode) |
-| `--aura-neutral` / `-light` / `-dark` | Dark gray / off-white | Text, borders, default UI chrome |
-| `--aura-red` | Red | Error states, destructive actions |
-| `--aura-orange` | Orange | Warnings |
-| `--aura-green` | Green | Success states, confirmations |
-| `--aura-blue` | Blue | Informational, links |
-| `--aura-yellow` | Yellow | Caution, highlights |
-| `--aura-purple` | Purple | Decorative accents |
+| Token | Project value | Usage |
+|-------|---------------|-------|
+| `--aura-accent-color-light` | `--ts-brand-blue-color`, the brand's blue | Primary actions, focus rings, selection highlights (light mode) |
+| `--aura-accent-color-dark` | Aura's neutral, a near white: the dark theme is monochrome | Primary actions, focus rings, selection highlights (dark mode) |
+| `--aura-background-color-light` / `-dark` | White / black | The work area's card; the drawer lies on the backdrop (below) |
+| `--aura-contrast-level` | 2 | Text and border contrast |
+| `--aura-neutral` / `-light` / `-dark` | Aura's, derived from the background | Text, borders, default UI chrome |
+| `--aura-red` | `--ts-danger-color` | Error states, destructive actions |
+| `--aura-green` | `--ts-success-color` | Success states, confirmations |
+| `--aura-yellow` | `--ts-warning-color`, an amber | Caution, highlights |
+| `--aura-blue` | The brand's hue at the palette's lightness | Informational; a badge with no color of its own in the dark theme; the dashboard's Over and To go, as literals in `DashboardColors` |
+| `--aura-orange` | One orange for both themes | The calendar's short week |
+| `--aura-purple` | One purple for both themes | The calendar's absences |
+
+Every Aura and Jmix rule that colors by status reads this palette: the theme names, the accent classes, the badges, and the `--aura-*-text` colors, so the project's colors reach them all. Each palette color is one value for both themes, as Aura's own are, in the middle of the lightness range, except the warning's light amber, so a fill shows on the white and on the black background alike; Aura derives from it, with relative color syntax, `oklch(from …)`, a text color and a tint for each theme, switching on `color-scheme`. The tokens sit on `html`, not `:where(:root)`: Aura sets `--aura-app-background` inside an `@scope (:root)` rule, and a scoped rule wins over an unscoped one of the same specificity, so a rule without specificity loses to it.
+
+**Backdrop.** The drawer and the inset around the work area show `--aura-app-background`, the project's backdrop in `tokens.css`: soft spots of color on a calm base, as light falling through, rather than one gradient across the window, each fading from a core through a softer ring to nothing. The backdrop is fixed to the window, so the spots sit at the left, where the drawer shows them. The light theme is frosted glass: the brand's mint behind the logo, its blue in the middle of the drawer, and a faint mint at the bottom. The dark theme, where no glass shows, is a fire behind the app: the top stays dark behind the ivory logo, an ember barely shows in the middle, and amber rises from the bottom left with a deeper ember ring. One geometry serves both themes; each spot's colors are a `light-dark()` pair. Aura paints the work area's card as a translucent surface over that same property, so `view/main-view.css` sets it back to the plain background color inside the card; otherwise the gradient tints the content.
 
 Derived read-only tokens (do not override directly):
 - `--aura-accent-contrast-color` — high-contrast text on accent backgrounds
@@ -56,19 +62,21 @@ Base style tokens (shared across all themes):
 
 Use accent class names (e.g. `.aura-accent-purple`) on `<html>` or individual components to swap accent color contextually.
 
-**Project colors** (defined in `tokens.css`, each with `-light` and `-dark` variants). `tokens.css` makes the primary color the app-wide accent, and `color.css` swaps the accent to the others by context:
+**Project colors** (defined in `tokens.css`, each one value for both themes). The danger and the success color share the palette blue's lightness; the warning is a light amber, since Aura darkens a color for its text and a lemon yellow darkens to olive. Aura's own rules swap the accent to a palette color by context, and the palette carries the project's colors:
 
 | Context | Theme names | Classes | Accent color |
 |---------|-------------|---------|--------------|
-| Primary (accent): primary actions, focus rings, selection highlights | — | — | `--ts-primary-color` |
+| Primary (accent): primary actions, focus rings, selection highlights | — | — | `--ts-brand-blue-color` in the light theme, Aura's neutral in the dark one |
 | Error | `error`, `danger` | `.aura-accent-red`, `.v-error` | `--ts-danger-color` |
 | Success | `success` | `.aura-accent-green`, `.v-success` | `--ts-success-color` |
 | Warning | `warning` | `.aura-accent-yellow`, `.v-warning` | `--ts-warning-color` |
-| Info | `info` | `.aura-accent-blue`, `.v-info` | `--ts-primary-color` |
+| Info | `info` | `.aura-accent-blue`, `.v-info` | `--aura-blue` |
 
-Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a text color, a border, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. There is no project orange, purple, or neutral; such rules use `--aura-orange`, `--aura-purple`, and `--aura-neutral`, except a neutral fill shown beside the status colors, such as Closed on the approval screen: `--aura-neutral` is the text color itself, nearly black in the light theme and nearly white in the dark one, so such a fill takes the mid gray of `--vaadin-text-color-secondary`, which Aura derives from it.
+Reach these colors through the theme names and classes rather than through the `--ts-*` tokens directly. The exception is a project CSS rule that colors a single property of the app's own element, such as a border, a dot, or a progress bar's fill: it uses the `--ts-*` token, because an accent class would recolor everything accent-based inside the element. Text in a status color takes Aura's `--aura-red-text`, `--aura-green-text`, and so on instead: the token is a mid tone, too light for text on white and too dark on black, and the `-text` color is the one Aura darkens or lightens for the theme. There is no `--ts-*` orange, purple, or neutral: `tokens.css` sets `--aura-orange` and `--aura-purple` directly, and rules use those and `--aura-neutral`, except a neutral fill shown beside the status colors, such as Closed on the approval screen: `--aura-neutral` is the text color itself, nearly black in the light theme and nearly white in the dark one, so such a fill takes the mid gray of `--vaadin-text-color-secondary`, which Aura derives from it.
 
-**Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these.
+**Badges** are Vaadin's `Badge` component, not a `span` with `theme="badge"`: that look comes from a stopgap stylesheet in the Jmix Aura layer, marked for removal now that the component exists. Aura styles the badge's `success`, `warning`, `error`, `filled`, and `small` variants, but not `contrast`, which compiles and changes nothing; a neutral badge takes the `.aura-accent-neutral` class instead. `BadgeStyle` in `data/renderer/` applies these. `component/badge.css` restyles them in two ways. A badge without a fill shows a fixed tint of its color, a border a step stronger, and text in its color: Aura scales the tint's opacity by the color's chroma and mixes it into the surface at half strength, so on the white surface a gray or a light color such as the warning shows hardly any tint, and the badges look alike. And a badge with no color of its own, a default or a filled one such as a tag or a project role, is blue in both themes: the accent, the brand's blue, in the light theme, and `--aura-blue` in the dark one, whose accent is a neutral white that would make it the gray of a neutral badge.
+
+**Buttons.** `component/button.css` makes a neutral button flat, with the body text color and the fields' border; a button with a color, by its theme name or an accent class, and a primary one keep Aura's colors.
 
 **Toggle buttons** are a checkbox group or a radio button group with a class that makes each item read as a button, or as a tab of a filled tab bar, a checked one filled with the accent color, while the keyboard works as for the group's checkboxes or radio buttons:
 
@@ -83,9 +91,11 @@ In a dialog, Tab stops on every option of a radio button group, a `segmented-gro
 
 **Forced colors.** Forced-colors (high contrast) mode drops background fills and box shadows, and draws a transparent border in the text color. So a card or row whose selection is only a fill, such as the approval screen's roster card and week card, marks it there as Vaadin's side nav marks its current item: the selected one has a border, or an outline where the part has no border all round, and text in `Highlight`, and a transparent border on the others takes `Canvas`. A system color that a rule sets explicitly survives the mode, so these rules need no `forced-color-adjust: none`. The mode stands for the user's own palette, each system color in its role, so the project's colors never come back in it: a part that is nothing but a color repeating what text says, such as the approval screen's status bars, dots, lines, and entry stripes, is left to disappear. A drawing whose shape tells what no text does, such as the roster's fingerprint, takes system colors, as Vaadin's progress bar draws its value in `CanvasText`; the mode leaves an SVG's `fill` as the author set it, so such a drawing sets it itself. An image, such as the login page's logo, keeps its own colors in the mode, so it is made transparent, keeping its place and its alternative text, and a pseudo-element over it draws its shape as a `mask` filled with `CanvasText`.
 
-**Brand colors.** The login page's sheet and its fold keep the brand's colors in both themes, as the brand's guide asks of dark surfaces. The brand's blue is the light theme's accent, so the sheet takes `--ts-primary-color-light`, never `--ts-primary-color`, whose dark value is purple. The fold takes the brand's mint, `#87F1AC`, from `--ts-brand-mint-color` in `tokens.css`; the brand mark's path gives the fold only its shape, as a mask, since a color inside an SVG image is beyond the theme's reach.
+**Brand colors.** The login page's sheet and its fold keep the brand's colors in both themes, as the brand's guide asks of dark surfaces. The sheet takes the brand's blue, `#0256A9`, from `--ts-brand-blue-color`, which is also the light theme's accent, and the fold the brand's mint, `#87F1AC`, from `--ts-brand-mint-color`, both in `tokens.css`, which also holds the brand's ivory, `--ts-brand-ivory-color`, the color of the drawer's logo in the dark theme; the brand mark's path gives the fold only its shape, as a mask, since a color inside an SVG image is beyond the theme's reach.
 
 **Charts.** A chart of the Charts add-on draws on a canvas and takes literal colors in its options, never the theme's custom properties, so it is the one place where colors are literals. When the theme switches, the add-on redraws the chart in ECharts' own light or dark theme, which colors its axis labels and grid lines, while the colors set in the options stay; each is one literal for both themes ([decision 0021](../decisions/0021-the-dashboards-charts-color-statuses-as-the-app-does-in-one-color-for-both-themes.md)). A fill, of a bar or a slice, is written in hex or `rgba()`: ECharts lightens a fill under the pointer through a color parser that reads no `oklch()`, and a fill it cannot read vanishes while hovered. A line's, a hatching's, or a label's color is drawn as written. See `DashboardColors`.
+
+**Notation.** Colors are written in `oklch()` wherever what draws them reads it: the stylesheets, and a chart's lines and labels. Where it does not, a color keeps its notation, with a note beside it that says why and, where it matches a token, its `oklch()`: a chart's fill (above); the brand collection under `assets/brand/`, its copies, and `.idea/icon.svg`, all in hex, since CairoSVG, which draws the brand's PNG exports, paints a color it cannot read black (`scripts/brand/generate.py`); and the Jmix Studio palette icons under `meta/icon/component/`, in IntelliJ's own icon grays, which the IDE matches by their exact hex values to recolor an icon for its theme.
 
 ---
 

@@ -1,0 +1,132 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The main menu (Jmix's listMenu) on the drawer's backdrop: rounded rows, the current item a raised white row, and a
+   guide line for the items of a group. */
+
+/* The current item's text color, computed where it is declared, on the menu, in the theme's scheme: the current item
+   itself is drawn in the light scheme (below), where an unregistered property's light-dark() would always pick the
+   light theme's color */
+@property --_item-selected-color {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: currentColor;
+}
+
+.jmix-list-menu {
+    /* Navigation text one step above Jmix's small size */
+    --jmix-list-menu-item-font-size: var(--aura-font-size-m);
+    --jmix-list-menu-item-line-height: var(--aura-line-height-m);
+
+    /* The icon box is one text line high */
+    --_icon-size: var(--jmix-list-menu-item-line-height);
+
+    /* The current item is white on the backdrop, a hovered one a fainter white. In the dark theme a hovered row is
+       a translucent lightening of the backdrop, and the current item is filled with the accent, a near white, so it
+       stands apart from a hovered one as a primary button does from a plain one. */
+    --_item-selected-background: light-dark(oklch(1 0 0), var(--aura-accent-color));
+    --_item-selected-color: light-dark(var(--aura-accent-text-color), var(--aura-accent-contrast-color));
+    --_item-hover-background: light-dark(oklch(1 0 0 / 0.55), oklch(1 0 0 / 0.08));
+
+    /* Room for the shadow of a current last item: the list clips its overflow */
+    padding-block-end: var(--vaadin-padding-s);
+}
+
+/* One gap between all rows, item or group, on every level, in place of Jmix's padding around each */
+.jmix-list-menu,
+.jmix-list-menu .jmix-menubar-item .menubar-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+}
+
+/* The list scrolls when it is taller than the drawer, so its rows keep their height */
+.jmix-list-menu li,
+.jmix-list-menu .jmix-menubar-item .menubar-list li {
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.jmix-list-menu .jmix-menubar-item {
+    padding: 0;
+}
+
+/* Rows: items and group headers. Jmix rounds only the current and the focused item, so a hovered row would show a
+   square background. */
+.jmix-list-menu a.jmix-menu-item,
+.jmix-list-menu .jmix-menubar-item vaadin-details-summary {
+    padding-inline: var(--vaadin-padding-m);
+    border-radius: var(--vaadin-radius-m);
+    transition: color 80ms, background-color 80ms;
+}
+
+/* Group headers are muted as the items are, in the items' typography instead of Jmix's bold small text */
+.jmix-list-menu .jmix-menubar-item vaadin-details-summary {
+    color: inherit;
+}
+
+.jmix-list-menu .jmix-menubar-item .menubar-summary {
+    font-size: var(--jmix-list-menu-item-font-size);
+    font-weight: var(--jmix-list-menu-item-font-weight);
+    line-height: var(--jmix-list-menu-item-line-height);
+}
+
+/* A group that holds the current item reads as active, even collapsed */
+.jmix-list-menu .jmix-menubar-item:has(a.jmix-menu-item[highlight]) > vaadin-details-summary {
+    color: var(--vaadin-text-color);
+}
+
+@media (any-hover: hover) {
+    .jmix-list-menu a.jmix-menu-item:not([highlight]):hover,
+    .jmix-list-menu .jmix-menubar-item vaadin-details-summary:hover {
+        color: var(--vaadin-text-color);
+        background-color: var(--_item-hover-background);
+    }
+}
+
+/* The current item. Its outline is drawn as a shadow, so the row keeps its size. Its text is in the accent's text
+   color on white, and in the accent's contrast color on the dark theme's accent fill. The row is white in both
+   themes, so what it holds, such as the rejected count's badge, is drawn in the light scheme, as on a light surface. */
+.jmix-list-menu a.jmix-menu-item[highlight] {
+    color-scheme: light;
+    color: var(--_item-selected-color);
+    background-color: var(--_item-selected-background);
+    box-shadow: 0 0 0 1px var(--vaadin-border-color-secondary), var(--aura-shadow-s);
+    transition: none;
+}
+
+.jmix-list-menu .prefix-component {
+    --vaadin-icon-size: var(--_icon-size);
+
+    flex-shrink: 0;
+}
+
+/* The items of a group hang on a guide line dropped from the middle of the group's icon, and their text starts
+   where the group's text does */
+.jmix-list-menu .jmix-menubar-item .menubar-list {
+    margin-block-start: var(--vaadin-gap-xs);
+    margin-inline-start: calc(var(--vaadin-padding-m) + var(--_icon-size) / 2 - 1px);
+    padding-inline-start: max(0px, var(--_icon-size) / 2 + var(--vaadin-gap-s) - var(--vaadin-padding-m));
+    border-inline-start: 1px solid var(--vaadin-border-color);
+}
+
+/* A separator, which the list menu renders as a bare <hr> and does not style: a line as wide as the rows' text */
+.jmix-list-menu li > hr {
+    height: 1px;
+    margin: var(--vaadin-gap-xs) var(--vaadin-padding-m);
+    border: 0;
+    background-color: var(--vaadin-border-color);
+}

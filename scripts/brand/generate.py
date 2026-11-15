@@ -12,6 +12,7 @@ import struct
 from xml.sax.saxutils import escape
 
 import cairosvg
+from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
@@ -20,6 +21,10 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "src/main/resources/META-INF/resources/assets/brand"
 FONT = Path(__file__).with_name("fonts") / "InstrumentSans.woff2"
+# The brand's colors in hex, though the theme writes its colors in oklch: CairoSVG, which draws the PNG exports, reads
+# only named, hex, rgb(), and rgba() colors and paints any other color black, and the tools outside the browser that
+# open the SVG files read oklch no better. In oklch: blue oklch(0.46 0.15 255), the theme's --ts-brand-blue-color;
+# ivory oklch(0.976 0.007 88.6); mint oklch(0.876 0.139 153.9), the theme's --ts-brand-mint-color.
 BLUE, IVORY, MINT = "#0256A9", "#F9F7F2", "#87F1AC"
 TOP = "M36 0H416L496 80V108Q496 136 468 136H44L0 92V36Q0 0 36 0Z"
 MIDDLE = "M136 164H388Q400 164 400 176V236Q400 274 362 274H92V208Z"
@@ -33,9 +38,12 @@ PALETTES = {
 }
 
 
+# The artwork's parts carry classes, so a page that puts an SVG inline can recolor them from its stylesheet: "ink"
+# for the strips and the lettering, "fold" for the mint corner. A fill set by a stylesheet wins over the fill
+# attribute, and every other reader of the files ignores the classes.
 def mark(color, accent, x, y, scale, small=False):
-    fold = "" if small else f'<path d="{FOLD}" fill="{accent}"/>'
-    return (f'<g transform="translate({x:g} {y:g}) scale({scale:g})" fill="{color}">'
+    fold = "" if small else f'<path class="fold" d="{FOLD}" fill="{accent}"/>'
+    return (f'<g class="ink" transform="translate({x:g} {y:g}) scale({scale:g})" fill="{color}">'
             f'<path d="{TOP}"/><path d="{MIDDLE}"/><path d="{BOTTOM}"/>{fold}</g>')
 
 
@@ -54,22 +62,33 @@ def typeface(weight):
 
 
 def lettering(text, weight, size, x, baseline, color, tracking=0):
+    """Returns the outlined text and its ink bounds (left, top, right, bottom) in the document's units."""
     font = typeface(weight)
     glyphs = font.getGlyphSet()
     cmap = font.getBestCmap()
     unit_scale = size / font["head"].unitsPerEm
     cursor = 0
     paths = []
+    ink = None
     for char in text:
         name = cmap[ord(char)]
         pen = SVGPathPen(glyphs)
         glyphs[name].draw(pen)
         if pen.getCommands():
             paths.append(f'<path transform="translate({cursor:.4f} 0)" d="{pen.getCommands()}"/>')
+            bounds = BoundsPen(glyphs)
+            glyphs[name].draw(bounds)
+            x_min, y_min, x_max, y_max = bounds.bounds
+            box = (x_min + cursor, y_min, x_max + cursor, y_max)
+            ink = box if ink is None else (min(ink[0], box[0]), min(ink[1], box[1]),
+                                           max(ink[2], box[2]), max(ink[3], box[3]))
         cursor += font["hmtx"].metrics[name][0] + tracking / unit_scale
-    return (f'<g fill="{color}" aria-label="{escape(text)}" '
-            f'transform="translate({x:g} {baseline:g}) scale({unit_scale:g} {-unit_scale:g})">'
-            + "".join(paths) + "</g>")
+    svg = (f'<g class="ink" fill="{color}" aria-label="{escape(text)}" '
+           f'transform="translate({x:g} {baseline:g}) scale({unit_scale:g} {-unit_scale:g})">'
+           + "".join(paths) + "</g>")
+    # Font units point up from the baseline; the document's point down
+    return svg, (x + ink[0] * unit_scale, baseline - ink[3] * unit_scale,
+                 x + ink[2] * unit_scale, baseline - ink[1] * unit_scale)
 
 
 def icon(variant, size=512, square=False, maskable=False):
@@ -84,16 +103,35 @@ def icon(variant, size=512, square=False, maskable=False):
     return svg
 
 
+# The clear space around a lockup's artwork, in the lockup's units: just enough for a transparent edge. A lockup is
+# cropped to its artwork, so it lines up with what is beside it and is as large as its box allows; the layout around
+# it gives it room.
+LOCKUP_MARGIN = 4
+
+
 def lockup(variant, tagline):
+    """Returns the lockup's SVG and its size in its own units."""
     color, accent, _ = PALETTES[variant]
     if tagline:
-        body = mark(color, accent, 48, 62, 0.60)
-        body += lettering("timesheets", 700, 172, 410, 210, color, -1.2)
-        body += lettering("Time, composed.", 450, 52, 415, 291, color, 4)
-        return document(body, 1536, 384, f"Timesheets logo with tagline, {variant}")
-    body = mark(color, accent, 48, 41.5, 0.50)
-    body += lettering("timesheets", 700, 172, 360, 199, color, -1.2)
-    return document(body, 1536, 288, f"Timesheets logo, {variant}")
+        x, y, scale = 48, 62, 0.60
+        word, word_ink = lettering("timesheets", 700, 172, 410, 210, color, -1.2)
+        line, line_ink = lettering("Time, composed.", 450, 52, 415, 291, color, 4)
+        inks = [word_ink, line_ink]
+        title = "Timesheets. Time, composed."
+    else:
+        x, y, scale = 48, 41.5, 0.50
+        word, word_ink = lettering("timesheets", 700, 172, 360, 199, color, -1.2)
+        line = ""
+        inks = [word_ink]
+        title = "Timesheets"
+    inks.append((x, y, x + 496 * scale, y + 410 * scale))
+    left = min(ink[0] for ink in inks) - LOCKUP_MARGIN
+    top = min(ink[1] for ink in inks) - LOCKUP_MARGIN
+    width = round(max(ink[2] for ink in inks) + LOCKUP_MARGIN - left)
+    height = round(max(ink[3] for ink in inks) + LOCKUP_MARGIN - top)
+    body = (f'<g transform="translate({-left:g} {-top:g})">'
+            + mark(color, accent, x, y, scale) + word + line + "</g>")
+    return document(body, width, height, title), width, height
 
 
 def export(stem, svg, width, height):
@@ -118,9 +156,10 @@ def overview():
         draw.text((left + 28, 138), variant.upper(), font=label, fill=foreground)
         for name, y, width, height in [(f"icons/icon-{variant}.png", 212, 320, 320),
                                       (f"marks/mark-{variant}.png", 590, 72, 72),
-                                      (f"logos/logo-{variant}.png", 724, 440, 110),
-                                      (f"logos/logo-no-tagline-{variant}.png", 902, 440, 83)]:
+                                      (f"logos/logo-{variant}.png", 724, 400, None),
+                                      (f"logos/logo-no-tagline-{variant}.png", 902, 400, None)]:
             with Image.open(OUT / name) as image:
+                height = height or round(image.height * width / image.width)
                 image = image.resize((width, height), Image.Resampling.LANCZOS)
                 sheet.paste(image, (left + (480 - width) // 2, y), image)
     sheet.save(OUT / "overview.png")
@@ -132,8 +171,10 @@ def build():
         export(f"icons/icon-{variant}", icon(variant), 512, 512)
         svg = document(mark(color, accent, 8, 51, 1), 512, 512, f"Timesheets standalone mark, {variant}")
         export(f"marks/mark-{variant}", svg, 512, 512)
-        export(f"logos/logo-{variant}", lockup(variant, True), 2048, 512)
-        export(f"logos/logo-no-tagline-{variant}", lockup(variant, False), 2048, 384)
+        # A lockup's PNG is 512 px high with the tagline and 384 px without, as wide as its artwork
+        for stem, tagline, png_height in [("logo", True, 512), ("logo-no-tagline", False, 384)]:
+            svg, width, height = lockup(variant, tagline)
+            export(f"logos/{stem}-{variant}", svg, round(width * png_height / height), png_height)
 
     favicon_dir = OUT / "favicons"
     favicon_dir.mkdir(exist_ok=True)

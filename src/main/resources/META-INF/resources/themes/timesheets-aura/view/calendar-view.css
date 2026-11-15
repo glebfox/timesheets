@@ -191,7 +191,7 @@
 }
 
 .calendar-view-week-summary-on-plan .calendar-view-week-summary-note {
-    color: var(--ts-success-color);
+    color: var(--aura-green-text);
 }
 
 .calendar-view-week-summary-short {
@@ -305,7 +305,7 @@
 }
 
 .insufficient-time {
-    color: var(--ts-danger-color);
+    color: var(--aura-red-text);
 }
 
 /* Events */
@@ -339,10 +339,11 @@
     border-color: var(--aura-neutral);
 }
 
-/* An absence's bar takes the purple that nothing else on the calendar uses: a light fill, and Aura's purple
-   text. Measured in the browser, over the shading of a day without a plan, the text's contrast on the fill is
-   about 5:1 in the light theme and 6:1 in the dark one, and 4.9:1 on the today cell in both: AA for its 11px
-   text. The bar does nothing on a click, so it drops the pointer and the darkening that Jmix gives a block
+/* An absence's bar takes the purple that nothing else on the calendar uses: a light fill, and the purple's
+   text color. Measured in the browser with Aura's own purple, before the project set its own and the white and
+   black backgrounds, over the shading of a day without a plan, the text's contrast on the fill was about 5:1 in
+   the light theme and 6:1 in the dark one, and 4.9:1 on the today cell in both: AA for its 11px text; not
+   measured again since. The bar does nothing on a click, so it drops the pointer and the darkening that Jmix gives a block
    event on hover.
    The bar takes one entry row on each day it crosses, so a day under it shows one entry fewer before its
    "+N more" link. So it is one line tall, without the top margin FullCalendar gives a day's events, the
@@ -388,7 +389,7 @@
 /* Bottom Text */
 
 .jmix-day-cell-bottom-text.matching-time {
-    color: var(--ts-success-color);
+    color: var(--aura-green-text);
 }
 
 /* Keeps the entries and the "+N more" link off the day's total. FullCalendar fits them into the
@@ -461,7 +462,7 @@
 }
 
 .calendar-view .fc .calendar-view-holiday-day-off .fc-event-title {
-    color: var(--ts-danger-color);
+    color: var(--aura-red-text);
 }
 
 .calendar-view .fc .calendar-view-holiday-workday .fc-event-title {

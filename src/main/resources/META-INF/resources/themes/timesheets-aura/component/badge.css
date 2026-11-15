@@ -1,0 +1,35 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A badge with no color of its own is blue in both themes: the light theme's accent is the brand's blue, and the
+   dark theme's a neutral white, which would make such a badge the gray of a neutral one, so there it takes the
+   palette's blue. */
+vaadin-badge:not([theme~='success'], [theme~='warning'], [theme~='error'], [theme~='danger'], [theme~='info'],
+                 [class*='aura-accent-']) {
+    --aura-accent-color-dark: var(--aura-blue);
+}
+
+/* A badge without a fill: a tint of its color, a border a step stronger, and text in its color. Aura scales the
+   tint's opacity by the color's chroma and mixes it into the surface at half strength, so on the white surface a gray
+   or a light color such as the warning shows hardly any tint, and the badges look alike. */
+vaadin-badge:not([theme~='filled'], [theme~='dot']) {
+    --vaadin-badge-background: light-dark(
+            color-mix(in oklab, var(--aura-accent-color) 12%, transparent),
+            color-mix(in oklab, var(--aura-accent-color) 22%, transparent));
+    --vaadin-badge-border-color: light-dark(
+            color-mix(in oklab, var(--aura-accent-color) 28%, transparent),
+            color-mix(in oklab, var(--aura-accent-color) 36%, transparent));
+}

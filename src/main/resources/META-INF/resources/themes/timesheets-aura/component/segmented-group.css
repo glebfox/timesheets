@@ -102,8 +102,8 @@
     --vaadin-radio-button-label-color: var(--aura-accent-contrast-color);
     color: var(--aura-accent-contrast-color);
     background: var(--aura-accent-color) border-box;
-    border-color: light-dark(transparent, hsl(0deg 100% 100% / 0.03));
-    box-shadow: 0 0 0 1px light-dark(hsl(0deg 100% 0% / 0.02), transparent), var(--aura-shadow-s);
+    border-color: light-dark(transparent, oklch(1 0 0 / 0.03));
+    box-shadow: 0 0 0 1px light-dark(oklch(0 0 0 / 0.02), transparent), var(--aura-shadow-s);
 }
 
 /* Hovered and pressed as Aura shows a button: an unchecked segment as a regular button, the checked one as a primary

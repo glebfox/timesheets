@@ -14,34 +14,72 @@
  * limitations under the License.
  */
 
-:where(:root),
-:where(:host) {
+/* On html rather than :where(:root): Aura sets --aura-app-background in an @scope (:root) rule, and a scoped rule
+   wins over an unscoped one of the same specificity, so a rule without specificity would lose to it. */
+html {
     /* App specific */
     --ts-filter-layout-column-min-width: 20rem;
     --ts-filter-layout-column-gap: var(--vaadin-gap-s);
     --ts-avatar-upload-size: 6rem;
     --ts-icon-stroke-width: 1.5;
 
-    /* Colors */
-    --ts-primary-color-light: oklch(0.46 0.15 255);
-    --ts-primary-color-dark: oklch(0.59 0.2 277);
-    --ts-primary-color: light-dark(var(--ts-primary-color-light), var(--ts-primary-color-dark));
-
-    --ts-danger-color-light: oklch(0.46 0.2 25);
-    --ts-danger-color-dark: oklch(0.59 0.2 25);
-    --ts-danger-color: light-dark(var(--ts-danger-color-light), var(--ts-danger-color-dark));
-
-    --ts-success-color-light: oklch(0.46 0.15 150);
-    --ts-success-color-dark: oklch(0.59 0.2 150);
-    --ts-success-color: light-dark(var(--ts-success-color-light), var(--ts-success-color-dark));
-
-    --ts-warning-color-light: oklch(0.89 0.2 98);
-    --ts-warning-color-dark: oklch(0.89 0.2 98);
-    --ts-warning-color: light-dark(var(--ts-warning-color-light), var(--ts-warning-color-dark));
-
-    /* The brand's mint (#87F1AC), the same in both themes, as the brand's colors are */
+    /* The brand's colors, the same in both themes, as the brand's are: its blue (#0256A9), the light theme's accent,
+       its ivory (#F9F7F2), the artwork's color on dark surfaces, and its mint (#87F1AC) */
+    --ts-brand-blue-color: oklch(0.46 0.15 255);
+    --ts-brand-ivory-color: oklch(0.976 0.007 88.6);
     --ts-brand-mint-color: oklch(0.876 0.139 153.9);
 
-    --aura-accent-color-light: var(--ts-primary-color-light);
-    --aura-accent-color-dark: var(--ts-primary-color-dark);
+    /* The status colors: one value for both themes, as Aura's palette colors are, in the middle of the lightness
+       range, so a fill shows on the white and on the black background alike. Aura derives each color's text and
+       tint per theme from it, so text in a status color takes --aura-*-text rather than these. The danger and the
+       success color share the lightness of --aura-blue; the warning is a light amber, as a yellow has to be light
+       to read as one, and an amber darkens to a brown text where a lemon yellow would darken to olive. */
+    --ts-danger-color: oklch(0.59 0.2 25);
+    --ts-success-color: oklch(0.59 0.2 150);
+    --ts-warning-color: oklch(0.85 0.16 85);
+
+    /* Aura's palette. Every Aura and Jmix rule that colors by status reads it: the error, success, warning, and info
+       theme names, the aura-accent-* classes, the badges, and the --aura-*-text colors. So it carries the project's
+       colors. Orange, purple, and blue have no project role of their own; blue is the brand's hue at the palette's
+       lightness. */
+    --aura-red: var(--ts-danger-color);
+    --aura-green: var(--ts-success-color);
+    --aura-yellow: var(--ts-warning-color);
+    --aura-blue: oklch(0.59 0.15 255);
+    --aura-orange: oklch(0.62 0.15 55);
+    --aura-purple: oklch(0.55 0.17 300);
+
+    /* The accent: the brand's blue in the light theme. The dark theme is monochrome: its accent is Aura's neutral, a
+       near white. */
+    --aura-accent-color-light: var(--ts-brand-blue-color);
+    --aura-accent-color-dark: var(--aura-neutral-dark);
+
+    --aura-contrast-level: 2;
+
+    /* A white and a black background, so the content card is plain and the drawer's backdrop carries the color */
+    --aura-background-color-light: oklch(1 0 0);
+    --aura-background-color-dark: oklch(0 0 0);
+
+    /* The backdrop: soft spots of color on a calm base, as light falling through, rather than one gradient across
+       the window. Each spot fades from a core through a softer ring to nothing. The backdrop is fixed to the window,
+       so the spots sit at the left, where the drawer shows them, and the inset around the work area catches their
+       edges; the work area's card keeps the plain background (view/main-view.css).
+       Light theme, frosted glass: the brand's mint behind the logo, its blue in the middle of the drawer, and a
+       faint mint again at the bottom. Dark theme, a fire behind the app: the top stays dark behind the ivory logo,
+       an ember barely shows in the middle, and amber rises from the bottom left with a deeper ember ring. */
+    --ts-backdrop-base: light-dark(oklch(0.975 0.004 240), oklch(0.15 0.006 60));
+    --ts-backdrop-top: light-dark(oklch(0.9 0.08 165 / 0.55), transparent);
+    --ts-backdrop-top-ring: light-dark(oklch(0.93 0.05 175 / 0.3), transparent);
+    --ts-backdrop-middle: light-dark(oklch(0.86 0.07 250 / 0.4), oklch(0.5 0.11 52 / 0.22));
+    --ts-backdrop-middle-ring: light-dark(oklch(0.9 0.04 240 / 0.2), oklch(0.4 0.08 45 / 0.1));
+    --ts-backdrop-bottom: light-dark(oklch(0.92 0.06 170 / 0.4), oklch(0.62 0.15 68 / 0.6));
+    --ts-backdrop-bottom-ring: light-dark(oklch(0.94 0.03 200 / 0.2), oklch(0.45 0.14 42 / 0.32));
+    --aura-app-background:
+            radial-gradient(ellipse 34% 32% at 2% 0%,
+                    var(--ts-backdrop-top), var(--ts-backdrop-top-ring) 45%, transparent),
+            radial-gradient(ellipse 24% 32% at 16% 55%,
+                    var(--ts-backdrop-middle), var(--ts-backdrop-middle-ring) 50%, transparent),
+            radial-gradient(ellipse 45% 45% at 6% 102%,
+                    var(--ts-backdrop-bottom), var(--ts-backdrop-bottom-ring) 45%, transparent),
+            var(--ts-backdrop-base);
 }

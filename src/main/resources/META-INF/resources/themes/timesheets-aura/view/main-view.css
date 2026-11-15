@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-/* The application title, the tab bar, and the initial layout pad alike, so the drawer toggle has one place whether
-   tabs are open or not, and the title is as tall as the tab bar. */
+/* The tab bar and the initial layout pad alike, so the drawer toggle has one place whether tabs are open or not. */
 .jmix-main-view-app-layout {
     --vaadin-app-layout-drawer-width: 256px;
-    --aura-app-layout-inset: 0px;
+    --aura-app-layout-inset: var(--vaadin-padding-s);
 
     --_bar-padding-block: var(--vaadin-padding-block-container);
     --_bar-padding-inline: var(--vaadin-padding-inline-container);
+}
+
+/* The backdrop stays outside the work area's card. Aura paints the card as a translucent surface over
+   --aura-app-background, so the gradient would tint the content; inside the card the property is the plain
+   background color. */
+vaadin-app-layout::part(content) {
+    --aura-app-background: var(--aura-background-color);
 }
 
 .jmix-main-view-section {
@@ -34,27 +40,35 @@
 
 /* Application Title */
 
-/* The line is drawn as the tab bar draws its own, inside the box, so the two lines meet. */
+/* The logo's file is cropped to its artwork, so the title's padding places the artwork: the mark starts where the
+   menu's icons do (component/list-menu.css), and ends as far from the drawer's other edge. */
 .jmix-main-view-application-title {
     display: flex;
-    justify-content: center;
-    padding: var(--_bar-padding-block) var(--_bar-padding-inline);
-    box-shadow: inset 0 -1px 0 0 var(--vaadin-border-color-secondary);
+    padding: var(--vaadin-padding-m) calc(var(--vaadin-padding-s) + var(--vaadin-padding-m));
 }
 
-/* As tall as a button, one line between its padding and border, since the drawer toggle sets the tab bar's
-   height. */
 .jmix-main-view-application-logo {
-    height: calc(1lh + 2 * var(--vaadin-padding-block-container) + 2 * var(--vaadin-button-border-width, 1px));
-    max-width: 100%;
-    object-fit: contain;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
-/* The brand has a logo for light surfaces and one for dark surfaces. Jmix marks the active theme on the root
-   element, whether the user picked it or it follows the system. */
-html[theme='dark'] .jmix-main-view-application-logo-light,
-html:not([theme='dark']) .jmix-main-view-application-logo-dark {
-    display: none;
+.jmix-main-view-application-logo > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* The brand's logo for light surfaces, put inline: its strips and lettering take the brand's ivory on the dark
+   theme's backdrop, as the brand's logo for dark surfaces draws them, and the mint fold keeps its color */
+.jmix-main-view-application-logo .ink {
+    fill: light-dark(var(--ts-brand-blue-color), var(--ts-brand-ivory-color));
+}
+
+/* Forced colors leave an SVG's fill as set, so the logo takes the system's text color, as the login page's does */
+@media (forced-colors: active) {
+    .jmix-main-view-application-logo :is(.ink, .fold) {
+        fill: CanvasText;
+    }
 }
 
 .jmix-main-view-navigation {
@@ -67,17 +81,6 @@ html:not([theme='dark']) .jmix-main-view-application-logo-dark {
 /* The menu scrolls itself, not the navigation around it. */
 .jmix-main-view-navigation > .jmix-list-menu {
     scrollbar-width: thin;
-}
-
-/* The list menu renders a separator as a bare <hr> and styles none of it. */
-.jmix-main-view-navigation .jmix-list-menu hr {
-    display: block;
-    align-self: stretch;
-    height: 1px;
-    border: 0;
-    padding: 0;
-    margin: var(--vaadin-padding-s) calc(var(--vaadin-radius-m) / 2);
-    background-color: var(--vaadin-border-color);
 }
 
 .jmix-main-view-footer {

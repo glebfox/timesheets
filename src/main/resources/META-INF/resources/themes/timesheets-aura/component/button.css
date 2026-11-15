@@ -1,0 +1,40 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A neutral button is flat, with the body text color and the fields' border. A colored one, by its theme name or
+   an accent class, keeps Aura's own colors, as a primary one does. */
+:where(:root),
+:where(:host) {
+    --vaadin-button-text-color: var(--vaadin-text-color);
+    --vaadin-button-border-color: var(--vaadin-border-color);
+}
+
+:is([theme~="error"], [theme~="danger"], [theme~="success"], [theme~="warning"], [theme~="info"],
+    .aura-accent-red, .aura-accent-orange, .aura-accent-yellow, .aura-accent-green, .aura-accent-blue,
+    .aura-accent-purple, .v-error, .v-success, .v-warning, .v-info):not([theme~="primary"]) {
+    --vaadin-button-text-color: initial;
+    --vaadin-button-border-color: initial;
+}
+
+/* A link styled as a button keeps the link color */
+.link-button {
+    --vaadin-button-text-color: initial;
+}
+
+/* A picker's action buttons sit inside the field: no fill. The border stays the regular button border. */
+jmix-value-picker-button {
+    --vaadin-button-background: transparent;
+}

@@ -4,14 +4,14 @@ The three time-entry strips form a compact T. The mint corner folds the top stri
 
 ## Files
 
-Every icon, standalone mark, and logo is supplied as editable SVG paths and a matching transparent PNG. The SVGs contain no embedded raster images, external resources, or live text. PNGs are exported directly from the same SVGs.
+Every icon, standalone mark, and logo is supplied as editable SVG paths and a matching transparent PNG. In the SVGs the strips and the lettering carry the class `ink` and the mint corner the class `fold`, so a page that puts a file inline can recolor them from its stylesheet, as the application's drawer does; a lockup's title is the brand's name, followed by the tagline where the lockup shows it, and is its accessible name inline. The SVGs contain no embedded raster images, external resources, or live text. PNGs are exported directly from the same SVGs.
 
 | Directory | Contents | PNG size |
 | --- | --- | --- |
 | `icons/` | Rounded app tiles: `icon-light`, `icon-dark`, `icon-mono-black`, `icon-mono-white` | 512 × 512 |
 | `marks/` | Standalone symbols without a tile: `mark-light`, `mark-dark`, `mark-mono-black`, `mark-mono-white` | 512 × 512 |
-| `logos/` | Horizontal logos with the tagline: `logo-*` | 2048 × 512 |
-| `logos/` | Horizontal logos without the tagline: `logo-no-tagline-*` | 2048 × 384 |
+| `logos/` | Horizontal logos with the tagline: `logo-*` | 512 high, as wide as the artwork |
+| `logos/` | Horizontal logos without the tagline: `logo-no-tagline-*` | 384 high, as wide as the artwork |
 | `favicons/` | PNG favicons at 16, 32, and 48 px; SVG favicon; ICO containing all three PNG sizes | As named |
 | `favicons/` | Full-bleed Apple touch icon and maskable PWA icons | 180, 192, and 512 px |
 | `overview.png` | Contact sheet of the four palettes | 1920 × 1160 |
@@ -25,10 +25,10 @@ Every icon, standalone mark, and logo is supplied as editable SVG paths and a ma
 - Use the standalone mark when an existing surface supplies the background. Use the app tile for launchers, project lists, and app directories.
 - Use the prepared 16 px favicon rather than shrinking the full logo: its corner detail is omitted for clarity. The ICO contains that same small-size artwork.
 - Apple touch and maskable icons have square, opaque backgrounds so the platform can apply its own mask. The maskable versions place the symbol inside the central safe circle.
-- Keep at least one strip's height of clear space around the symbol when placing it with unrelated content. Retain the spacing built into the supplied lockups.
+- Keep at least one strip's height of clear space around the symbol when placing it with unrelated content. Retain the spacing built into the supplied lockups. A lockup is cropped to its artwork, with only a hairline of transparent edge, so the layout that places it gives it its clear space and lines it up by the artwork itself.
 - Keep the mint fold as part of the mark. Do not recolor individual strips, stretch the logo, or add outlines.
 
-The primary blue is `#0256A9`, matching the sRGB approximation of the application's light-theme accent `oklch(0.46 0.15 255)`. Ivory is `#F9F7F2`; mint is `#87F1AC`. Dark-surface branding retains the same blue identity rather than using the UI's purple dark-mode accent.
+The primary blue is `#0256A9`, `oklch(0.46 0.15 255)`, the application's `--ts-brand-blue-color` and its light-theme accent. Ivory is `#F9F7F2`, `oklch(0.976 0.007 88.6)`; mint is `#87F1AC`, `oklch(0.876 0.139 153.9)`, the application's `--ts-brand-mint-color`. The files give the colors in hex: CairoSVG, which draws the PNG exports, paints a color it cannot read, such as `oklch()`, black, and tools outside the browser read `oklch()` no better. Dark-surface branding retains the same blue identity rather than using the UI's dark-mode accent, a neutral white.
 
 Lettering is outlined from Instrument Sans, the application's typeface: weight 700 for the wordmark and 450 for the tagline. Its unmodified source font and OFL license are in `scripts/brand/fonts/` for reproducible exports. No font installation is required to display the finished assets.
 
