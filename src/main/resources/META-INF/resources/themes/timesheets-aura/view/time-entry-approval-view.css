@@ -31,9 +31,10 @@
     width: 100%;
 }
 
-/* Wide enough for a project's name of a few words, such as "Anomalous Materials", beside the clear button */
+/* Wide enough for a project's name of a few words, such as "Anomalous Materials", between the briefcase and the clear
+   button */
 .time-entry-approval-view-project {
-    width: 14rem;
+    width: 16rem;
 }
 
 .time-entry-approval-view-period {
@@ -105,7 +106,7 @@
 }
 
 /* From a screen of 1440 pixels the view is wide enough, even with the navigation drawer open, for the longest controls,
-   those of a week in Russian, and the team progress beside them: about 72rem of the 70rem they need */
+   those of a week in Russian, and the team progress beside them: about 71.5rem for the 71rem they need */
 @media (min-width: 1440px) {
     .time-entry-approval-view-toolbar {
         flex-wrap: nowrap;
