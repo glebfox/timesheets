@@ -50,7 +50,7 @@
                            dataLoader="workSchedulesDl">
                 <configurations>
                     <configuration id="byName" name="msg://byNameConfiguration.name" default="true">
-                        <propertyFilter property="name" operation="CONTAINS"/>
+                        <propertyFilter property="name" operation="CONTAINS" operationTextVisible="false"/>
                     </configuration>
                 </configurations>
                 <properties include=".*"/>
