@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.Attention;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.ShortDay;
@@ -31,7 +32,6 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import io.jmix.core.AccessManager;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -92,13 +92,13 @@ public class NeedsAttentionBlock extends Fragment<JmixCard> implements Dashboard
     @Autowired
     private Messages messages;
     @Autowired
-    private TimeSource timeSource;
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
     @Override
     public void refresh() {
-        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate today = userTimeZoneSupport.today();
         Attention attention = dashboardSupport.loadAttention(today, componentSupport.getDaysOfWeek().getFirst());
         boolean calendarPermitted = calendarOpener.isPermitted();
 

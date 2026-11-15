@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.schedule;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentEditAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentRemoveAction;
 import com.glebfox.timesheets.action.WorkScheduleUsersAddAction;
@@ -105,6 +106,8 @@ public class ScheduleUsersUiTest {
     DialogWindows dialogWindows;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     Messages messages;
 
@@ -550,7 +553,7 @@ public class ScheduleUsersUiTest {
 
     @Test
     void currentBadgeTakesOtherSchedulesIntoAccount() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User current = saveUser("Ann");
         User movedOn = saveUser("Bob");
         User future = saveUser("Cid");
@@ -575,7 +578,7 @@ public class ScheduleUsersUiTest {
 
     @Test
     void currentBadgeFollowsChangesInTheEditor() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User a = saveUser("Ann");
         User b = saveUser("Bob");
         WorkSchedule schedule = saveSchedule();
@@ -604,7 +607,7 @@ public class ScheduleUsersUiTest {
 
     @Test
     void editRedrawsEveryRow() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User a = saveUser("Ann");
         WorkSchedule schedule = saveSchedule();
         WorkScheduleAssignment past = saveAssignment(a, schedule, today.minusMonths(1));

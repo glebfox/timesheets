@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.user;
 
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.WorkScheduleAssignmentSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
@@ -46,7 +47,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -89,6 +89,8 @@ public class UserDetailView extends StandardDetailView<User> {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private WorkScheduleAssignmentSupport workScheduleAssignmentSupport;
+    @Autowired
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     // The assignments in force today, found when the table is drawn and dropped whenever its assignments change
     @Nullable
@@ -198,7 +200,8 @@ public class UserDetailView extends StandardDetailView<User> {
 
     private Set<WorkScheduleAssignment> getCurrentAssignments() {
         if (currentAssignments == null) {
-            currentAssignments = workScheduleAssignmentSupport.findCurrent(assignmentsDc.getItems(), LocalDate.now());
+            currentAssignments = workScheduleAssignmentSupport.findCurrent(assignmentsDc.getItems(),
+                    userTimeZoneSupport.today());
         }
         return currentAssignments;
     }

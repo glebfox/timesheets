@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.approval;
 
 import com.glebfox.timesheets.app.TimeEntryApprovalSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalOverview;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
@@ -180,6 +181,8 @@ public class TimeEntryApprovalView extends StandardView {
 
     @Autowired
     private TimeEntryApprovalSupport approvalSupport;
+    @Autowired
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
@@ -608,7 +611,7 @@ public class TimeEntryApprovalView extends StandardView {
     }
 
     private ApprovalPeriod defaultPeriod(ApprovalMode mode) {
-        return ApprovalPeriod.defaultOf(mode, LocalDate.now(), firstDayOfWeek);
+        return ApprovalPeriod.defaultOf(mode, userTimeZoneSupport.today(), firstDayOfWeek);
     }
 
     private void load(boolean keepSelection) {

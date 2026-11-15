@@ -18,6 +18,7 @@ package com.glebfox.timesheets.dashboard;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.Attention;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
@@ -35,7 +36,6 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.TimeEntryApprovalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.dashboard.ComingUpBlock;
-import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.NeedsAttentionBlock;
 import com.glebfox.timesheets.view.dashboard.RecentEntriesBlock;
@@ -51,8 +51,6 @@ import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -90,9 +88,7 @@ public class MyTimeListsUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
-    TimeSource timeSource;
-    @Autowired
-    CurrentAuthentication currentAuthentication;
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     ComponentSupport componentSupport;
     @Autowired
@@ -114,8 +110,7 @@ public class MyTimeListsUiTest {
         user = data.saveUser("user", "Chell", null);
         assignRole(user, FullAccessRole.CODE);
         // The user's today, as the dashboard counts it: in the user's time zone, which may be a day off the JVM's
-        today = systemAuthenticator.withUser(user.getUsername(),
-                () -> DashboardBlock.today(timeSource, currentAuthentication));
+        today = systemAuthenticator.withUser(user.getUsername(), userTimeZoneSupport::today);
     }
 
     @AfterEach

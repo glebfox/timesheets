@@ -16,13 +16,9 @@
 
 package com.glebfox.timesheets.view.dashboard;
 
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentOwner;
 import io.jmix.flowui.fragment.FragmentUtils;
-
-import java.time.LocalDate;
 
 /**
  * A block of the dashboard: a fragment nested in {@link DashboardFragment}, declared in the dashboard's descriptor
@@ -48,19 +44,6 @@ public interface DashboardBlock {
      * Loads the block's data again and shows or hides the block by what it finds.
      */
     void refresh();
-
-    /**
-     * Returns today in the current user's time zone, the day the dashboard's periods are counted from.
-     *
-     * @param timeSource            the source of the current time
-     * @param currentAuthentication the current user's settings
-     * @return today's date for the current user
-     */
-    static LocalDate today(TimeSource timeSource, CurrentAuthentication currentAuthentication) {
-        return timeSource.now()
-                .withZoneSameInstant(currentAuthentication.getTimeZone().toZoneId())
-                .toLocalDate();
-    }
 
     /**
      * Refreshes the dashboard that holds this block, every block and the header included. The dashboard is found

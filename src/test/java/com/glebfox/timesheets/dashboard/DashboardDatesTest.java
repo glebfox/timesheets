@@ -16,10 +16,9 @@
 
 package com.glebfox.timesheets.dashboard;
 
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.test_support.AuthenticatedAsAdmin;
-import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardDates;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +41,7 @@ public class DashboardDatesTest {
     @Autowired
     DashboardDates dashboardDates;
     @Autowired
-    TimeSource timeSource;
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     CurrentAuthentication currentAuthentication;
 
@@ -90,7 +89,7 @@ public class DashboardDatesTest {
 
     @Test
     void currentUserYearAndLocaleByDefaultTest() {
-        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate today = userTimeZoneSupport.today();
         Locale locale = currentAuthentication.getLocale();
 
         assertThat(dashboardDates.formatDate(today)).isEqualTo(dashboardDates.formatDate(today, today.getYear(), locale))

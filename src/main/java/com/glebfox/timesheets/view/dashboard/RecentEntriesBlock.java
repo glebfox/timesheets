@@ -18,6 +18,7 @@ package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
 import com.glebfox.timesheets.app.TimeEntrySupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.datatype.WorkTime;
@@ -31,8 +32,6 @@ import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.data.renderer.TextRenderer;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.component.grid.DataGrid;
@@ -114,9 +113,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     @Autowired
     private DashboardDates dashboardDates;
     @Autowired
-    private TimeSource timeSource;
-    @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     private boolean openPermitted;
 
@@ -247,7 +244,7 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
 
     private void copyToToday(TimeEntry entry) {
         TimeEntry copy = timeEntrySupport.copy(entry);
-        copy.setDate(DashboardBlock.today(timeSource, currentAuthentication));
+        copy.setDate(userTimeZoneSupport.today());
         timeEntryEditorOpener.open(this, builder -> builder.newEntity(copy), this::refreshDashboard);
     }
 }

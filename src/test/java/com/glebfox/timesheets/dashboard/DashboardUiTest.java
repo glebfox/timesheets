@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.dashboard;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
@@ -26,7 +27,6 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
-import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardDates;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.main.MainView;
@@ -39,7 +39,6 @@ import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
@@ -80,7 +79,7 @@ public class DashboardUiTest {
     @Autowired
     CurrentAuthentication currentAuthentication;
     @Autowired
-    TimeSource timeSource;
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     Fragments fragments;
     @Autowired
@@ -143,7 +142,7 @@ public class DashboardUiTest {
 
         HasText today = component(dashboard, "today");
         // The user's today, which the header counts from as every block does
-        LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate date = userTimeZoneSupport.today();
         int week = date.get(WeekFields.of(currentAuthentication.getLocale()).weekOfWeekBasedYear());
         // The dashboard's short date, without the year, as it is the current one
         assertThat(today.getText())
@@ -182,7 +181,7 @@ public class DashboardUiTest {
             assertThat(entry.getUser()).isNotNull();
             assertThat(entry.getUser().getId()).isEqualTo(user.getId());
             // Dated by the user's today, as Copy to today and every block count, not by the server's
-            assertThat(entry.getDate()).isEqualTo(DashboardBlock.today(timeSource, currentAuthentication));
+            assertThat(entry.getDate()).isEqualTo(userTimeZoneSupport.today());
             editor.closeWithDiscard();
         });
     }

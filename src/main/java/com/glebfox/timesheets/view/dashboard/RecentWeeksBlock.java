@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.app.util.WeekStatus;
@@ -29,7 +30,6 @@ import io.jmix.chartsflowui.kit.component.model.DataSet;
 import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -92,7 +92,7 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
     @Autowired
     private UiComponents uiComponents;
     @Autowired
-    private TimeSource timeSource;
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
@@ -116,7 +116,7 @@ public class RecentWeeksBlock extends Fragment<JmixCard> implements DashboardBlo
 
     @Override
     public void refresh() {
-        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate today = userTimeZoneSupport.today();
         weeks = dashboardSupport.loadRecentWeeks(today, componentSupport.getDaysOfWeek().getFirst(),
                 DashboardSupport.RECENT_WEEKS);
         WeekFields weekFields = WeekFields.of(currentAuthentication.getLocale());

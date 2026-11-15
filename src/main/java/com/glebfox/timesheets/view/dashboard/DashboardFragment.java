@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.TeamDashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.entity.user.User;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
@@ -26,7 +27,6 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.fragment.Fragment;
@@ -37,6 +37,7 @@ import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Target;
 import io.jmix.flowui.view.View;
 import io.jmix.flowui.view.ViewComponent;
+import io.jmix.flowui.view.builder.DetailWindowClassBuilder;
 import io.jmix.tabbedmode.app.main.HasWorkArea;
 import io.jmix.tabbedmode.component.workarea.WorkArea;
 import org.apache.commons.lang3.StringUtils;
@@ -85,7 +86,7 @@ public class DashboardFragment extends Fragment<Div> {
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
     @Autowired
-    private TimeSource timeSource;
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private TimeEntryEditorOpener timeEntryEditorOpener;
     @Autowired
@@ -145,11 +146,7 @@ public class DashboardFragment extends Fragment<Div> {
 
     @Subscribe(id = "logTimeButton", subject = "clickListener")
     public void onLogTimeButtonClick(final ClickEvent<JmixButton> event) {
-        // Dated by the user's today, as every block counts from it, not by the server's, as the editor would date it
-        LocalDate date = DashboardBlock.today(timeSource, currentAuthentication);
-        timeEntryEditorOpener.open(this,
-                builder -> builder.newEntity().withInitializer(entry -> entry.setDate(date)),
-                this::refresh);
+        timeEntryEditorOpener.open(this, DetailWindowClassBuilder::newEntity, this::refresh);
     }
 
     private Optional<WorkArea> findWorkArea() {
@@ -161,7 +158,7 @@ public class DashboardFragment extends Fragment<Div> {
 
     private void updateHeader() {
         Locale locale = currentAuthentication.getLocale();
-        ZonedDateTime now = timeSource.now().withZoneSameInstant(currentAuthentication.getTimeZone().toZoneId());
+        ZonedDateTime now = userTimeZoneSupport.now();
 
         Greeting timeOfDay = Greeting.of(now.toLocalTime());
         greeting.setText(messages.formatMessage(DashboardFragment.class, timeOfDay.getMessageKey(), locale,

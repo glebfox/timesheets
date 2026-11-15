@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.TeamDashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PersonAbsence;
@@ -24,8 +25,6 @@ import com.glebfox.timesheets.component.approval.ApprovalRosterCard;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
@@ -63,13 +62,11 @@ public class TeamAwayBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private UiComponents uiComponents;
     @Autowired
-    private TimeSource timeSource;
-    @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     @Override
     public void refresh() {
-        LocalDate weekStart = ApprovalPeriod.weekStartOf(DashboardBlock.today(timeSource, currentAuthentication),
+        LocalDate weekStart = ApprovalPeriod.weekStartOf(userTimeZoneSupport.today(),
                 componentSupport.getDaysOfWeek().getFirst());
         List<PersonAbsence> absences = teamDashboardSupport.loadTeamAbsences(weekStart,
                 weekStart.plusWeeks(WEEKS).minusDays(1));

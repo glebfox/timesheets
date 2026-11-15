@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.DaySummary;
 import com.glebfox.timesheets.app.util.FactAndPlan;
@@ -32,8 +33,6 @@ import io.jmix.chartsflowui.kit.component.model.series.ItemStyleWithDecal;
 import io.jmix.chartsflowui.kit.component.model.shared.RichStyle;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
@@ -135,9 +134,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private DashboardDates dashboardDates;
     @Autowired
-    private TimeSource timeSource;
-    @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     private List<DaySummary> days = List.of();
 
@@ -163,7 +160,7 @@ public class ThisWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
 
     @Override
     public void refresh() {
-        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate today = userTimeZoneSupport.today();
         MyWeek week = dashboardSupport.loadMyWeek(today, componentSupport.getDaysOfWeek().getFirst());
         days = week.days();
 
