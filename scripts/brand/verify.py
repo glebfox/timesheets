@@ -37,10 +37,11 @@ for entry in manifest["files"]:
         checks += 1
 
 for variant in variants:
+    # A lockup is as wide as its artwork, so only its height is fixed
     for folder, stem, dimensions in [("icons", "icon", (512, 512)), ("marks", "mark", (512, 512)),
-                                     ("logos", "logo", (2048, 512)), ("logos", "logo-no-tagline", (2048, 384))]:
+                                     ("logos", "logo", (None, 512)), ("logos", "logo-no-tagline", (None, 384))]:
         with Image.open(BRAND / folder / f"{stem}-{variant}.png") as image:
-            assert image.size == dimensions
+            assert image.size[1] == dimensions[1] and dimensions[0] in (None, image.size[0]), image.size
             assert image.mode == "RGBA"
             alpha = image.getchannel("A")
             assert alpha.getextrema() == (0, 255), (folder, stem, variant)

@@ -212,7 +212,7 @@ public class MyTimeChartsUiTest {
             // The colors themselves, as the app gives these statuses
             assertThat(DashboardColors.of(WeekStatus.ON_PLAN).getValue()).isEqualTo("#009B31");
             assertThat(DashboardColors.of(WeekStatus.SHORT).getValue()).isEqualTo("#DB373A");
-            assertThat(DashboardColors.of(WeekStatus.OVER).getValue()).isEqualTo("#6468F0");
+            assertThat(DashboardColors.of(WeekStatus.OVER).getValue()).isEqualTo("#367ED4");
 
             // The tooltip says where the day stands, in the words of a week's status; a short day is short today
             // and ahead too, as its bar says

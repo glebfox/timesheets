@@ -29,12 +29,11 @@ import java.util.List;
  * the theme, the Charts add-on draws the chart again in ECharts' own light or dark theme, which colors what the
  * dashboard leaves to it, such as the axes' labels and the grid's lines, but the colors set here stay as they are.
  * So each color is one literal for both themes. A status takes the color the app gives the same status, on the
- * calendar or the approval screen: the token's value in the dark theme where the token differs between the themes,
- * as the light theme's darker value would not read on the dark card. The user chose this consistency with the app
- * over a contrast of at least 3:1 (WCAG 1.4.11) against the card's surface, so the colors that fall below it, New's
- * yellow and the half-strength blue of a week in progress, say so. The ratios beside each color are against the
- * light card's surface, about {@code #F6F8FA}, and the dark one, about {@code #1C1F24}: Aura's card surface over
- * the work area's, computed from {@code aura.css}.
+ * calendar or the approval screen, whose status colors are one value for both themes too. The user chose this
+ * consistency with the app over a contrast of at least 3:1 (WCAG 1.4.11) against the card's surface, so the colors
+ * that fall below it, New's amber and the half-strength blue of a week in progress, say so. The ratios beside each color are against the
+ * light card's surface, {@code #FFFFFF}, and the dark one, about {@code #121212}: Aura's card surface over the
+ * work area's white and black background, as the browser computes it.
  * <p>
  * The colors are written as the project's stylesheets write them, in {@code oklch()}, except a fill of a bar or a
  * slice: ECharts lightens a fill under the pointer through zrender's color parser, which reads only hex,
@@ -47,31 +46,32 @@ public final class DashboardColors {
     /**
      * Neutral, a fill: the mid gray between {@code --vaadin-text-color-secondary} of the light theme and of the dark
      * one, which differ, and are each nearly invisible on the other theme's card. {@code oklch(0.599 0.01 264.5)}.
-     * 3.72:1 light, 4.17:1 dark.
+     * 3.96:1 light, 4.73:1 dark.
      */
     private static final Color NEUTRAL = new Color("#7D8086");
 
     /**
-     * Green, a fill: {@code --ts-success-color-dark}, {@code oklch(0.59 0.2 150)} as sRGB shows it, On plan on the
-     * calendar and Approved on the approval screen. 3.44:1 light, 4.51:1 dark.
+     * Green, a fill: {@code --ts-success-color}, {@code oklch(0.59 0.2 150)} as sRGB shows it, On plan on the
+     * calendar and Approved on the approval screen. 3.66:1 light, 5.11:1 dark.
      */
     private static final Color SUCCESS = new Color("#009B31");
 
     /**
-     * Red, a fill: {@code --ts-danger-color-dark}, {@code oklch(0.59 0.2 25)}, the calendar's time short of plan
-     * and the approval screen's Rejected. 4.27:1 light, 3.64:1 dark.
+     * Red, a fill: {@code --ts-danger-color}, {@code oklch(0.59 0.2 25)}, the calendar's time short of plan
+     * and the approval screen's Rejected. 4.55:1 light, 4.12:1 dark.
      */
     private static final Color DANGER = new Color("#DB373A");
 
     /**
-     * Blue, a fill: {@code --ts-primary-color-dark}, {@code oklch(0.59 0.2 277)}, the accent, which marks Over on
-     * the calendar. 4.13:1 light, 3.76:1 dark.
+     * Blue, a fill: {@code --aura-blue}, {@code oklch(0.59 0.15 255)}, the brand's hue at the palette's lightness.
+     * It marks Over as the calendar does in the light theme, with the accent, the brand's blue; the dark theme's
+     * accent is a neutral white, which one literal for both themes cannot follow. 4.12:1 light, 4.54:1 dark.
      */
-    private static final Color ACCENT = new Color("#6468F0");
+    private static final Color ACCENT = new Color("#367ED4");
 
     /**
      * The plan's dashed mark, neutral as the calendar's plan figures are: {@link #NEUTRAL}'s color, as a line.
-     * 3.72:1 light, 4.17:1 dark.
+     * 3.96:1 light, 4.73:1 dark.
      */
     public static final Color PLAN = new Color("oklch(0.599 0.01 264.5)");
 
@@ -90,7 +90,7 @@ public final class DashboardColors {
     /**
      * The time a person of the team spent on projects where the current user does not approve them: a plain total,
      * in the neutral, as Closed is, and told apart from Closed by the stripes of
-     * {@link #OTHER_PROJECTS_STRIPE} over it. 3.72:1 light, 4.17:1 dark.
+     * {@link #OTHER_PROJECTS_STRIPE} over it. 3.96:1 light, 4.73:1 dark.
      */
     public static final Color OTHER_PROJECTS = NEUTRAL;
 
@@ -117,21 +117,21 @@ public final class DashboardColors {
      * light and the dark card's surface, and each stays at 3:1 or more against the extremes too.
      */
     private static final List<Color> PROJECTS = List.of(
-            // oklch(0.578 0.17 268.4). 4.19:1 light, 3.70:1 dark
+            // oklch(0.578 0.17 268.4). 4.47:1 light, 4.20:1 dark
             new Color("#5070DD"),
-            // oklch(0.627 0.163 127.6). 3.18:1 light, 4.87:1 dark
+            // oklch(0.627 0.163 127.6). 3.39:1 light, 5.53:1 dark
             new Color("#6C9900"),
-            // oklch(0.579 0.239 352.6). 4.62:1 light, 3.36:1 dark
+            // oklch(0.579 0.239 352.6). 4.92:1 light, 3.81:1 dark
             new Color("#D80087"),
-            // oklch(0.551 0.121 56.1). 4.73:1 light, 3.28:1 dark; 3.09:1 against the dark card's solid surface
+            // oklch(0.551 0.121 56.1). 5.04:1 light, 3.72:1 dark; 3.12:1 against the dark card's solid surface
             new Color("#A65C1C"),
-            // oklch(0.631 0.123 331.6). 3.48:1 light, 4.46:1 dark
+            // oklch(0.631 0.123 331.6). 3.70:1 light, 5.06:1 dark
             new Color("#B46CAB"),
-            // oklch(0.643 0.216 36.8). 3.44:1 light, 4.52:1 dark
+            // oklch(0.643 0.216 36.8). 3.66:1 light, 5.12:1 dark
             new Color("#F34800"));
 
     /**
-     * The projects that Time by project counts together as Other: the neutral. 3.72:1 light, 4.17:1 dark.
+     * The projects that Time by project counts together as Other: the neutral. 3.96:1 light, 4.73:1 dark.
      */
     public static final Color OTHER_PROJECT_SLICE = NEUTRAL;
 
@@ -162,8 +162,8 @@ public final class DashboardColors {
             // calendar's week summary draws a short week in --aura-orange, but the user chose the red
             case SHORT -> DANGER;
             // The accent at half strength, as the calendar's week summary draws a week in progress or upcoming:
-            // oklch(0.59 0.2 277 / 0.5). Over the card 1.91:1 light, 1.90:1 dark: below 3:1, the user's choice
-            case IN_PROGRESS, UPCOMING -> new Color("rgba(100, 104, 240, 0.5)");
+            // oklch(0.59 0.15 255 / 0.5). Over the card 1.92:1 light, 2.01:1 dark: below 3:1, the user's choice
+            case IN_PROGRESS, UPCOMING -> new Color("rgba(54, 126, 212, 0.5)");
             // The calendar gives No workdays no color of its own; such a week has no time to draw anyway
             case NO_WORKDAYS -> NEUTRAL;
         };
@@ -177,10 +177,10 @@ public final class DashboardColors {
      */
     public static Color of(TimeEntryStatus status) {
         return switch (status) {
-            // --ts-warning-color, oklch(0.89 0.2 98), the same in both themes: the yellow of New on the calendar and
-            // the approval screen. 1.29:1 light, 11.99:1 dark: below 3:1 on the light card, the user's choice; the
+            // --ts-warning-color, oklch(0.85 0.16 85), the same in both themes: the amber of New on the calendar and
+            // the approval screen. 1.60:1 light, 11.71:1 dark: below 3:1 on the light card, the user's choice; the
             // legend and the tooltip name the segment
-            case NEW -> new Color("#FEDA00");
+            case NEW -> new Color("#FDC436");
             case APPROVED -> SUCCESS;
             case REJECTED -> DANGER;
             // The neutral of Closed on the approval screen

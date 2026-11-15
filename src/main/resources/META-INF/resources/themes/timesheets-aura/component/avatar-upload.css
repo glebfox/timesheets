@@ -174,7 +174,7 @@
 }
 
 .avatar-upload-remove-item {
-    color: var(--ts-danger-color);
+    color: var(--aura-red-text);
 }
 
 @media (forced-colors: active) {
