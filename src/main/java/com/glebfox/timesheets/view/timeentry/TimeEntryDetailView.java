@@ -155,6 +155,11 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         return componentSupport.createUserRenderer();
     }
 
+    @Supply(to = "taskField", subject = "renderer")
+    private Renderer<Task> taskFieldRenderer() {
+        return componentSupport.createTaskWithProjectRenderer();
+    }
+
     @Install(to = "taskField", subject = "itemsFetchCallback")
     private Stream<Task> taskFieldItemsFetchCallback(final Query<Task, String> query) {
         User user = getEditedEntity().getUser();
