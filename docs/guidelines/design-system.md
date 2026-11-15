@@ -159,6 +159,8 @@ Aura computes gap and padding from `--aura-base-size` (unitless, range 12–24).
 
 **Focus rings at an edge.** A focus ring reaches outside its part by its width, `--vaadin-focus-ring-width`, plus its offset, which Aura sets to 2 pixels for a primary button, to minus the border's width, 1 pixel inward, for any other button, and to zero or less for most other parts. A container that clips its overflow, as one that scrolls does, cuts the ring off at the outer edge of its padding, so a container whose parts reach its edge, such as the approval screen's person panel with the person's primary button, pads by the ring's width plus 2 pixels.
 
+**Lines in a drop-down's item.** Vaadin's own styles of a drop-down's item, a `vaadin-combo-box-item`, lay out its content as a flex row, and Aura gives the row a gap, where a grid cell's content is a block. So a renderer that writes a name followed by a block meant to sit under it, as `${item.name}<div class="secondary-text">…</div>`, shows the two lines stacked in a grid and side by side in a drop-down, which suits a short pair. Lines that are to stack in a drop-down too go in one element of the `.text-lines` class in `app/util.css`, each line `.truncate`, as the task renderer of `ComponentSupport` does for the lists and the time entry editor alike: a plain block in its place would stay as wide as its longest line and run out of the item uncut. The avatar cell needs none of it, being one grid itself.
+
 ---
 
 ## 5. Responsive Behavior

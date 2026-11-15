@@ -59,6 +59,17 @@
     white-space: nowrap;
 }
 
+/*
+ * Lines of text one under another, such as a name with a secondary line under it, each line a .truncate one, in a
+ * grid cell or in a drop-down's item alike. A drop-down's item lays out its content in a row, so the lines stay
+ * stacked only inside one element; and its single column, which has no minimum, lets that element shrink to the
+ * item's width, where a plain block would stay as wide as its longest line and run out of the item uncut.
+ */
+.text-lines {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .margin-inline-m {
     margin-inline: var(--vaadin-vertical-layout-padding, var(--vaadin-padding-m));
 }
