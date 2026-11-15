@@ -19,6 +19,7 @@ package com.glebfox.timesheets.view.main;
 import com.glebfox.timesheets.app.TimeEntrySupport;
 import com.glebfox.timesheets.app.util.AvatarImages;
 import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.google.common.base.Strings;
@@ -30,6 +31,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
+import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.main.JmixListMenu;
@@ -48,6 +50,8 @@ public class MainView extends StandardTabbedModeMainView {
 
     @ViewComponent
     private JmixListMenu menu;
+    @ViewComponent
+    private MessageBundle messageBundle;
 
     @Autowired
     private Messages messages;
@@ -59,6 +63,8 @@ public class MainView extends StandardTabbedModeMainView {
     private ComponentSupport componentSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
+    @Autowired
+    private CurrentAuthentication currentAuthentication;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -163,12 +169,23 @@ public class MainView extends StandardTabbedModeMainView {
     private void updateRejectedTimeEntries() {
         long count = timeEntrySupport.getRejectedCount();
 
-        Badge badge = count > 0 ? componentSupport.createRejectedCountBadge(count) : null;
+        Badge badge = count > 0 ? createRejectedCountBadge(count) : null;
 
         ListMenu.MenuItem teMenuItem = menu.getMenuItem("ts_TimeEntry.my");
         // Can be 'null' if menu item isn't permitted by security
         if (teMenuItem != null) {
             teMenuItem.setSuffixComponent(badge);
         }
+    }
+
+    // The bare count names itself on hover and to assistive technology, as the approval screen's bare rejected
+    // count does
+    private Badge createRejectedCountBadge(long count) {
+        Badge badge = componentSupport.createRejectedCountBadge(count);
+        String label = messageBundle.formatMessage(
+                PluralForms.key("rejectedCountBadge.label", count, currentAuthentication.getLocale()), count);
+        badge.getElement().setAttribute("title", label);
+        badge.getElement().setAttribute("aria-label", label);
+        return badge;
     }
 }
