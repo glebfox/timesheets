@@ -28,13 +28,18 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
+import com.vaadin.flow.component.textfield.TextField;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
+import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.component.UiComponentUtils;
+import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.formlayout.JmixFormLayout;
 import io.jmix.flowui.component.markdowneditor.MarkdownEditor;
 import io.jmix.flowui.component.multiselectcombobox.JmixMultiSelectComboBox;
@@ -47,6 +52,7 @@ import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
 import io.jmix.tabbedmode.testassist.UiTestUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +79,8 @@ public class TimeEntryDetailViewUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     Messages messages;
+    @Autowired
+    SystemAuthenticator systemAuthenticator;
 
     ApprovalTestData data;
     Project project;
@@ -218,6 +226,106 @@ public class TimeEntryDetailViewUiTest {
 
         view.setReadOnly(false);
         assertThat(tagFields(view)).noneMatch(JmixMultiSelectComboBox::isReadOnly);
+    }
+
+    @Test
+    void spentTimeFieldShowsTheFormsItAccepts() {
+        TimeEntryDetailView view = openNewEntry();
+
+        TextField spentTimeField = UiTestUtils.getComponent(view, "spentTimeField");
+        assertThat(spentTimeField.getHelperText()).isEqualTo("Such as 1:30 or 1h 30m");
+        assertThat(spentTimeField.getPlaceholder()).isNull();
+    }
+
+    @Test
+    void newGeneralEntryExplainsTheLockedFields() {
+        TimeEntryDetailView view = openNewEntry();
+        EntityComboBox<Task> taskField = UiTestUtils.getComponent(view, "taskField");
+        EntityComboBox<User> userField = UiTestUtils.getComponent(view, "userField");
+
+        assertThat(tooltipOf(taskField)).isEqualTo("Choose a user first");
+        assertThat(tooltipOf(userField)).isNull();
+
+        // taskField.setValue could refuse an item its lazy items callback has not served; setting the property fires
+        // the same property change
+        view.getEditedEntity().setUser(user);
+        assertThat(tooltipOf(taskField)).isNull();
+
+        view.getEditedEntity().setTask(task);
+        assertThat(tooltipOf(userField)).isEqualTo("Clear the task to change the user");
+
+        view.getEditedEntity().setTask(null);
+        assertThat(tooltipOf(userField)).isNull();
+    }
+
+    @Test
+    void existingGeneralEntryExplainsTheLockedUser() {
+        TimeEntryDetailView view = openEditor(saveEntry(TimeEntryStatus.NEW, null));
+
+        assertThat(tooltipOf(UiTestUtils.getComponent(view, "userField")))
+                .isEqualTo("Clear the task to change the user");
+        assertThat(tooltipOf(UiTestUtils.getComponent(view, "taskField"))).isNull();
+    }
+
+    @Test
+    void copiedGeneralEntryExplainsNothing() {
+        // As TimeEntryCopyAction opens a copy: a new entry with the user and the task chosen, both locked
+        TimeEntry copy = dataManager.create(TimeEntry.class);
+        copy.setUser(user);
+        copy.setTask(task);
+        viewBuilders.detail(UiTestUtils.getCurrentView(), TimeEntry.class, TimeEntryDetailView.class)
+                .newEntity(copy)
+                .open();
+        TimeEntryDetailView view = UiTestUtils.getCurrentView();
+
+        assertThat(tooltipOf(UiTestUtils.getComponent(view, "userField"))).isNull();
+        assertThat(tooltipOf(UiTestUtils.getComponent(view, "taskField"))).isNull();
+    }
+
+    @Test
+    void ownEntryExplainsNothing() {
+        // An own entry takes the signed-in user, which the system user of a UI test is not
+        systemAuthenticator.runWithUser("admin", () -> {
+            viewBuilders.detail(UiTestUtils.getCurrentView(), TimeEntry.class, TimeEntryDetailView.class)
+                    .newEntity()
+                    .withViewConfigurer(editor -> editor.setOwnTimeEntry(true))
+                    .open();
+            TimeEntryDetailView view = UiTestUtils.getCurrentView();
+
+            // With a task, the user field is locked and the task field is not, so only the own-entry rule keeps
+            // the user field quiet
+            view.getEditedEntity().setTask(task);
+            assertThat(tooltipOf(UiTestUtils.getComponent(view, "userField"))).isNull();
+            assertThat(tooltipOf(UiTestUtils.getComponent(view, "taskField"))).isNull();
+        });
+    }
+
+    @Test
+    void readOnlyEditorExplainsNothing() {
+        TimeEntryDetailView view = openNewEntry();
+        EntityComboBox<Task> taskField = UiTestUtils.getComponent(view, "taskField");
+        assertThat(tooltipOf(taskField)).isEqualTo("Choose a user first");
+
+        view.setReadOnly(true);
+
+        // The task field stays locked and the entry has no user, so only the read-only rule keeps it quiet
+        assertThat(tooltipOf(taskField)).isNull();
+        assertThat(tooltipOf(UiTestUtils.getComponent(view, "userField"))).isNull();
+    }
+
+    private TimeEntryDetailView openNewEntry() {
+        viewBuilders.detail(UiTestUtils.getCurrentView(), TimeEntry.class, TimeEntryDetailView.class)
+                .newEntity()
+                .open();
+        return UiTestUtils.getCurrentView();
+    }
+
+    /**
+     * Gives the text of a component's tooltip: {@link Tooltip#forComponent} returns the tooltip the component has, or a
+     * new one without text.
+     */
+    private static @Nullable String tooltipOf(Component component) {
+        return Tooltip.forComponent(component).getText();
     }
 
     private TimeEntryDetailView openEditor(TimeEntry entry) {
