@@ -102,7 +102,11 @@
                     </itemsQuery>
                 </entityComboBox>
                 <textArea id="descriptionField" property="description"
-                          minHeight="10rem" colspan="2"/>
+                          minHeight="10rem" colspan="2">
+                    <prefix>
+                        <icon icon="gravity-ui:comment"/>
+                    </prefix>
+                </textArea>
             </formLayout>
             <h4 id="usersTitle" text="msg://usersTitle.text"
                 classNames="text-divider"/>

@@ -45,9 +45,20 @@
                 <responsiveStep minWidth="0" columns="1"/>
             </responsiveSteps>
 
-            <entityPicker id="userField" property="user" readOnly="true"/>
-            <datePicker id="startDateField" property="startDate"/>
+            <entityPicker id="userField" property="user" readOnly="true">
+                <prefix>
+                    <icon icon="gravity-ui:person"/>
+                </prefix>
+            </entityPicker>
+            <datePicker id="startDateField" property="startDate">
+                <prefix>
+                    <icon icon="gravity-ui:calendar"/>
+                </prefix>
+            </datePicker>
             <entityComboBox id="workScheduleField" property="workSchedule">
+                <prefix>
+                    <icon icon="gravity-ui:clock"/>
+                </prefix>
                 <itemsQuery class="com.glebfox.timesheets.entity.schedule.WorkSchedule"
                             searchStringFormat="(?i)%${inputString}%"
                             escapeValueForLike="true">

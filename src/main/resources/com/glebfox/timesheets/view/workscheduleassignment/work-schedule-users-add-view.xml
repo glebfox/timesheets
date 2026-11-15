@@ -63,7 +63,11 @@
                         datatype="localDate"
                         label="msg://com.glebfox.timesheets.entity.schedule/WorkScheduleAssignment.startDate"
                         required="true"
-                        requiredMessage="msg://startDateField.requiredMessage"/>
+                        requiredMessage="msg://startDateField.requiredMessage">
+                <prefix>
+                    <icon icon="gravity-ui:calendar"/>
+                </prefix>
+            </datePicker>
             <span id="workScheduleText" classNames="secondary-text"/>
         </formLayout>
         <hbox id="detailActions"

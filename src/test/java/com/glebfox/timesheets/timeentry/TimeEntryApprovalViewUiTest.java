@@ -201,6 +201,18 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
+    void projectFieldShowsABriefcase() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = open();
+
+            JmixComboBox<Project> projectField = UiTestUtils.getComponent(view, "projectField");
+            assertThat(projectField.getPrefixComponent()).isNotNull();
+            assertThat(projectField.getPrefixComponent().getElement().getAttribute("icon"))
+                    .isEqualTo("gravity-ui:briefcase");
+        });
+    }
+
+    @Test
     void searchFindsAPersonByName() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openInOctober();

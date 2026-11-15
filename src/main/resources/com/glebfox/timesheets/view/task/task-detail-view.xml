@@ -93,6 +93,7 @@
             <select id="statusField" property="status" noVerticalOverlap="true"/>
             <multiSelectComboBoxPicker id="requiredTagGroupsField"
                                        property="requiredTagGroups" itemsContainer="tagGroupsDc"
+                                       helperText="msg://requiredTagGroupsField.helperText"
                                        colspan="2">
                 <actions>
                     <action id="entityLookup" type="entity_lookup"/>
