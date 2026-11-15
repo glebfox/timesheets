@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.security;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPerson;
 import com.glebfox.timesheets.datatype.WorkTime;
@@ -61,7 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The holder signs in with UI: minimal access and holds the role besides. The fixture is one project where the holder
- * is an Approver and {@code member} is a Member, with an entry of the member's today and one a week ago.
+ * is an Approver and {@code member} is a Member, with an entry of the holder's today and one a week ago.
  */
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -77,6 +78,8 @@ public class TimeEntryApprovalRoleUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
+    UserTimeZoneSupport userTimeZoneSupport;
+    @Autowired
     UserSettingsService userSettingsService;
 
     String holder;
@@ -87,8 +90,6 @@ public class TimeEntryApprovalRoleUiTest {
 
     @BeforeEach
     void setUp() {
-        LocalDate today = LocalDate.now();
-
         User holderUser = saveUser();
         assignRole(holderUser, UiMinimalRole.CODE);
         assignRole(holderUser, TimeEntryApprovalRole.CODE);
@@ -108,6 +109,8 @@ public class TimeEntryApprovalRoleUiTest {
         });
         saveParticipant(project, holderUser, saveProjectRole(ProjectRoleType.APPROVER));
         saveParticipant(project, member, saveProjectRole(ProjectRoleType.MEMBER));
+        // The holder's today, which the screen counts its periods from
+        LocalDate today = systemAuthenticator.withUser(holder, userTimeZoneSupport::today);
         todayEntry = saveEntry(task, today);
         lastWeekEntry = saveEntry(task, today.minusDays(7));
     }

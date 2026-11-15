@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.TeamDashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
@@ -38,8 +39,6 @@ import io.jmix.chartsflowui.kit.component.model.series.Label;
 import io.jmix.chartsflowui.kit.component.model.shared.Decal;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
@@ -161,9 +160,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private UiComponents uiComponents;
     @Autowired
-    private TimeSource timeSource;
-    @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     private List<PersonWeek> people = List.of();
 
@@ -205,8 +202,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
 
     @Override
     public void refresh() {
-        LocalDate weekStart = ApprovalPeriod.weekStartOf(DashboardBlock.today(timeSource, currentAuthentication),
-                firstDayOfWeek());
+        LocalDate weekStart = ApprovalPeriod.weekStartOf(userTimeZoneSupport.today(), firstDayOfWeek());
         people = teamDashboardSupport.loadTeamWeek(weekStart, weekStart.plusDays(6));
         setVisible(!people.isEmpty());
         if (people.isEmpty()) {
@@ -291,7 +287,7 @@ public class TeamWeekBlock extends Fragment<JmixCard> implements DashboardBlock 
             return;
         }
 
-        LocalDate today = DashboardBlock.today(timeSource, currentAuthentication);
+        LocalDate today = userTimeZoneSupport.today();
         approvalOpener.open(this, new ApprovalOpening(ApprovalMode.WEEK,
                 ApprovalPeriod.weekOf(today, firstDayOfWeek()), ApprovalRosterScope.EVERYONE, week.user()));
     }

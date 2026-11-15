@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.workschedule;
 
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.WorkScheduleAssignmentSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.PluralForms;
@@ -51,7 +52,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -89,6 +89,8 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     private ComponentSupport componentSupport;
     @Autowired
     private WorkScheduleAssignmentSupport workScheduleAssignmentSupport;
+    @Autowired
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     private final Span workdaysSummary = new Span();
 
@@ -252,7 +254,7 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
                 .forEach(saved -> assignments.put(saved.getId(), saved));
         listed.forEach(assignment -> assignments.put(assignment.getId(), assignment));
 
-        return workScheduleAssignmentSupport.findCurrent(assignments.values(), LocalDate.now());
+        return workScheduleAssignmentSupport.findCurrent(assignments.values(), userTimeZoneSupport.today());
     }
 
     private void fillWorkdaysField(WorkSchedule schedule) {

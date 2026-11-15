@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.ProjectTime;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
@@ -32,7 +33,6 @@ import io.jmix.chartsflowui.kit.component.model.series.PieSeries;
 import io.jmix.chartsflowui.kit.component.model.shared.Color;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
@@ -97,7 +97,7 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
     @Autowired
     private Messages messages;
     @Autowired
-    private TimeSource timeSource;
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private CurrentAuthentication currentAuthentication;
 
@@ -117,7 +117,7 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
 
     @Override
     public void refresh() {
-        YearMonth month = YearMonth.from(DashboardBlock.today(timeSource, currentAuthentication));
+        YearMonth month = YearMonth.from(userTimeZoneSupport.today());
         getContent().setSubtitle(formatMonth(month));
 
         List<ProjectTime> projectTimes = dashboardSupport.loadTimeByProject(month).stream()

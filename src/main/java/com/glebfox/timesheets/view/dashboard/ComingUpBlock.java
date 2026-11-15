@@ -17,14 +17,13 @@
 package com.glebfox.timesheets.view.dashboard;
 
 import com.glebfox.timesheets.app.DashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComingUp;
 import com.glebfox.timesheets.app.util.WorkPlan;
 import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.fragment.Fragment;
@@ -59,13 +58,11 @@ public class ComingUpBlock extends Fragment<JmixCard> implements DashboardBlock 
     @Autowired
     private Messages messages;
     @Autowired
-    private TimeSource timeSource;
-    @Autowired
-    private CurrentAuthentication currentAuthentication;
+    private UserTimeZoneSupport userTimeZoneSupport;
 
     @Override
     public void refresh() {
-        ComingUp comingUp = dashboardSupport.loadComingUp(DashboardBlock.today(timeSource, currentAuthentication));
+        ComingUp comingUp = dashboardSupport.loadComingUp(userTimeZoneSupport.today());
 
         rows.removeAll();
         comingUp.absences().stream().limit(MAX_ROWS).forEach(absence -> rows.add(createAbsenceRow(absence)));

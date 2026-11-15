@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.timeentry;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ApprovalPerson;
@@ -117,6 +118,8 @@ public class TimeEntryApprovalViewUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     UserSettingsService userSettingsService;
     @Autowired
@@ -249,7 +252,7 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(defaultPeriodBtn.getText()).isEqualTo("This month");
             assertThat(defaultPeriodBtn.isEnabled()).isTrue();
             defaultPeriodBtn.click();
-            assertThat(view.getPeriod()).isEqualTo(ApprovalPeriod.monthOf(YearMonth.from(LocalDate.now())));
+            assertThat(view.getPeriod()).isEqualTo(ApprovalPeriod.monthOf(YearMonth.from(userTimeZoneSupport.today())));
             assertThat(defaultPeriodBtn.isEnabled()).isFalse();
         });
     }
@@ -259,7 +262,8 @@ public class TimeEntryApprovalViewUiTest {
         asAdmin(() -> {
             TimeEntryApprovalView view = openInOctober();
             DayOfWeek firstDayOfWeek = componentSupport.getDaysOfWeek().getFirst();
-            ApprovalPeriod lastWeek = ApprovalPeriod.defaultOf(ApprovalMode.WEEK, LocalDate.now(), firstDayOfWeek);
+            ApprovalPeriod lastWeek = ApprovalPeriod.defaultOf(ApprovalMode.WEEK, userTimeZoneSupport.today(),
+                    firstDayOfWeek);
 
             modeField(view).setValue(ApprovalMode.WEEK);
             assertThat(view.getPeriod()).isEqualTo(lastWeek);

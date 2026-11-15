@@ -18,6 +18,7 @@ package com.glebfox.timesheets.dashboard;
 
 import com.glebfox.timesheets.TimesheetsApplication;
 import com.glebfox.timesheets.app.TeamDashboardSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ApprovalMode;
 import com.glebfox.timesheets.app.util.ApprovalPeriod;
 import com.glebfox.timesheets.app.util.ComponentSupport;
@@ -39,7 +40,6 @@ import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.approval.ApprovalRosterScope;
 import com.glebfox.timesheets.view.approval.TimeEntryApprovalView;
-import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardCharts;
 import com.glebfox.timesheets.view.dashboard.DashboardColors;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
@@ -57,8 +57,6 @@ import io.jmix.chartsflowui.kit.component.model.series.BarSeries;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.fragment.Fragment;
@@ -105,9 +103,7 @@ public class MyTeamUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
-    TimeSource timeSource;
-    @Autowired
-    CurrentAuthentication currentAuthentication;
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     ComponentSupport componentSupport;
     @Autowired
@@ -138,8 +134,7 @@ public class MyTeamUiTest {
         assignRole(approver, TimeEntryApprovalRole.CODE);
         data.saveParticipant(project, approver, approverRole);
         // The user's today, as the dashboard counts it: in the user's time zone, which may be a day off the JVM's
-        today = systemAuthenticator.withUser(approver.getUsername(),
-                () -> DashboardBlock.today(timeSource, currentAuthentication));
+        today = systemAuthenticator.withUser(approver.getUsername(), userTimeZoneSupport::today);
     }
 
     @AfterEach

@@ -16,8 +16,8 @@
 
 package com.glebfox.timesheets.view.dashboard;
 
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
 import io.jmix.core.security.CurrentAuthentication;
 import org.springframework.stereotype.Component;
 
@@ -34,12 +34,13 @@ import java.util.Locale;
 public class DashboardDates {
 
     private final Messages messages;
-    private final TimeSource timeSource;
+    private final UserTimeZoneSupport userTimeZoneSupport;
     private final CurrentAuthentication currentAuthentication;
 
-    public DashboardDates(Messages messages, TimeSource timeSource, CurrentAuthentication currentAuthentication) {
+    public DashboardDates(Messages messages, UserTimeZoneSupport userTimeZoneSupport,
+                          CurrentAuthentication currentAuthentication) {
         this.messages = messages;
-        this.timeSource = timeSource;
+        this.userTimeZoneSupport = userTimeZoneSupport;
         this.currentAuthentication = currentAuthentication;
     }
 
@@ -112,6 +113,6 @@ public class DashboardDates {
     }
 
     private int currentYear() {
-        return DashboardBlock.today(timeSource, currentAuthentication).getYear();
+        return userTimeZoneSupport.today().getYear();
     }
 }

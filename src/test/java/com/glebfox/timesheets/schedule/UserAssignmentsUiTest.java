@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.schedule;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentCreateAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentEditAction;
 import com.glebfox.timesheets.action.WorkScheduleAssignmentRemoveAction;
@@ -97,6 +98,8 @@ public class UserAssignmentsUiTest {
     Messages messages;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    UserTimeZoneSupport userTimeZoneSupport;
 
     List<Id<WorkSchedule>> scheduleIds = new ArrayList<>();
     List<Id<RoleAssignmentEntity>> roleAssignmentIds = new ArrayList<>();
@@ -235,7 +238,7 @@ public class UserAssignmentsUiTest {
     @Test
     void assignmentOfADeletedScheduleShowsAndSaves() {
         // Dated from today, since whether the assignment is in force decides its Current badge
-        LocalDate lastMonth = LocalDate.now().minusMonths(1);
+        LocalDate lastMonth = userTimeZoneSupport.today().minusMonths(1);
         LocalDate twoMonthsAgo = lastMonth.minusMonths(1);
         User user = saveUser();
         WorkSchedule deletedSchedule = saveSchedule();
@@ -356,7 +359,7 @@ public class UserAssignmentsUiTest {
 
     @Test
     void currentBadgeMarksTheAssignmentInForceToday() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         saveAssignment(user, schedule, today.minusMonths(1));
@@ -376,7 +379,7 @@ public class UserAssignmentsUiTest {
 
     @Test
     void currentBadgeFollowsChangesInTheEditor() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         saveAssignment(user, schedule, today.minusMonths(2));
@@ -406,7 +409,7 @@ public class UserAssignmentsUiTest {
 
     @Test
     void editRedrawsEveryRow() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userTimeZoneSupport.today();
         User user = saveUser();
         WorkSchedule schedule = saveSchedule();
         saveAssignment(user, schedule, today.minusMonths(1));

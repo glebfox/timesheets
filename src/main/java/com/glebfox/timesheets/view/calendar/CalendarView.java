@@ -18,6 +18,7 @@ package com.glebfox.timesheets.view.calendar;
 
 
 import com.glebfox.timesheets.app.CalendarSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
@@ -143,6 +144,8 @@ public class CalendarView extends StandardView {
     private CalendarSupport calendarSupport;
     @Autowired
     private WorkPlanSupport workPlanSupport;
+    @Autowired
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
 
@@ -382,7 +385,7 @@ public class CalendarView extends StandardView {
     private void updateWeeksSummary(List<WeekSummary> weeks) {
         weeksSummaryWrapper.removeAll();
 
-        LocalDate today = getToday();
+        LocalDate today = userTimeZoneSupport.today();
         for (WeekSummary week : weeks) {
             weeksSummaryWrapper.add(createWeekSummary(week, today));
         }
@@ -629,11 +632,7 @@ public class CalendarView extends StandardView {
     }
 
     private void updateTodayButton() {
-        todayBtn.setEnabled(!displayedMonth.equals(YearMonth.from(getToday())));
-    }
-
-    private LocalDate getToday() {
-        return LocalDate.now();
+        todayBtn.setEnabled(!displayedMonth.equals(YearMonth.from(userTimeZoneSupport.today())));
     }
 
     private boolean isTimeEntry(@Nullable CalendarEvent calendarEvent) {

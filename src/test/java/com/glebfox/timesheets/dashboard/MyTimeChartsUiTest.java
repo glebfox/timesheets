@@ -17,6 +17,7 @@
 package com.glebfox.timesheets.dashboard;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
@@ -32,7 +33,6 @@ import com.glebfox.timesheets.security.FullAccessRole;
 import com.glebfox.timesheets.security.UiMinimalRole;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.calendar.CalendarView;
-import com.glebfox.timesheets.view.dashboard.DashboardBlock;
 import com.glebfox.timesheets.view.dashboard.DashboardColors;
 import com.glebfox.timesheets.view.dashboard.DashboardFragment;
 import com.glebfox.timesheets.view.dashboard.RecentWeeksBlock;
@@ -66,8 +66,6 @@ import io.jmix.chartsflowui.kit.component.model.shared.Color;
 import io.jmix.chartsflowui.kit.data.chart.ListChartItems;
 import io.jmix.core.DataManager;
 import io.jmix.core.Messages;
-import io.jmix.core.TimeSource;
-import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentUtils;
@@ -106,9 +104,7 @@ public class MyTimeChartsUiTest {
     @Autowired
     SystemAuthenticator systemAuthenticator;
     @Autowired
-    TimeSource timeSource;
-    @Autowired
-    CurrentAuthentication currentAuthentication;
+    UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     ComponentSupport componentSupport;
     @Autowired
@@ -130,8 +126,7 @@ public class MyTimeChartsUiTest {
         user = data.saveUser("user", "Chell", null);
         assignRole(user, FullAccessRole.CODE);
         // The user's today, as the dashboard counts it: in the user's time zone, which may be a day off the JVM's
-        today = systemAuthenticator.withUser(user.getUsername(),
-                () -> DashboardBlock.today(timeSource, currentAuthentication));
+        today = systemAuthenticator.withUser(user.getUsername(), userTimeZoneSupport::today);
     }
 
     @AfterEach

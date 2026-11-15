@@ -19,6 +19,7 @@ package com.glebfox.timesheets.view.timeentry;
 import com.glebfox.timesheets.app.ProjectSupport;
 import com.glebfox.timesheets.app.TagsSupport;
 import com.glebfox.timesheets.app.TaskSupport;
+import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.entity.project.Project;
@@ -39,7 +40,6 @@ import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
-import io.jmix.core.TimeSource;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponents;
@@ -56,7 +56,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     private CollectionPropertyContainer<Tag> tagsDc;
 
     @Autowired
-    private TimeSource timeSource;
+    private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private TaskSupport taskSupport;
     @Autowired
@@ -137,8 +136,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         }
 
         if (timeEntry.getDate() == null) {
-            final ZonedDateTime zonedDateTime = timeSource.now();
-            timeEntry.setDate(zonedDateTime.toLocalDate());
+            timeEntry.setDate(userTimeZoneSupport.today());
         }
 
         statusField.setVisible(false);
