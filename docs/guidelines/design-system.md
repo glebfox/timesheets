@@ -28,7 +28,7 @@ Aura computes all color variations automatically from a small set of base proper
 | Token | Project value | Usage |
 |-------|---------------|-------|
 | `--aura-accent-color-light` | `--ts-brand-blue-color`, the brand's blue | Primary actions, focus rings, selection highlights (light mode) |
-| `--aura-accent-color-dark` | Aura's neutral, a near white: the dark theme is monochrome | Primary actions, focus rings, selection highlights (dark mode) |
+| `--aura-accent-color-dark` | Aura's neutral, a near white: the dark theme is monochrome ([decision 0022](../decisions/0022-the-dark-themes-accent-is-a-neutral-white.md)) | Primary actions, focus rings, selection highlights (dark mode) |
 | `--aura-background-color-light` / `-dark` | White / black | The work area's card; the drawer lies on the backdrop (below) |
 | `--aura-contrast-level` | 2 | Text and border contrast |
 | `--aura-neutral` / `-light` / `-dark` | Aura's, derived from the background | Text, borders, default UI chrome |
