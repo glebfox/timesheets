@@ -1,0 +1,35 @@
+/*
+ * Copyright 2026 Gleb Gorelov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* A notification with a color, an info, success, warning, or error one, as a badge without a fill: a tint of its
+   color, a border a step stronger, and text in its color. Aura mixes a notification's tint from a few percent of its
+   color, scaled again by the color's chroma, so the variants show hardly any color and look alike. The tint is mixed
+   into the overlay's surface, so the notification keeps the overlay's translucency. A notification without a color
+   keeps the plain surface. The selector is Aura's own, so it ties with Aura's rule and wins by coming later. Aura
+   draws the border as a ring of --aura-accent-border-color and has no border property for it, so the rule sets that
+   derived token. */
+vaadin-notification-card:is(.aura-accent-color, .aura-accent-red, .aura-accent-orange, .aura-accent-yellow,
+                            .aura-accent-green, .aura-accent-blue, .aura-accent-purple, .v-info, .v-success,
+                            .v-warning, .v-error, [theme~='info'], [theme~='success'], [theme~='warning'],
+                            [theme~='error'])::part(overlay) {
+    --vaadin-notification-background: light-dark(
+            color-mix(in oklab, var(--aura-accent-color) 12%, var(--aura-surface-color)),
+            color-mix(in oklab, var(--aura-accent-color) 22%, var(--aura-surface-color)));
+    --aura-accent-border-color: light-dark(
+            color-mix(in oklab, var(--aura-accent-color) 28%, transparent),
+            color-mix(in oklab, var(--aura-accent-color) 36%, transparent));
+    color: var(--aura-accent-text-color);
+}
