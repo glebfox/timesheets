@@ -108,6 +108,7 @@
 
             <h4 id="workScheduleTitle" text="msg://workScheduleTitle.text"
                 classNames="text-divider"/>
+            <span id="defaultScheduleText" classNames="secondary-text" visible="false"/>
             <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
                 <button id="assignmentCreateBtn" action="assignmentsDataGrid.create"/>
                 <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>

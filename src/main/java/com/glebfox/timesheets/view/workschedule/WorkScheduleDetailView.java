@@ -77,6 +77,8 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
     @ViewComponent
     private CollectionLoader<WorkScheduleAssignment> assignmentsDl;
     @ViewComponent
+    private Span defaultScheduleUsersText;
+    @ViewComponent
     private MessageBundle messageBundle;
 
     @Autowired
@@ -133,6 +135,9 @@ public class WorkScheduleDetailView extends StandardDetailView<WorkSchedule> {
         fillWorkdaysField(schedule);
         updateWorkdaysSummary();
         updateReadOnlyFields();
+
+        // The default is chosen in the schedule list, never here, so the schedule as it opened decides
+        defaultScheduleUsersText.setVisible(Boolean.TRUE.equals(schedule.getIsDefault()));
 
         HolidayCalendar holidayCalendar = schedule.getHolidayCalendar();
         if (holidayCalendar != null && holidayCalendar.getDeletedDate() != null) {

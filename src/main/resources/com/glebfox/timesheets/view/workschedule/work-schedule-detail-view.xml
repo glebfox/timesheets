@@ -106,6 +106,8 @@
             </formLayout>
             <h4 id="usersTitle" text="msg://usersTitle.text"
                 classNames="text-divider"/>
+            <span id="defaultScheduleUsersText" classNames="secondary-text"
+                  text="msg://defaultScheduleUsersText.text" visible="false"/>
             <hbox id="assignmentsButtonsPanel" classNames="buttons-panel">
                 <button id="assignmentAddBtn" action="assignmentsDataGrid.add"/>
                 <button id="assignmentEditBtn" action="assignmentsDataGrid.edit"/>
