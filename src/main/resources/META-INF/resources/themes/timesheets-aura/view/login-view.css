@@ -37,6 +37,9 @@
     --_logo-width: 226px;
     --_logo-left: 22px;
     --_logo-bottom: 35px;
+    /* On a narrow window the logo stands on the form's left edge once the form, up to 400 pixels wide and centered,
+       leaves the side's padding; a percentage of the sheet, which is as wide as the page */
+    --_logo-start: max(var(--_logo-left), 50% - 200px);
 
     position: relative;
     /* The logo is positioned, so the band has no content height of its own and would shrink instead of the page
@@ -63,7 +66,7 @@
 
 .login-view-logo {
     position: absolute;
-    left: var(--_logo-left);
+    left: var(--_logo-start);
     bottom: var(--_logo-bottom);
     width: var(--_logo-width);
     height: auto;
@@ -108,8 +111,8 @@ jmix-login-form::part(error-message-title) {
 
 /* ---------- The language switch ---------- */
 
-/* Two words in a row, the checked one in the text color and semibold. Each item keeps a little room around its word
-   for the focus ring, which the group gives back at its start so that the first word lines up with the form */
+/* Two words in a row, the checked one in the text color and semibold, centered at the page's foot on a narrow window.
+   Each item keeps a little room around its word for the focus ring */
 .login-view-locale-switch {
     --_item-padding: var(--vaadin-padding-xs);
 
@@ -122,8 +125,8 @@ jmix-login-form::part(error-message-title) {
 
 .login-view-locale-switch::part(group-field) {
     flex-direction: row;
+    justify-content: center;
     gap: var(--vaadin-gap-m);
-    margin-inline-start: calc(var(--_item-padding) * -1);
     padding: 0;
     border: 0;
 }
@@ -229,6 +232,7 @@ jmix-login-form::part(error-message-title) {
         --_logo-width: min(0.654 * var(--_sheet-width), 452px);
         --_logo-left: calc(clamp(44px, 3.4vw, 72px) + 0.034 * var(--_logo-width));
         --_logo-bottom: calc(clamp(52px, 6.5vh, 88px) + 0.056 * var(--_logo-width));
+        --_logo-start: var(--_logo-left);
 
         height: auto;
     }
@@ -285,7 +289,7 @@ jmix-login-form::part(error-message-title) {
     .login-view-sheet::after {
         content: "";
         position: absolute;
-        left: var(--_logo-left);
+        left: var(--_logo-start);
         bottom: var(--_logo-bottom);
         width: var(--_logo-width);
         /* The logo's own proportions */
