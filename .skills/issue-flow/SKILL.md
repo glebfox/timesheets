@@ -22,7 +22,7 @@ bash .skills/issue-flow/scripts/set-board-field.sh <issue> Status "<status>"
 ## `pr [<issue>]`
 
 1. Take the issue from the argument or from this session's `start`; otherwise ask.
-2. Consolidate: dispatch the `docs-consolidator` agent and apply what it reports. Tell the user about anything you left out and why.
+2. Consolidate and review: dispatch the `docs-consolidator` and `rules-reviewer` agents in parallel. Apply what the consolidator reports, and fix the reviewer's violations in this branch; when a fix changes behavior, dispatch the consolidator again. Tell the user about anything you left out and why.
 3. Run the `local-ci` skill. Open the pull request only when it passes.
 4. Commit what is left (Conventional Commits, `docs/conventions.md`) and push: `git push -u origin HEAD`.
 5. `gh pr create` with the title and the opening line that `docs/conventions.md` describes. After `Closes #<issue>.` the body has `## Summary` (what changed for the user and why), then what a reviewer must check by hand, such as a live check that was not run.
