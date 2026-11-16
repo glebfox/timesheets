@@ -305,14 +305,10 @@ public final class ApprovalRejectDialog {
             field.setLabel(message("reasonField.label"));
             field.setRequiredMessage(message("reasonField.requiredMessage"));
             field.setWidthFull();
-            // Jmix checks a field the moment it becomes required (jmix.ui.component.immediate-required-validation-
-            // enabled), so an empty reason would show its error before anything was tried. The check passes over a
-            // hidden field: made required and given its first value while hidden, the field shows the error only
-            // once a change or Reject checks it
-            field.setVisible(false);
-            field.setRequired(true);
+            // The value goes first: Jmix checks a field the moment it becomes required, as
+            // jmix.ui.component.immediate-required-validation-enabled says, and so sees the reason the dialog opens on
             field.setValue(reason);
-            field.setVisible(true);
+            field.setRequired(true);
             return field;
         }
 

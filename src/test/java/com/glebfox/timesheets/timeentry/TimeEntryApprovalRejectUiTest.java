@@ -279,9 +279,16 @@ public class TimeEntryApprovalRejectUiTest {
             SideDialog dialog = rejectDialogOf(view);
             MarkdownEditor reasonField = partOf(dialog, "reasonField");
 
-            // Marked as required, but not as missing before anything was tried
+            // Marked as missing from the start, as an editor's empty required field is
             assertThat(reasonField.isRequiredIndicatorVisible()).isTrue();
+            assertThat(reasonField.isInvalid()).isTrue();
+            assertThat(reasonField.getErrorMessage()).isEqualTo("Reason required");
+
+            // A quick reason fills it, and emptying it marks it again
+            click(partOf(dialog, "quickReason-description"));
             assertThat(reasonField.isInvalid()).isFalse();
+            reasonField.clear();
+            assertThat(reasonField.isInvalid()).isTrue();
 
             click(partOf(dialog, "rejectBtn"));
 
@@ -594,7 +601,10 @@ public class TimeEntryApprovalRejectUiTest {
             // The reason written waits in the dialog, which now rejects the entries as they are
             click(view, "writeReasonBtn");
             SideDialog again = rejectDialogOf(view);
-            assertThat(this.<MarkdownEditor>partOf(again, "reasonField").getValue()).isEqualTo(DESCRIPTION_REASON);
+            MarkdownEditor againReason = partOf(again, "reasonField");
+            assertThat(againReason.getValue()).isEqualTo(DESCRIPTION_REASON);
+            // Not empty, so not marked
+            assertThat(againReason.isInvalid()).isFalse();
             click(partOf(again, "rejectBtn"));
 
             assertThat(statusOf(cidMonday)).isEqualTo(TimeEntryStatus.REJECTED);
