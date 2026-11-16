@@ -42,6 +42,7 @@ class IconButtonTooltipsDescriptorTest {
     static final Path VIEWS = Path.of("src/main/resources/com/glebfox/timesheets/view");
     static final Path FIXTURES = Path.of("src/test/resources/com/glebfox/timesheets/view/iconbuttons");
     static final Set<String> BUTTONS = Set.of("button", "dropdownButton", "comboButton");
+    static final String TYPE_WITHOUT_DEFAULTS = "list_itemTracking";
 
     @Test
     void findsIconOnlyButtonsWithoutATooltip() throws Exception {
@@ -51,6 +52,9 @@ class IconButtonTooltipsDescriptorTest {
                 "buttons-view.xml#iconChildNoTooltip",
                 "buttons-view.xml#prefixChildNoTooltip",
                 "buttons-view.xml#actionIconNoText",
+                "buttons-view.xml#typedActionEmptyText",
+                "buttons-view.xml#actionWithTextEmptyText",
+                "buttons-view.xml#trackingActionIconNoText",
                 "buttons-view.xml#dropdownIconOnly",
                 "buttons-fragment.xml#fragmentIconNoTooltip");
     }
@@ -97,12 +101,27 @@ class IconButtonTooltipsDescriptorTest {
         Element action = actionRef.isBlank() ? null : actions.get(actionRef.substring(actionRef.lastIndexOf('.') + 1));
         boolean hasIcon = !button.getAttribute("icon").isBlank()
                 || !children(button, Set.of("icon", "prefix", "suffix")).isEmpty()
-                || (action != null && !action.getAttribute("icon").isBlank());
-        // An action the descriptor does not declare has an unknown text, so its button is not judged
-        boolean hasText = !button.getAttribute("text").isBlank()
-                || (action != null && (!action.getAttribute("type").isBlank() || !action.getAttribute("text").isBlank()))
-                || (!actionRef.isBlank() && action == null);
+                || (action != null && (!action.getAttribute("icon").isBlank() || hasDefaults(action)));
+        boolean hasText;
+        if (button.hasAttribute("text")) {
+            // The loader sets the button's own text after the action's, even an empty one, which clears the action's
+            hasText = !button.getAttribute("text").isBlank();
+        } else if (action != null) {
+            hasText = !action.getAttribute("text").isBlank() || hasDefaults(action);
+        } else {
+            // An action the descriptor does not declare has an unknown text, so its button is not judged
+            hasText = !actionRef.isBlank();
+        }
         return hasIcon && !hasText;
+    }
+
+    /**
+     * Whether the action's type brings a text and an icon of its own, as the list, entity, and detail actions and the
+     * project's own types do. The item tracking action has neither.
+     */
+    static boolean hasDefaults(Element action) {
+        String type = action.getAttribute("type");
+        return !type.isBlank() && !TYPE_WITHOUT_DEFAULTS.equals(type);
     }
 
     static boolean hasTooltip(Element button) {

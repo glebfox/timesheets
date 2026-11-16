@@ -24,6 +24,7 @@
         <dataGrid id="grid">
             <actions>
                 <action id="create" type="list_create"/>
+                <action id="track" type="list_itemTracking" icon="gravity-ui:check"/>
             </actions>
         </dataGrid>
         <button id="iconNoTooltip" icon="gravity-ui:plus"/>
@@ -45,6 +46,9 @@
         <button id="actionIconNoText" action="add"/>
         <button id="actionWithText" action="addWithText"/>
         <button id="typedAction" action="grid.create" icon="gravity-ui:plus"/>
+        <button id="typedActionEmptyText" action="grid.create" text=""/>
+        <button id="actionWithTextEmptyText" action="addWithText" text=""/>
+        <button id="trackingActionIconNoText" action="grid.track"/>
         <button id="undeclaredAction" action="other.run" icon="gravity-ui:plus"/>
         <button id="textOnly" text="Add"/>
         <dropdownButton id="dropdownIconOnly" icon="gravity-ui:plus"/>
