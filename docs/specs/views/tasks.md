@@ -19,7 +19,7 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 - **Project** — shown only when the task has no project yet, which happens only when the editor is opened by URL; opened from a project, the task's project is fixed.
 - **Type** — a drop-down of task types by name, or the task type picker.
 - **Status** — Active or Inactive.
-- **Required tag groups** — a multi-select of the tag groups of the task's project, or the tag group picker in multi-select mode limited to that project; the groups chosen in the picker replace the field's current ones rather than adding to them. The drop-down lists the groups of the project the task had when the editor opened, so a task created by URL without a project offers none there; its picker then shows the groups of the project chosen so far, or of every project when none is chosen.
+- **Required tag groups** — a multi-select of the tag groups of the task's project, or the tag group picker in multi-select mode limited to that project; the groups chosen in the picker replace the field's current ones rather than adding to them. The drop-down lists the groups of the project the task had when the editor opened, so a task created by URL without a project offers none there; its picker then shows the groups of the project chosen so far, or of every project when none is chosen. A helper under the field says what the groups mean: "Every time entry on this task needs a tag from each of these groups" («В каждой записи времени по этой задаче нужен тег из каждой выбранной группы»).
 
 ## Task picker
 
@@ -27,4 +27,4 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 ## Not covered
 
-- All of these screens beyond the empty states of My tasks and the task picker (`GridEmptyStatesUiTest`): no UI test exists for them.
+- All of these screens beyond the empty states of My tasks and the task picker (`GridEmptyStatesUiTest`) and the task editor's Required tag groups helper, checked in English by `TaskDetailViewUiTest`: no UI test exists for them. The helper was seen live on 2026-11-16, on a copy of the working tree with `dev` demo data, in English and Russian, in the light theme.

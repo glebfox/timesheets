@@ -34,7 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Plain guard over the view descriptors: every field of a form that can take a prefix has one. Multi-select drop-downs,
  * the date range field, switches, segmented bars, Markdown editors, and avatar fields have no prefix area and are not
- * checked.
+ * checked. The multi-selects have no framework API for one, and an icon put into their slot by hand is ruled out; the
+ * date range field's pickers stay without one because an icon on each, about 40px, would move the widths at which its
+ * dates stack.
  */
 class FieldPrefixIconsDescriptorTest {
 

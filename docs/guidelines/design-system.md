@@ -210,9 +210,9 @@ The project has a set of its own, drawn for the main menu and also used by the g
 3. **A family with a mark.** Entries that share a base object and differ in one aspect take the base object cut open at the bottom right and one mark in that corner, a zone of about 7.5 × 7.5: Work schedules, Holiday calendars, and Absences on the calendar. A mark is not placed inside the base object: inside the calendar there are about 2.5 units of free height, and a mark drawn there becomes a blot.
 4. **Meanings are shared with the screens.** The menu never gives an object a meaning that contradicts what the same object means on screens. The meanings in use:
    - briefcase — a project (project fields; Projects);
-   - clock — time spent or work time (time fields; My time entries, Time entries, Work schedules);
+   - clock — time spent or work time, and a work schedule (time fields and the assignment editor's Work schedule field; My time entries, Time entries, Work schedules);
    - tag — a project role (the participant editor's Role field; Project roles), and a tag (the tag editor's name; the tags' empty states);
-   - tags — a task type (the task editor's Type field; Task types), and a tag group (the tag editor; the tag groups' empty states);
+   - tags — a task type and an absence type (the task and absence editors' Type fields; Task types), and a tag group (the tag editor; the tag groups' empty states);
    - shield — security roles (Security, Resource roles, Row-level roles);
    - magnifier — search and inspection (filter fields; Entity inspector);
    - rows — the list of all records of a kind (Time entries, Row-level roles, Entity inspector, Locks);
