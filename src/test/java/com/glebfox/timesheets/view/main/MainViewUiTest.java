@@ -82,7 +82,8 @@ public class MainViewUiTest {
         refreshRejectedCountAsAdmin();
 
         Component badge = rejectedCountBadge();
-        assertThat(badge.getElement().getAttribute("title")).isEqualTo("1 rejected entry");
+        assertThat(Tooltip.forComponent(badge).getText()).isEqualTo("1 rejected entry");
+        assertThat(badge.getElement().hasAttribute("title")).isFalse();
         assertThat(badge.getElement().getAttribute("aria-label")).isEqualTo("1 rejected entry");
 
         saveRejectedEntry();
@@ -90,7 +91,7 @@ public class MainViewUiTest {
         refreshRejectedCountAsAdmin();
 
         Component updatedBadge = rejectedCountBadge();
-        assertThat(updatedBadge.getElement().getAttribute("title")).isEqualTo("3 rejected entries");
+        assertThat(Tooltip.forComponent(updatedBadge).getText()).isEqualTo("3 rejected entries");
         assertThat(updatedBadge.getElement().getAttribute("aria-label")).isEqualTo("3 rejected entries");
     }
 

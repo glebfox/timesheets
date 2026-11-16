@@ -191,13 +191,13 @@ public class MainView extends StandardTabbedModeMainView {
         }
     }
 
-    // The bare count names itself on hover and to assistive technology, as the approval screen's bare rejected
-    // count does
+    // The bare count names itself on hover and to assistive technology. A badge has no tooltip API, so the tooltip
+    // is a standalone one, as the menu toggles' is
     private Badge createRejectedCountBadge(long count) {
         Badge badge = componentSupport.createRejectedCountBadge(count);
         String label = messageBundle.formatMessage(
                 PluralForms.key("rejectedCountBadge.label", count, currentAuthentication.getLocale()), count);
-        badge.getElement().setAttribute("title", label);
+        Tooltip.forComponent(badge).setText(label);
         badge.getElement().setAttribute("aria-label", label);
         return badge;
     }
