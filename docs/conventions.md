@@ -1,6 +1,6 @@
 # Conventions
 
-Rules that tooling does not enforce and the code does not consistently show.
+Rules for writing and committing code that formatters and linters do not enforce and the code does not consistently show, and the rules that tests check, unless they belong to a guideline.
 
 ## Language
 
@@ -43,6 +43,10 @@ When a UI piece that looks the same in several places becomes a component or a r
 ## Entity drop-downs
 
 An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Three older fields lack one or both: the assignment editor's schedule field, the task lookup's project filter, and the field that picks the new default schedule when the default one is deleted.
+
+## Prefix icons
+
+Every field of a form that can take a prefix shows an icon there, whether the descriptor declares it or the controller builds it, so that the fields of a form look alike and line up, and the icon shows at a glance what kind of value a field takes, with the same icon for the same kind of value on every screen. Fields with no prefix area, such as switches, segmented bars, Markdown editors, and avatar fields, are not concerned. Three kinds of field go without one. The Status fields of the project, task, and time entry editors set their icon by the value, an icon for each status. The multi-select drop-downs have no framework API for a prefix, and an icon slotted into them by hand is ruled out. The date range field's two pickers stay without one: an icon on each, about 40 px, would move the widths at which its dates stack.
 
 ## Components in a view
 

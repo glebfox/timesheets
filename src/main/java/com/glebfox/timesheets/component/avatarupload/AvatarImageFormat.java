@@ -27,6 +27,8 @@ import java.util.Optional;
 /**
  * Image formats that {@link AvatarUpload} accepts, recognized by their file signature.
  * SVG is deliberately absent: it can carry scripts.
+ * The schema's {@code avatarUploadAcceptedFileTypes} in {@code app-ui-components.xsd} lists the MIME type and
+ * extensions of each format, so a format added or removed here is added to or removed from it.
  */
 public enum AvatarImageFormat {
 
