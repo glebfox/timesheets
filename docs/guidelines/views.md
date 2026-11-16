@@ -77,7 +77,7 @@ The date range field and its filter (`component/daterange/`, [decision 0015](../
 
 ## Tooltips on components without a tooltip of their own
 
-A hint on hover is a Vaadin tooltip everywhere, never a `title` attribute, which the browser draws in its own style and after its own delay. A component with no tooltip API, such as a badge, takes a standalone one, `Tooltip.forComponent(component).setText(text)`, which Vaadin attaches to `body` and points at the component's element. So does a drawer toggle: it inherits `setTooltipText` from `Button`, but `<vaadin-drawer-toggle>` has no tooltip slot, so that tooltip is accepted on the server and never shown, and Jmix's `drawerToggle` element takes no tooltip in a descriptor for the same reason (jmix-framework/jmix#4161). See `MainView` and `ApprovalStatusBadges`.
+A component with no tooltip API, such as a badge, takes a standalone one, `Tooltip.forComponent(component).setText(text)`, which Vaadin attaches to `body` and points at the component's element. See `MainView` and `ApprovalStatusBadges`.
 
 ## Tooltips that render Markdown
 
