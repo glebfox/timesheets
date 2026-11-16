@@ -39,6 +39,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
@@ -70,7 +71,8 @@ import java.util.stream.Collectors;
  * The panel only shows what it is given. A click on a day or a week of the month grid, on an entry's ✓, ✕, or ↺, and
  * on a button that approves a person, a week, or a day, is passed on as an event of the panel, whose listener decides
  * what follows, such as {@link #showWeek}. Those buttons are in the {@code actions} of the person, the week card, and
- * the day, one for each that has waiting entries; which entries a button approves is asked of the function set with
+ * the day: the person's and a week's only while their stretch has entries to approve, and a day's for each day with
+ * entries, disabled while it has none to approve; which entries a button approves is asked of the function set with
  * {@link #setEntriesToApproveProvider}, so that the count on a button and what the click approves come from one place.
  * The ids of the buttons are {@code approvePersonBtn}, {@code approveWeekBtn-<first day>}, and
  * {@code approveDayBtn-<day>}.
@@ -528,8 +530,10 @@ public final class ApprovalPersonPanel extends Composite<Div>
 
     /**
      * Adds the button of a day, which stays in its place, disabled, while the day has nothing to approve: the day's
-     * header keeps its height, and the cards under it do not move as the button comes and goes. On the week board, a
-     * column too narrow for the button's text shows its icon alone, so there the button also names itself on hover.
+     * header keeps its height, and the cards under it do not move as the day's entries are approved or put in the
+     * reject basket. On the week board, a column too narrow for the button's text shows its icon alone, so there the
+     * button is also named on hover, by a tooltip of the slot it stands in: a disabled button takes no pointer events,
+     * so a tooltip of its own would never open while the day has nothing to approve.
      */
     private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day, boolean onBoard) {
         Button button = createApproveButton("approveDayBtn-" + day, ButtonVariant.TERTIARY, ButtonVariant.SUCCESS,
@@ -538,7 +542,7 @@ public final class ApprovalPersonPanel extends Composite<Div>
                 titles.formatDates(day, day));
         button.setAriaLabel(name);
         if (onBoard) {
-            button.setTooltipText(name);
+            Tooltip.forComponent(actions).setText(name);
         }
         buttons.addKept(actions, button, ApprovalScope.ofDay(day),
                 messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale));

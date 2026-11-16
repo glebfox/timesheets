@@ -35,6 +35,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.Messages;
@@ -354,10 +355,12 @@ public class TimeEntryApprovalActionsUiTest {
 
             assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Approve week · 3");
 
-            // The days on the board's column headers, which name themselves on hover too, as a narrow column shows
-            // only their icon
+            // The days on the board's column headers, which are named on hover too, as a narrow column shows only
+            // their icon: by a tooltip of the slot the button stands in, which opens over a disabled button as well
             Button dayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidMonday.getDate());
-            assertThat(dayButton.getTooltip().getText()).isEqualTo("Approve day Oct 5");
+            assertThat(Tooltip.forComponent(dayButton.getParent().orElseThrow()).getText())
+                    .isEqualTo("Approve day Oct 5");
+            assertThat(dayButton.getTooltip().getText()).isNull();
             click(view, "approveDayBtn-" + cidMonday.getDate());
             DialogInfo day = confirmation();
             assertThat(textOf(day)).isEqualTo("Approve 2 entries of Cid Cole for Oct 5, 8h?");

@@ -71,7 +71,8 @@
 }
 
 /* A day without entries has no cards to stand on the edge of, so its heading keeps only a narrow padding: five days
-   with entries then fit a panel of 768 pixels beside two without */
+   with entries then fit beside two without in a panel of 795 pixels, the board's narrowest at a common window, 1440
+   pixels with the navigation drawer open and a classic scrollbar */
 .approval-week-board > .column.empty > .header {
     padding-inline: var(--vaadin-padding-xs);
 }

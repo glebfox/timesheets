@@ -33,7 +33,7 @@ import java.util.List;
  * through the function given to the constructor, every time {@link #refresh} runs. A scope with no entries to approve
  * has no button: it is taken out of its slot, so that an empty slot takes no room. A button added with
  * {@link #addKept} stays in its slot instead, disabled while its scope has nothing to approve, so that the parts
- * around it do not move as it comes and goes. A click is passed on with the scope of the button, and whether it came
+ * around it do not move as its entries are approved or put in the reject basket. A click is passed on with the scope of the button, and whether it came
  * from the browser.
  */
 final class ApprovalBulkApproveButtons {

@@ -58,7 +58,7 @@
 - What cannot be clicked does not look like a control: a label or a value does not get the border and the fill of a button, a chip, or a field together. A bordered card that holds a group's heading and its actions is a container, not such a look-alike.
 - A control of the project's own has every state the theme's controls have: hover, focus, pressed, selected, disabled, and its look in forced colors (`design-system.md`).
 - Making a whole row clickable is a choice with a price, the box and its edges above; a row whose name alone is clickable has no box to align.
-- A repeated action in a list is an icon with a tooltip, not a text button in every row (`ux.md`).
+- An action repeated in every row of a list is an icon with a tooltip, not a text button. The action of a group, in the group's header, may keep its text while there is room for it, and where there is none shows its icon alone. How an icon-only button names itself: `ux.md`.
 - A pointer target is at least 24 by 24 pixels. On a screen that is used by touch it is at least 44 pixels tall; the room comes from the element's own padding, not from a visible box.
 
 ## 7. Content
