@@ -193,6 +193,21 @@ public class HolidayCalendarDaysAddUiTest {
     }
 
     @Test
+    void opensWithTheEmptyRequiredFieldsMarked() {
+        HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
+
+        // The test profile keeps jmix.ui.component.immediate-required-validation-enabled on, as the application does
+        HolidayCalendarDaysAddView dialog = openAddDialog(view);
+
+        assertThat(nameField(dialog).isInvalid()).isTrue();
+        assertThat(nameField(dialog).getErrorMessage()).isEqualTo("Name required");
+        assertThat(datesField(dialog).isInvalid()).isTrue();
+        assertThat(datesField(dialog).getErrorMessage()).isEqualTo("Dates required");
+        // Day off from the start, so not empty
+        assertThat(typeField(dialog).isInvalid()).isFalse();
+    }
+
+    @Test
     void nameAndFirstDayAreRequired() {
         HolidayCalendarDetailView view = openCalendar(saveCalendar(uniqueName()));
 

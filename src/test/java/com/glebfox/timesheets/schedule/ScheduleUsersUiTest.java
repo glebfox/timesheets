@@ -192,6 +192,19 @@ public class ScheduleUsersUiTest {
     }
 
     @Test
+    void opensWithTheEmptyRequiredFieldsMarked() {
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+
+        // The test profile keeps jmix.ui.component.immediate-required-validation-enabled on, as the application does
+        WorkScheduleUsersAddView dialog = add(editor);
+
+        assertThat(usersField(dialog).isInvalid()).isTrue();
+        assertThat(usersField(dialog).getErrorMessage()).isEqualTo("Users required");
+        assertThat(startDateField(dialog).isInvalid()).isTrue();
+        assertThat(startDateField(dialog).getErrorMessage()).isEqualTo("Start date required");
+    }
+
+    @Test
     void usersAndStartDateAreRequired() {
         WorkScheduleDetailView editor = openSchedule(saveSchedule());
 

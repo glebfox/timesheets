@@ -189,6 +189,24 @@ public class WorkScheduleDeletionUiTest {
     }
 
     @Test
+    void opensWithTheEmptyRequiredFieldsMarked() {
+        saveSchedule(uniqueName());
+        DataGrid<WorkSchedule> grid = openListGrid();
+        Action remove = Objects.requireNonNull(grid.getAction("remove"));
+
+        grid.select(listed(grid, seedDefaultId));
+        assertThat(remove.isEnabled()).isTrue();
+        // The test profile keeps jmix.ui.component.immediate-required-validation-enabled on, as the application does
+        remove.actionPerform(grid);
+
+        // Marked before Delete is pressed
+        EntityComboBox<WorkSchedule> newDefaultField = newDefaultField(openedDeleteDialog());
+        assertThat(newDefaultField.getValue()).isNull();
+        assertThat(newDefaultField.isInvalid()).isTrue();
+        assertThat(newDefaultField.getErrorMessage()).isEqualTo("New default schedule required");
+    }
+
+    @Test
     void deleteNeedsAChoice() {
         saveSchedule(uniqueName());
         DataGrid<WorkSchedule> grid = openListGrid();
