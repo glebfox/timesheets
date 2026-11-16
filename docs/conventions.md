@@ -42,7 +42,7 @@ When a UI piece that looks the same in several places becomes a component or a r
 
 ## Entity drop-downs
 
-An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Three older fields lack one or both: the assignment editor's schedule field, the task lookup's project filter, and the field that picks the new default schedule when the default one is deleted.
+An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button, to empty the field in one click instead of selecting and deleting its text: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Three older fields lack one or both: the assignment editor's schedule field, the task lookup's project filter, and the field that picks the new default schedule when the default one is deleted.
 
 ## Prefix icons
 
