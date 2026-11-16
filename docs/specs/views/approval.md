@@ -37,7 +37,7 @@ In forced-colors (high contrast) mode no status color shows: the status bars, do
 On the left, a card for everyone with entries in the period, showing:
 
 - the avatar, the name (the first and last name, or the username), and the names of the person's project roles on the projects of their entries, none for a person who is not a participant of them;
-- a badge: "N waiting", with a red bare count of the rejected entries beside it when there are any; "N rejected" alone when nothing waits; "✓ Approved" when every entry is Approved or Closed;
+- a badge: "N waiting", with a red bare count of the rejected entries beside it when there are any, which names itself on hover and to assistive technology, such as "1 rejected"; "N rejected" alone when nothing waits; "✓ Approved" when every entry is Approved or Closed;
 - a fingerprint of the period, one bar per day, as tall as the time logged that day, full at 10 hours, in the color of the day's status: Rejected when any entry of the day is, otherwise New when any is, otherwise Approved when any is, otherwise neutral for Closed;
 - the time logged in the period.
 
@@ -98,7 +98,8 @@ A change that would leave the basket behind asks "Discard N entries from the rej
 - The screen under user substitution: the tests check the effective user in the support bean only.
 - A project without a Manager and with a single Approver leaves that Approver's own entries to nobody on this screen: only someone with the Time entries list can change them by hand. Whether an Approver is restricted further than not approving their own and the Managers' entries is undecided. No test pins it.
 - Entries of closed projects and of inactive tasks being listed: the tests check only that a closed project is offered in the project choice.
-- The tags on an entry's card, each naming its group on hover: no UI test checks them, and the support tests check only that the tags are loaded; the live check as `mossman` saw them.
+- The tags on an entry's card, each naming its group on hover: no UI test checks them, and the support tests check only that the tags are loaded; the live check as `mossman` saw them. A live check on 2026-11-16, on a copy of the working tree with `dev` demo data, as `mossman`, in Russian, in the light theme, at 1024×768, saw a tag's group open in a tooltip on hover, such as "Non-billable [Billing]".
+- The roster's bare rejected count on hover: `TimeEntryApprovalViewUiTest` checks its name in English. No live check has seen it: the `dev` demo data gives `mossman`'s team no rejected entries.
 - The empty-state messages other than two: the tests check only that of a user who approves on no project and that of a period with no entries. A chosen project with no time, nobody with time waiting under Needs review, and a search that matches nobody are untested, as is the team progress hiding itself when nobody has entries.
 - The entries of a deleted task are listed nowhere on this screen, so nobody approves them here; the test checks only that they are absent.
 - The author's Rejected count in the main menu refreshing after a rejection: it needs a second live session, so no test sees it, and the tests check only that the operations tell the entry's user. Seen live: the count changed in the author's own session without a reload.

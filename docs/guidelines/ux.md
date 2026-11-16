@@ -23,6 +23,8 @@ A form does not change its height as the user fills it in:
 
 Older fields predate the rule: the date range field's summary line appears once dates are chosen, and the "This … is deleted" helpers of a deleted holiday calendar, schedule, or absence type go once another value is chosen.
 
+A tooltip is a Vaadin tooltip, never a `title` attribute, which the browser draws in its own style and after its own delay, so that every hint on a screen looks and opens alike. How a component without a tooltip of its own, such as a badge, takes one: `views.md`. The calendar's events are the exception: the FullCalendar add-on shows an event's description, such as an entry's description, an absence's type and dates, or a holiday's name, as a `title`.
+
 ## Buttons with only an icon
 
 A button that shows an icon and no text has a tooltip that names what it does, such as the period arrows of the calendar and of the approval screen, and the approval board's Approve day: an icon alone does not say for certain what the button does, and the tooltip is the only text the button has.

@@ -28,7 +28,7 @@ You review one branch of the Timesheets repository against the project's written
 - Only what a doc prescribes is a violation. A mechanic that a guideline explains is not a rule unless the doc tells the reader to do or to avoid something.
 - Code that a rule says predates it is not a finding, nor is older code that the diff does not touch.
 - A violation that a test would also catch is still reported: local CI runs after you, and an early report is cheaper.
-- Look first where the tests stop. The descriptor tests read only descriptors, and the prefix-icon test only the forms of view descriptors: a button with only an icon, an entity drop-down, or a form field built in Java, and a form in a fragment, are yours. The bundle test compares only the key sets of the bundles: a user-visible text that is not a message key, the plural forms, and a `requiredMessage` are yours. Breakpoints, and utility classes set from Java or a descriptor, have no test at all.
+- Look first where the tests stop. The descriptor tests read only descriptors, and the prefix-icon test only the forms of view descriptors: a button with only an icon, an entity drop-down, or a form field built in Java, and a form in a fragment, are yours, and so is any element besides `button`, `dropdownButton`, and `comboButton` that shows only an icon, such as a `drawerToggle`. The bundle test compares only the key sets of the bundles: a user-visible text that is not a message key, the plural forms, and a `requiredMessage` are yours. Breakpoints, and utility classes set from Java or a descriptor, have no test at all.
 - A line number is the line in the working tree, as `Read` shows it, not a position in the diff.
 
 ## Report

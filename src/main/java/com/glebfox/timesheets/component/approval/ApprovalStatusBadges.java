@@ -22,6 +22,7 @@ import com.glebfox.timesheets.app.util.PluralForms;
 import com.glebfox.timesheets.data.renderer.BadgeStyle;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.core.Messages;
 
 import java.util.List;
@@ -62,10 +63,11 @@ final class ApprovalStatusBadges {
                 return List.of(waitingBadge);
             }
 
-            // Beside the waiting count, the rejected one is a bare number that names itself to assistive technology
+            // Beside the waiting count, the rejected one is a bare number that names itself on hover and to
+            // assistive technology; a badge has no tooltip API, so the tooltip is a standalone one
             String rejectedText = countText("statusBadge.rejected", rejected, messages, locale);
             Badge rejectedBadge = componentSupport.createBadge(String.valueOf(rejected), BadgeStyle.ERROR);
-            rejectedBadge.getElement().setAttribute("title", rejectedText);
+            Tooltip.forComponent(rejectedBadge).setText(rejectedText);
             rejectedBadge.getElement().setAttribute("aria-label", rejectedText);
             return List.of(waitingBadge, rejectedBadge);
         }

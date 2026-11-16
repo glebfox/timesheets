@@ -78,13 +78,13 @@
                 <prefix>
                     <drawerToggle id="mainTabSheetDrawerToggle"
                                   classNames="jmix-main-view-drawer-toggle"
-                                  ariaLabel="msg://drawerToggle.ariaLabel"/>
+                                  ariaLabel="msg://drawerToggle.tooltip"/>
                 </prefix>
             </mainTabSheet>
             <initialLayout id="initialLayout" classNames="jmix-initial-layout">
                 <drawerToggle id="initialLayoutDrawerToggle"
                               classNames="jmix-main-view-drawer-toggle"
-                              ariaLabel="msg://drawerToggle.ariaLabel"/>
+                              ariaLabel="msg://drawerToggle.tooltip"/>
                 <fragment id="dashboard" class="com.glebfox.timesheets.view.dashboard.DashboardFragment"/>
             </initialLayout>
         </workArea>

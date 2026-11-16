@@ -23,6 +23,8 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.core.DataManager;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.UiEventPublisher;
@@ -39,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,7 +82,8 @@ public class MainViewUiTest {
         refreshRejectedCountAsAdmin();
 
         Component badge = rejectedCountBadge();
-        assertThat(badge.getElement().getAttribute("title")).isEqualTo("1 rejected entry");
+        assertThat(Tooltip.forComponent(badge).getText()).isEqualTo("1 rejected entry");
+        assertThat(badge.getElement().hasAttribute("title")).isFalse();
         assertThat(badge.getElement().getAttribute("aria-label")).isEqualTo("1 rejected entry");
 
         saveRejectedEntry();
@@ -87,8 +91,24 @@ public class MainViewUiTest {
         refreshRejectedCountAsAdmin();
 
         Component updatedBadge = rejectedCountBadge();
-        assertThat(updatedBadge.getElement().getAttribute("title")).isEqualTo("3 rejected entries");
+        assertThat(Tooltip.forComponent(updatedBadge).getText()).isEqualTo("3 rejected entries");
         assertThat(updatedBadge.getElement().getAttribute("aria-label")).isEqualTo("3 rejected entries");
+    }
+
+    @Test
+    void menuTogglesNameWhatTheyDo() {
+        View<?> view = UiTestUtils.getCurrentView();
+        assertThat(view).isInstanceOf(MainView.class);
+
+        for (String id : List.of("mainTabSheetDrawerToggle", "initialLayoutDrawerToggle")) {
+            DrawerToggle toggle = UiTestUtils.getComponent(view, id);
+            Tooltip tooltip = Tooltip.forComponent(toggle);
+            assertThat(tooltip.getText()).as(id).isEqualTo("Show or hide the menu");
+            // A standalone tooltip, not one in the toggle's tooltip slot, which <vaadin-drawer-toggle> lacks
+            assertThat(toggle.getElement().getChildren())
+                    .as(id).noneMatch(child -> "tooltip".equals(child.getAttribute("slot")));
+            assertThat(toggle.getAriaLabel()).as(id).hasValue("Show or hide the menu");
+        }
     }
 
     private void saveRejectedEntry() {

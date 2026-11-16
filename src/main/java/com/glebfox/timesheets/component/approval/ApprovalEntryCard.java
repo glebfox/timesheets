@@ -306,8 +306,9 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
                 .sorted(Comparator.comparing(Tag::getName, String.CASE_INSENSITIVE_ORDER))
                 .forEach(tag -> {
                     Badge badge = componentSupport.createBadge(tag.getName(), BadgeStyle.NEUTRAL);
-                    // The name alone is short; the group it belongs to is told on hover
-                    badge.getElement().setAttribute("title", metadataTools.getInstanceName(tag));
+                    // The name alone is short; the group it belongs to is told on hover, in a standalone tooltip,
+                    // since a badge has no tooltip API
+                    Tooltip.forComponent(badge).setText(metadataTools.getInstanceName(tag));
                     tagsPart.add(badge);
                 });
         content.add(tagsPart);

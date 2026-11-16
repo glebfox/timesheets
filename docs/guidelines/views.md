@@ -75,6 +75,10 @@ The date range field and its filter (`component/daterange/`, [decision 0015](../
 - A view refuses the field with `setInvalid(true)` and `setErrorMessage(...)`, in either order: `setInvalid(true)` runs no validators, so it leaves the message alone. Only `setInvalid(false)` runs the validators again, which is how the field drops both the mark and the message at the next change of either date.
 - A filter on `SingleFilterComponentBase` applies only a change that comes from the client, so a value set from the server loads nothing; a value the filter must not use is held back in both `onFilterValueChanged` and `updateQueryCondition`. Its condition is built before the loader has set an id or a property, so the label's id and the parameter names are set later, and every parameter needs a name or the first load fails. Its value field is a nested element of the filter's own element, and a filter element is never declared inside `urlQueryParameters`, whose loader fails on a child no binder supports.
 
+## Tooltips on components without a tooltip of their own
+
+A component with no tooltip API, such as a badge, takes a standalone one, `Tooltip.forComponent(component).setText(text)`, which Vaadin attaches to `body` and points at the component's element. See `MainView` and `ApprovalStatusBadges`.
+
 ## Tooltips that render Markdown
 
 `Tooltip.forComponent(part).setMarkdown(text)` renders the text as Markdown in a `vaadin-tooltip` that Vaadin attaches to `body`, outside the component, so only a theme-wide rule reaches it: the theme's `component/tooltip.css` trims the browser's margins above its first block and below its last. A tooltip stays open while the pointer is on it and hides what it covers, so one on a part with buttons nearby opens where it covers none of them, as a week board card's description opens beside the card with `TooltipPosition.END_TOP`. A part that takes no focus shows its tooltip on hover only, never to the keyboard. See `ApprovalEntryCard`.
