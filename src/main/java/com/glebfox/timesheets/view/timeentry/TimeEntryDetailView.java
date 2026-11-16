@@ -148,6 +148,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         if (getEditedEntity().getTask() != null) {
             updateTagsFields();
         }
+        updateLockTooltips();
     }
 
     @Supply(to = "userField", subject = "renderer")
@@ -205,6 +206,24 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
                 userField.setReadOnly(getEditedEntity().getTask() != null);
             }
         }
+
+        updateLockTooltips();
+    }
+
+    // A locked field of a general entry says why while the other field locks it; an own entry's user and the fields
+    // of a read-only editor are fixed for reasons the user cannot change, so they say nothing. The view may turn
+    // read-only before its entity is set
+    private void updateLockTooltips() {
+        TimeEntry timeEntry = getEditedEntityContainer().getItemOrNull();
+        boolean explain = timeEntry != null && !ownTimeEntry && !isReadOnly();
+
+        boolean taskWaitsForUser = explain && timeEntry.getUser() == null && taskField.isReadOnly();
+        taskField.setTooltipText(taskWaitsForUser ? messageBundle.getMessage("taskField.lockedTooltip") : null);
+
+        // A task locked too, as in a copy, leaves nothing to clear
+        boolean userWaitsForTask = explain && timeEntry.getTask() != null
+                && userField.isReadOnly() && !taskField.isReadOnly();
+        userField.setTooltipText(userWaitsForTask ? messageBundle.getMessage("userField.lockedTooltip") : null);
     }
 
     private void updateTagsFields() {
@@ -296,6 +315,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         tagsForm.getOwnComponents().stream()
                 .filter(component -> component instanceof JmixMultiSelectComboBox<?>)
                 .forEach(component -> ((JmixMultiSelectComboBox<?>) component).setReadOnly(isReadOnly()));
+        updateLockTooltips();
     }
 
     // Tells why the entry, as it was loaded, was rejected; the reason is written on the approval screen.

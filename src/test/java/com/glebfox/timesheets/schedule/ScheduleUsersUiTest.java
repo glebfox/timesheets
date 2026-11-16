@@ -768,6 +768,26 @@ public class ScheduleUsersUiTest {
         scheduleIds.clear();
     }
 
+    @Test
+    void defaultScheduleSaysUsersWithoutAssignmentsWorkToIt() {
+        WorkSchedule defaultSchedule = dataManager.load(WorkSchedule.class).query("e.isDefault = true").one();
+
+        WorkScheduleDetailView editor = openSchedule(defaultSchedule);
+
+        Span text = UiTestUtils.getComponent(editor, "defaultScheduleUsersText");
+        assertThat(text.isVisible()).isTrue();
+        assertThat(text.getText()).isEqualTo("Users with no assignments work to this schedule too");
+    }
+
+    @Test
+    void otherSchedulesSayNothingAboutTheDefault() {
+        WorkScheduleDetailView editor = openSchedule(saveSchedule());
+        assertThat(UiTestUtils.<Span>getComponent(editor, "defaultScheduleUsersText").isVisible()).isFalse();
+
+        WorkScheduleDetailView newEditor = openNewSchedule();
+        assertThat(UiTestUtils.<Span>getComponent(newEditor, "defaultScheduleUsersText").isVisible()).isFalse();
+    }
+
     private WorkScheduleDetailView openNewSchedule() {
         viewBuilders.detail(UiTestUtils.getCurrentView(), WorkSchedule.class).newEntity().open();
         return UiTestUtils.getCurrentView();

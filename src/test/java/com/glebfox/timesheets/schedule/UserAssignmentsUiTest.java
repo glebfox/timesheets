@@ -35,6 +35,7 @@ import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.badge.BadgeVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import io.jmix.core.DataManager;
@@ -141,6 +142,34 @@ public class UserAssignmentsUiTest {
                     .findFirst()
                     .orElseThrow();
             assertThat(emptyStateSlot).isInstanceOf(DataGridEmptyStateByPermissionsFragment.class);
+        });
+    }
+
+    @Test
+    void defaultScheduleIsNamedAboveTheAssignments() {
+        String defaultName = dataManager.load(WorkSchedule.class).query("e.isDefault = true").one().getName();
+
+        UserDetailView editor = openUser(saveUser());
+
+        Span text = UiTestUtils.getComponent(editor, "defaultScheduleText");
+        assertThat(text.isVisible()).isTrue();
+        assertThat(text.getText())
+                .isEqualTo("Until the first assignment, the user works to the default schedule «" + defaultName + "»");
+    }
+
+    @Test
+    void defaultScheduleLineIsHiddenWithoutReadOnSchedules() {
+        User viewer = saveUser();
+        assignRole(viewer, UiMinimalRole.CODE);
+        assignRole(viewer, UserWithoutAssignmentsTestRole.CODE);
+        User user = saveUser();
+
+        systemAuthenticator.runWithUser(viewer.getUsername(), () -> {
+            UserDetailView editor = openUser(user);
+            assertThat(UiTestUtils.<View<?>>getCurrentView()).isSameAs(editor);
+
+            Span text = UiTestUtils.getComponent(editor, "defaultScheduleText");
+            assertThat(text.isVisible()).isFalse();
         });
     }
 

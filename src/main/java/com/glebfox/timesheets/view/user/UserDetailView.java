@@ -32,9 +32,13 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.AccessManager;
+import io.jmix.core.DataManager;
 import io.jmix.core.EntityStates;
 import io.jmix.core.MessageTools;
+import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
+import io.jmix.core.accesscontext.CrudEntityContext;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.textfield.TypedTextField;
@@ -73,6 +77,14 @@ public class UserDetailView extends StandardDetailView<User> {
     private CollectionContainer<WorkScheduleAssignment> assignmentsDc;
     @ViewComponent
     private CollectionLoader<WorkScheduleAssignment> assignmentsDl;
+    @ViewComponent
+    private Span defaultScheduleText;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private DataManager dataManager;
+    @Autowired
+    private Metadata metadata;
     @Autowired
     private ComponentSupport componentSupport;
     @Autowired
@@ -127,6 +139,22 @@ public class UserDetailView extends StandardDetailView<User> {
         if (entityStates.isNew(getEditedEntity())) {
             usernameField.focus();
         }
+        updateDefaultScheduleText();
+    }
+
+    // Names the schedule a user works to before their first assignment, to a signed-in user who may read schedules
+    private void updateDefaultScheduleText() {
+        CrudEntityContext scheduleContext = new CrudEntityContext(metadata.getClass(WorkSchedule.class));
+        accessManager.applyRegisteredConstraints(scheduleContext);
+
+        WorkSchedule defaultSchedule = scheduleContext.isReadPermitted()
+                ? dataManager.load(WorkSchedule.class).query("e.isDefault = true").optional().orElse(null)
+                : null;
+        if (defaultSchedule != null) {
+            defaultScheduleText.setText(messageBundle.formatMessage("defaultScheduleText.text",
+                    defaultSchedule.getName()));
+        }
+        defaultScheduleText.setVisible(defaultSchedule != null);
     }
 
     @Subscribe

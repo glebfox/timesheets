@@ -37,7 +37,11 @@
                       placeholder="msg://projectField.placeholder"
                       ariaLabel="msg://projectField.ariaLabel"
                       clearButtonVisible="true"
-                      classNames="time-entry-approval-view-project"/>
+                      classNames="time-entry-approval-view-project">
+                <prefix>
+                    <icon icon="gravity-ui:briefcase"/>
+                </prefix>
+            </comboBox>
             <div id="teamProgress" classNames="time-entry-approval-view-team-progress">
                 <div classNames="time-entry-approval-view-team-progress-label">
                     <span id="teamProgressText" classNames="time-entry-approval-view-team-progress-text"/>

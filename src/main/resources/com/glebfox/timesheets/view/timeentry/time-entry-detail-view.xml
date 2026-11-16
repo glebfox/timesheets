@@ -89,7 +89,7 @@
                         <action id="entityClear" type="entity_clear"/>
                     </actions>
                 </entityComboBox>
-                <textField id="spentTimeField" property="spentTime" placeholder="msg://spentTimeField.placeholder">
+                <textField id="spentTimeField" property="spentTime" helperText="msg://spentTimeField.helperText">
                     <prefix>
                         <icon icon="gravity-ui:clock"/>
                     </prefix>

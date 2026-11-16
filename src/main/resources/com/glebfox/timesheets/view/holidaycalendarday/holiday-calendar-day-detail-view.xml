@@ -45,7 +45,11 @@
                     <icon icon="gravity-ui:office-badge"/>
                 </prefix>
             </textField>
-            <datePicker id="dateField" property="date"/>
+            <datePicker id="dateField" property="date">
+                <prefix>
+                    <icon icon="gravity-ui:calendar"/>
+                </prefix>
+            </datePicker>
             <radioButtonGroup id="typeField" property="type"
                               classNames="segmented-group"/>
         </formLayout>

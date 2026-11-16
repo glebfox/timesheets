@@ -48,6 +48,9 @@
             </responsiveSteps>
 
             <entityComboBox id="userField" property="user">
+                <prefix>
+                    <icon icon="gravity-ui:person"/>
+                </prefix>
                 <!-- Inactive users included -->
                 <itemsQuery class="com.glebfox.timesheets.entity.user.User"
                             searchStringFormat="(?i)%${inputString}%"
@@ -66,6 +69,9 @@
                 </actions>
             </entityComboBox>
             <entityComboBox id="typeField" property="type">
+                <prefix>
+                    <icon icon="gravity-ui:tags"/>
+                </prefix>
                 <itemsQuery class="com.glebfox.timesheets.entity.absence.AbsenceType"
                             searchStringFormat="(?i)%${inputString}%"
                             escapeValueForLike="true">
@@ -88,7 +94,11 @@
                                 requiredMessage="msg://datesField.requiredMessage"
                                 summaryVisible="true"/>
             <textArea id="commentField" property="comment"
-                      minRows="5" maxRows="5"/>
+                      minRows="5" maxRows="5">
+                <prefix>
+                    <icon icon="gravity-ui:comment"/>
+                </prefix>
+            </textArea>
         </formLayout>
         <hbox id="detailActions"
               classNames="footer-panel">
