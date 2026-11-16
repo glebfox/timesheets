@@ -27,6 +27,7 @@ import io.jmix.core.DataManager;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.UiEventPublisher;
 import io.jmix.flowui.component.main.JmixListMenu;
+import io.jmix.flowui.kit.component.main.ListMenu;
 import io.jmix.flowui.view.View;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -38,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,7 +105,8 @@ public class MainViewUiTest {
         View<?> view = UiTestUtils.getCurrentView();
         assertThat(view).isInstanceOf(MainView.class);
         JmixListMenu menu = UiTestUtils.getComponent(view, "menu");
-        Component badge = menu.getMenuItem("ts_TimeEntry.my").getSuffixComponent();
+        ListMenu.MenuItem item = Objects.requireNonNull(menu.getMenuItem("ts_TimeEntry.my"), "My time entries item");
+        Component badge = item.getSuffixComponent();
         assertThat(badge).isNotNull();
         return badge;
     }
