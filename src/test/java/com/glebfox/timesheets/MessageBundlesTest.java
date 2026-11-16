@@ -61,7 +61,7 @@ class MessageBundlesTest {
         List<Path> files;
         try (Stream<Path> list = Files.list(RESOURCES)) {
             files = list.filter(p -> {
-                String name = p.getFileName().toString();
+                String name = RESOURCES.relativize(p).toString();
                 return name.startsWith("messages_") && name.endsWith(".properties");
             }).sorted().toList();
         }
@@ -71,7 +71,7 @@ class MessageBundlesTest {
             try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                 properties.load(reader);
             }
-            bundles.put(file.getFileName().toString(), new TreeSet<>(properties.stringPropertyNames()));
+            bundles.put(RESOURCES.relativize(file).toString(), new TreeSet<>(properties.stringPropertyNames()));
         }
         return bundles;
     }
