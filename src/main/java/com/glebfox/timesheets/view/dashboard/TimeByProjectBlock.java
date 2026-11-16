@@ -24,6 +24,7 @@ import com.glebfox.timesheets.component.emptystate.GridEmptyState;
 import com.glebfox.timesheets.datatype.WorkTime;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.shared.Tooltip;
 import io.jmix.chartsflowui.component.Chart;
 import io.jmix.chartsflowui.data.item.MapDataItem;
 import io.jmix.chartsflowui.kit.component.model.DataSet;
@@ -185,7 +186,8 @@ public class TimeByProjectBlock extends Fragment<JmixCard> implements DashboardB
         Span name = uiComponents.create(Span.class);
         name.addClassName("name");
         name.setText(slice.name());
-        name.setTitle(slice.name());
+        // The whole name on hover, where two lines cut it
+        Tooltip.forComponent(name).setText(slice.name());
 
         Span time = uiComponents.create(Span.class);
         time.addClassName("time");

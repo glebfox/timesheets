@@ -462,6 +462,14 @@ public class MyTimeChartsUiTest {
                             .get("background-color"))
                     .toList())
                     .containsExactlyElementsOf(expected.stream().map(Color::getValue).toList());
+
+            // A name that two lines cut shows whole on hover
+            assertThat(FragmentUtils.getComponent(block, "projectList").getChildren()
+                    .map(row -> row.getChildren().skip(1).findFirst().orElseThrow())
+                    .limit(5)
+                    .map(name -> com.vaadin.flow.component.shared.Tooltip.forComponent(name).getText())
+                    .toList())
+                    .containsExactlyElementsOf(projects.subList(0, 5).stream().map(Project::getName).toList());
         });
     }
 
