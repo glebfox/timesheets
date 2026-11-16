@@ -468,10 +468,12 @@ public class TimeEntryApprovalViewUiTest {
             scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
 
             // Cid has a new and a rejected entry: the rejected count beside the waiting one is a bare number
-            // that names itself to assistive technology
+            // that names itself on hover and to assistive technology
             ApprovalRosterCard cidCard = cardOf(view, cid, List.of(memberRole.getName()));
             List<Badge> cidBadges = badgesOf(cidCard);
             assertThat(cidBadges).extracting(Badge::getText).containsExactly("1 waiting", "1");
+            assertThat(Tooltip.forComponent(cidBadges.get(1)).getText()).isEqualTo("1 rejected");
+            assertThat(cidBadges.get(1).getElement().hasAttribute("title")).isFalse();
             assertThat(cidBadges.get(1).getElement().getAttribute("aria-label")).isEqualTo("1 rejected");
             assertThat(textOf(cidCard, "name")).isEqualTo("Cid Cole");
             assertThat(textOf(cidCard, "role")).isEqualTo(memberRole.getName());
