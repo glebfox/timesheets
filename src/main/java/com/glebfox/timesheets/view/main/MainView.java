@@ -24,11 +24,13 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.event.TimeEntryStatusChangedEvent;
 import com.google.common.base.Strings;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.badge.Badge;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
 import io.jmix.core.security.CurrentAuthentication;
@@ -52,6 +54,10 @@ public class MainView extends StandardTabbedModeMainView {
     private JmixListMenu menu;
     @ViewComponent
     private MessageBundle messageBundle;
+    @ViewComponent
+    private DrawerToggle mainTabSheetDrawerToggle;
+    @ViewComponent
+    private DrawerToggle initialLayoutDrawerToggle;
 
     @Autowired
     private Messages messages;
@@ -68,6 +74,13 @@ public class MainView extends StandardTabbedModeMainView {
 
     @Subscribe
     public void onInit(final InitEvent event) {
+        // A standalone tooltip, which targets the element: <vaadin-drawer-toggle> has no tooltip slot, so
+        // setTooltipText is accepted and never shown, and Jmix dropped the descriptor's tooltip element for it
+        // (jmix-framework/jmix#4161)
+        String toggleTooltip = messageBundle.getMessage("drawerToggle.tooltip");
+        Tooltip.forComponent(mainTabSheetDrawerToggle).setText(toggleTooltip);
+        Tooltip.forComponent(initialLayoutDrawerToggle).setText(toggleTooltip);
+
         updateRejectedTimeEntries();
     }
 
