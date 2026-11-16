@@ -280,16 +280,13 @@ public class TimeEntryApprovalRejectUiTest {
             Component mondayRow = partOf(dialog, "basketEntry-" + cidMonday.getId());
             assertThat(markdownOf(mondayRow)).isEqualTo(description);
             assertThat(mondayRow.getElement().getTextRecursively()).doesNotContain("**", "- zeroed");
-            // Cut after two lines, so the whole description shows on hover
-            Component mondayDescription = descendantsOf(mondayRow)
-                    .filter(part -> part.hasClassName("description"))
-                    .findFirst()
-                    .orElseThrow();
-            assertThat(Tooltip.forComponent(mondayDescription).getText()).isEqualTo(description);
+            // Cut after two lines, so the whole description shows on hover over the entry, anywhere on it
+            assertThat(Tooltip.forComponent(mondayRow).getText()).isEqualTo(description);
 
             // An entry without a description shows only its day
             Component tuesdayRow = partOf(dialog, "basketEntry-" + cidTuesday.getId());
             assertThat(descendantsOf(tuesdayRow).filter(Markdown.class::isInstance)).isEmpty();
+            assertThat(Tooltip.forComponent(tuesdayRow).getText()).isNull();
         });
     }
 
@@ -569,10 +566,13 @@ public class TimeEntryApprovalRejectUiTest {
 
             click(view, "rejectEntryBtn-" + cidMonday.getId());
 
-            // The counts leave the entry out at once, and a day with nothing else to approve has no button
+            // The counts leave the entry out at once, and the button of a day with nothing else to approve is
+            // disabled, in its place
             assertThat(personButtonTextOf(view)).isEqualTo("Approve 2 waiting");
-            assertThat(UiComponentUtils.findComponent(view, "approveDayBtn-" + cidMonday.getDate())).isEmpty();
-            assertThat(UiComponentUtils.findComponent(view, "approveDayBtn-" + cidTuesday.getDate())).isPresent();
+            Button mondayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidMonday.getDate());
+            assertThat(mondayButton.isEnabled()).isFalse();
+            Button tuesdayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidTuesday.getDate());
+            assertThat(tuesdayButton.isEnabled()).isTrue();
 
             click(view, "approvePersonBtn");
             DialogInfo confirmation = lastDialog();

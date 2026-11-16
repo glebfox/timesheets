@@ -44,6 +44,7 @@ import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -680,6 +681,11 @@ public class TimeEntryApprovalViewUiTest {
             // A day without entries is marked, so that it takes only the room of its header
             assertThat(classesOf(column)).doesNotContain("empty");
             assertThat(classesOf(UiTestUtils.getComponent(view, "column-" + OCTOBER.atDay(9)))).contains("empty");
+            // A day with entries keeps Approve day in its header, disabled while none of them waits; a day without
+            // entries has no such button
+            Button rejectedDayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidRejected.getDate());
+            assertThat(rejectedDayButton.isEnabled()).isFalse();
+            assertThat(UiComponentUtils.findComponent(view, "approveDayBtn-" + OCTOBER.atDay(9))).isEmpty();
             assertThat(listedOf(view)).containsExactly(cidRejected.getId());
             assertThat(entryCardOf(view, cidRejected).getParent().flatMap(Component::getParent))
                     .contains(column);

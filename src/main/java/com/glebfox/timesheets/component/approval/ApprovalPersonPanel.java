@@ -225,7 +225,10 @@ public final class ApprovalPersonPanel extends Composite<Div>
                     entry -> createEntryCard(entry, true), componentSupport, messages, locale);
             panel.add(board);
             for (LocalDate day : period.days()) {
-                addDayButton(drawnButtons, board.getDayActions(day), day, true);
+                // A day without entries has nothing that could ever be approved, so no button, not a disabled one
+                if (!entriesByDay.getOrDefault(day, List.of()).isEmpty()) {
+                    addDayButton(drawnButtons, board.getDayActions(day), day, true);
+                }
             }
         }
         drawnButtons.refresh();
@@ -514,15 +517,19 @@ public final class ApprovalPersonPanel extends Composite<Div>
         // Without a fill, as Approve day: the person's button above is the one filled button of the panel
         Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.TERTIARY,
                 ButtonVariant.SUCCESS, ButtonVariant.SMALL);
-        button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
-                titles.formatDates(scope.from(), scope.to())));
+        // A narrow panel shows the button's icon alone, so the button also names itself on hover
+        String name = messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
+                titles.formatDates(scope.from(), scope.to()));
+        button.setAriaLabel(name);
+        button.setTooltipText(name);
         String text = messages.getMessage(ApprovalPersonPanel.class, "approveWeekBtn.text", locale);
         drawnButtons.add(actions, button, scope, count -> text);
     }
 
     /**
-     * Adds the button of a day. On the week board, a column too narrow for the button's text shows its icon alone, so
-     * there the button also names itself on hover.
+     * Adds the button of a day, which stays in its place, disabled, while the day has nothing to approve: the day's
+     * header keeps its height, and the cards under it do not move as the button comes and goes. On the week board, a
+     * column too narrow for the button's text shows its icon alone, so there the button also names itself on hover.
      */
     private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day, boolean onBoard) {
         Button button = createApproveButton("approveDayBtn-" + day, ButtonVariant.TERTIARY, ButtonVariant.SUCCESS,
@@ -533,8 +540,8 @@ public final class ApprovalPersonPanel extends Composite<Div>
         if (onBoard) {
             button.setTooltipText(name);
         }
-        String text = messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale);
-        buttons.add(actions, button, ApprovalScope.ofDay(day), count -> text);
+        buttons.addKept(actions, button, ApprovalScope.ofDay(day),
+                messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale));
     }
 
     private static Button createApproveButton(String id, ButtonVariant... variants) {

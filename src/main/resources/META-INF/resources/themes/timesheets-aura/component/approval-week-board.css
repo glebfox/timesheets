@@ -52,16 +52,19 @@
 }
 
 /* The day and its hours on the first row, the hours below the day where both do not fit; the line and the actions,
-   when there are any, each on a row of its own, the actions at the end, as those of an entry card. A heading, so it
-   has no border and no fill, which would make it look like a field or a button; its text stands on the edge of the
-   cards' text, a card's padding and border in from the column's edge */
+   when there are any, each on a row of its own, the actions at the end, as those of an entry card. The card of the
+   day: bordered as the entry cards under it and the figures above it, between which a bare heading would hang in the
+   air, and without a fill, which would make it look like a disabled button; its text stands on the edge of the cards'
+   text, the same border and padding in from the column's edge */
 .approval-week-board > .column > .header {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     column-gap: var(--vaadin-gap-xs);
     row-gap: var(--vaadin-gap-xs);
-    padding: var(--vaadin-padding-xs) calc(var(--vaadin-padding-s) + 1px);
+    padding: var(--vaadin-padding-xs) var(--vaadin-padding-s);
+    border: 1px solid var(--vaadin-border-color);
+    border-radius: var(--vaadin-radius-l);
 
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
@@ -152,12 +155,14 @@
         display: none;
     }
 
-    /* As a day's header in a month's list: on the cards' outer edge, in the body size, a weekend's too */
+    /* As a day's header in a month's list: a plain row on the cards' outer edge, in the body size, a weekend's too */
     .approval-week-board > .column > .header {
         flex-wrap: nowrap;
         align-items: center;
         column-gap: var(--vaadin-gap-s);
         padding: 0;
+        border: none;
+        border-radius: 0;
 
         font-size: var(--aura-font-size-m);
         line-height: var(--aura-line-height-m);

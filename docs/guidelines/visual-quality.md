@@ -17,7 +17,7 @@
 ## 2. Spacing and grouping
 
 - Three steps, each clearly larger than the one before: inside a block, between blocks, between sections. A block whose inner padding exceeds the gap to its neighbor merges with it.
-- Parts that belong together stand closer to each other than to anything else.
+- Parts that belong together stand closer to each other than to anything else, and a part that is a block of its own, such as a badge under a title and its caption, is as far from them as the other blocks are from each other.
 - Space groups first, a line second, a box last. A box inside a box needs a reason, and a screen whose every part has the same border has no grouping left.
 - A container's padding is not smaller than its corner radius; otherwise text sits against the curve. A part too small for such padding takes a smaller radius: a radius made for a panel turns a compact card into a bubble and a one-line header into a pill.
 - Uniformity is in the padding around content, not in the size of the box. Rows of one line and rows of two lines are not made equally tall: they get the same padding, and their height follows.
@@ -55,7 +55,7 @@
 ## 6. Interactive elements
 
 - A control is the component its role names. A navigation is a link, an action is a button, a row of data is a row. A button is not a container for a layout: its label is one line of text and clips the rest.
-- What cannot be clicked does not look like a control: a heading or a value gets no border, fill, and radius of a button, a chip, or a field.
+- What cannot be clicked does not look like a control: a label or a value does not get the border and the fill of a button, a chip, or a field together. A bordered card that holds a group's heading and its actions is a container, not such a look-alike.
 - A control of the project's own has every state the theme's controls have: hover, focus, pressed, selected, disabled, and its look in forced colors (`design-system.md`).
 - Making a whole row clickable is a choice with a price, the box and its edges above; a row whose name alone is clickable has no box to align.
 - A repeated action in a list is an icon with a tooltip, not a text button in every row (`ux.md`).
@@ -75,11 +75,12 @@
 
 - Screenshots at the widths the screen is made for, before the work is called done: the widest common one, every width where its layout switches, and the narrowest it supports, a phone where it has a layout for one. Each in both themes and, where the screen's width depends on it, with the navigation drawer open and collapsed (`design-system.md`). Widen the window as well as narrow it.
 - Screenshots at the device's own pixels: one scaled down to fit a pane hides a fault of a pixel or two.
-- Measure, do not eyeball: the left and right edges of every line of text in a container and of the blocks stacked in a column, the pitch of rows, the baseline of the same value in blocks side by side, and whatever a container clips.
+- Measure, do not eyeball: the left and right edges of every line of text in a container and of the blocks stacked in a column, the pitch of rows, the gaps between the blocks inside a card, the baseline of the same value in blocks side by side, and whatever a container clips.
 - Check with the keyboard: the focus ring of every focusable element is whole and clear of its container's border.
 - Check in forced colors: what only a fill or a color tells still shows (`design-system.md`).
 - Check the longest text the screen can get, the other language included, at the narrowest width.
 - Check with no data, with one item, with a period only partly filled, and with as much as the screen shows. Demo data rarely gives the first two; make the users that do.
+- Change the state of every part that can change, and watch what moves: a button that comes and goes must not shift what stands around it.
 - After a fix, look at what it moved in the neighbors of the part it changed.
 
 ## Open
@@ -89,6 +90,6 @@ Not settled as general rules. Where a screen decided one of these, the decision 
 - How blocks of unequal content share a row: equal heights with empty space, or their own heights.
 - Whether a wide row keeps its values and its actions next to its text or at the far edge.
 - Blocks with no data: where the message stands, how loud it is, and when a block is hidden instead.
-- When the items of a list are cards and when they are rows parted by lines.
+- When the items of a list are cards and when they are rows parted by lines, and when the heading of a group is a card of its own and when it is plain text.
 - Charts: fonts, tooltips, plan marks, the current period, and how a chart uses extra room.
 - A palette for categories and statuses that holds across charts, badges, and lists, and whether a status that asks nothing of a screen's user, such as New on the author's own screens, keeps its color there or turns neutral.
