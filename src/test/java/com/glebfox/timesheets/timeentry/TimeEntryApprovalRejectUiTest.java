@@ -588,7 +588,9 @@ public class TimeEntryApprovalRejectUiTest {
             assertThat(basketOf(view)).containsExactly(cidMonday.getId());
             assertThat(buttonsOf(view, cidMonday)).containsExactly("unreject");
             assertThat(basketBar(view).isVisible()).isTrue();
-            assertThat(UiComponentUtils.findComponent(view, "approvePersonBtn")).isEmpty();
+            Button personButton = UiTestUtils.getComponent(view, "approvePersonBtn");
+            assertThat(personButton.isEnabled()).isFalse();
+            assertThat(personButton.getText()).isEqualTo("Approve waiting");
         });
     }
 

@@ -29,12 +29,11 @@ import java.util.List;
  * The buttons that approve in bulk, each in the {@code actions} slot of the part it belongs to: the person's period,
  * a week, or a day.
  * <p>
- * Whether a button is there, and the count its text tells, come from the entries that its scope covers, asked for
- * through the function given to the constructor, every time {@link #refresh} runs. A scope with no entries to approve
- * has no button: it is taken out of its slot, so that an empty slot takes no room. A button added with
- * {@link #addKept} stays in its slot instead, disabled while its scope has nothing to approve, so that the parts
- * around it do not move as its entries are approved or put in the reject basket. A click is passed on with the scope of the button, and whether it came
- * from the browser.
+ * A button stays in its slot from the moment it is added, enabled while its scope has entries to approve and disabled
+ * while it has none, so that the parts around it do not move as its entries are approved or put in the reject basket.
+ * Whether it is enabled, and the text it shows, come from the entries that its scope covers, asked for through the
+ * function given to the constructor, every time {@link #refresh} runs. A click is passed on with the scope of the
+ * button, and whether it came from the browser.
  */
 final class ApprovalBulkApproveButtons {
 
@@ -55,59 +54,31 @@ final class ApprovalBulkApproveButtons {
     }
 
     /**
-     * Adds a button for a scope. It reaches its slot at the next {@link #refresh}, if its scope has entries to
-     * approve.
+     * Adds a button for a scope and puts it in its slot, disabled until the next {@link #refresh} finds entries to
+     * approve in its scope.
      *
      * @param slot   the {@code actions} part to put the button in
      * @param button the button, with its id, look, and label
      * @param scope  the days that the button approves
-     * @param text   gives the button's text for the number of entries to approve, never zero
+     * @param text   gives the button's text for the number of entries to approve, zero included
      */
     void add(Div slot, Button button, ApprovalScope scope, SerializableFunction<Integer, String> text) {
         button.addClickListener(event -> onClick.accept(scope, event.isFromClient()));
-        slots.add(new Slot(slot, button, scope, text, false));
-    }
-
-    /**
-     * Adds a button for a scope that stays in its slot whether or not its scope has entries to approve: it is put
-     * there at once, and the next {@link #refresh} enables it if its scope has some. Its text does not tell their
-     * number.
-     *
-     * @param slot   the {@code actions} part to put the button in
-     * @param button the button, with its id, look, and label
-     * @param scope  the days that the button approves
-     * @param text   the button's text
-     */
-    void addKept(Div slot, Button button, ApprovalScope scope, String text) {
-        button.addClickListener(event -> onClick.accept(scope, event.isFromClient()));
-        button.setText(text);
+        button.setText(text.apply(0));
         button.setEnabled(false);
         slot.add(button);
-        slots.add(new Slot(slot, button, scope, count -> text, true));
+        slots.add(new Slot(button, scope, text));
     }
 
     /**
-     * Brings every button up to date with the entries to approve: a button of a scope with none leaves its slot, or
-     * is disabled if it is kept there, and one of a scope with some is in its slot and tells their number.
+     * Brings every button up to date with the entries to approve: its text for their number, and enabled only while
+     * there are some.
      */
     void refresh() {
         for (Slot slot : slots) {
             int count = entriesToApprove.apply(slot.scope()).size();
-            if (slot.kept()) {
-                slot.button().setEnabled(count > 0);
-                continue;
-            }
-            if (count == 0) {
-                if (slot.button().getParent().isPresent()) {
-                    slot.container().remove(slot.button());
-                }
-                continue;
-            }
-
             slot.button().setText(slot.text().apply(count));
-            if (slot.button().getParent().isEmpty()) {
-                slot.container().add(slot.button());
-            }
+            slot.button().setEnabled(count > 0);
         }
     }
 
@@ -118,7 +89,6 @@ final class ApprovalBulkApproveButtons {
         slots.clear();
     }
 
-    private record Slot(Div container, Button button, ApprovalScope scope, SerializableFunction<Integer, String> text,
-                        boolean kept) {
+    private record Slot(Button button, ApprovalScope scope, SerializableFunction<Integer, String> text) {
     }
 }

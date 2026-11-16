@@ -233,11 +233,12 @@ public class TimeEntryApprovalActionsUiTest {
             assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
             assertSuccess("5 entries approved");
 
-            // The screen follows: the figures, and no button where nothing waits
+            // The screen follows: the figures, and the person's button disabled, without a number, where nothing waits
             assertThat(figureOf(view, "waiting")).containsExactly("Waiting", "0");
             assertThat(figureOf(view, "approved")).containsExactly("Approved", "6", "entries · 24h");
             assertThat(figureOf(view, "rejected")).containsExactly("Rejected", "1", "entry · 4h");
-            assertThat(UiComponentUtils.findComponent(view, "approvePersonBtn")).isEmpty();
+            assertThat(this.<Button>buttonOf(view, "approvePersonBtn").isEnabled()).isFalse();
+            assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Approve waiting");
             assertThat(selectedOf(view)).isEqualTo(cid.getId());
         });
     }
@@ -254,7 +255,8 @@ public class TimeEntryApprovalActionsUiTest {
             // Named as Approve day is, and by its dates on hover, as a narrow panel shows its icon alone
             Button weekButton = UiTestUtils.getComponent(view, "approveWeekBtn-" + week);
             assertThat(weekButton.getText()).isEqualTo("Approve week");
-            assertThat(weekButton.getTooltip().getText()).isEqualTo("Approve week Oct 4 – 10");
+            assertThat(Tooltip.forComponent(weekButton.getParent().orElseThrow()).getText())
+                    .isEqualTo("Approve week Oct 4 – 10");
 
             click(view, "approveWeekBtn-" + week);
 
@@ -275,8 +277,8 @@ public class TimeEntryApprovalActionsUiTest {
 
             // The week stays listed, and the buttons follow what still waits
             assertThat(view.getSelectedWeek()).isEqualTo(week);
-            assertThat(UiComponentUtils.findComponent(view, "approveWeekBtn-" + week)).isEmpty();
-            assertThat(UiComponentUtils.findComponent(view, "approveWeekBtn-" + nextWeek)).isPresent();
+            assertThat(this.<Button>buttonOf(view, "approveWeekBtn-" + week).isEnabled()).isFalse();
+            assertThat(this.<Button>buttonOf(view, "approveWeekBtn-" + nextWeek).isEnabled()).isTrue();
             assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Approve 2 waiting");
         });
     }
@@ -379,25 +381,30 @@ public class TimeEntryApprovalActionsUiTest {
             assertThat(statusOf(cidTuesday)).isEqualTo(TimeEntryStatus.APPROVED);
             assertThat(statusOf(cidRejected)).isEqualTo(TimeEntryStatus.REJECTED);
             assertThat(statusOf(cidWednesday)).isEqualTo(TimeEntryStatus.NEW);
-            assertThat(UiComponentUtils.findComponent(view, "approvePersonBtn")).isEmpty();
+            // Nothing of the week waits any more: the button stays, disabled, and names the week without a number
+            assertThat(this.<Button>buttonOf(view, "approvePersonBtn").isEnabled()).isFalse();
+            assertThat(buttonTextOf(view, "approvePersonBtn")).isEqualTo("Approve week");
             assertSuccess("1 entry approved");
         });
     }
 
     @Test
-    void noButtonWhereNothingWaits() {
+    void buttonsAreDisabledWhereNothingWaits() {
         asAdmin(() -> {
             TimeEntryApprovalView view = open();
             view.setPeriod(ApprovalPeriod.monthOf(OCTOBER));
             scopeField(view).setValue(ApprovalRosterScope.EVERYONE);
             view.selectPerson(bob);
 
-            assertThat(UiComponentUtils.findComponent(view, "approvePersonBtn")).isEmpty();
-            assertThat(UiComponentUtils.findComponent(view, "approveWeekBtn-" + weekStartOf(bobApproved.getDate())))
-                    .isEmpty();
-            // A day's button is the one that stays, disabled
+            // The buttons that approve in bulk stay in their places, disabled; an entry's own ✓ is not there
+            assertThat(this.<Button>buttonOf(view, "approvePersonBtn").isEnabled()).isFalse();
+            assertThat(this.<Button>buttonOf(view, "approveWeekBtn-" + weekStartOf(bobApproved.getDate())).isEnabled())
+                    .isFalse();
             assertThat(this.<Button>buttonOf(view, "approveDayBtn-" + bobApproved.getDate()).isEnabled()).isFalse();
             assertThat(UiComponentUtils.findComponent(view, "approveEntryBtn-" + bobApproved.getId())).isEmpty();
+            // A week without entries has no button at all
+            assertThat(UiComponentUtils.findComponent(view, "approveWeekBtn-" + weekStartOf(OCTOBER.atDay(20))))
+                    .isEmpty();
         });
     }
 
