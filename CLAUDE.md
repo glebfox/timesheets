@@ -17,7 +17,7 @@ Map of this repository's knowledge base: pointers, not content. The docs hold on
 - **docs/reference/** — dated external research; frozen. Never a source for what the product does. Not created yet: created at first need.
 - **docs/specs/data-model/*.md** — what each entity and value type is: its meaning, rules, and lifecycle, and what no test covers. `README.md` gives the overview and the rules that hold for every entity.
 - **docs/specs/roles/*.md** — what each security role grants and who holds it. `README.md` gives the overview.
-- **docs/specs/views/*.md** — what each screen does as its users see it, one file per functional area, and what no test covers. `README.md` gives what every screen with a list or a table shares.
+- **docs/specs/views/*.md** — what each screen does as its users see it, one file per functional area, and what no test covers. `README.md` gives what every screen with a list, a table, or a form shares.
 - Each spec opens with `Source:`, the code paths it describes, relative to the base package `com/glebfox/timesheets/` in `src/main/java` and `src/main/resources`.
 
 ## Reading order
