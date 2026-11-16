@@ -1,6 +1,6 @@
 # Conventions
 
-Rules that tooling does not enforce and the code does not consistently show.
+Rules for writing and committing code that formatters and linters do not enforce and the code does not consistently show, and the rules that tests check, unless they belong to a guideline.
 
 ## Language
 
@@ -8,7 +8,7 @@ Code, comments, documentation, commit messages, and every other repository artif
 
 ## User-visible text
 
-Every user-visible text is a message key, defined in both `messages_en.properties` and `messages_ru_RU.properties`, the bundles of the locales in `jmix.core.available-locales`. The two bundles stay key-for-key in sync.
+Every user-visible text is a message key, defined in both `messages_en.properties` and `messages_ru_RU.properties`, the bundles of the locales in `jmix.core.available-locales`. The two bundles stay key-for-key in sync: a key that one of them lacks shows that locale's users the key itself instead of a text.
 
 A text with a count, such as "5 workdays", has one key per plural form, `<key>.one`, `<key>.few`, and `<key>.many`, in both bundles, and takes the form its count needs from `PluralForms` in `app/util/`. Russian uses all three forms; English repeats its `many` text under `few`.
 
@@ -42,7 +42,11 @@ When a UI piece that looks the same in several places becomes a component or a r
 
 ## Entity drop-downs
 
-An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Older views lack one or both, such as the assignment editor's schedule field and the task lookup's project filter.
+An entity drop-down (`entityComboBox`) has a picker that opens the entity's list, as another way to choose its value, and a clear button, to empty the field in one click instead of selecting and deleting its text: the `entity_lookup` and `entity_clear` actions, in an editor and in a list's filter alike, and on a required field too, where the save then asks for a value. Three older fields lack one or both: the assignment editor's schedule field, the task lookup's project filter, and the field that picks the new default schedule when the default one is deleted.
+
+## Prefix icons
+
+Every field of a form that can take a prefix shows an icon there, whether the descriptor declares it or the controller builds it, so that the fields of a form look alike and line up, and the icon shows at a glance what kind of value a field takes, with the same icon for the same kind of value on every screen. Fields with no prefix area, such as switches, segmented bars, Markdown editors, and avatar fields, are not concerned. Three kinds of field go without one. The Status fields of the project, task, and time entry editors set their icon by the value, an icon for each status. The multi-select drop-downs have no framework API for a prefix, and an icon slotted into them by hand is ruled out. The date range field's two pickers stay without one: an icon on each, about 40 px, would move the widths at which its dates stack.
 
 ## Components in a view
 

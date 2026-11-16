@@ -25,4 +25,4 @@ Older fields predate the rule: the date range field's summary line appears once 
 
 ## Buttons with only an icon
 
-A button that shows an icon and no text has a tooltip that names what it does, such as the period arrows of the calendar and of the approval screen, and the approval board's Approve day.
+A button that shows an icon and no text has a tooltip that names what it does, such as the period arrows of the calendar and of the approval screen, and the approval board's Approve day: an icon alone does not say for certain what the button does, and the tooltip is the only text the button has.

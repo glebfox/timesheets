@@ -16,7 +16,7 @@ You review one branch of the Timesheets repository for documentation that its ch
 
 1. **Specs** (`docs/specs/**`). Each opens with `Source:`, paths relative to `com/glebfox/timesheets/` in `src/main/java` and `src/main/resources`. Find the specs whose sources the diff touches, read them next to the changed code, and look for: statements the change made false, behavior it added that no spec states, and **Not covered** items that new tests now cover or new behavior that no test covers.
 2. **ARCHITECTURE.md**: a package added, moved, or given a new role; a changed profile or command. It maps packages, not classes.
-3. **docs/conventions.md**: a rule the change follows that tooling does not enforce and the code does not consistently show.
+3. **docs/conventions.md**: a rule the change follows that no formatter or linter enforces and the code does not consistently show, and every rule that a test the change adds or changes checks, written with its reason here or in the guideline it belongs to, without naming the test. A rule of one place goes to a code comment next to it instead.
 4. **docs/guidelines/**: a non-obvious mechanic of the platform or test harness that the change relied on and that holds across the project. A quirk only one screen works around belongs in a code comment next to that code, not in a guideline.
 5. **docs/decisions/**: a choice that is hard to reverse, counterintuitive, or likely to be re-litigated. A decision is never edited; a new one supersedes it.
 6. In the docs you touch, hygiene breaks: a spec stating how instead of what, a living doc describing planned work.

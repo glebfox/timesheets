@@ -112,7 +112,7 @@
         </xs:complexType>
     </xs:element>
 
-    <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports -->
+    <!-- A comma-separated list; every entry names one of the formats AvatarUpload supports, those of AvatarImageFormat, and every such format is listed, since Studio suggests these values and the field accepts no others -->
     <xs:simpleType name="avatarUploadAcceptedFileTypes">
         <xs:union>
             <xs:simpleType>

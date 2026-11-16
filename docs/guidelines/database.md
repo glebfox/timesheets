@@ -9,7 +9,7 @@ The root `changelog.xml` includes the add-ons' changelogs, then `includeAll` of 
 1. `010-init-user.xml` — the user table and the `admin` user with full access, in every environment.
 2. `YYYY/MM/*.xml` — the rest of the schema, one changelog per model change. New changelogs go here, in the folder of the month they are written. A schema changelog may also insert a row that every environment needs, with one insert per `dbms` group as the `admin` insert has, as the default work schedule's changelog does; the demo data may then change that row.
 
-The changelogs hold no demo data: a `dev` start loads it from code, after Liquibase has run (`ARCHITECTURE.md`); why: [decision 0007](../decisions/0007-demo-data-is-loaded-by-the-application-not-by-liquibase.md). A schema change therefore needs no change to the demo data unless the loader breaks on it, such as on a new required attribute, and `DemoDataLoaderTest` catches that.
+The changelogs hold no demo data: a `dev` start loads it from code, after Liquibase has run (`ARCHITECTURE.md`); why: [decision 0007](../decisions/0007-demo-data-is-loaded-by-the-application-not-by-liquibase.md). A schema change therefore needs no change to the demo data unless the loader breaks on it, such as on a new required attribute; then the loader changes in the same change, so that a `dev` start still loads the demo data.
 
 ## Soft delete and uniqueness
 
