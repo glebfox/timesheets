@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-/* Entry card: the status color, as a stripe on the week board and a dot before the time in a month's list, the time,
-   what was done, and the actions */
+/* Entry card: the status color, as a dot before the time, the time, what was done, and the actions */
 
 .approval-entry-card {
-    position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: "time content actions";
     align-items: start;
     box-sizing: border-box;
     padding: var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-s) var(--vaadin-padding-m);
-    overflow: hidden;
     border: 1px solid var(--vaadin-border-color);
     border-radius: var(--vaadin-radius-l);
 }
@@ -35,28 +32,17 @@
     border-color: var(--ts-danger-color);
 }
 
-.approval-entry-card > .stripe {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
-    width: var(--vaadin-gap-xs);
-    background: var(--_status-color);
-}
-
+/* The status dot sits on the middle of the time */
 .approval-entry-card > .time {
     grid-area: time;
+    display: flex;
+    align-items: center;
+    gap: var(--vaadin-gap-s);
     margin-inline-end: var(--vaadin-gap-m);
     white-space: nowrap;
 
     font-weight: var(--aura-font-weight-semibold);
     font-variant-numeric: tabular-nums;
-}
-
-/* The status dot of a card in a month's list sits on the middle of the time */
-.approval-entry-card > .time:has(> .dot) {
-    display: flex;
-    align-items: center;
-    gap: var(--vaadin-gap-s);
 }
 
 .approval-entry-card > .content {
@@ -74,8 +60,9 @@
     column-gap: var(--vaadin-gap-s);
 }
 
+/* A step below the time and below the headings of the day and the week that the card stands under */
 .approval-entry-card > .content > .task > .task-name {
-    font-weight: var(--aura-font-weight-semibold);
+    font-weight: var(--aura-font-weight-medium);
 }
 
 .approval-entry-card > .content > .task > .project {
@@ -134,72 +121,18 @@
     margin-inline-start: var(--vaadin-gap-s);
 }
 
-/* On the week board: the time, the rest, and the actions each on a row of its own, so that the buttons cover neither
-   the time nor the text of a narrow column; the description cut after three lines */
-.approval-entry-card.compact {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-        "time"
-        "content"
-        "actions";
-    row-gap: var(--vaadin-gap-s);
-}
+/* On the week board, a card is compact: its description is cut after three lines, a tag longer than its column is
+   cut short, and, while the week is a board of columns, its parts stand one under another */
 
-.approval-entry-card.compact > .time {
-    margin-inline-end: 0;
-}
-
-.approval-entry-card.compact > .actions:not(:empty) {
-    justify-self: end;
-    margin-inline-start: 0;
-}
-
-/* A card without buttons, such as a Closed one, has no row for them, so no gap above it either */
-@container approval-day (width < 10rem) {
-    .approval-entry-card.compact:has(> .actions:empty) {
-        grid-template-areas:
-            "time"
-            "content";
-    }
-}
-
-/* A column wide enough for the time and both buttons side by side has them on one row, over the rest */
-@container approval-day (width >= 10rem) {
-    .approval-entry-card.compact {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas:
-            "time actions"
-            "content content";
-        align-items: center;
-    }
-
-    .approval-entry-card.compact > .actions:not(:empty) {
-        margin-inline-start: var(--vaadin-gap-xs);
-    }
-}
-
-/* A word longer than the column breaks rather than running past the card's edge */
-.approval-entry-card.compact > .content > .task {
-    flex-direction: column;
-    align-items: flex-start;
-    overflow-wrap: anywhere;
-}
-
-/* A badge longer than the column is cut short with an ellipsis */
-.approval-entry-card.compact vaadin-badge {
+/* A tag longer than the column is cut short with an ellipsis; the status badge never is */
+.approval-entry-card.compact > .content > .tags > vaadin-badge {
     max-width: 100%;
 }
 
-.approval-entry-card.compact > .content > .task > .task-name {
-    font-size: var(--aura-font-size-s);
-    line-height: var(--aura-line-height-s);
-}
-
-/* Below the task, the project reads as its caption, a size smaller than the description, so that the two never read as
-   one text */
-.approval-entry-card.compact > .content > .task > .project {
-    font-size: var(--aura-font-size-xs);
-    line-height: var(--aura-line-height-xs);
+/* A list starts at the card's text edge, with only the room its markers need: the browser's indent takes a third of a
+   narrow column */
+.approval-entry-card.compact > .content > .description vaadin-markdown :is(ul, ol) {
+    padding-inline-start: var(--vaadin-padding-l);
 }
 
 .approval-entry-card.compact > .content > .description {
@@ -213,6 +146,74 @@
 
     font-size: var(--aura-font-size-s);
     line-height: var(--aura-line-height-s);
+}
+
+/* While the week is a board, in a panel of 768 pixels or more (approval-week-board.css): the time, the rest, and the
+   actions each on a row of its own, so that the buttons cover neither the time nor the text of a narrow column, and
+   the same padding on every side, as a column is narrow and its header's text stands on the edge of the cards' text.
+   In a narrower panel the week is a list of days, and a card is laid out as in a month's list, by the rules above */
+@container approval-panel (width >= 768px) {
+    .approval-entry-card.compact {
+        padding: var(--vaadin-padding-s);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "time"
+            "content"
+            "actions";
+        row-gap: var(--vaadin-gap-s);
+    }
+
+    .approval-entry-card.compact > .time {
+        margin-inline-end: 0;
+    }
+
+    .approval-entry-card.compact > .actions:not(:empty) {
+        justify-self: end;
+        margin-inline-start: 0;
+    }
+
+    /* A card without buttons, such as a Closed one, has no row for them, so no gap above it either */
+    @container approval-day (width < 10rem) {
+        .approval-entry-card.compact:has(> .actions:empty) {
+            grid-template-areas:
+                "time"
+                "content";
+        }
+    }
+
+    /* A column wide enough for the time and both buttons side by side has them on one row, over the rest */
+    @container approval-day (width >= 10rem) {
+        .approval-entry-card.compact {
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "time actions"
+                "content content";
+            align-items: center;
+        }
+
+        .approval-entry-card.compact > .actions:not(:empty) {
+            margin-inline-start: var(--vaadin-gap-xs);
+        }
+    }
+
+    /* A word longer than the column breaks rather than running past the card's edge */
+    .approval-entry-card.compact > .content > .task {
+        flex-direction: column;
+        align-items: flex-start;
+        overflow-wrap: anywhere;
+    }
+
+    .approval-entry-card.compact > .content > .task > .task-name {
+        font-size: var(--aura-font-size-s);
+        line-height: var(--aura-line-height-s);
+    }
+
+    /* Below the task, the project reads as its caption, a size smaller than the description, so that the two never
+       read as one text */
+    .approval-entry-card.compact > .content > .task > .project {
+        font-size: var(--aura-font-size-xs);
+        line-height: var(--aura-line-height-xs);
+    }
 }
 
 /* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and

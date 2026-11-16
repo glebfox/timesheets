@@ -511,7 +511,8 @@ public final class ApprovalPersonPanel extends Composite<Div>
         List<LocalDate> days = row.stream().filter(month::contains).toList();
         ApprovalScope scope = new ApprovalScope(days.getFirst(), days.getLast());
 
-        Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.PRIMARY,
+        // Without a fill, as Approve day: the person's button above is the one filled button of the panel
+        Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.TERTIARY,
                 ButtonVariant.SUCCESS, ButtonVariant.SMALL);
         button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
                 titles.formatDates(scope.from(), scope.to())));

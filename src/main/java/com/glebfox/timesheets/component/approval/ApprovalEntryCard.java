@@ -51,11 +51,11 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 /**
- * A time entry's card on the approval screen: the color of the entry's status, as a stripe along the card's edge on
- * the week board and as a dot before the time in a month's list, the time, the task with
- * its project and, unless the entry waits, a badge of its status, the description, the tags, the rejection reason of
- * a rejected entry, and the buttons for what can be done with it: ✓ for a new or a rejected entry, ✕ for a new, an
- * approved, or a rejected one, and none for a closed one. The description and the reason are rendered from Markdown.
+ * A time entry's card on the approval screen: the color of the entry's status, as a dot before the time, the time,
+ * the task with its project and, unless the entry waits, a badge of its status, the description, the tags, the
+ * rejection reason of a rejected entry, and the buttons for what can be done with it: ✓ for a new or a rejected
+ * entry, ✕ for a new or an approved one, and none for a closed one. The description and the reason are rendered from
+ * Markdown.
  * <p>
  * An entry that can be rejected may be put in the reject basket, which {@link #setInBasket} tells the card: the card
  * is then marked "in reject basket", and its only button is ↺, which takes the entry out again.
@@ -68,9 +68,10 @@ import java.util.stream.Stream;
  * <p>
  * The card's classes are {@code approval-entry-card}, the class of the entry's status ({@code new}, {@code approved},
  * {@code rejected}, or {@code closed}), {@code compact} on the week board, where the description is cut after three
- * lines and shows in full in a tooltip, and {@code in-basket} while the entry is in the reject basket. Its parts have the classes {@code stripe} on the week board,
- * {@code time}, with a {@code dot} in a month's list, {@code content}, which holds {@code task} (with {@code task-name}, {@code project}, and the
- * {@code basket-mark}), {@code description}, {@code tags}, and {@code reason}, and {@code actions}. The card's id is
+ * lines and shows in full in a tooltip, and {@code in-basket} while the entry is in the reject basket. Its parts have
+ * the classes {@code time}, which holds a {@code dot} in the class of the status, {@code content}, which holds
+ * {@code task} (with {@code task-name}, {@code project}, and the {@code basket-mark}), {@code description},
+ * {@code tags}, and {@code reason}, and {@code actions}. The card's id is
  * {@code entry-<id>}, and its buttons' are {@code approveEntryBtn-<id>}, {@code rejectEntryBtn-<id>}, and
  * {@code unrejectEntryBtn-<id>}, with the id of the entry.
  * <p>
@@ -83,8 +84,8 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
     static final String IN_BASKET_CLASS_NAME = "in-basket";
 
     private static final Set<TimeEntryStatus> APPROVABLE = EnumSet.of(TimeEntryStatus.NEW, TimeEntryStatus.REJECTED);
-    private static final Set<TimeEntryStatus> REJECTABLE =
-            EnumSet.of(TimeEntryStatus.NEW, TimeEntryStatus.APPROVED, TimeEntryStatus.REJECTED);
+    // Not a rejected one: it is rejected already, as an approved one has no ✓
+    private static final Set<TimeEntryStatus> REJECTABLE = EnumSet.of(TimeEntryStatus.NEW, TimeEntryStatus.APPROVED);
 
     private final TimeEntry entry;
     private final Div task;
@@ -119,24 +120,15 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         card.addClassNames(CLASS_NAME, ApprovalStatusClassNames.of(status));
         card.setClassName(COMPACT_CLASS_NAME, compact);
 
-        // The color of the status: a stripe along the edge of a card on the week board, where it reads down a column,
-        // and a dot before the time of a card in a month's list, whose cards are rows as wide as the list
-        Span statusMark = new Span();
-        // The stripe takes its color from the card's status class, and a dot, as everywhere on the screen, from its own
-        if (compact) {
-            statusMark.addClassName("stripe");
-        } else {
-            statusMark.addClassNames("dot", ApprovalStatusClassNames.of(status));
-        }
+        // The color of the status: a dot before the time, as everywhere on the screen, which takes the color from
+        // its own status class
+        Span dot = new Span();
+        dot.addClassNames("dot", ApprovalStatusClassNames.of(status));
         // The status is told by the badge, or by the absence of one for an entry that waits
-        statusMark.getElement().setAttribute("aria-hidden", "true");
+        dot.getElement().setAttribute("aria-hidden", "true");
 
-        Div time = new Div();
+        Div time = new Div(dot, new Text(metadataTools.format(entry.getSpentTime())));
         time.addClassName("time");
-        if (!compact) {
-            time.add(statusMark);
-        }
-        time.add(new Text(metadataTools.format(entry.getSpentTime())));
 
         task = createTask(componentSupport, metadataTools);
         basketMark = componentSupport.createBadge(
@@ -181,14 +173,11 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
         focusInsteadOnClick(unrejectButton, rejectButton);
         showButtons();
 
-        if (compact) {
-            card.add(statusMark);
-        }
         card.add(time, content, actions);
     }
 
     /**
-     * Tells whether an entry can be rejected, and so put in the reject basket: a new, an approved, or a rejected one.
+     * Tells whether an entry can be rejected, and so put in the reject basket: a new or an approved one.
      *
      * @param entry the entry
      * @return whether the card of the entry has ✕
@@ -211,6 +200,7 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
      *
      * @param inBasket whether the entry is in the reject basket
      * @throws IllegalArgumentException if the entry goes in the basket but cannot be rejected, as a closed entry
+     *                                  or one rejected already
      */
     public void setInBasket(boolean inBasket) {
         Preconditions.checkArgument(!inBasket || unrejectButton != null,
@@ -241,8 +231,9 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
     }
 
     /**
-     * Adds a listener to the ✕ button, which puts the entry in the reject basket. A closed entry has no such button,
-     * and the listener is never called. While the entry is in the reject basket, the card does not show it.
+     * Adds a listener to the ✕ button, which puts the entry in the reject basket. A rejected or a closed entry has no
+     * such button, and the listener is never called. While the entry is in the reject basket, the card does not show
+     * it.
      *
      * @param listener the listener to call when ✕ is clicked
      * @return a registration that removes the listener
@@ -253,7 +244,7 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
 
     /**
      * Adds a listener to the ↺ button, which takes the entry out of the reject basket. The card shows it only while
-     * the entry is in the basket; a closed entry has no such button, and the listener is never called.
+     * the entry is in the basket; a rejected or a closed entry has no such button, and the listener is never called.
      *
      * @param listener the listener to call when ↺ is clicked
      * @return a registration that removes the listener
@@ -327,7 +318,8 @@ public class ApprovalEntryCard extends Composite<Div> implements HasComponents {
 
     /**
      * Makes a click from the browser on a button move the focus to the button that replaces it. A click that the
-     * server makes moves no focus. Does nothing for an entry without these buttons, a closed one.
+     * server makes moves no focus. Does nothing for an entry without these buttons, a
+     * rejected or a closed one.
      */
     private static void focusInsteadOnClick(@Nullable Button clicked, @Nullable Button replacement) {
         if (clicked != null && replacement != null) {

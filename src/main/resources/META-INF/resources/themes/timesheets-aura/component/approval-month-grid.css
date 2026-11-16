@@ -86,9 +86,6 @@
 .approval-month-grid > .day > .hours {
     grid-row: 2;
     align-self: end;
-    display: flex;
-    align-items: center;
-    gap: var(--vaadin-gap-xs);
     white-space: nowrap;
 
     font-weight: var(--aura-font-weight-semibold);
@@ -99,16 +96,12 @@
     grid-row: 3;
 }
 
-/* Below 768 pixels a day is narrower than its dot and a time such as "10h 30m" (about 87 pixels with the usual
-   padding), as at 1280 pixels with the navigation drawer open, where it is about 68: the day keeps the time on one line
-   with a narrower padding and without the dot, as the line below it shows the same status */
+/* Below 768 pixels a day is narrower than a time such as "10h 30m" with the usual padding (about 76 pixels), as at
+   1280 pixels with the navigation drawer open, where it is about 68: the day keeps the time on one line with a narrower
+   padding */
 @container approval-month (width < 768px) {
     .approval-month-grid > .day {
         padding-inline: var(--vaadin-padding-xs);
-    }
-
-    .approval-month-grid > .day > .hours > .dot {
-        display: none;
     }
 }
 

@@ -25,8 +25,14 @@
     min-height: 0;
     overflow-y: auto;
     /* Room for the focus rings of the parts along the edges, such as the person's primary button: a ring reaches as far
-       out as its width and its offset from the part, which Aura sets to 2 pixels for a primary button */
-    padding: calc(var(--vaadin-focus-ring-width) + 2px);
+       out as its width and its offset from the part, which Aura sets to 2 pixels for a primary button. The margin takes
+       the room back, so that the panel's parts end where the toolbar above them ends */
+    --_ring-room: calc(var(--vaadin-focus-ring-width) + 2px);
+    margin: calc(var(--_ring-room) * -1);
+    padding: var(--_ring-room);
+    /* The week takes its shape, a board of columns or a list of days, from the panel's width */
+    container-name: approval-panel;
+    container-type: inline-size;
 }
 
 /* A slot for actions that has none takes no room: the rules that lay a slot out apply only to one with actions, and
@@ -119,6 +125,9 @@
         "label label"
         "value details"
         "bar bar";
+    /* From the top: the figures are equally tall, and a figure without a bar would spread its rows over the bar's
+       room, with its value lower than its neighbor's */
+    align-content: start;
     align-items: baseline;
     column-gap: var(--vaadin-gap-s);
     padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
@@ -177,7 +186,7 @@
 
 /* Below 600 pixels, two rows of two: four figures in a row still show their longest labels and details whole at 600,
    such as "Утверждено" and "записей · 186ч 30м" in Russian, and the switch stays clear of the panel's width at 1280
-   pixels with the navigation drawer open, about 640 */
+   pixels with the navigation drawer open, about 650 */
 @container approval-figures (width < 600px) {
     .approval-person-panel .figure {
         flex-basis: calc(50% - var(--vaadin-gap-s));
@@ -198,7 +207,8 @@
     }
 }
 
-/* The entries of a week in a month, grouped by day */
+/* The entries of a week in a month, grouped by day. The week's heading and the days' are a step above the titles of
+   the entries they head: the week's a size larger, a day's semibold beside a card's medium */
 
 .approval-person-panel > .entries {
     display: flex;
@@ -215,9 +225,9 @@
 .approval-person-panel > .entries > .entries-header > h4 {
     margin: 0;
 
-    font-size: var(--aura-font-size-m);
+    font-size: var(--aura-font-size-l);
     font-weight: var(--aura-font-weight-semibold);
-    line-height: var(--aura-line-height-m);
+    line-height: var(--aura-line-height-l);
 }
 
 .approval-person-panel > .entries > .empty {
@@ -236,8 +246,8 @@
     gap: var(--vaadin-gap-s);
 
     color: var(--vaadin-text-color-secondary);
-    font-size: var(--aura-font-size-s);
-    line-height: var(--aura-line-height-s);
+    font-size: var(--aura-font-size-m);
+    line-height: var(--aura-line-height-m);
 }
 
 /* A rule fills the header up to the day's actions */

@@ -38,10 +38,11 @@ import java.util.function.Function;
 
 /**
  * A person's week on the approval screen: seven columns, one per day in the order of the user's week, each headed by
- * the day and its time, with the day's entries as compact cards below. Saturday and Sunday are shaded.
+ * the day and its time, with the day's entries as compact cards below. Saturday's and Sunday's day names are muted.
  * <p>
  * The board has the class {@code approval-week-board}. Its {@code column}s have the id {@code column-<date>} and the
- * class {@code weekend}; each holds a {@code header}, with the parts {@code day}, {@code hours}, {@code line} in the
+ * classes {@code weekend} and, for a day without entries, {@code empty}; each holds a {@code header}, with the parts
+ * {@code day}, {@code hours}, {@code line} in the
  * class of the day's status when it has entries, and {@code actions}, where the actions of a day go, and the
  * {@code entries} of the day.
  */
@@ -95,6 +96,8 @@ final class ApprovalWeekBoard extends Composite<Div> implements HasComponents {
         column.addClassName("column");
         DayOfWeek dayOfWeek = day.getDayOfWeek();
         column.setClassName("weekend", dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY);
+        // A day without entries takes only the room of its header
+        column.setClassName("empty", entries.isEmpty());
         return column;
     }
 

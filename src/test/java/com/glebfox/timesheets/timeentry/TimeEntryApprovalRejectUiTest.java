@@ -41,6 +41,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.internal.PendingJavaScriptInvocation;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.internal.StateNode;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
@@ -144,7 +145,8 @@ public class TimeEntryApprovalRejectUiTest {
         bobApproved = data.saveEntry(task, bob, OCTOBER.atDay(6), TimeEntryStatus.APPROVED, null);
         cidMonday = data.saveEntry(task, cid, OCTOBER.atDay(5), TimeEntryStatus.NEW, null);
         cidTuesday = data.saveEntry(task, cid, OCTOBER.atDay(6), TimeEntryStatus.NEW, null);
-        cidApproved = data.saveEntry(task, cid, OCTOBER.atDay(7), TimeEntryStatus.APPROVED, null);
+        // Approved after an earlier rejection, whose reason it still carries
+        cidApproved = data.saveEntry(task, cid, OCTOBER.atDay(7), TimeEntryStatus.APPROVED, EARLIER_REASON);
         cidRejected = data.saveEntry(task, cid, OCTOBER.atDay(8), TimeEntryStatus.REJECTED, EARLIER_REASON);
         cidLater = data.saveEntry(task, cid, OCTOBER.atDay(14), TimeEntryStatus.NEW, null);
     }
@@ -201,7 +203,7 @@ public class TimeEntryApprovalRejectUiTest {
         asAdmin(() -> {
             TimeEntryApprovalView view = openOnCidsWeek();
             click(view, "rejectEntryBtn-" + cidMonday.getId());
-            click(view, "rejectEntryBtn-" + cidRejected.getId());
+            click(view, "rejectEntryBtn-" + cidApproved.getId());
 
             click(view, "writeReasonBtn");
 
@@ -211,7 +213,7 @@ public class TimeEntryApprovalRejectUiTest {
             assertThat(dialog.getModality()).isEqualTo(ModalityMode.STRICT);
             assertThat(dialog.getSideDialogPosition()).isEqualTo(SideDialogPosition.RIGHT);
             assertThat(findPart(dialog, "basketEntry-" + cidMonday.getId())).isNotNull();
-            assertThat(findPart(dialog, "basketEntry-" + cidRejected.getId())).isNotNull();
+            assertThat(findPart(dialog, "basketEntry-" + cidApproved.getId())).isNotNull();
             assertThat(this.<Button>partOf(dialog, "rejectBtn").getText()).isEqualTo("Reject 2 entries");
 
             // Quick reasons append their sentences, each a paragraph of its own once the Markdown is rendered
@@ -225,11 +227,13 @@ public class TimeEntryApprovalRejectUiTest {
 
             click(partOf(dialog, "rejectBtn"));
 
-            // Both are rejected with the reason, which replaces the earlier one
+            // Both are rejected with the reason, which replaces the one of the approved entry's earlier rejection
             TimeEntry monday = reload(cidMonday);
             assertThat(monday.getStatus()).isEqualTo(TimeEntryStatus.REJECTED);
             assertThat(monday.getRejectionReason()).isEqualTo(DESCRIPTION_REASON);
-            assertThat(reload(cidRejected).getRejectionReason()).isEqualTo(DESCRIPTION_REASON);
+            TimeEntry approved = reload(cidApproved);
+            assertThat(approved.getStatus()).isEqualTo(TimeEntryStatus.REJECTED);
+            assertThat(approved.getRejectionReason()).isEqualTo(DESCRIPTION_REASON);
             assertThat(statusOf(cidTuesday)).isEqualTo(TimeEntryStatus.NEW);
             assertSuccess("2 entries rejected");
 
@@ -238,10 +242,23 @@ public class TimeEntryApprovalRejectUiTest {
             assertThat(UiTestUtils.getOpenedDialogs()).isEmpty();
             assertThat(basketOf(view)).isEmpty();
             assertThat(basketBar(view).isVisible()).isFalse();
-            assertThat(buttonsOf(view, cidMonday)).containsExactly("approve", "reject");
+            // A rejected entry can be approved, and cannot be rejected again
+            assertThat(buttonsOf(view, cidMonday)).containsExactly("approve");
             assertThat(selectedOf(view)).isEqualTo(cid.getId());
             assertThat(cardOf(view, cidMonday).getElement().getClassList())
                     .contains("rejected");
+        });
+    }
+
+    @Test
+    void aRejectedEntryCannotBeRejectedAgain() {
+        asAdmin(() -> {
+            TimeEntryApprovalView view = openOnCidsWeek();
+
+            // No ✕, so no way into the basket; ✓ stays
+            assertThat(buttonsOf(view, cidRejected)).containsExactly("approve");
+            assertThat(UiComponentUtils.findComponent(view, "rejectEntryBtn-" + cidRejected.getId())).isEmpty();
+            assertThat(reload(cidRejected).getRejectionReason()).isEqualTo(EARLIER_REASON);
         });
     }
 
@@ -263,6 +280,12 @@ public class TimeEntryApprovalRejectUiTest {
             Component mondayRow = partOf(dialog, "basketEntry-" + cidMonday.getId());
             assertThat(markdownOf(mondayRow)).isEqualTo(description);
             assertThat(mondayRow.getElement().getTextRecursively()).doesNotContain("**", "- zeroed");
+            // Cut after two lines, so the whole description shows on hover
+            Component mondayDescription = descendantsOf(mondayRow)
+                    .filter(part -> part.hasClassName("description"))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(Tooltip.forComponent(mondayDescription).getText()).isEqualTo(description);
 
             // An entry without a description shows only its day
             Component tuesdayRow = partOf(dialog, "basketEntry-" + cidTuesday.getId());
