@@ -41,6 +41,7 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.AccessManager;
+import io.jmix.core.EntityStates;
 import io.jmix.core.Metadata;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
@@ -114,6 +115,8 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     private AccessManager accessManager;
     @Autowired
     private Metadata metadata;
+    @Autowired
+    private EntityStates entityStates;
 
     // Made on the first reason to show: the descriptor's markdown element can neither be declared without content nor
     // be bound to the reason, https://github.com/jmix-framework/jmix/issues/5938
@@ -313,6 +316,15 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     public void onBeforeSave(final BeforeSaveEvent event) {
         Collection<Tag> tags = collectTagsFromFields();
         tagsDc.setItems(tags);
+
+        // A framework defect of Jmix 3.1.0: the data context drops a new instance from its changes once its last
+        // changed attribute is back to its value at open, and then saves nothing while the view reports it saved. A
+        // copy opens complete, so setting its tags again above, or any change undone, would lose it; a new entry is
+        // therefore kept among the changes whatever was changed
+        TimeEntry timeEntry = getEditedEntity();
+        if (entityStates.isNew(timeEntry)) {
+            getViewData().getDataContext().setModified(timeEntry, true);
+        }
     }
 
     @SuppressWarnings("unchecked")

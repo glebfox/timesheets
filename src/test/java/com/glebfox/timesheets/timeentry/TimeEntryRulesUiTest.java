@@ -130,6 +130,7 @@ public class TimeEntryRulesUiTest {
     ProjectRole managerRole;
     ProjectParticipant workerOnProject;
     Tag tag;
+    Task task;
 
     TimeEntry workerNew;
     TimeEntry workerApproved;
@@ -144,7 +145,7 @@ public class TimeEntryRulesUiTest {
         manager = saveUser("manager", FullAccessRole.CODE);
 
         project = data.saveProject("P", data.saveClient());
-        Task task = data.saveTask(project, data.saveTaskType());
+        task = data.saveTask(project, data.saveTaskType());
         TagGroup tagGroup = data.save(dataManager.create(TagGroup.class), group -> {
             group.setName("tag group");
             group.setProject(project);
@@ -174,19 +175,25 @@ public class TimeEntryRulesUiTest {
 
     @AfterEach
     void tearDown() {
-        // The entries a screen saved, such as a copy, besides the fixture's; each of the fixture's tags belongs to
-        // one entry, whose removal for good removes it too (#8), and the helper then skips it
+        // The entries a screen saved, such as a copy, besides the fixture's. A copy shares its source's tags, and the
+        // removal of an entry for good removes its tags too (#8), so each entry lets go of its tags first; the helper
+        // then removes the tags
         List<UUID> userIds = Stream.of(worker, manager)
                 .filter(Objects::nonNull)
                 .map(User::getId)
                 .toList();
         dataManager.load(TimeEntry.class)
                 .query("e.user.id in ?1", userIds)
+                .fetchPlan(builder -> builder.addFetchPlan(FetchPlan.BASE)
+                        .add("tags", FetchPlan.BASE))
                 .hint(PersistenceHints.SOFT_DELETION, false)
                 .list()
-                .forEach(entry -> dataManager.save(new SaveContext()
-                        .removing(entry)
-                        .setHint(PersistenceHints.SOFT_DELETION, false)));
+                .forEach(entry -> {
+                    entry.setTags(new ArrayList<>());
+                    dataManager.save(new SaveContext()
+                            .removing(dataManager.save(entry))
+                            .setHint(PersistenceHints.SOFT_DELETION, false));
+                });
         data.removeAll();
     }
 
@@ -207,6 +214,49 @@ public class TimeEntryRulesUiTest {
             assertThat(copied.getStatus()).isEqualTo(NEW);
             assertThat(copied.getRejectionReason()).isNull();
         });
+    }
+
+    @Test
+    void copyOfAnApprovedEntrySavesAsOpened() {
+        Tag sourceTag = data.save(dataManager.create(Tag.class), t -> {
+            t.setName("B");
+            t.setTagGroup(tag.getTagGroup());
+        });
+        TimeEntry source = data.save(dataManager.create(TimeEntry.class), entry -> {
+            entry.setTask(task);
+            entry.setUser(worker);
+            entry.setDate(DAY);
+            entry.setSpentTime(WorkTime.ofHours(2));
+            entry.setStatus(APPROVED);
+            entry.setTags(new ArrayList<>(List.of(sourceTag)));
+        });
+
+        UUID copyId = systemAuthenticator.withUser(worker.getUsername(), () -> {
+            View<?> list = openList(MyTimeEntryListView.class);
+            select(list, source);
+            Objects.requireNonNull(grid(list).getAction("copy")).actionPerform(grid(list));
+
+            // Saved as opened: the editor sets the copy's tags again from its fields, the only change
+            TimeEntryDetailView editor = UiTestUtils.getCurrentView();
+            UUID id = editor.getEditedEntity().getId();
+            JmixButton saveAndCloseBtn = UiTestUtils.getComponent(editor, "saveAndCloseBtn");
+            saveAndCloseBtn.click();
+
+            CollectionContainer<TimeEntry> entries = ViewControllerUtils.getViewData(list)
+                    .getContainer("timeEntriesDc");
+            assertThat(entries.containsItem(id)).as("the list shows the copy").isTrue();
+            return id;
+        });
+
+        TimeEntry copy = dataManager.load(TimeEntry.class)
+                .id(copyId)
+                .fetchPlan(builder -> builder.addFetchPlan(FetchPlan.BASE)
+                        .add("tags", FetchPlan.BASE))
+                .one();
+        assertThat(copy.getStatus()).isEqualTo(NEW);
+        assertThat(copy.getDate()).isEqualTo(DAY);
+        assertThat(copy.getTags()).extracting(Tag::getId).containsExactly(sourceTag.getId());
+        assertThat(stored(source).getStatus()).isEqualTo(APPROVED);
     }
 
     @Test
