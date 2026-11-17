@@ -26,7 +26,7 @@ A screen asks about an entry it has loaded and not changed, so its question is j
 
 ## Holders
 
-None in code or seed data.
+None in code or seed data. [Project scope](project-scope.md) includes it.
 
 ## Not covered
 

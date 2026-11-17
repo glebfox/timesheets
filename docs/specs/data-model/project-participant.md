@@ -12,7 +12,7 @@ A user's membership in a project, with a role.
 
 ## Meaning
 
-Participation is what makes a project's tasks [bookable](task.md#bookable-tasks) for the user and lists them in the user's My tasks. The role grants no security permissions ([security roles](../roles/README.md)). Its type decides which time entries the participant approves on the project: a Manager approves every entry of the project, an Approver all but their own and the Managers', and Member and Observer none ([approval screen](../views/approval.md#which-entries-it-shows)), and so whom the [dashboard](../views/dashboard.md#the-people)'s My team shows.
+Participation is what makes a project's tasks [bookable](task.md#bookable-tasks) for the user and lists them in the user's My tasks. The role grants no security permissions ([security roles](../roles/README.md)). Its type decides which time entries the participant approves on the project: a Manager approves every entry of the project, an Approver all but their own and the Managers', and Member and Observer none ([approval screen](../views/approval.md#which-entries-it-shows)), and so whom the [dashboard](../views/dashboard.md#the-people)'s My team shows. For a holder of the row-level role [Project scope](../roles/project-scope.md), participation also decides which projects and time entries the user reads, and the type Manager where they change project data.
 
 ## Deletion
 
