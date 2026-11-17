@@ -1,6 +1,6 @@
 # HR
 
-Source: `security/HrRole.java`
+Source: `security/HrRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `hr`, named "HR", a job role: a person who keeps work schedules and absences and logs their own time. It includes [Worker](worker.md), [Work schedule management](work-schedule-management.md), and [Absence management](absence-management.md), and through the last two [User: read only](user-read-only.md), and grants nothing besides.
 
@@ -21,7 +21,7 @@ Without a row-level role the holder is unrestricted, as a Worker without one is:
 
 ## Holders
 
-None in code or seed data.
+- The demo user `mossman`, in the `dev` demo data only, with [Approver](approver.md) and [Project scope](project-scope.md).
 
 ## Not covered
 

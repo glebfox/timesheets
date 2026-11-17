@@ -16,7 +16,7 @@ A user needs no permission on absences to see their own: the [calendar](../views
 
 ## Holders
 
-- The demo user `mossman`, in the `dev` demo data only.
+None directly. [HR](hr.md) includes it, so in the `dev` demo data `mossman` holds it.
 
 ## Not covered
 

@@ -14,7 +14,7 @@ It grants no entity access and no other view, so on its own a user can sign in a
 
 ## Holders
 
-- The demo user `mossman`, in the `dev` demo data only.
+None directly. [Worker](worker.md) and [Observer](observer.md) include it, and through Worker every other job role, so in the `dev` demo data every user but `admin` holds it.
 
 ## Not covered
 

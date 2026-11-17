@@ -23,7 +23,7 @@ Why the role has no update permission on users: [decision 0003](../../decisions/
 
 ## Holders
 
-- The demo user `mossman`, in the `dev` demo data only.
+None directly. [HR](hr.md) includes it, so in the `dev` demo data `mossman` holds it.
 
 ## Not covered
 

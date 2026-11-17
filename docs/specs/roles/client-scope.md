@@ -1,6 +1,6 @@
 # Client scope
 
-Source: `security/ClientScopeRole.java`
+Source: `security/ClientScopeRole.java`, `demo/DemoDataLoader.java`
 
 Row-level role `client-scope`, named "Client scope". It includes [Project scope](project-scope.md), and through it [Time entry rules](time-entry-rules.md).
 
@@ -23,7 +23,7 @@ Writing users and clients is not narrowed; what the role narrows for writing is 
 
 ## Holders
 
-None in code or seed data.
+- The demo user `gman`, in the `dev` demo data only, beside [Observer](observer.md).
 
 ## Not covered
 

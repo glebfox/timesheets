@@ -24,13 +24,13 @@ A holder of the row-level role [Time entry rules](time-entry-rules.md) approves 
 
 ## Holders
 
-- The demo user `mossman`, in the `dev` demo data only, with [UI: minimal access](ui-minimal.md) and [Work schedule management](work-schedule-management.md). She is the Approver of the Borealis Recovery project and approves nowhere else. She sees My team for the people of Borealis Recovery.
+None directly. [Approver](approver.md) includes it, and through Approver [Manager](manager.md), so in the `dev` demo data `mossman`, an Approver, and the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` hold it. `mossman` is the Approver of the Borealis Recovery project and approves nowhere else. She sees My team for the people of Borealis Recovery.
 
 Holders of [Full access](system-full-access.md) can open the screen without it, and the rule of the screen still narrows what they see to the projects where they are a Manager or an Approver.
 
 ## Not covered
 
-- The screen rendered for a holder: the UI test checks that a holder opens it and switches its mode, and the role test that a holder loads and changes what it needs; no test sees the cards, avatars, and badges under the role. A live check as `mossman`, who has only granular roles, saw Project Management → Approve time entries, only the people of Borealis Recovery with their avatars and tag badges, and approving and rejecting working.
+- The screen rendered for a holder: the UI test checks that a holder opens it and switches its mode, and the role test that a holder loads and changes what it needs; no test sees the cards, avatars, and badges under the role. A live check as `mossman`, when she held only granular roles, saw Project Management → Approve time entries, only the people of Borealis Recovery with their avatars and tag badges, and approving and rejecting working.
 - A holder who lacks UI: minimal access: not checked.
 - A change of another attribute of an entry by code running as a holder: no test.
 - The combination with Time entry rules: the approve and reject operations under that role are checked for users who hold it with Full access, not with this role ([Time entry rules](time-entry-rules.md#not-covered)). What the screen shows a holder of both was not checked.

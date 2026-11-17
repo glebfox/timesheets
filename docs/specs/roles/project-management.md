@@ -1,6 +1,6 @@
 # Projects: management
 
-Source: `security/ProjectManagementRole.java`, `view/projectparticipant/ProjectParticipantDetailView.java`
+Source: `security/ProjectManagementRole.java`, `view/projectparticipant/ProjectParticipantDetailView.java`, `demo/DemoDataLoader.java`
 
 Resource role `project-management`, named "Projects: management". It includes [Projects: read only](project-read.md).
 
@@ -21,7 +21,7 @@ The role grants changing every project and its data. Which projects a holder cha
 
 ## Holders
 
-None in code or seed data.
+None directly. [Manager](manager.md) and [Project office](project-office.md) include it, so in the `dev` demo data the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` hold it.
 
 ## Not covered
 

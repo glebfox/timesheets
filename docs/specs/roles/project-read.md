@@ -1,6 +1,6 @@
 # Projects: read only
 
-Source: `security/ProjectReadOnlyRole.java`
+Source: `security/ProjectReadOnlyRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `project-read`, named "Projects: read only".
 
@@ -18,7 +18,7 @@ Which projects a holder reads is decided by a row-level role: [Project scope](pr
 
 ## Holders
 
-None in code or seed data. [Projects: management](project-management.md) includes it.
+None directly. [Projects: management](project-management.md) and [Observer](observer.md) include it, and through Projects: management [Manager](manager.md) and [Project office](project-office.md), so in the `dev` demo data the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` and `gman` hold it.
 
 ## Not covered
 

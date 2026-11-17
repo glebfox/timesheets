@@ -1,6 +1,6 @@
 # Manager
 
-Source: `security/ManagerRole.java`
+Source: `security/ManagerRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `manager`, named "Manager", a job role: a person who runs projects. It includes [Approver](approver.md), [Projects: management](project-management.md), and [Time entries: read only](time-entry-read.md), and through them every role those include, and grants nothing besides.
 
@@ -21,7 +21,7 @@ Without a row-level role the holder is unrestricted: they read and change every 
 
 ## Holders
 
-None in code or seed data.
+- The demo users `kleiner`, `eli`, `magnusson`, `cave`, and `caroline`, in the `dev` demo data only, each with [Project scope](project-scope.md).
 
 ## Not covered
 

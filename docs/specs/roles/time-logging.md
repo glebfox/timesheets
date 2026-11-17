@@ -1,6 +1,6 @@
 # Time logging
 
-Source: `security/TimeLoggingRole.java`
+Source: `security/TimeLoggingRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `time-logging`, named "Time logging".
 
@@ -21,7 +21,7 @@ The role grants every operation on every entry and reading every task, project, 
 
 ## Holders
 
-None in code or seed data.
+None directly. [Worker](worker.md) includes it, and through Worker every job role but Observer, so in the `dev` demo data every user but `admin` and `gman` holds it.
 
 ## Not covered
 

@@ -1,6 +1,6 @@
 # Approver
 
-Source: `security/ApproverRole.java`
+Source: `security/ApproverRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `approver`, named "Approver", a job role: a person who logs their own time and reviews the time logged on their projects. It includes [Worker](worker.md) and [Time entries: approval](time-entry-approval.md), and through it [User: read only](user-read-only.md), and grants nothing besides.
 
@@ -22,7 +22,9 @@ Without a row-level role the holder is unrestricted: the approval screen still s
 
 ## Holders
 
-None in code or seed data.
+- The demo user `mossman`, in the `dev` demo data only, with [HR](hr.md) and [Project scope](project-scope.md).
+
+[Manager](manager.md) includes it, so the demo Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` hold it too.
 
 ## Not covered
 

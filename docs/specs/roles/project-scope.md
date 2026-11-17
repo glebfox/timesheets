@@ -1,6 +1,6 @@
 # Project scope
 
-Source: `security/ProjectScopeRole.java`, `app/ProjectDataAccessSupport.java`, `app/ProjectAccessSupport.java`
+Source: `security/ProjectScopeRole.java`, `app/ProjectDataAccessSupport.java`, `app/ProjectAccessSupport.java`, `demo/DemoDataLoader.java`
 
 Row-level role `project-scope`, named "Project scope". It includes [Time entry rules](time-entry-rules.md).
 
@@ -26,7 +26,9 @@ The rules hold on every save, whatever screen or `DataManager` call makes it; a 
 
 ## Holders
 
-None in code or seed data. [Client scope](client-scope.md) includes it.
+- Every demo user but `admin` and `gman`, in the `dev` demo data only, beside their job roles.
+
+[Client scope](client-scope.md) includes it, so the demo user `gman` holds it too.
 
 ## Not covered
 

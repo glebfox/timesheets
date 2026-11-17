@@ -1,6 +1,6 @@
 # Observer
 
-Source: `security/ObserverRole.java`
+Source: `security/ObserverRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `observer`, named "Observer", a job role: a person who follows projects without working on them, such as a project's client. It includes [UI: minimal access](ui-minimal.md), [Projects: read only](project-read.md), [Time entries: read only](time-entry-read.md), and [Filters: own configurations](own-filters.md), and grants nothing besides.
 
@@ -21,7 +21,7 @@ Without a row-level role the holder reads every project, every time entry, and e
 
 ## Holders
 
-None in code or seed data.
+- The demo user `gman`, in the `dev` demo data only, with [Client scope](client-scope.md). He plays a client: an Observer on Anomalous Materials, a Black Mesa project, and on Portal Device, an Aperture Science one, who logs no time.
 
 ## Not covered
 

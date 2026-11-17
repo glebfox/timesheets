@@ -1,6 +1,6 @@
 # Time entries: read only
 
-Source: `security/TimeEntryReadOnlyRole.java`
+Source: `security/TimeEntryReadOnlyRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `time-entry-read`, named "Time entries: read only".
 
@@ -18,7 +18,7 @@ Which entries a holder reads is decided by a row-level role: [Project scope](pro
 
 ## Holders
 
-None in code or seed data.
+None directly. [Manager](manager.md) and [Observer](observer.md) include it, so in the `dev` demo data the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` and `gman` hold it.
 
 ## Not covered
 

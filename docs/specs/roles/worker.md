@@ -1,6 +1,6 @@
 # Worker
 
-Source: `security/WorkerRole.java`
+Source: `security/WorkerRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `worker`, named "Worker", a job role: a person who logs their own time. It includes [UI: minimal access](ui-minimal.md), [Time logging](time-logging.md), and [Filters: own configurations](own-filters.md), and grants nothing besides.
 
@@ -20,7 +20,9 @@ Without a row-level role the holder is unrestricted: they read every project and
 
 ## Holders
 
-None in code or seed data.
+- The demo users `freeman`, `barney`, `rosenberg`, `gina`, `colette`, `alyx`, `odessa`, `shephard`, `rattmann`, and `chell`, in the `dev` demo data only, each with [Project scope](project-scope.md).
+
+[Approver](approver.md) and [HR](hr.md) include it, and through Approver [Manager](manager.md), so in the `dev` demo data every user but `admin` and `gman` holds it.
 
 ## Not covered
 

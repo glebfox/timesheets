@@ -13,7 +13,7 @@ It grants nothing else: no signing in, no creating, changing, or deleting users,
 
 ## Holders
 
-None directly. The demo user `mossman` gets it through [Work schedule management](work-schedule-management.md), [Time entries: approval](time-entry-approval.md), and [Absence management](absence-management.md), in the `dev` demo data only.
+None directly. [Work schedule management](work-schedule-management.md), [Time entries: approval](time-entry-approval.md), and [Absence management](absence-management.md) include it, and through them [HR](hr.md), [Approver](approver.md), and [Manager](manager.md), so in the `dev` demo data `mossman` and the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` hold it.
 
 ## Not covered
 

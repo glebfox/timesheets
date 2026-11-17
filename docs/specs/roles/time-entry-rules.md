@@ -1,6 +1,6 @@
 # Time entry rules
 
-Source: `security/TimeEntryRulesRole.java`, `app/TimeEntryAccessSupport.java`
+Source: `security/TimeEntryRulesRole.java`, `app/TimeEntryAccessSupport.java`, `demo/DemoDataLoader.java`
 
 Row-level role `time-entry-rules`, named "Time entry rules".
 
@@ -26,7 +26,7 @@ A screen asks about an entry it has loaded and not changed, so its question is j
 
 ## Holders
 
-None in code or seed data. [Project scope](project-scope.md) includes it.
+None directly. [Project scope](project-scope.md) includes it, and through Project scope [Client scope](client-scope.md), so in the `dev` demo data every user but `admin` holds it.
 
 ## Not covered
 

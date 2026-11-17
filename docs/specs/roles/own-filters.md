@@ -1,6 +1,6 @@
 # Filters: own configurations
 
-Source: `security/OwnFiltersRole.java`
+Source: `security/OwnFiltersRole.java`, `demo/DemoDataLoader.java`
 
 Resource role `own-filters`, named "Filters: own configurations", with UI scope.
 
@@ -20,7 +20,7 @@ It grants no signing in and no list: a holder also needs a role that does, such 
 
 ## Holders
 
-None in code or seed data.
+None directly. [Worker](worker.md) and [Observer](observer.md) include it, and through Worker every other job role, so in the `dev` demo data every user but `admin` holds it.
 
 ## Not covered
 
