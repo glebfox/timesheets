@@ -33,7 +33,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -55,20 +54,19 @@ import static com.glebfox.timesheets.entity.timeentry.TimeEntryStatus.REJECTED;
  * change, so the screen's question is judged on the entry's current values.
  * <p>
  * The rules never load an entity and never flush: an entity query inside a save refreshes the rows the save holds,
- * and a flush clears the change tracking the rules read. The project of a task and the user's part in it come from
- * value queries. A reference is read only where it is loaded, or from the row of a managed instance; a detached
- * instance whose reference is not loaded is refused, as its value is unknown.
+ * and a flush clears the change tracking the rules read. The project of a task, the user's part in it, and whether the
+ * approval rule lets the user review an entry come from value queries, the last one the approval screen's own,
+ * {@link TimeEntryApprovalSupport#canApprove}. A reference is read only where it is loaded, or from the row of a
+ * managed instance; a detached instance whose reference is not loaded is refused, as its value is unknown.
  * <p>
  * The user is always the effective user, so under user substitution it is the substituted user.
  */
 @Component("ts_TimeEntryAccessSupport")
 public class TimeEntryAccessSupport {
 
-    // What the entry says, as opposed to its status and rejection reason, which a reviewer sets
-    private static final List<String> CONTENT = List.of("date", "task", "user", "spentTime", "description", "tags");
-    // Whether the entry is deleted, which a review leaves as it is: a save that deletes or restores the entry is the
-    // author's, judged as a removal is
-    private static final List<String> DELETION = List.of("deletedDate", "deletedBy");
+    // What a reviewer sets: a save that changes these and nothing else is a review. Any other change, to what the
+    // entry says or to whether it is deleted, makes the save the author's
+    private static final Set<String> REVIEWED = Set.of("status", "rejectionReason");
 
     // The statuses in which the author changes or removes the entry
     private static final Set<TimeEntryStatus> OPEN_TO_AUTHOR = EnumSet.of(NEW, REJECTED);
@@ -77,6 +75,7 @@ public class TimeEntryAccessSupport {
     private static final Set<TimeEntryStatus> REVIEW_RESULTS = EnumSet.of(APPROVED, REJECTED);
 
     private final ProjectAccessSupport projectAccessSupport;
+    private final TimeEntryApprovalSupport timeEntryApprovalSupport;
     private final AttributeChangesProvider attributeChangesProvider;
     private final ReferenceIdProvider referenceIdProvider;
     private final EntityStates entityStates;
@@ -84,12 +83,14 @@ public class TimeEntryAccessSupport {
     private final CurrentUserSubstitution currentUserSubstitution;
 
     public TimeEntryAccessSupport(ProjectAccessSupport projectAccessSupport,
+                                  TimeEntryApprovalSupport timeEntryApprovalSupport,
                                   AttributeChangesProvider attributeChangesProvider,
                                   ReferenceIdProvider referenceIdProvider,
                                   EntityStates entityStates,
                                   UnconstrainedDataManager unconstrainedDataManager,
                                   CurrentUserSubstitution currentUserSubstitution) {
         this.projectAccessSupport = projectAccessSupport;
+        this.timeEntryApprovalSupport = timeEntryApprovalSupport;
         this.attributeChangesProvider = attributeChangesProvider;
         this.referenceIdProvider = referenceIdProvider;
         this.entityStates = entityStates;
@@ -115,13 +116,12 @@ public class TimeEntryAccessSupport {
     /**
      * Tells whether the current user may save the entry as it is, against its stored values.
      * <p>
-     * A Closed entry is changed by no one. A change of the status or the rejection reason alone, the entry's content
-     * and whether it is deleted left as they are, is a review: the user
-     * must be someone the approval rule lets review the entry's author on its project, the entry stored New,
-     * Approved, or Rejected, and its new status Approved or Rejected. Any other save, one that changes nothing
-     * included, is the author's: the entry is theirs and stored New or Rejected, its user and rejection reason stay as
-     * they are, its status stays or goes back to New, and a new task must be on a project where they take part in a
-     * role other than Observer.
+     * A Closed entry is changed by no one. A save that changes the status, the rejection reason, or both, and no other
+     * attribute, is a review: the approval rule must let the user review the entry as stored, as the approval screen
+     * asks it, the entry stored New, Approved, or Rejected, and its new status Approved or Rejected. Any other save,
+     * one that changes nothing included, is the author's: the entry is theirs and stored New or Rejected, its user and
+     * rejection reason stay as they are, its status stays or goes back to New, and a new task must be on a project
+     * where they take part in a role other than Observer.
      *
      * @param entry the entry being saved, or an unchanged entry a screen asks about
      * @return {@code true} if the current user may save the entry
@@ -132,17 +132,15 @@ public class TimeEntryAccessSupport {
             return false;
         }
 
-        boolean statusChanged = changed(entry, "status");
-        boolean reviewed = statusChanged || changed(entry, "rejectionReason");
-        if (reviewed
-                && CONTENT.stream().noneMatch(attribute -> changed(entry, attribute))
-                && DELETION.stream().noneMatch(attribute -> changed(entry, attribute))) {
-            // The task is not changed here, so its current project is the stored one
+        Set<String> changedAttributes = changedAttributes(entry);
+        if (!changedAttributes.isEmpty() && REVIEWED.containsAll(changedAttributes)) {
+            // A review changes neither the task nor the user, so the entry as stored is the entry as it is saved
             return REVIEWABLE.contains(storedStatus)
                     && REVIEW_RESULTS.contains(currentStatus(entry))
-                    && projectAccessSupport.mayReview(currentProjectId(entry), toUuid(storedReferenceId(entry, "user")));
+                    && timeEntryApprovalSupport.canApprove(entry);
         }
 
+        boolean statusChanged = changedAttributes.contains("status");
         return OPEN_TO_AUTHOR.contains(storedStatus)
                 && isCurrentUser(storedReferenceId(entry, "user"))
                 && !changed(entry, "user")
@@ -162,6 +160,13 @@ public class TimeEntryAccessSupport {
         return storedStatus != null
                 && OPEN_TO_AUTHOR.contains(storedStatus)
                 && isCurrentUser(storedReferenceId(entry, "user"));
+    }
+
+    // The attributes the save changes; a detached instance reports none
+    private Set<String> changedAttributes(TimeEntry entry) {
+        return attributeChangesProvider.getChangedAttributeNames(entry).stream()
+                .filter(attribute -> changed(entry, attribute))
+                .collect(Collectors.toSet());
     }
 
     // A value the change tracking reports as changed may still be the stored one, as when a save sets the same

@@ -36,16 +36,14 @@ import java.util.UUID;
  * ({@code JmixEclipseLinkQuery}): it reads the stored participants without flushing the rows the save holds, which
  * would clear the change tracking the predicates read, and without refreshing them.
  * <p>
- * An unknown project or author, a {@code null} id, gets the answer {@code false}, never an exception: the predicates
- * pass whatever the entity they judge holds, and an entity whose reference is not loaded has no id for it.
+ * An unknown project, a {@code null} id, gets the answer {@code false}, never an exception: the predicates pass
+ * whatever the entity they judge holds, and an entity whose reference is not set has no id for it.
  */
 @Component("ts_ProjectAccessSupport")
 public class ProjectAccessSupport {
 
     private static final String MANAGER =
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.MANAGER)";
-    private static final String APPROVER =
-            "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.APPROVER)";
     private static final String OBSERVER =
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER)";
 
@@ -76,42 +74,6 @@ public class ProjectAccessSupport {
      */
     public boolean worksOn(@Nullable UUID projectId) {
         return participates(projectId, "p.role.type <> " + OBSERVER);
-    }
-
-    /**
-     * Tells whether the current user may review the author's entries on the project. This is the approval rule of
-     * {@code TimeEntryApprovalSupport.APPROVABLE_ENTRY} stated by participation: the user is a participant of the
-     * project with a role of type Manager, or of type Approver while the author is someone else and no participant of
-     * that project with a role of type Manager. An author who is no participant counts as a member.
-     *
-     * @param projectId the id of the project, or {@code null} for an unknown one
-     * @param authorId  the id of the user whose entries are to be reviewed, or {@code null} for an unknown one
-     * @return {@code true} if the approval rule lets the current user review the author's entries on the project;
-     * {@code false} for an unknown project or author, even to the project's Manager
-     */
-    public boolean mayReview(@Nullable UUID projectId, @Nullable UUID authorId) {
-        // EclipseLink prints a comparison with a null parameter as IS NULL or IS NOT NULL, so an unknown author would
-        // pass the Approver's branch: "<> :authorId" would hold, and the Managers' subquery would find no one
-        if (projectId == null || authorId == null) {
-            return false;
-        }
-        Long count = unconstrainedDataManager.loadValue("""
-                        select count(p) from ts_ProjectParticipant p
-                        where p.project.id = :projectId
-                        and p.user.id = :userId
-                        and (p.role.type = %1$s
-                             or (p.role.type = %2$s
-                                 and p.user.id <> :authorId
-                                 and not exists (select m from ts_ProjectParticipant m
-                                                 where m.project.id = :projectId
-                                                 and m.user.id = :authorId
-                                                 and m.role.type = %1$s)))
-                        """.formatted(MANAGER, APPROVER), Long.class)
-                .parameter("projectId", projectId)
-                .parameter("userId", userId())
-                .parameter("authorId", authorId)
-                .one();
-        return count > 0;
     }
 
     private boolean participates(@Nullable UUID projectId, String roleCondition) {

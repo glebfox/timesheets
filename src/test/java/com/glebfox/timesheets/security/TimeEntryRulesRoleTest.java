@@ -42,9 +42,11 @@ import io.jmix.core.SaveContext;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
 import io.jmix.core.security.AccessDeniedException;
 import io.jmix.core.security.SystemAuthenticator;
+import io.jmix.core.usersubstitution.UserSubstitutionManager;
 import io.jmix.data.PersistenceHints;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
+import io.jmix.securitydata.entity.UserSubstitutionEntity;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -97,6 +99,8 @@ public class TimeEntryRulesRoleTest {
     TimeEntryApprovalSupport approvalSupport;
     @Autowired
     TimeEntrySupport timeEntrySupport;
+    @Autowired
+    UserSubstitutionManager userSubstitutionManager;
 
     ApprovalTestData data;
     // Entries that a test expects to be refused, removed should a save let one through
@@ -108,6 +112,8 @@ public class TimeEntryRulesRoleTest {
     User manager;
     User observer;
 
+    Project projectP;
+    TaskType taskType;
     Task taskP;
     Task otherTaskP;
     Task taskQ;
@@ -132,8 +138,9 @@ public class TimeEntryRulesRoleTest {
         observer = saveRuleHolder("observer");
 
         Client client = data.saveClient();
-        TaskType taskType = data.saveTaskType();
+        taskType = data.saveTaskType();
         Project p = data.saveProject("P", client);
+        projectP = p;
         Project q = data.saveProject("Q", client);
         taskP = data.saveTask(p, taskType);
         otherTaskP = data.saveTask(p, taskType);
@@ -329,10 +336,71 @@ public class TimeEntryRulesRoleTest {
             refusedToSave(withStatus(load(reviewerNew), APPROVED));
         });
         as(observer, () -> refusedToSave(withStatus(load(newEntry), APPROVED)));
-        as(manager, () -> dataManager.save(withStatus(load(newEntry), APPROVED)));
+        // A Manager reviews everyone's entries on the project, their own included
+        as(manager, () -> {
+            dataManager.save(withStatus(load(newEntry), APPROVED));
+            dataManager.save(withStatus(load(managerNew), APPROVED));
+        });
+
+        assertThat(stored(managerNew).getStatus()).isEqualTo(APPROVED);
+        assertThat(stored(reviewerNew).getStatus()).isEqualTo(NEW);
+        assertThat(stored(newEntry).getStatus()).isEqualTo(APPROVED);
+    }
+
+    @Test
+    void reviewJudgesTheStoredEntryWhateverIsLoaded() {
+        // The approval operations save an entry with its own attributes alone, its user and task not loaded
+        TimeEntry managerNew = saveEntry(manager, NEW, null);
+
+        as(reviewer, () -> {
+            dataManager.save(withStatus(loadLocal(newEntry), APPROVED));
+            refusedToSave(withStatus(loadLocal(managerNew), APPROVED));
+        });
+
+        assertThat(stored(newEntry).getStatus()).isEqualTo(APPROVED);
+        assertThat(stored(managerNew).getStatus()).isEqualTo(NEW);
+    }
+
+    @Test
+    void entryOfADeletedTaskIsReviewedByNobody() {
+        // The approval screen shows no entry of a deleted task, so neither does a save review one, even the
+        // Manager's own, whose task and project the editor holds in memory
+        Task deletedTask = data.saveTask(projectP, taskType);
+        TimeEntry managerNew = data.save(entryOf(deletedTask, manager), entry -> {
+        });
+        dataManager.remove(deletedTask);
+
+        as(manager, () -> {
+            TimeEntry entry = dataManager.load(Id.of(managerNew))
+                    .fetchPlan(builder -> builder.addFetchPlan(FetchPlan.BASE)
+                            .add("user", FetchPlan.BASE)
+                            .add("task", task -> task.addFetchPlan(FetchPlan.BASE)
+                                    .add("project", FetchPlan.BASE))
+                            .add("tags", FetchPlan.BASE))
+                    .one();
+            assertThat(entry.getTask().getProject().getId()).isEqualTo(projectP.getId());
+            refusedToSave(withStatus(entry, APPROVED));
+        });
 
         assertThat(stored(managerNew).getStatus()).isEqualTo(NEW);
-        assertThat(stored(reviewerNew).getStatus()).isEqualTo(NEW);
+    }
+
+    @Test
+    void reviewerIsTheEffectiveUserOfASubstitution() {
+        data.save(dataManager.create(UserSubstitutionEntity.class), substitution -> {
+            substitution.setUsername(observer.getUsername());
+            substitution.setSubstitutedUsername(reviewer.getUsername());
+        });
+
+        as(observer, () -> {
+            // The substitute alone: an Observer of P
+            refusedToSave(withStatus(load(newEntry), APPROVED));
+
+            userSubstitutionManager.substituteUser(reviewer.getUsername());
+
+            dataManager.save(withStatus(load(newEntry), APPROVED));
+        });
+
         assertThat(stored(newEntry).getStatus()).isEqualTo(APPROVED);
     }
 
@@ -351,6 +419,19 @@ public class TimeEntryRulesRoleTest {
         // The same save with the tags as they are: the loaded tags, saved back unchanged, are no change
         as(reviewer, () -> dataManager.save(withStatus(load(newEntry), APPROVED)));
         assertThat(stored(newEntry).getStatus()).isEqualTo(APPROVED);
+    }
+
+    @Test
+    void reviewerWhoChangesSpentTimeWithTheStatusIsRefused() {
+        as(reviewer, () -> {
+            TimeEntry entry = withStatus(load(newEntry), APPROVED);
+            entry.setSpentTime(WorkTime.ofHours(8));
+            refusedToSave(entry);
+        });
+
+        TimeEntry stored = stored(newEntry);
+        assertThat(stored.getStatus()).isEqualTo(NEW);
+        assertThat(stored.getSpentTime()).isEqualTo(WorkTime.ofHours(1));
     }
 
     @Test
@@ -540,6 +621,15 @@ public class TimeEntryRulesRoleTest {
                 .fetchPlan(builder -> builder.addFetchPlan(FetchPlan.BASE)
                         .add("user", FetchPlan.BASE)
                         .add("tags", FetchPlan.BASE))
+                .one();
+    }
+
+    /**
+     * Loads the entry's own attributes alone, as the approval operations do.
+     */
+    private TimeEntry loadLocal(TimeEntry entry) {
+        return dataManager.load(Id.of(entry))
+                .fetchPlan(FetchPlan.LOCAL)
                 .one();
     }
 

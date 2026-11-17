@@ -121,31 +121,10 @@ public class ProjectAccessSupportTest {
     }
 
     @Test
-    void reviewsByTheApprovalRule() {
-        systemAuthenticator.runWithUser(user.getUsername(), () -> {
-            // A Manager reviews everyone's entries on the project, their own included
-            assertThat(accessSupport.mayReview(p1.getId(), author.getId())).isTrue();
-            assertThat(accessSupport.mayReview(p1.getId(), manager.getId())).isTrue();
-            assertThat(accessSupport.mayReview(p1.getId(), user.getId())).isTrue();
-            // An Approver reviews everyone's but their own and the project's Managers'
-            assertThat(accessSupport.mayReview(p3.getId(), author.getId())).isTrue();
-            assertThat(accessSupport.mayReview(p3.getId(), user.getId())).isFalse();
-            assertThat(accessSupport.mayReview(p3.getId(), manager.getId())).isFalse();
-            // A Member or an Observer reviews nobody's
-            assertThat(accessSupport.mayReview(p2.getId(), author.getId())).isFalse();
-            assertThat(accessSupport.mayReview(p4.getId(), author.getId())).isFalse();
-        });
-    }
-
-    @Test
-    void answersNoForAnUnknownProjectOrAuthor() {
+    void answersNoForAnUnknownProject() {
         systemAuthenticator.runWithUser(user.getUsername(), () -> {
             assertThat(accessSupport.managesProject(null)).isFalse();
             assertThat(accessSupport.worksOn(null)).isFalse();
-            assertThat(accessSupport.mayReview(null, author.getId())).isFalse();
-            // The unknown author could be the Approver themselves or a Manager, and even a Manager is not told yes
-            assertThat(accessSupport.mayReview(p3.getId(), null)).isFalse();
-            assertThat(accessSupport.mayReview(p1.getId(), null)).isFalse();
         });
     }
 
@@ -160,15 +139,12 @@ public class ProjectAccessSupportTest {
             // The substitute alone: a Member of P3 only
             assertThat(accessSupport.managesProject(p1.getId())).isFalse();
             assertThat(accessSupport.worksOn(p2.getId())).isFalse();
-            assertThat(accessSupport.mayReview(p3.getId(), author.getId())).isFalse();
 
             userSubstitutionManager.substituteUser(user.getUsername());
 
             assertThat(accessSupport.managesProject(p1.getId())).isTrue();
             assertThat(accessSupport.worksOn(p2.getId())).isTrue();
             assertThat(accessSupport.worksOn(p4.getId())).isFalse();
-            assertThat(accessSupport.mayReview(p3.getId(), author.getId())).isTrue();
-            assertThat(accessSupport.mayReview(p3.getId(), user.getId())).isFalse();
         });
     }
 }
