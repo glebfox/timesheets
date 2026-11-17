@@ -171,6 +171,29 @@ public class TimeLoggingRoleUiTest {
         assertThat(stored.getTags()).extracting(Tag::getId).containsExactly(tag.getId());
     }
 
+    @Test
+    void holderGetsTheirOwnUserInAGeneralEntry() {
+        systemAuthenticator.runWithUser(holderUser.getUsername(), () -> {
+            // As the editor's URL time-entries/new opens it: a new entry not marked as the holder's own
+            viewBuilders.detail(UiTestUtils.getCurrentView(), TimeEntry.class, TimeEntryDetailView.class)
+                    .newEntity()
+                    .open();
+            TimeEntryDetailView editor = UiTestUtils.getCurrentView();
+            EntityComboBox<User> userField = UiTestUtils.getComponent(editor, "userField");
+            EntityComboBox<Task> taskField = UiTestUtils.getComponent(editor, "taskField");
+
+            // The role leaves the user view-only, so the editor sets the holder, as for an own entry
+            assertThat(userField.getValue()).extracting(User::getId).isEqualTo(holderUser.getId());
+            assertThat(userField.isReadOnly()).isTrue();
+            assertThat(taskField.isReadOnly()).isFalse();
+
+            // Choosing and clearing a task, which unlocks the user of a general entry, keeps it locked
+            editor.getEditedEntity().setTask(task);
+            editor.getEditedEntity().setTask(null);
+            assertThat(userField.isReadOnly()).isTrue();
+        });
+    }
+
     @AfterEach
     void tearDown() {
         // The entry the editor saved first: removing it for good removes its tag too (#8), which the loop below then
