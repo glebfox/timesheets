@@ -1,6 +1,6 @@
 # Calendar
 
-Source: `view/calendar/`, `app/CalendarSupport.java`, `app/WorkPlanSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/FactAndPlan.java`, `app/util/WeekSummary.java`, `app/util/WeekStatus.java`, `app/util/WorkPlan.java`, `app/util/ComponentSupport.java`, `entity/timeentry/TimeEntryCalendarWrapper.java`, `security/EditActiveTimeEntriesRole.java`
+Source: `view/calendar/`, `app/CalendarSupport.java`, `app/WorkPlanSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/FactAndPlan.java`, `app/util/WeekSummary.java`, `app/util/WeekStatus.java`, `app/util/WorkPlan.java`, `app/util/ComponentSupport.java`, `entity/timeentry/TimeEntryCalendarWrapper.java`, `security/TimeEntryRulesRole.java`
 
 `calendar`, the first item of menu Timesheets. The current user's own [time entries](../data-model/time-entry.md) laid out on a month, with the time spent per day, per week, and for the month against the time their [work schedule](../data-model/work-schedule.md) plans, and their absences across their days.
 
@@ -21,7 +21,7 @@ Each entry shows as `<spent time> [<project>] <task>`, with a dot colored by sta
 - **Create** — clicking a day's number, or Add in the day's context menu, opens the editor on a new own entry for that day.
 - **Copy** — in the entry's context menu; saves a [copy](../data-model/time-entry.md#copying) on the same day at once, without the editor.
 - **Remove** — in the entry's context menu, after a confirmation.
-- **Move** — dragging an entry to another day saves it with that date; an Approved or Rejected entry moved so goes back to New ([status](../data-model/time-entry.md#status)), and its dot turns amber at once. When the user may not change the entry, as under the [edit active time entries](../roles/edit-active-time-entries.md) role for an Approved or Closed one, the entry returns to its day and a warning says why.
+- **Move** — dragging an entry to another day saves it with that date; an Approved or Rejected entry moved so goes back to New ([status](../data-model/time-entry.md#status)), and its dot turns amber at once. When the user may not change the entry, as under the [time entry rules](../roles/time-entry-rules.md) role, the entry returns to its day and a warning says why.
 
 Copy, Remove, and Move are confirmed with a notification. After any of these, the totals below follow at once.
 
