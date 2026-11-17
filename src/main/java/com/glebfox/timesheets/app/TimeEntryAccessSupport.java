@@ -140,13 +140,12 @@ public class TimeEntryAccessSupport {
                     && timeEntryApprovalSupport.canApprove(entry);
         }
 
-        boolean statusChanged = changedAttributes.contains("status");
         return OPEN_TO_AUTHOR.contains(storedStatus)
                 && isCurrentUser(storedReferenceId(entry, "user"))
-                && !changed(entry, "user")
-                && !changed(entry, "rejectionReason")
-                && (!statusChanged || currentStatus(entry) == NEW)
-                && (!changed(entry, "task") || projectAccessSupport.worksOn(currentProjectId(entry)));
+                && !changedAttributes.contains("user")
+                && !changedAttributes.contains("rejectionReason")
+                && (!changedAttributes.contains("status") || currentStatus(entry) == NEW)
+                && (!changedAttributes.contains("task") || projectAccessSupport.worksOn(currentProjectId(entry)));
     }
 
     /**
