@@ -78,7 +78,7 @@
                             <property name="openMode" value="DIALOG"/>
                         </properties>
                     </action>
-                    <action id="edit" type="list_edit">
+                    <action id="edit" type="list_childEdit">
                         <properties>
                             <property name="openMode" value="DIALOG"/>
                         </properties>

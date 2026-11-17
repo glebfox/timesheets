@@ -1,6 +1,6 @@
 # Tag screens
 
-Source: `view/taggroup/`, `view/tag/`
+Source: `view/taggroup/`, `view/tag/`, `action/ChildEditAction.java`
 
 The tag group and tag editors and pickers. What tag groups and tags are: [tag group and tag](../data-model/tag-group.md).
 
@@ -10,7 +10,7 @@ The tag group and tag editors and pickers. What tag groups and tags are: [tag gr
 
 - **Name**.
 - **Project** — shown only when the group has no project yet, which happens only when the editor is opened by URL.
-- **Tags** — the group's tags by name, with Create and Edit opening the tag editor in a dialog, and Remove. They are saved with the group. An empty table shows the tag icon and "No tags" («Нет тегов»), with no Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
+- **Tags** — the group's tags by name, with Create and Edit opening the tag editor in a dialog, and Remove. They are saved with the group. In a group editor that opens read-only, as for a user who may not change the group's project, Create and Remove are unavailable, and Edit, labeled Read, opens the tag read-only. An empty table shows the tag icon and "No tags" («Нет тегов»), with no Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
 
 ## Tag editor
 
@@ -25,4 +25,4 @@ Empty, Select tag groups shows the tag group icon and "No tag groups" («Нет 
 
 ## Not covered
 
-- All of these screens beyond the empty states of the editor's Tags table and of both pickers (`GridEmptyStatesUiTest`): no UI test exists for them.
+- All of these screens beyond the empty states of the editor's Tags table and of both pickers (`GridEmptyStatesUiTest`), and a read-only group editor opening a tag read-only, which `ProjectManagementRoleUiTest` checks for a holder of [Projects: management](../roles/project-management.md) with Project scope: no UI test exists for them.

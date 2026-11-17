@@ -22,18 +22,26 @@ import com.glebfox.timesheets.entity.project.Project;
 import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.project.ProjectRole;
 import com.glebfox.timesheets.entity.project.ProjectRoleType;
+import com.glebfox.timesheets.entity.tag.Tag;
+import com.glebfox.timesheets.entity.tag.TagGroup;
 import com.glebfox.timesheets.entity.task.Task;
+import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
 import com.glebfox.timesheets.view.project.ProjectDetailView;
 import com.glebfox.timesheets.view.projectparticipant.ProjectParticipantDetailView;
 import com.glebfox.timesheets.view.projectrole.ProjectRoleListView;
+import com.glebfox.timesheets.view.tag.TagDetailView;
+import com.glebfox.timesheets.view.taggroup.TagGroupDetailView;
 import com.glebfox.timesheets.view.task.TaskDetailView;
 import com.glebfox.timesheets.view.user.UserListView;
 import com.vaadin.flow.component.UI;
 import io.jmix.core.DataManager;
+import io.jmix.core.Id;
+import io.jmix.core.Messages;
 import io.jmix.core.SaveContext;
+import io.jmix.core.entity.EntityValues;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.combobox.EntityComboBox;
@@ -42,6 +50,7 @@ import io.jmix.flowui.component.tabsheet.JmixTabSheet;
 import io.jmix.flowui.component.textfield.TypedTextField;
 import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.component.button.JmixButton;
+import io.jmix.flowui.kit.component.dropdownbutton.DropdownButton;
 import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.View;
 import io.jmix.security.role.assignment.RoleAssignmentRoleType;
@@ -64,7 +73,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The holder signs in with UI: minimal access, holds Projects: management, and has Project scope as their row-level
- * role, as a Manager does. They are the Manager of one project and an Approver of another.
+ * role, as a Manager does. They are the Manager of one project and an Approver of another. Each project has a task,
+ * and the approved one also a tag group with a tag.
  */
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -78,12 +88,19 @@ public class ProjectManagementRoleUiTest {
     ViewBuilders viewBuilders;
     @Autowired
     SystemAuthenticator systemAuthenticator;
+    @Autowired
+    Messages messages;
 
     ApprovalTestData data;
     User holder;
     TaskType taskType;
     Project managed;
+    Task managedTask;
     Project approved;
+    Task approvedTask;
+    ProjectParticipant approvedParticipant;
+    TagGroup approvedTagGroup;
+    Tag approvedTag;
 
     @BeforeEach
     void setUp() {
@@ -101,8 +118,18 @@ public class ProjectManagementRoleUiTest {
 
         managed = data.saveProject("managed", client);
         data.saveParticipant(managed, holder, managerRole);
+        managedTask = data.saveTask(managed, taskType);
         approved = data.saveProject("approved", client);
-        data.saveParticipant(approved, holder, approverRole);
+        approvedParticipant = data.saveParticipant(approved, holder, approverRole);
+        approvedTask = data.saveTask(approved, taskType);
+        approvedTagGroup = data.save(dataManager.create(TagGroup.class), group -> {
+            group.setName(USERNAME_PREFIX + "tag group");
+            group.setProject(approved);
+        });
+        approvedTag = data.save(dataManager.create(Tag.class), tag -> {
+            tag.setName(USERNAME_PREFIX + "tag");
+            tag.setTagGroup(approvedTagGroup);
+        });
     }
 
     @Test
@@ -134,7 +161,29 @@ public class ProjectManagementRoleUiTest {
         List<Task> tasks = dataManager.load(Task.class)
                 .query("e.project = ?1", managed)
                 .list();
-        assertThat(tasks).extracting(Task::getName).containsExactly(taskName);
+        assertThat(tasks).extracting(Task::getName).containsExactlyInAnyOrder(managedTask.getName(), taskName);
+    }
+
+    @Test
+    void holderEditsAndClosesATaskOfAManagedProject() {
+        systemAuthenticator.runWithUser(holder.getUsername(), () -> {
+            ProjectDetailView editor = openEditor(managed);
+            DataGrid<Task> tasksDataGrid = UiTestUtils.getComponent(editor, "tasksDataGrid");
+            tasksDataGrid.select(listed(tasksDataGrid, managedTask));
+
+            assertThat(Objects.requireNonNull(tasksDataGrid.getAction("edit")).getText())
+                    .isEqualTo(messages.getMessage("actions.Edit"));
+            TaskDetailView taskEditor = (TaskDetailView) performForDialog(tasksDataGrid, "edit");
+            assertThat(taskEditor.isReadOnly()).isFalse();
+            taskEditor.closeWithDiscard();
+
+            Action close = Objects.requireNonNull(tasksDataGrid.getAction("taskClose"));
+            assertThat(close.isEnabled()).isTrue();
+            close.actionPerform(tasksDataGrid);
+            UiTestUtils.<JmixButton>getComponent(editor, "saveAndCloseBtn").click();
+        });
+
+        assertThat(dataManager.load(Id.of(managedTask)).one().getStatus()).isEqualTo(TaskStatus.INACTIVE);
     }
 
     @Test
@@ -150,12 +199,59 @@ public class ProjectManagementRoleUiTest {
     }
 
     @Test
+    void holderReadsTheChildrenOfAProjectTheyApproveButClosesNoTask() {
+        systemAuthenticator.runWithUser(holder.getUsername(), () -> {
+            ProjectDetailView editor = openEditor(approved);
+            DataGrid<Task> tasksDataGrid = UiTestUtils.getComponent(editor, "tasksDataGrid");
+            tasksDataGrid.select(listed(tasksDataGrid, approvedTask));
+
+            // Its save would be refused, so the editor does not offer it
+            assertThat(Objects.requireNonNull(tasksDataGrid.getAction("taskClose")).isEnabled()).isFalse();
+
+            // The action reads its label through Messages, as this call does, so both resolve the same locale
+            assertThat(Objects.requireNonNull(tasksDataGrid.getAction("edit")).getText())
+                    .isEqualTo(messages.getMessage("actions.Read"));
+            TaskDetailView taskEditor = (TaskDetailView) performForDialog(tasksDataGrid, "edit");
+            assertThat(taskEditor.isReadOnly()).isTrue();
+            taskEditor.closeWithDiscard();
+
+            assertThat(Objects.requireNonNull(tasksDataGrid.getAction("remove")).isEnabled()).isFalse();
+
+            // The participants and tag groups open the same way. The tab is selected first, as a tab that is not
+            // disables its content whatever the editor's mode
+            UiTestUtils.<JmixTabSheet>getComponent(editor, "tabSheet").setSelectedIndex(1);
+            attachSelectedTab();
+            DataGrid<ProjectParticipant> participantsDataGrid =
+                    UiTestUtils.getComponent(editor, "participantsDataGrid");
+            participantsDataGrid.select(listed(participantsDataGrid, approvedParticipant));
+            assertThat(Objects.requireNonNull(participantsDataGrid.getAction("edit")).isEnabled()).isTrue();
+            assertThat(UiTestUtils.<DropdownButton>getComponent(editor, "addParticipantsDropdown").isEnabled())
+                    .isFalse();
+
+            UiTestUtils.<JmixTabSheet>getComponent(editor, "tabSheet").setSelectedIndex(2);
+            attachSelectedTab();
+            DataGrid<TagGroup> tagGroupsDataGrid = UiTestUtils.getComponent(editor, "tagGroupsDataGrid");
+            tagGroupsDataGrid.select(listed(tagGroupsDataGrid, approvedTagGroup));
+            TagGroupDetailView tagGroupEditor = (TagGroupDetailView) performForDialog(tagGroupsDataGrid, "edit");
+            assertThat(tagGroupEditor.isReadOnly()).isTrue();
+
+            // And so do the tag group's tags
+            DataGrid<Tag> tagsDataGrid = UiTestUtils.getComponent(tagGroupEditor, "tagsDataGrid");
+            tagsDataGrid.select(listed(tagsDataGrid, approvedTag));
+            TagDetailView tagEditor = (TagDetailView) performForDialog(tagsDataGrid, "edit");
+            assertThat(tagEditor.isReadOnly()).isTrue();
+        });
+    }
+
+    @Test
     void participantDialogOffersProjectRolesToPickButNotToCreate() {
         systemAuthenticator.runWithUser(holder.getUsername(), () -> {
             ProjectDetailView editor = openEditor(managed);
             // The participants are on the second tab, whose content stays disabled until it is selected
             UiTestUtils.<JmixTabSheet>getComponent(editor, "tabSheet").setSelectedIndex(1);
             attachSelectedTab();
+            assertThat(UiTestUtils.<DropdownButton>getComponent(editor, "addParticipantsDropdown").isEnabled())
+                    .isTrue();
             DataGrid<ProjectParticipant> participantsDataGrid =
                     UiTestUtils.getComponent(editor, "participantsDataGrid");
             ProjectParticipantDetailView participantEditor =
@@ -207,6 +303,17 @@ public class ProjectManagementRoleUiTest {
      */
     private static void attachSelectedTab() {
         UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
+    }
+
+    /**
+     * Returns the item of the grid that is the given entity, by its id.
+     */
+    private static <E> E listed(DataGrid<E> grid, Object entity) {
+        Object id = EntityValues.getId(entity);
+        return Objects.requireNonNull(grid.getItems()).getItems().stream()
+                .filter(item -> Objects.equals(EntityValues.getId(item), id))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(entity + " in " + grid.getId().orElse("the grid")));
     }
 
     /**
