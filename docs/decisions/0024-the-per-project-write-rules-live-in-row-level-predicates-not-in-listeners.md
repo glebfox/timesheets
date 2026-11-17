@@ -15,12 +15,12 @@ Alternatives considered and rejected:
 
 ## Decision
 
-The write rules are the create, update, and delete predicates of the row-level roles Project scope and Time entry rules. The predicates call beans in `app/` that hold the rules and tell the person's part in a project, such as whether the approval rule lets them review an entry's author. A predicate judges a save against the stored values, which it reads from the instance's change tracking. Decided by the user (issue #23).
+The write rules are the create, update, and delete predicates of the row-level roles Project scope and Time entry rules. The predicates call beans in `app/` that hold the rules and tell the person's part in a project, such as whether the approval rule lets them review an entry. A predicate judges a save against the stored values, which it reads from the instance's change tracking. Decided by the user (issue #23).
 
 ## Consequences
 
-- Every save is checked whatever makes it, and the Row-level roles screen lists the write rules beside the reads. Nothing exempts a person in code: Full access holds no row-level role, and Project office holds Time entry rules alone, so it changes every project but writes only its own time entries.
+- Every save is checked whatever makes it, but for the cascade of [#8](https://github.com/glebfox/timesheets/issues/8): removing a time entry also removes its tags, and those removals pass neither the entity permission nor the rule that only a project's Manager changes tags. The Row-level roles screen lists the write rules beside the reads. Nothing exempts a person in code: Full access holds no row-level role, and Project office holds Time entry rules alone, so it changes every project but writes only its own time entries.
 - A save of project data or of an entry costs a query or two. The predicates never load an entity and never flush: an entity query inside a save refreshes the rows the save holds, and a flush clears the change tracking they read (`docs/guidelines/views.md`).
 - The screens ask the same predicates about an entity as they loaded it, so each screen offers only what a save would let through: the editor opens read-only, the calendar refuses a move, and Remove is disabled where the rules refuse.
-- The approval rule is stated twice: by participation for the predicates, and as a query of the entries for the approval screen and the dashboard (`TimeEntryApprovalSupport`), so a change to it touches both.
+- The approval rule is written once, as a query of the entries (`TimeEntryApprovalSupport`), which the approval screen loads by and the predicate of a review asks about the stored entry, so the two never disagree. Two queries that name what a person approves without an entry restate it: the projects to approve, by the person's project role, and the people of the dashboard's My team, by participation; a change to the rule touches them too.
 - The back-to-New rule and the one default work schedule stay in listeners: they are rules of the data, not of who may write it.

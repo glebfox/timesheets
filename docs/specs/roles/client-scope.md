@@ -28,5 +28,5 @@ Writing users and clients is not narrowed; what the role narrows for writing is 
 ## Not covered
 
 - Reading users, clients, and projects through a constrained `DataManager`, the acting user holding Full access and this role, and an entry's user that a holder reads only as a reference, with the load and loaded later: `ClientScopeRoleTest`. The rest of what Project scope narrows is checked for holders of Project scope (`ProjectScopeRoleTest`), not of this role.
-- No test opens a screen as a holder, such as the user list, the client list, or a picker of users or clients.
+- The only screens a test opens as a holder are the project list and a project's editor, read only, as an [Observer](observer.md) (`JobRolesUiTest`); none opens the user list, the client list, or a picker of users or clients.
 - The people and the client of a deleted project not being read, a client loaded later when first read, reading as a substituted user, counts and other value queries of users and clients being narrowed, and signing in, and switching to a substituted user who takes part in none of the holder's projects, not being narrowed: read from the policies and the framework, no test for this role.

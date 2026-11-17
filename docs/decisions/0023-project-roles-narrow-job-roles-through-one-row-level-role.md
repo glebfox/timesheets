@@ -10,7 +10,7 @@ In Jmix 3.1 resource roles add up and row-level roles narrow: the row-level poli
 
 Alternatives considered and rejected:
 
-- **The screens alone narrow**, with queries on the user's projects and editors opened read-only, and no row-level role. The AI assistant, a REST endpoint, or a new screen would read and change everything (issue #23, comment c).
+- **The screens alone narrow**, with queries on the user's projects and editors opened read-only, and no row-level role. The AI assistant or a new screen would read and change everything (issue #23, comment c).
 - **A row-level role per project role type**, such as one for Managers and one for Members. Two row-level roles narrow each other instead of adding up, so the Manager of one project who is a Member of another would get only what both allow.
 
 ## Decision

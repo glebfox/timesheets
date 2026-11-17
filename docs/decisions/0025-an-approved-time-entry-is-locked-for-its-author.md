@@ -18,5 +18,5 @@ The time entry rules judge a save against the entry as stored: its author change
 
 - The lock holds on every save, as the rules read the stored status from change tracking ([decision 0024](0024-the-per-project-write-rules-live-in-row-level-predicates-not-in-listeners.md)): the gap decision 0012 left to the roles work is closed.
 - The time entry editor opens an author's Approved entry read-only, the calendar refuses to move it, and Remove is not offered on it. Copy still is: the copy is a new New entry.
-- A Manager's own Approved entry is read-only for them everywhere but the approval screen, where they can reject it and then fix it.
+- The own Approved entry of the project's Manager, whether their job role is Manager or Approver, is read-only for them everywhere but the approval screen, where they can reject it and then fix it.
 - Full access holds no row-level role, so the Administrator still changes an Approved or a Closed entry, and decision 0012 sends a changed Approved one back to New.
