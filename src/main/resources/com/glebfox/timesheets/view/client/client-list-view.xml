@@ -66,7 +66,7 @@
                       dataContainer="clientsDc">
                 <actions>
                     <action id="create" type="list_create"/>
-                    <action id="edit" type="list_edit"/>
+                    <action id="edit" type="list_viewPermittedEdit"/>
                     <action id="remove" type="list_remove"/>
                     <action id="refresh" type="list_refresh"/>
                 </actions>

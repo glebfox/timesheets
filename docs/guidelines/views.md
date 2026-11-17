@@ -29,6 +29,8 @@ Such a table uses custom actions instead, as the assignment tables of the user e
 - that needs no selection, such as a create or an add, extends `ListDataComponentAction`, as the framework's `CreateAction` does, and checks the entity-level create permission;
 - that works on selected items extends `SecuredListDataComponentAction` with its entity operation, and checks the entity-level permission of that operation before the row-level one.
 
+The framework's `list_edit` checks the entity's permissions and its row-level constraints, never the view it opens. In a list that a role grants without its editor, as Projects: management grants the client, task type, project role, and user lists as pickers, it stays enabled, labeled Read, and fails with an access-denied error when clicked. Those lists use `ViewPermittedEditAction` in `action/`, which is offered only to a user who may also open the editor.
+
 ## Lists after an editor save
 
 The standard create and edit actions do not invoke their `afterSaveHandler` when the detail view opens by navigation, as the editors opened from this project's lists do unless a list says otherwise; the framework only logs that the handler is set but not invoked. In tabbed mode the list stays open, and a save reaches it only as the saved row added to its container or replaced there. A list whose actions open the editor as a dialog (the action's `openMode` property set to `DIALOG`), as the absence list does, gets the saved row the same way, and there the actions also invoke `afterSaveHandler`. A list that shows a value its own query does not load, as the holiday calendar list shows Filled until, listens for that change of its container and loads the value for the rows added or replaced.

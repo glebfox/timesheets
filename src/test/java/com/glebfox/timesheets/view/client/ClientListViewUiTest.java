@@ -101,6 +101,7 @@ class ClientListViewUiTest {
 
     @Test
     void clientLookupOpensTheList() {
+        Client client = saveClient(null);
         viewBuilders.detail(UiTestUtils.getCurrentView(), Project.class).newEntity().open();
         ProjectDetailView editor = UiTestUtils.getCurrentView();
         EntityComboBox<Client> clientField = UiTestUtils.getComponent(editor, "clientField");
@@ -112,6 +113,11 @@ class ClientListViewUiTest {
         View<?> dialog = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the client picker");
         assertThat(dialog).isInstanceOf(ClientListView.class);
         assertThat(UiTestUtils.<Component>getComponent(dialog, "lookupActions").isVisible()).isTrue();
+
+        // The system user may open the client editor, so the picker offers Edit
+        DataGrid<Client> grid = UiTestUtils.getComponent(dialog, "clientsDataGrid");
+        grid.select(listed(grid, client));
+        assertThat(Objects.requireNonNull(grid.getAction("edit")).isEnabled()).isTrue();
     }
 
     @AfterEach

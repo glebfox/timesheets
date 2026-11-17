@@ -29,12 +29,18 @@ import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.test_support.ApprovalTestData;
+import com.glebfox.timesheets.view.client.ClientDetailView;
+import com.glebfox.timesheets.view.client.ClientListView;
 import com.glebfox.timesheets.view.project.ProjectDetailView;
 import com.glebfox.timesheets.view.projectparticipant.ProjectParticipantDetailView;
+import com.glebfox.timesheets.view.projectrole.ProjectRoleDetailView;
 import com.glebfox.timesheets.view.projectrole.ProjectRoleListView;
 import com.glebfox.timesheets.view.tag.TagDetailView;
 import com.glebfox.timesheets.view.taggroup.TagGroupDetailView;
 import com.glebfox.timesheets.view.task.TaskDetailView;
+import com.glebfox.timesheets.view.tasktype.TaskTypeDetailView;
+import com.glebfox.timesheets.view.tasktype.TaskTypeListView;
+import com.glebfox.timesheets.view.user.UserDetailView;
 import com.glebfox.timesheets.view.user.UserListView;
 import com.vaadin.flow.component.UI;
 import io.jmix.core.DataManager;
@@ -270,6 +276,25 @@ public class ProjectManagementRoleUiTest {
         });
     }
 
+    @Test
+    void pickersOfferNoEditorTheHolderMayNotOpen() {
+        // The role grants the lists to pick from, not their editors
+        systemAuthenticator.runWithUser(holder.getUsername(), () -> assertPickersOfferTheirEditors(false));
+    }
+
+    @Test
+    void pickersOfferTheirEditorsToTheHoldersOfTheirRoles() {
+        User editorsHolder = data.saveUser("editors-holder", "Editors", "Holder");
+        for (String roleCode : List.of(UiMinimalRole.CODE, ProjectManagementRole.CODE, ClientManagementRole.CODE,
+                ProjectCatalogsRole.CODE, UserReadOnlyRole.CODE)) {
+            assignRole(editorsHolder, roleCode, RoleAssignmentRoleType.RESOURCE);
+        }
+        assignRole(editorsHolder, ProjectScopeRole.CODE, RoleAssignmentRoleType.ROW_LEVEL);
+        data.saveParticipant(managed, editorsHolder, data.saveRole(ProjectRoleType.MANAGER));
+
+        systemAuthenticator.runWithUser(editorsHolder.getUsername(), () -> assertPickersOfferTheirEditors(true));
+    }
+
     @AfterEach
     void tearDown() {
         // The tasks saved through the editor first, then the fixture. All are soft-deleted, so they are removed for
@@ -324,6 +349,53 @@ public class ProjectManagementRoleUiTest {
         assertThat(action.isEnabled()).as("action %s", actionId).isTrue();
         action.actionPerform(grid);
         return Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the dialog of " + actionId);
+    }
+
+    /**
+     * Opens each picker of the managed project's editor and its dialogs, selects a row, and checks whether Edit is
+     * offered there; where it is, it opens the list's editor.
+     */
+    private void assertPickersOfferTheirEditors(boolean offered) {
+        ProjectDetailView editor = openEditor(managed);
+        assertPickerEdit(UiTestUtils.getComponent(editor, "clientField"), "clientsDataGrid",
+                ClientListView.class, ClientDetailView.class, offered);
+
+        DataGrid<Task> tasksDataGrid = UiTestUtils.getComponent(editor, "tasksDataGrid");
+        TaskDetailView taskEditor = (TaskDetailView) performForDialog(tasksDataGrid, "create");
+        assertPickerEdit(UiTestUtils.getComponent(taskEditor, "typeField"), "taskTypesDataGrid",
+                TaskTypeListView.class, TaskTypeDetailView.class, offered);
+        taskEditor.closeWithDiscard();
+
+        UiTestUtils.<JmixTabSheet>getComponent(editor, "tabSheet").setSelectedIndex(1);
+        attachSelectedTab();
+        DataGrid<ProjectParticipant> participantsDataGrid = UiTestUtils.getComponent(editor, "participantsDataGrid");
+        ProjectParticipantDetailView participantEditor =
+                (ProjectParticipantDetailView) performForDialog(participantsDataGrid, "create");
+        assertPickerEdit(UiTestUtils.getComponent(participantEditor, "roleField"), "projectRolesDataGrid",
+                ProjectRoleListView.class, ProjectRoleDetailView.class, offered);
+        assertPickerEdit(UiTestUtils.getComponent(participantEditor, "userField"), "usersDataGrid",
+                UserListView.class, UserDetailView.class, offered);
+        participantEditor.closeWithDiscard();
+    }
+
+    private static void assertPickerEdit(EntityComboBox<?> field, String gridId,
+                                         Class<? extends View<?>> listClass, Class<? extends View<?>> editorClass,
+                                         boolean offered) {
+        Objects.requireNonNull(field.getAction("entityLookup"), "the lookup of " + listClass).actionPerform(field);
+        View<?> list = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the lookup dialog");
+        assertThat(list).isInstanceOf(listClass);
+
+        DataGrid<Object> grid = UiTestUtils.getComponent(list, gridId);
+        grid.select(Objects.requireNonNull(grid.getItems()).getItems().iterator().next());
+        Action edit = Objects.requireNonNull(grid.getAction("edit"), "the edit of " + listClass);
+        assertThat(edit.isEnabled()).as("edit in %s", listClass.getSimpleName()).isEqualTo(offered);
+        if (offered) {
+            edit.actionPerform(grid);
+            View<?> opened = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the editor");
+            assertThat(opened).isInstanceOf(editorClass);
+            opened.close(StandardOutcome.CLOSE);
+        }
+        list.close(StandardOutcome.CLOSE);
     }
 
     private static void openAndCloseLookup(EntityComboBox<?> field, Class<? extends View<?>> lookupClass) {
