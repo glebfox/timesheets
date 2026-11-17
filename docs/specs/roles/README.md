@@ -2,7 +2,7 @@
 
 Source: `security/`
 
-Access control is Jmix security roles only. The code defines eight resource roles and three row-level roles, each with its own spec here:
+Access control is Jmix security roles only. The code defines fourteen resource roles and three row-level roles, each with its own spec here:
 
 - [Full access](system-full-access.md) — everything.
 - [UI: minimal access](ui-minimal.md) — signing in and the main view, nothing else.
@@ -11,6 +11,12 @@ Access control is Jmix security roles only. The code defines eight resource role
 - [Absence management](absence-management.md) — absences and absence types; it includes User: read only.
 - [Time logging](time-logging.md) — logging one's own time: the calendar, My time entries, My tasks, and the time entry editor; creating, changing, and removing time entries, whose user, status, and rejection reason stay view-only; and reading what these screens show.
 - [Time entries: approval](time-entry-approval.md) — the approval screen and changing the status and rejection reason of time entries; it includes User: read only.
+- [Time entries: read only](time-entry-read.md) — the Time entries list and the time entry editor, read only, with what they show of an entry.
+- [Projects: read only](project-read.md) — the project list and the project editor with its dialogs, read only, with what they show: participants and their project roles, tasks and their types, tag groups, tags, and the project's client.
+- [Projects: management](project-management.md) — changing projects, and creating, changing, and removing their tasks, participants, tag groups, and tags, with the lists the editors' fields pick from, not creating or removing projects; it includes Projects: read only.
+- [Projects: create and remove](project-creation.md) — creating and removing projects, with no screen of its own.
+- [Client management](client-management.md) — the client list and the client editor.
+- [Task types and project roles](project-catalogs.md) — the task type and project role lists and editors.
 - [Filters: own configurations](own-filters.md) — adding conditions to a list's filter and saving one's own filter configurations, not configurations for everybody and not JPQL conditions.
 - [Time entry rules](time-entry-rules.md) — a row-level role with the write rules of time entries: who creates, changes, and removes an entry, in which status, and which of its attributes.
 - [Project scope](project-scope.md) — a row-level role that narrows project data and time entries to the projects where the person takes part, and lets them change project data only where they are the project's Manager; it includes Time entry rules.

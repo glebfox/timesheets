@@ -30,10 +30,10 @@ An empty tab's table shows an icon and what is missing, with no Refresh ([empty 
 
 - **User** — a drop-down searched by username, first name, or last name, case-insensitively, showing each user's avatar, name, and Active or Inactive badge; or the user picker.
 - **Project** — shown only when the participant has no project yet, which happens only when the editor is opened by URL.
-- **Role** — a drop-down of project roles by name, showing each role's type beside the name, smaller and muted, on one line; or the role picker. Its Create action opens the [project role editor](settings.md#project-roles) in a dialog and selects the new role.
+- **Role** — a drop-down of project roles by name, showing each role's type beside the name, smaller and muted, on one line; or the role picker. Its Create action, shown only to a user who may create project roles, opens the [project role editor](settings.md#project-roles) in a dialog and selects the new role; a holder of [Projects: management](../roles/project-management.md) without [Task types and project roles](../roles/project-catalogs.md) picks one of the existing roles.
 
 ## Not covered
 
-- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`), and the editor's client picker opening the client list (`ClientListViewUiTest`): no UI test exists for them.
+- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`), the editor's client picker opening the client list (`ClientListViewUiTest`), the participant editor's Create on the role field, offered to a user who may create project roles (`ProjectParticipantDetailViewUiTest`), and what `ProjectManagementRoleUiTest` checks for a holder of Projects: management with Project scope ([Projects: management](../roles/project-management.md#not-covered)): no UI test exists for them.
 - The failed save when a participating user is added again: PostgreSQL only, so no test can check it.
 - How the participant editor's role drop-down shows its roles, which no test sees (`docs/guidelines/testing.md`). A live check on 2026-11-15, as freeman on `dev` demo data, in English, in the dark theme, opened it on a new participant: each role showed its type beside its name, smaller and muted, on one line.
