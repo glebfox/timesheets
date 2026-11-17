@@ -85,8 +85,8 @@ public class TimeEntryApprovalSupport {
      * {@code (0=0)}, so the deleted participants, roles, tasks, and projects would no longer be dropped.
      * <p>
      * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, and
-     * {@link #loadApprovedPeople} states the same rule by participation, so a change to the rule touches all
-     * three.
+     * {@link #loadApprovedPeople} and {@link ProjectAccessSupport#mayReview} state the same rule by participation,
+     * so a change to the rule touches all four.
      */
     private static final String APPROVABLE_ENTRY = """
             (exists (select p from ts_ProjectParticipant p
