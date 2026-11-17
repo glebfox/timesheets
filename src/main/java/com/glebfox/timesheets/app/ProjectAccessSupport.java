@@ -19,6 +19,7 @@ package com.glebfox.timesheets.app;
 import com.glebfox.timesheets.entity.user.User;
 import io.jmix.core.UnconstrainedDataManager;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -34,6 +35,9 @@ import java.util.UUID;
  * inside a save. A value query has no fetch plan, so it runs with the commit flush mode and without the refresh hint
  * ({@code JmixEclipseLinkQuery}): it reads the stored participants without flushing the rows the save holds, which
  * would clear the change tracking the predicates read, and without refreshing them.
+ * <p>
+ * An unknown project or author, a {@code null} id, gets the answer {@code false}, never an exception: the predicates
+ * pass whatever the entity they judge holds, and an entity whose reference is not loaded has no id for it.
  */
 @Component("ts_ProjectAccessSupport")
 public class ProjectAccessSupport {
@@ -57,21 +61,21 @@ public class ProjectAccessSupport {
     /**
      * Tells whether the current user is a participant of the project with a role of type Manager.
      *
-     * @param projectId the id of the project
-     * @return {@code true} if the current user manages the project
+     * @param projectId the id of the project, or {@code null} for an unknown one
+     * @return {@code true} if the current user manages the project; {@code false} for an unknown project
      */
-    public boolean managesProject(UUID projectId) {
-        return countParticipations(projectId, "p.role.type = " + MANAGER) > 0;
+    public boolean managesProject(@Nullable UUID projectId) {
+        return participates(projectId, "p.role.type = " + MANAGER);
     }
 
     /**
      * Tells whether the current user is a participant of the project with a role of any type but Observer.
      *
-     * @param projectId the id of the project
-     * @return {@code true} if the current user works on the project
+     * @param projectId the id of the project, or {@code null} for an unknown one
+     * @return {@code true} if the current user works on the project; {@code false} for an unknown project
      */
-    public boolean worksOn(UUID projectId) {
-        return countParticipations(projectId, "p.role.type <> " + OBSERVER) > 0;
+    public boolean worksOn(@Nullable UUID projectId) {
+        return participates(projectId, "p.role.type <> " + OBSERVER);
     }
 
     /**
@@ -80,11 +84,17 @@ public class ProjectAccessSupport {
      * project with a role of type Manager, or of type Approver while the author is someone else and no participant of
      * that project with a role of type Manager. An author who is no participant counts as a member.
      *
-     * @param projectId the id of the project
-     * @param authorId  the id of the user whose entries are to be reviewed
-     * @return {@code true} if the approval rule lets the current user review the author's entries on the project
+     * @param projectId the id of the project, or {@code null} for an unknown one
+     * @param authorId  the id of the user whose entries are to be reviewed, or {@code null} for an unknown one
+     * @return {@code true} if the approval rule lets the current user review the author's entries on the project;
+     * {@code false} for an unknown project or author, even to the project's Manager
      */
-    public boolean mayReview(UUID projectId, UUID authorId) {
+    public boolean mayReview(@Nullable UUID projectId, @Nullable UUID authorId) {
+        // EclipseLink prints a comparison with a null parameter as IS NULL or IS NOT NULL, so an unknown author would
+        // pass the Approver's branch: "<> :authorId" would hold, and the Managers' subquery would find no one
+        if (projectId == null || authorId == null) {
+            return false;
+        }
         Long count = unconstrainedDataManager.loadValue("""
                         select count(p) from ts_ProjectParticipant p
                         where p.project.id = :projectId
@@ -104,12 +114,16 @@ public class ProjectAccessSupport {
         return count > 0;
     }
 
-    private long countParticipations(UUID projectId, String roleCondition) {
-        return unconstrainedDataManager.loadValue("select count(p) from ts_ProjectParticipant p " +
+    private boolean participates(@Nullable UUID projectId, String roleCondition) {
+        if (projectId == null) {
+            return false;
+        }
+        Long count = unconstrainedDataManager.loadValue("select count(p) from ts_ProjectParticipant p " +
                         "where p.project.id = :projectId and p.user.id = :userId and " + roleCondition, Long.class)
                 .parameter("projectId", projectId)
                 .parameter("userId", userId())
                 .one();
+        return count > 0;
     }
 
     private UUID userId() {

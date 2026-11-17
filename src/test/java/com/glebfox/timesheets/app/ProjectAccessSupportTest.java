@@ -138,6 +138,18 @@ public class ProjectAccessSupportTest {
     }
 
     @Test
+    void answersNoForAnUnknownProjectOrAuthor() {
+        systemAuthenticator.runWithUser(user.getUsername(), () -> {
+            assertThat(accessSupport.managesProject(null)).isFalse();
+            assertThat(accessSupport.worksOn(null)).isFalse();
+            assertThat(accessSupport.mayReview(null, author.getId())).isFalse();
+            // The unknown author could be the Approver themselves or a Manager, and even a Manager is not told yes
+            assertThat(accessSupport.mayReview(p3.getId(), null)).isFalse();
+            assertThat(accessSupport.mayReview(p1.getId(), null)).isFalse();
+        });
+    }
+
+    @Test
     void judgesTheEffectiveUserOfASubstitution() {
         data.save(dataManager.create(UserSubstitutionEntity.class), substitution -> {
             substitution.setUsername(author.getUsername());
