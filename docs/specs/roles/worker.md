@@ -6,7 +6,7 @@ Resource role `worker`, named "Worker", a job role: a person who logs their own 
 
 ## Grants
 
-- Signing in, the main view, and the [dashboard](../views/dashboard.md), with Log time and Copy to today.
+- Signing in, the main view, and the [dashboard](../views/dashboard.md), with My time, Log time, and Copy to today.
 - Logging one's own time: the [calendar](../views/calendar.md), My time entries ([time entry screens](../views/time-entries.md#lists)), and [My tasks](../views/tasks.md#my-tasks), with their Timesheets menu items, and the time entry editor, the task picker, and the task editor they open.
 - In a list's filter, adding conditions and saving one's own configurations.
 

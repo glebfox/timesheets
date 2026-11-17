@@ -12,7 +12,7 @@ Resource role `absence-management`, named "Absence management". It includes [Use
 
 It grants no signing in: a holder also needs a role that does, such as [UI: minimal access](ui-minimal.md). Apart from the user list and the user editor, it opens no other screen under Settings or Administration.
 
-A user needs no permission on absences to see their own: the [calendar](../views/calendar.md#absences) and the [dashboard](../views/dashboard.md)'s Coming up show them to every user, whatever the user may read. An approver also needs none to see, on the dashboard, the absences of the people they approve, with their types.
+A user needs no permission on absences to see their own: the [calendar](../views/calendar.md#absences) and the [dashboard](../views/dashboard.md)'s Coming up show them to every user who sees those screens, whatever the user may read. An approver also needs none to see, on the dashboard, the absences of the people they approve, with their types.
 
 ## Holders
 

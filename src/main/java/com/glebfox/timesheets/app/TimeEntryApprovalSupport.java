@@ -59,6 +59,8 @@ public class TimeEntryApprovalSupport {
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.MANAGER)";
     private static final String APPROVER =
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.APPROVER)";
+    private static final String OBSERVER =
+            "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER)";
 
     /**
      * Who approves whose entries. A JPQL condition on a time entry with the alias {@code e}, with the parameter
@@ -86,7 +88,8 @@ public class TimeEntryApprovalSupport {
      * <p>
      * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, and
      * {@link #loadApprovedPeople} and {@link ProjectAccessSupport#mayReview} state the same rule by participation,
-     * so a change to the rule touches all four.
+     * so a change to the rule touches all four. {@link #loadApprovedPeople} also leaves out the Observers, whose
+     * entries the rule still names.
      */
     private static final String APPROVABLE_ENTRY = """
             (exists (select p from ts_ProjectParticipant p
@@ -136,11 +139,12 @@ public class TimeEntryApprovalSupport {
     }
 
     /**
-     * Loads the people whose entries the current user approves by participation, the people the dashboard's team
-     * is made of: every participant of a project where the user is a Manager, and every participant of a project
-     * where the user is an Approver except that project's Managers. The current user, inactive users, and deleted
-     * users are left out. Soft deletion applies to the participants, the roles, and the projects: a deleted one
-     * grants nothing.
+     * Loads the people whose entries the current user approves by participation, the people the dashboard's team is
+     * made of: every participant of a project where the user is a Manager, and every participant of a project where the
+     * user is an Approver except that project's Managers. Either way the project's Observers are left out, as they do
+     * not work on it, and so are the current user, inactive users, and deleted users. Soft deletion applies to the
+     * participants, the roles, and the projects: a deleted one grants nothing, and a participant whose role is deleted
+     * takes part in no role, so is left out too.
      * <p>
      * The users are read without the current user's own permissions, as the approval screen shows the user of every
      * entry it lists, and only with their username, names, avatar, and active flag.
@@ -154,6 +158,7 @@ public class TimeEntryApprovalSupport {
                         where u.id <> :approverId and u.active = true
                         and exists (select pt from ts_ProjectParticipant pt, ts_ProjectParticipant my
                                     where pt.user = u
+                                    and pt.role.type <> %3$s
                                     and my.project = pt.project
                                     and my.user.id = :approverId
                                     and exists (select pr from ts_Project pr where pr = my.project)
@@ -163,7 +168,7 @@ public class TimeEntryApprovalSupport {
                                                              where m.project = pt.project
                                                              and m.user = pt.user
                                                              and m.role.type = %1$s))))
-                        """.formatted(MANAGER, APPROVER))
+                        """.formatted(MANAGER, APPROVER, OBSERVER))
                 .parameter("approverId", approverId())
                 // Only what the dashboard shows of a person and their instance name needs, so no password hash or
                 // other credentials leave the database
@@ -176,8 +181,8 @@ public class TimeEntryApprovalSupport {
     /**
      * Loads the entries in status New that the current user may approve, of any date.
      * <p>
-     * They include the entries of deleted users, of inactive users, and of users who are no longer participants,
-     * which {@link #loadApprovedPeople} leaves out.
+     * They include the entries of deleted users, of inactive users, of users who are no longer participants, and of
+     * Observers, which {@link #loadApprovedPeople} leaves out.
      *
      * @return the entries with their user, whose own attributes and user are the only ones loaded
      */

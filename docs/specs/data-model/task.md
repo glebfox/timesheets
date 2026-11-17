@@ -16,7 +16,7 @@ A piece of work within a project that people log time against.
 
 ## Bookable tasks
 
-A task is bookable for a user when the task is Active, its project is Open, and the user [participates](project-participant.md) in the project. Only bookable tasks are offered when a task is chosen for a time entry, and only they are listed in My tasks, ordered by project name and then task name. The rule applies when a task is chosen, not on save: time entries already logged on a task that later turns Inactive, or whose project closes, stay as they are.
+A task is bookable for a user when the task is Active, its project is Open, and the user [participates](project-participant.md) in the project in a role other than Observer: an Observer follows the project without logging time on it, and a participant whose project role is deleted takes part in no role. Only bookable tasks are offered when a task is chosen for a time entry, and only they are listed in My tasks, ordered by project name and then task name. The rule applies when a task is chosen: time entries already logged on a task that later turns Inactive, or whose project closes, stay as they are. Of its conditions, only taking part in a role other than Observer is also checked on save, when an entry is created or moved to another task, and only for a holder of [Time entry rules](../roles/time-entry-rules.md) or a row-level role that includes it.
 
 ## Deletion
 
@@ -24,5 +24,6 @@ Deleting a task leaves the time entries on it in place, still referring to it.
 
 ## Not covered
 
-- The Active and Open conditions of the bookable rule: the test checks participation only.
+- The Active and Open conditions of the bookable rule: `TaskSupportTest`, `MyTaskListViewUiTest`, and `TaskLookupViewUiTest` check participation only, an Observer's included.
+- A participant whose project role is deleted: read from the queries, no test.
 - The required tag groups belonging to the task's project: not checked anywhere but the editor.

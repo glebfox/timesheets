@@ -23,8 +23,8 @@ My tasks, the task editor, and the task picker. What a task is: [task](../data-m
 
 ## Task picker
 
-"Select a task", opened from the task field of the time entry editor for the entry's user. It lists the tasks bookable for that user, by project name and then task name, with a project filter (the user's Open projects) and a name filter, and pagination. Opened without a user, it lists every Active task of an Open project. Empty, it shows the My tasks icon and "No tasks" («Нет задач»), with Refresh.
+"Select a task", opened from the task field of the time entry editor for the entry's user. It lists the tasks bookable for that user, by project name and then task name, with a project filter (the Open projects where the user takes part in a role other than Observer) and a name filter, and pagination. Opened without a user, it lists every Active task of an Open project. Empty, it shows the My tasks icon and "No tasks" («Нет задач»), with Refresh.
 
 ## Not covered
 
-- All of these screens beyond the empty states of My tasks and the task picker (`GridEmptyStatesUiTest`) and the task editor's Required tag groups helper, checked in English by `TaskDetailViewUiTest`: no UI test exists for them. The helper was seen live on 2026-11-16, on a copy of the working tree with `dev` demo data, in English and Russian, in the light theme.
+- What the tests check: the empty states of My tasks and the task picker (`GridEmptyStatesUiTest`); both leaving out the tasks of a project where the user is an Observer, and the picker's project filter leaving out that project (`MyTaskListViewUiTest`, `TaskLookupViewUiTest`); and the task editor's Required tag groups helper, in English (`TaskDetailViewUiTest`). Nothing else on these screens has a UI test. The helper was seen live on 2026-11-16, on a copy of the working tree with `dev` demo data, in English and Russian, in the light theme.

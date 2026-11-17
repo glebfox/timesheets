@@ -6,7 +6,7 @@ Resource role `observer`, named "Observer", a job role: a person who follows pro
 
 ## Grants
 
-- Signing in, the main view, and the [dashboard](../views/dashboard.md).
+- Signing in, the main view, and the [dashboard](../views/dashboard.md)'s header: its My time is for a user who logs time, and its My team for one who approves.
 - The [project list](../views/projects.md#projects) and its menu item, and the project editor with its dialogs, read only, with what they show: the people taking part and their project roles, the tasks and their types, the tag groups and tags, and the project's client.
 - The Time entries list ([time entry screens](../views/time-entries.md#lists)) and its menu item, and the time entry editor, read only.
 - In a list's filter, adding conditions and saving one's own configurations.

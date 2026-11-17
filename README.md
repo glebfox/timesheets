@@ -16,7 +16,7 @@
 
 ## Features
 
-- **Time logging** — log time against the tasks you can book: active tasks of open projects you take part in. Type durations the way you think of them: `4:30`, `90`, or `4h 30m`.
+- **Time logging** — log time against the tasks you can book: active tasks of open projects you work on. Type durations the way you think of them: `4:30`, `90`, or `4h 30m`.
 - **Dashboard** — what you see when no tab is open: your week against your plan, your last eight weeks, this month's time by project, what needs fixing, what is coming up, and your latest entries, with Log time and Copy to today a click away; if you approve time, also what waits for your approval, how each person's week stands, and who is away.
 - **Calendar** — your month at a glance: entries by day with daily, weekly, and monthly totals against your work schedule, with holidays and moved days named on their days and absences drawn across theirs; create, copy, or drag an entry to another day right there.
 - **Work schedules** — how long a workday is and which days of the week are worked, optionally with a holiday calendar of public holidays and moved days that several schedules can share. A user is assigned a schedule from a date, and the default schedule covers the days no assignment does.

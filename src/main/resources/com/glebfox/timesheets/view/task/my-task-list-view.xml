@@ -31,7 +31,9 @@
                         select e from ts_Task e
                         where e.project.status = @enum(com.glebfox.timesheets.entity.project.ProjectStatus.OPEN)
                               and e.status = @enum(com.glebfox.timesheets.entity.task.TaskStatus.ACTIVE)
-                              and (select pp from ts_ProjectParticipant pp where pp.user.username = :current_user_username) MEMBER OF e.project.participants
+                              and (select pp from ts_ProjectParticipant pp
+                                   where pp.user.username = :current_user_username
+                                         and pp.role.type <> @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER)) MEMBER OF e.project.participants
                         order by e.project.name asc, e.name asc
                     ]]>
                 </query>

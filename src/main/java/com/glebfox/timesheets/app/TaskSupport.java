@@ -120,8 +120,11 @@ public class TaskSupport {
         PropertyCondition nameCondition = PropertyCondition.contains("name", filter);  // parameter value can be 'null'
         nameCondition.setSkipNullOrEmpty(true);
 
+        // A project's tasks are offered to a person who takes part in it in any role but Observer
         JpqlCondition participantCondition = JpqlCondition.createWithParameters(
-                "(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF e.project.participants",
+                "(select pp from ts_ProjectParticipant pp where pp.user = :user " +
+                        "and pp.role.type <> @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER)) " +
+                        "MEMBER OF e.project.participants",
                 null, Collections.singletonMap("user", user)
         );
         participantCondition.setSkipNullOrEmpty(true);
