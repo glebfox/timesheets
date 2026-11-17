@@ -59,7 +59,9 @@ Tabbed mode disables the content of a tab that is not selected, and Vaadin answe
 
 ## Generic filters for users who may not configure them
 
-A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles only Full access grants. Anyone else can use only the configurations the descriptor declares, so a generic filter that other roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).
+A `genericFilter` shows Add condition and its settings button only to a user with the `ui.genericfilter.modifyConfiguration` specific policy, which among the project's roles Full access and Filters: own configurations grant. A holder of Filters: own configurations adds conditions and saves configurations of their own. Only Full access makes a configuration for everybody (`ui.genericfilter.modifyGlobalConfiguration`) or adds a JPQL condition (`ui.genericfilter.modifyJpqlCondition`); the filter shows a holder of Filters: own configurations a configuration for everybody but lets them neither save nor remove it, and opens its editor read-only (`docs/specs/roles/own-filters.md`).
+
+A user with neither role reads no saved configuration, not even one for everybody: the filter loads them through the data layer as that user, who may not read the filter configuration entity. So they use only the configurations the descriptor declares, and a generic filter that such users' roles use declares a default configuration with the conditions they need, as the work schedule list does with its name condition (`docs/specs/views/settings.md`).
 
 ## Components declared with the generic element
 
