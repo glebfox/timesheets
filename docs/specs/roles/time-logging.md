@@ -11,7 +11,7 @@ Resource role `time-logging`, named "Time logging".
 - The [calendar](../views/calendar.md), My time entries ([time entry screens](../views/time-entries.md#lists)), and [My tasks](../views/tasks.md#my-tasks), with their Timesheets menu items. The [time entry editor](../views/time-entries.md#editor), the [task picker](../views/tasks.md#task-picker), and the [task editor](../views/tasks.md#task-editor) have no menu item: those screens open them. The two editors also open by their URLs, `time-entries/:id` and `tasks/:id`; the task editor opens read-only, as the role does not let a holder change tasks.
 - On the [dashboard](../views/dashboard.md), My time, with Copy to today in its Recent entries, and Log time, which show to every user who may create time entries.
 
-It grants no Time entries list of everyone's entries, no project screens, and no user screens: those are other roles'. It grants no signing in: a holder also needs a role that does, such as [UI: minimal access](ui-minimal.md).
+It grants no Time entries list of everyone's entries, no project screens, and no user screens: those are other roles'. The time entry editor opened by its URL, `time-entries/:id`, still shows any entry the holder's row-level role lets them read, other people's included, read only unless they may change it. It grants no signing in: a holder also needs a role that does, such as [UI: minimal access](ui-minimal.md).
 
 The attribute policies bind the screens, not the data layer, so only the screens keep a holder from changing an entry's user, status, or rejection reason: code running as a holder could save them.
 

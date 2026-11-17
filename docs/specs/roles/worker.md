@@ -14,7 +14,7 @@ The menu offers nothing else: no clients, projects, Time entries list, approval 
 
 ## Row-level role
 
-[Project scope](project-scope.md), assigned beside the job role ([job roles and their row-level role](README.md#job-roles-and-their-row-level-role)); [Time entry rules](time-entry-rules.md) instead when the person also holds Project office, and none with Full access. With Project scope a holder logs time only on the projects where they take part in a role other than Observer, writes only their own time entries, by the time entry rules, and reads only what Project scope opens to them by their project roles.
+[Project scope](project-scope.md), assigned beside the job role ([job roles and their row-level role](README.md#job-roles-and-their-row-level-role)); [Time entry rules](time-entry-rules.md) instead when the person also holds Project office, and none with Full access. With Project scope a holder logs time only on the projects where they take part in a role other than Observer, writes only their own time entries, by the time entry rules, and reads only what Project scope opens to them by their project roles. No screen lists other people's entries to them, but the time entry editor opened by its URL, `time-entries/:id`, shows any entry Project scope opens, read only: every entry of the projects where they are a Manager, an Approver, or an Observer ([Time logging](time-logging.md#grants)).
 
 Without a row-level role the holder is unrestricted: they read every project and every time entry, and change and remove anyone's entries in any status, Closed ones included. Nothing assigns it by itself, and no screen shows that it is missing.
 

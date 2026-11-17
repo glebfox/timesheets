@@ -18,7 +18,7 @@ No Time entries list and no approval screen.
 
 [Time entry rules](time-entry-rules.md), assigned beside the job role whatever other job roles the person holds, Full access aside, with which they get none ([job roles and their row-level role](README.md#job-roles-and-their-row-level-role)). It narrows no reading and nothing of project data, so a holder reads and changes every project, also when they approve or manage, and writes only their own time entries, by the time entry rules: they create entries only for themselves and only on projects where they take part in a role other than Observer, and change or remove nobody else's. With [Approver](approver.md) or [Manager](manager.md) besides, they still approve and reject only the entries the approval rule names, on the projects where they are an Approver or a Manager.
 
-As the rules narrow no reading, a holder reads every time entry too. No screen lists other people's entries, but the [time entry editor](../views/time-entries.md#editor), opened by its URL, `time-entries/:id`, shows any entry, read only.
+As the rules narrow no reading, a holder reads every time entry too. No screen lists other people's entries, but the [time entry editor](../views/time-entries.md#editor), opened by its URL, `time-entries/:id`, shows any entry, read only, as it shows every holder of [Time logging](time-logging.md#grants) the entries their row-level role lets them read; for Project office that is every entry.
 
 Without a row-level role the holder changes and removes anyone's entries in any status, Closed ones included. Nothing assigns it by itself, and no screen shows that it is missing.
 

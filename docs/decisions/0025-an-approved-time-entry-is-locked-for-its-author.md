@@ -8,8 +8,7 @@ Before issue #23 the role Edit active time entries kept its holders from changin
 
 Alternatives considered and rejected:
 
-- **The author changes an Approved entry, and decision 0012 sends it back to New.** An approval would be withdrawn by the person it reviews rather than by the reviewer.
-- **A Manager changes their own Approved entry**, as the approval rule lets them review it. The lock would then depend on who reviews the author, while a Manager can reopen their own entry as any entry is reopened, by rejecting it on the approval screen.
+- **A Manager changes their own Approved entry**, as the approval rule lets them review it. No reason is recorded.
 
 ## Decision
 

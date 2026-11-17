@@ -109,7 +109,7 @@ Each job role held with the row-level role of the table above; the Administrator
 | Projects: list and editor | — | — | their | their, read | — | all | all |
 | Create and remove projects | — | — | — | — | — | all | all |
 | Tasks, participants, tag groups, and tags | — | — | their | their, read | — | all | all |
-| Time entries: everyone's, read only | — | — | their, read | their, read | — | —² | all |
+| Time entries: everyone's, read only | —² | —² | their, read | their, read | —² | —² | all |
 | Approve and reject; the dashboard's My team | — | their | their | — | — | — | their |
 | Task types, project roles | — | — | picker, read¹ | — | — | all | all |
 | Work schedules, holiday calendars, absence types, absences | — | — | — | — | all | — | all |
@@ -119,8 +119,8 @@ Each job role held with the row-level role of the table above; the Administrator
 | Own filter configurations | own | own | own | own | own | own | all |
 
 1. The list is the picker of an editor's field: for a Manager, the project editor's client, the task editor's type, and the participant editor's role; for Project office, the participant editor's user and Add participants. It has no menu item, and tabbed mode also opens it by its URL; it stays read only and offers no Edit ([Projects: management](project-management.md#grants), [Project office](project-office.md#grants)).
-2. No screen lists other people's entries to Project office, but its row-level role narrows no reading, so the time entry editor opened by its URL, `time-entries/:id`, shows any entry, read only ([Project office](project-office.md#row-level-role)).
-3. On their own New or Rejected entry, the time entry editor's Status field is editable for an Approver or a Manager ([#105](https://github.com/glebfox/timesheets/issues/105)), and the time entry rules judge the save: a Manager sets Approved or Rejected there, as the approval rule lets them review their own entries, while an Approver's change of the status alone is refused ([Approver](approver.md#grants), [Manager](manager.md#grants)).
+2. No screen lists other people's entries to them, but [Time logging](time-logging.md#grants) opens the time entry editor by its URL, `time-entries/:id`, on any entry the person's row-level role lets them read, read only: under Project scope, the entries of the projects where they are a Manager, an Approver, or an Observer; for Project office, whose row-level role narrows no reading, every entry ([Project office](project-office.md#row-level-role)).
+3. On their own New or Rejected entry, the time entry editor's Status field is editable for an Approver or a Manager ([#105](https://github.com/glebfox/timesheets/issues/105)), and the time entry rules judge the save by the person's project role on the entry's project: where they are its Manager, they set Approved or Rejected there, as the approval rule lets a project's Manager review their own entries; elsewhere a change of the status alone is refused, whichever of the two job roles they hold ([Approver](approver.md#grants), [Manager](manager.md#grants)).
 
 ## Project roles on a project
 
@@ -131,9 +131,9 @@ What a project role unlocks for a holder of Project scope, on that project, and 
 | Member | Its active tasks are offered for logging time; the person logs and sees their own time there | Worker |
 | Observer | The project read only, with its tasks, participants, tag groups, and tags, and all the time logged on it, in every status, rejection reasons included. Its tasks are not offered for logging time, the person creates no time entry on it, and they are on no one's My team through it | Observer |
 | Approver | What a Member gets, plus reviewing the time of the project's participants but their own and the Managers' (the approval rule); the project read only, and all its time | Approver |
-| Manager | What an Approver gets, plus reviewing all the project's time, their own included, and changing the project, its tasks, participants, tag groups, and tags | Manager |
+| Manager | What an Approver gets, plus reviewing all the project's time, their own included, and changing the project, its tasks, participants, tag groups, and tags | Approver to review, Manager to change the project |
 
-A project role above the person's job role is not checked: the person reads what Project scope opens but has no screen to act on it. Project office and the Administrator read and change every project, whatever their project role there; still, a holder of Project office logs time only on the projects where they take part in a role other than Observer.
+A project role above the person's job role is not checked: what it unlocks reaches the person through the screens their job roles open, and no further. A Worker who is a project's Manager reads all its time, in the time entry editor opened by its URL, but has no screen to review it or to change the project; an Approver who is a project's Manager reviews its time on the approval screen as its Manager, their own entries included, but changes nothing of the project. Project office and the Administrator read and change every project, whatever their project role there; still, a holder of Project office logs time only on the projects where they take part in a role other than Observer.
 
 ## Every role
 
@@ -172,5 +172,5 @@ A project role above the person's job role is not checked: the person reads what
 
 ## Not covered
 
-- The who-can-do-what table: the menu items each job role opens, held with the row-level role of the combination table, and whether it logs time, are checked by `JobRolesTest`; the other cells by the tests each role's spec names. The footnoted cells were seen once in a UI test written to look and not kept ([Project office](project-office.md#not-covered), [Approver](approver.md#not-covered), [Manager](manager.md#not-covered)).
+- The who-can-do-what table: the menu items each job role opens, held with the row-level role of the combination table, and whether it logs time, are checked by `JobRolesTest`; the other cells by the tests each role's spec names. Footnote 2 was seen once, for Project office only, and footnote 3 once, each in a UI test written to look and not kept ([Project office](project-office.md#not-covered), [Approver](approver.md#not-covered), [Manager](manager.md#not-covered)); no test opens another person's entry by its URL as a Worker, an Approver, or HR, and none saves a status as an Approver who is the Manager of the entry's project.
 - A person holding several job roles: only Project office with Approver, under Time entry rules, is checked (`JobRolesTest`); no test checks what another combination opens.

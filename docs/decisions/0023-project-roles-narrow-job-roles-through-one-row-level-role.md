@@ -19,7 +19,7 @@ Two axes. A person's job role, a resource role composed of granular blocks, says
 
 ## Consequences
 
-- A project role above the person's job role is not checked: the person reads what Project scope opens but has no screen to act on it. A warning on the Participants tab would mean reading other people's security roles from the application, which is not wanted.
+- A project role above the person's job role is not checked: what it unlocks reaches the person only through the screens their job roles open. An Approver who is a project's Manager reviews its time as its Manager, their own entries included, but changes nothing of the project; a Worker who is a project's Manager reads its time but neither reviews it nor changes the project. A warning on the Participants tab would mean reading other people's security roles from the application, which is not wanted.
 - A JPQL read policy narrows only what a load starts from, so a reference of an entity the person reads shows regardless, as an entry's task and project do on the person's own entries of a project they have left; accepted.
 - The read policies are JPQL `where` clauses only, never a `join` and never a predicate read policy, as the AI datasets of #88 refuse both.
 - A save of project data or of a time entry by a holder costs a query or two for the person's part in the project.

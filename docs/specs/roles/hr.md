@@ -15,7 +15,7 @@ No project screens, no Time entries list, and no approval screen.
 
 ## Row-level role
 
-[Project scope](project-scope.md), assigned beside the job role ([job roles and their row-level role](README.md#job-roles-and-their-row-level-role)); [Time entry rules](time-entry-rules.md) instead when the person also holds Project office, and none with Full access. Project scope leaves people, work schedules, holiday calendars, and absences open, so a holder keeps them for everyone, while their own time is narrowed as a [Worker](worker.md#row-level-role)'s is.
+[Project scope](project-scope.md), assigned beside the job role ([job roles and their row-level role](README.md#job-roles-and-their-row-level-role)); [Time entry rules](time-entry-rules.md) instead when the person also holds Project office, and none with Full access. Project scope leaves people, work schedules, holiday calendars, and absences open, so a holder keeps them for everyone, while time entries are narrowed as for a [Worker](worker.md#row-level-role), the time entry editor opened by its URL included.
 
 Without a row-level role the holder is unrestricted, as a Worker without one is: they read every project and every time entry, and change and remove anyone's entries in any status, Closed ones included. Nothing assigns it by itself, and no screen shows that it is missing.
 
