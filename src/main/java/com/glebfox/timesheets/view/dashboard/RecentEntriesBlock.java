@@ -35,7 +35,6 @@ import io.jmix.core.MetadataTools;
 import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.card.JmixCard;
 import io.jmix.flowui.component.grid.DataGrid;
-import io.jmix.flowui.component.grid.DataGridColumn;
 import io.jmix.flowui.fragment.Fragment;
 import io.jmix.flowui.fragment.FragmentDescriptor;
 import io.jmix.flowui.kit.component.button.JmixButton;
@@ -52,7 +51,7 @@ import java.util.List;
  * header, a row each, with its date, its task and then its project, time spent, status, and Copy to today. A click on
  * the task opens the entry in the time entry editor, in a dialog, if the user may open the editor; otherwise it is
  * plain text. Copy to today, an icon button with its name as the tooltip, opens the editor on a new entry copied from
- * it and dated today, if the user may create time entries; otherwise the grid has no such column. After a save in
+ * it and dated today; the dashboard shows the block only to a user who may create time entries. After a save in
  * either, the dashboard reloads. No entries shows the grid's empty state.
  * <p>
  * Space on a cell clicks its first element, as the grid does, which opens the entry or copies it; the buttons are out
@@ -86,11 +85,6 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
      */
     static final String EMPTY = "empty";
 
-    /**
-     * The key of the Copy to today column, which the grid has only while the user may create time entries.
-     */
-    static final String COPY_COLUMN = "copy";
-
     @ViewComponent
     private DataGrid<TimeEntry> entriesGrid;
     @ViewComponent
@@ -121,12 +115,6 @@ public class RecentEntriesBlock extends Fragment<JmixCard> implements DashboardB
     public void refresh() {
         List<TimeEntry> entries = dashboardSupport.loadRecentEntries(LIMIT);
         openPermitted = timeEntryEditorOpener.isOpenPermitted();
-        // Removed rather than hidden: a hidden column keeps the browser from sizing the others to their content
-        // after a reload of the page. The user's permissions hold for the session, which the dashboard lives in
-        DataGridColumn<TimeEntry> copyColumn = entriesGrid.getColumnByKey(COPY_COLUMN);
-        if (copyColumn != null && !timeEntryEditorOpener.isCreatePermitted()) {
-            entriesGrid.removeColumn(copyColumn);
-        }
 
         entriesDc.setItems(entries);
         entriesGrid.setClassName(EMPTY, entries.isEmpty());

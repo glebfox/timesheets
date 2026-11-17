@@ -71,7 +71,9 @@ public interface ProjectScopeRole extends TimeEntryRulesRole {
                     + " or {E}.task in (select st from ts_Task st"
                     + " where exists (select sp from ts_ProjectParticipant sp"
                     + " where sp.user.id = :current_user_id and sp.project.id = st.project.id"
-                    + " and sp.role.type in ('manager', 'approver', 'observer')))")
+                    + " and sp.role.type in (@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.MANAGER),"
+                    + " @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.APPROVER),"
+                    + " @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER))))")
     void timeEntryRead();
 
     @PredicateRowLevelPolicy(entityClass = Project.class, actions = RowLevelPolicyAction.UPDATE)
