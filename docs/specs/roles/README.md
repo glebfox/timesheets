@@ -2,7 +2,7 @@
 
 Source: `security/`
 
-Access control is Jmix security roles only. The code defines six resource roles and two row-level roles, each with its own spec here:
+Access control is Jmix security roles only. The code defines six resource roles and three row-level roles, each with its own spec here:
 
 - [Full access](system-full-access.md) — everything.
 - [UI: minimal access](ui-minimal.md) — signing in and the main view, nothing else.
@@ -12,9 +12,10 @@ Access control is Jmix security roles only. The code defines six resource roles 
 - [Time entries: approval](time-entry-approval.md) — the approval screen and changing the status and rejection reason of time entries; it includes User: read only.
 - [Time entry rules](time-entry-rules.md) — a row-level role with the write rules of time entries: who creates, changes, and removes an entry, in which status, and which of its attributes.
 - [Project scope](project-scope.md) — a row-level role that narrows project data and time entries to the projects where the person takes part, and lets them change project data only where they are the project's Manager; it includes Time entry rules.
+- [Client scope](client-scope.md) — a row-level role for a project's client: Project scope, and users and clients narrowed to those of the projects where the person takes part.
 
 Apart from Full access, the roles are granular and meant to be combined: UI: minimal access to sign in, plus the roles for the data and screens a user works with (`docs/conventions.md`).
 
 Further roles of either kind can be created at runtime in the Security screens and assigned to users with Role assignments ([users](../views/users.md)). A user's roles are role assignments, not attributes of the user ([user](../data-model/user.md#access)).
 
-Project roles and their types (Manager, Approver, Member, Observer) are project data, not security roles: they grant no permissions. They decide whose time entries a user approves on a project, on a screen that a security role such as [Time entries: approval](time-entry-approval.md) lets the user open, and whom the [dashboard](../views/dashboard.md#my-team)'s My team shows that user ([project role](../data-model/project-role.md), [approval](../views/approval.md#which-entries-it-shows)). For a holder of [Project scope](project-scope.md), they also narrow what the user's security roles grant to the projects where the user takes part.
+Project roles and their types (Manager, Approver, Member, Observer) are project data, not security roles: they grant no permissions. They decide whose time entries a user approves on a project, on a screen that a security role such as [Time entries: approval](time-entry-approval.md) lets the user open, and whom the [dashboard](../views/dashboard.md#my-team)'s My team shows that user ([project role](../data-model/project-role.md), [approval](../views/approval.md#which-entries-it-shows)). For a holder of [Project scope](project-scope.md) or [Client scope](client-scope.md), they also narrow what the user's security roles grant to the projects where the user takes part.
