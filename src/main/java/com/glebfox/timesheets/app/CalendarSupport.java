@@ -120,7 +120,10 @@ public class CalendarSupport {
                             and e.date >= ?1 and e.date < ?2
                         order by e.date desc
                         """, startDate, endDate)
-                .fetchPlan(FetchPlan.BASE)
+                // The user is not shown: the time entry rules read it when the calendar asks whether an entry may be
+                // moved or removed, and refuse an entry whose user is not loaded
+                .fetchPlan(builder -> builder.addFetchPlan(FetchPlan.BASE)
+                        .add("user", FetchPlan.INSTANCE_NAME))
                 .list().stream()
                 .map(this::wrapTimeEntry)
                 .toList();

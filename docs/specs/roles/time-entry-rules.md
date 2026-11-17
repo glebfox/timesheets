@@ -22,7 +22,7 @@ A save is judged against the entry as stored before it, not as the save leaves i
 
 So a change of the tags alone is a change of what the entry says: its author saves it on a Rejected entry, which goes back to New, and a reviewer who changes the tags together with the status is refused. Two entries approved in one save are each judged on their own.
 
-A screen asks about an entry it has loaded and not changed, so its question is judged by rule 2 alone: an entry the person did not write, and their own Approved or Closed one, a Manager's own Approved entry included, get no. The time entry editor then opens read-only, and the calendar refuses a move; the same Manager can still reject that entry on the approval screen, as a review. An entry loaded without its user or its status gets no, as its author or its status is unknown.
+A screen asks about an entry it has loaded and not changed, so its question is judged by rule 2 alone: an entry the person did not write, and their own Approved or Closed one, a Manager's own Approved entry included, get no. The time entry editor then opens read-only, and the calendar refuses a move; the same Manager can still reject that entry on the approval screen, as a review. The removal question is judged by rule 2 as well, so Remove is offered only on the person's own New or Rejected entry, while Copy asks nothing about the selected entry: the copy is judged by rules 1 and 3 when it is saved. An entry loaded without its user or its status gets no, as its author or its status is unknown.
 
 ## Holders
 
@@ -31,4 +31,4 @@ None in code or seed data. [Project scope](project-scope.md) includes it.
 ## Not covered
 
 - The rules through a constrained `DataManager` save and through the approve and reject operations, each acting user holding Full access and this role: `TimeEntryRulesRoleTest`. A user working as a substitute is judged as the substituted user, which only `ProjectAccessSupportTest` checks, for the user's part in a project.
-- The screens under the role: no test opens the editor, the lists, the calendar, or Copy as a holder. Read from the code: the calendar loads its entries without their user, so it refuses every move of a holder; Copy asks rule 1 about the source entry, so it is enabled only on the person's own New entry without a reason; remove actions check only the entity permission, so a refused removal fails on save.
+- The screens under the role: `TimeEntryRulesUiTest` opens My time entries, Time entries, the editor, and the calendar as holders of Full access and [Project scope](project-scope.md), which includes this role ([time entry screens](../views/time-entries.md#not-covered), [calendar](../views/calendar.md#not-covered)).

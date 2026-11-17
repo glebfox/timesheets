@@ -45,6 +45,7 @@ import com.vaadin.flow.router.Route;
 import io.jmix.core.*;
 import io.jmix.core.accesscontext.InMemoryCrudEntityContext;
 import io.jmix.core.metamodel.model.MetaClass;
+import io.jmix.core.security.AccessDeniedException;
 import io.jmix.core.security.CurrentAuthentication;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
@@ -154,6 +155,8 @@ public class CalendarView extends StandardView {
 
     private Span monthName;
     private Span monthYear;
+    // A field, not a local: nothing else leads to the menu, which a UI test opens through its handler
+    private FullCalendarContextMenu contextMenu;
     private ListCalendarDataProvider dayMarksProvider;
     private ListCalendarDataProvider absencesProvider;
 
@@ -216,7 +219,7 @@ public class CalendarView extends StandardView {
     }
 
     private void initCalendarContextMenu() {
-        FullCalendarContextMenu contextMenu = FullCalendarContextMenu.create(calendar);
+        contextMenu = FullCalendarContextMenu.create(calendar);
         contextMenu.setContentMenuHandler(context -> {
             contextMenu.removeAll();
 
@@ -235,8 +238,12 @@ public class CalendarView extends StandardView {
             if (isTimeEntry(calendarEvent)) {
                 contextMenu.addItem(messages.getMessage("actions.Copy"), __ ->
                         copyTimeEntry(calendarEvent));
-                contextMenu.addItem(messages.getMessage("actions.Remove"), __ ->
-                        removeTimeEntry(calendarEvent));
+
+                TimeEntryCalendarWrapper timeEntryWrapper = findTimeEntry(calendarEvent);
+                if (timeEntryWrapper != null && deletePermitted(timeEntryWrapper.getTimeEntry())) {
+                    contextMenu.addItem(messages.getMessage("actions.Remove"), __ ->
+                            removeTimeEntry(calendarEvent));
+                }
 
                 return true;
             } else if (dayCell != null) {
@@ -260,7 +267,15 @@ public class CalendarView extends StandardView {
             return;
         }
 
-        TimeEntryCalendarWrapper copied = calendarSupport.copyTimeEntry(timeEntryWrapper);
+        TimeEntryCalendarWrapper copied;
+        try {
+            copied = calendarSupport.copyTimeEntry(timeEntryWrapper);
+        } catch (AccessDeniedException e) {
+            // The time entry rules judge the copy only when it is saved, and refuse one on a project where the user
+            // no longer logs time
+            showTimeEntryCopyPreventedNotification();
+            return;
+        }
         timeEntriesDc.getMutableItems().add(copied);
 
         showTimeEntryCopiedNotification();
@@ -561,6 +576,11 @@ public class CalendarView extends StandardView {
         }
     }
 
+    private boolean deletePermitted(TimeEntry timeEntry) {
+        return getEntityContext().isDeletePermitted()
+                && getCrudEntityContext().isDeletePermitted(timeEntry);
+    }
+
     private boolean editPermitted(TimeEntry timeEntry) {
         return getEntityContext().isEditPermitted()
                 && (getCrudEntityContext().updatePredicate() == null
@@ -614,6 +634,13 @@ public class CalendarView extends StandardView {
     private void showTimeEntryNotification(String messageKey) {
         notifications.create(messageBundle.getMessage(messageKey))
                 .withType(Notifications.Type.SUCCESS)
+                .withPosition(Notification.Position.TOP_END)
+                .show();
+    }
+
+    private void showTimeEntryCopyPreventedNotification() {
+        notifications.create(messageBundle.getMessage("info.TimeEntry.copyPrevented.text"))
+                .withType(Notifications.Type.WARNING)
                 .withPosition(Notification.Position.TOP_END)
                 .show();
     }

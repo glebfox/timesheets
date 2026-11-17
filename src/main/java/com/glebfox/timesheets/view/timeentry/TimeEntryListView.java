@@ -16,6 +16,7 @@
 
 package com.glebfox.timesheets.view.timeentry;
 
+import com.glebfox.timesheets.action.TimeEntryCopyAction;
 import com.glebfox.timesheets.app.util.ComponentSupport;
 import com.glebfox.timesheets.entity.tag.Tag;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
@@ -26,7 +27,11 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.AccessManager;
+import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
+import io.jmix.flowui.accesscontext.UiEntityAttributeContext;
+import io.jmix.flowui.action.list.CreateAction;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.*;
@@ -44,11 +49,19 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
 
     @ViewComponent
     private DataGrid<TimeEntry> timeEntriesDataGrid;
+    @ViewComponent("timeEntriesDataGrid.create")
+    private CreateAction<TimeEntry> timeEntriesDataGridCreate;
+    @ViewComponent("timeEntriesDataGrid.copy")
+    private TimeEntryCopyAction timeEntriesDataGridCopy;
 
     @Autowired
     private MetadataTools metadataTools;
     @Autowired
     private ComponentSupport componentSupport;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private Metadata metadata;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -56,6 +69,18 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
         // the browser console once the grid shows and on hover of a header, from its own tooltip generator:
         // https://github.com/vaadin/flow-components/issues/10247, fixed in later 25.3 releases
         timeEntriesDataGrid.setTooltipMarkdownEnabled(true);
+
+        // Create and Copy log time for any person here, which only someone who may set an entry's user does; everyone
+        // else logs their own time in My time entries, the calendar, My tasks, or the dashboard
+        boolean userModifiable = isUserModifiable();
+        timeEntriesDataGridCreate.setVisible(userModifiable);
+        timeEntriesDataGridCopy.setVisible(userModifiable);
+    }
+
+    private boolean isUserModifiable() {
+        UiEntityAttributeContext context = new UiEntityAttributeContext(metadata.getClass(TimeEntry.class), "user");
+        accessManager.applyRegisteredConstraints(context);
+        return context.canModify();
     }
 
     @Subscribe(id = "timeEntriesDc", target = Target.DATA_CONTAINER)
