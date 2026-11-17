@@ -24,7 +24,7 @@ Soft deletion is chosen per entity where it fits; it is not a rule for every ent
 
 ## Security roles
 
-Security roles are granular: each grants one piece of access and is named by what it grants, such as "User: read only" or "Work schedule management". Full access, which grants everything, is the one exception. A larger role is composed of them rather than repeating their policies: a role in code extends the interfaces of the roles it includes, as Work schedule management extends User: read only.
+Security roles are granular: each grants one piece of access and is named by what it grants, such as "User: read only" or "Work schedule management". Full access, which grants everything, and the job roles are the exceptions. A larger role is composed of them rather than repeating their policies: a role in code extends the interfaces of the roles it includes, as Work schedule management extends User: read only. A job role, such as Worker or Manager, is a resource role that only extends the roles it is made of, declares no policy of its own, and is named by the kind of work its holder does; each is assigned with the row-level role that `docs/specs/roles/README.md` gives the person's combination of job roles.
 
 ## Custom list actions
 
