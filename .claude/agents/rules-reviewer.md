@@ -20,7 +20,6 @@ You review one branch of the Timesheets repository against the project's written
   - `docs/guidelines/views.md`: views and fragments, list actions (`action/`), roles (`security/`), components, the UI helpers in `app/util/`, and `app-ui-components.xsd`.
   - `docs/guidelines/database.md`: entities (`entity/`) and changelogs (`src/main/resources/com/glebfox/timesheets/liquibase/**`).
   - `docs/guidelines/testing.md`: tests (`src/test/**`).
-- Never `docs/guidelines/visual-quality.md`: a draft that the map does not list.
 
 ## What to judge
 
