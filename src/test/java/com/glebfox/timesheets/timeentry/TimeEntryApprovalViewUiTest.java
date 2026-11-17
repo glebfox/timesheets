@@ -44,6 +44,7 @@ import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.badge.Badge;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -634,7 +635,11 @@ public class TimeEntryApprovalViewUiTest {
             Component september30Cell = dayOf(view, september30);
             assertThat(classesOf(september30Cell)).contains("outside");
             assertThat(findDescendant(september30Cell, "hours")).isEmpty();
-            assertThat(textOf(descendantOf(weekCardOf(view, firstRow), "hours"))).isEqualTo("0h");
+            // A week without entries of the month shows no time and no count
+            Component firstWeek = weekCardOf(view, firstRow);
+            assertThat(classesOf(firstWeek)).contains("empty");
+            assertThat(findDescendant(firstWeek, "hours")).isEmpty();
+            assertThat(findDescendant(firstWeek, "count")).isEmpty();
             assertThat(figureOf(view, "logged")).containsExactly("Logged", "8h", "2 entries");
             assertThat(figureOf(view, "waiting")).containsExactly("Waiting", "1", "entry · 4h");
             assertThat(fingerprintBarsOf(view, cid)).isEqualTo(2);
@@ -673,6 +678,14 @@ public class TimeEntryApprovalViewUiTest {
             Component column = UiTestUtils.getComponent(view, "column-" + cidRejected.getDate());
             assertThat(textOf(descendantOf(column, "day"))).isEqualTo("Thu 8");
             assertThat(textOf(descendantOf(column, "hours"))).isEqualTo("4h");
+            // A day without entries is marked, so that it takes only the room of its header
+            assertThat(classesOf(column)).doesNotContain("empty");
+            assertThat(classesOf(UiTestUtils.getComponent(view, "column-" + OCTOBER.atDay(9)))).contains("empty");
+            // A day with entries keeps Approve day in its header, disabled while none of them waits; a day without
+            // entries has no such button
+            Button rejectedDayButton = UiTestUtils.getComponent(view, "approveDayBtn-" + cidRejected.getDate());
+            assertThat(rejectedDayButton.isEnabled()).isFalse();
+            assertThat(UiComponentUtils.findComponent(view, "approveDayBtn-" + OCTOBER.atDay(9))).isEmpty();
             assertThat(listedOf(view)).containsExactly(cidRejected.getId());
             assertThat(entryCardOf(view, cidRejected).getParent().flatMap(Component::getParent))
                     .contains(column);
@@ -708,14 +721,14 @@ public class TimeEntryApprovalViewUiTest {
             assertThat(buttonsOf(view, annClosed)).isEmpty();
             assertThat(classesOf(entryCardOf(view, annClosed))).contains("approval-entry-card", "closed");
 
-            // ✓ approves a new or a rejected entry, ✕ rejects a new, an approved, or a rejected one
+            // ✓ approves a new or a rejected entry, ✕ rejects a new or an approved one
             assertThat(buttonsOf(view, annWaiting)).containsExactly("approve", "reject");
             view.selectPerson(bob);
             assertThat(buttonsOf(view, bobApproved)).containsExactly("reject");
             assertThat(classesOf(entryCardOf(view, bobApproved))).contains("approved");
             view.selectPerson(cid);
             view.selectWeek(weekStartOf(cidRejected));
-            assertThat(buttonsOf(view, cidRejected)).containsExactly("approve", "reject");
+            assertThat(buttonsOf(view, cidRejected)).containsExactly("approve");
         });
     }
 
@@ -752,24 +765,27 @@ public class TimeEntryApprovalViewUiTest {
     }
 
     @Test
-    void anEntryShowsItsStatusAsADotInTheMonthAndAsAStripeOnTheWeekBoard() {
+    void anEntryShowsItsStatusAsADotBeforeItsTime() {
         asAdmin(() -> {
             TimeEntryApprovalView view = openInOctober();
             view.selectPerson(cid);
             view.selectWeek(weekStartOf(cidWaiting));
 
-            // In the month's list, a dot of the status's color leads the time
+            // In the month's list, a dot of the status's color leads the time, and so does the day's line
             ApprovalEntryCard monthCard = entryCardOf(view, cidWaiting);
             assertThat(classesOf(descendantOf(descendantOf(monthCard, "time"), "dot"))).contains("new");
-            assertThat(findDescendant(monthCard, "stripe")).isEmpty();
+            Component day = dayOf(view, cidWaiting.getDate());
+            assertThat(classesOf(descendantOf(day, "line"))).contains("new");
+            // The day tells its status once, by the line
+            assertThat(findDescendant(day, "dot")).isEmpty();
 
-            // On the week board, a stripe runs along the card's edge instead
+            // On the week board too, and no stripe runs along the card's edge
             modeField(view).setValue(ApprovalMode.WEEK);
             view.setPeriod(ApprovalPeriod.weekOf(cidWaiting.getDate(), firstDayOfWeek()));
             view.selectPerson(cid);
             ApprovalEntryCard boardCard = entryCardOf(view, cidWaiting);
-            assertThat(findDescendant(boardCard, "stripe")).isPresent();
-            assertThat(findDescendant(boardCard, "dot")).isEmpty();
+            assertThat(classesOf(descendantOf(descendantOf(boardCard, "time"), "dot"))).contains("new");
+            assertThat(findDescendant(boardCard, "stripe")).isEmpty();
         });
     }
 

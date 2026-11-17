@@ -21,16 +21,27 @@
     --jmix-side-dialog-horizontal-size: 28rem;
 }
 
+/* No taller than the dialog has room for: a list of more entries than fit scrolls by itself, and the quick reasons
+   and the reason stay in view. With few entries the reason stands right under them. In a dialog too low even for a
+   short list, the content is taller than it and the dialog scrolls as a whole */
 .approval-reject-dialog-content {
     display: flex;
     flex-direction: column;
     gap: var(--vaadin-gap-l);
+    max-height: 100%;
 }
 
 .approval-reject-dialog-content > .section {
     display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
     gap: var(--vaadin-gap-xs);
+}
+
+/* The entries give way, down to about two of them */
+.approval-reject-dialog-content > .entries-section {
+    flex: 0 1 auto;
+    min-height: 10rem;
 }
 
 .approval-reject-dialog-content .section-label {
@@ -44,6 +55,13 @@
     display: flex;
     flex-direction: column;
     gap: var(--vaadin-gap-xs);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* In a list that scrolls, an entry keeps its height */
+.approval-reject-dialog-content .entries > .basket-entry {
+    flex-shrink: 0;
 }
 
 /* The task and the time over the day and the description, with the button that takes the entry out beside them */
@@ -122,5 +140,6 @@
 
 /* As tall as the reason field of the time entry editor */
 .approval-reject-dialog-content > .reason {
+    flex: 0 0 auto;
     min-height: 15rem;
 }

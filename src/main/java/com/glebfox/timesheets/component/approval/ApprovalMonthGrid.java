@@ -56,10 +56,11 @@ import java.util.Optional;
  * <p>
  * The grid has the class {@code approval-month-grid}. Its parts are {@code heading} cells; {@code day} cells with the
  * id {@code day-<date>} and the classes {@code weekend}, {@code outside} for a neighbouring day, and, for a day of
- * the month in the selected week, {@code selected}, with the parts {@code number}, {@code hours} (holding a
- * {@code dot}), and {@code line}; and {@code week} cards with the id {@code week-<first day>} and the class
- * {@code selected}. A week card holds a {@code summary}, with the parts {@code hours}, {@code count}, and
- * {@code badges}, which is the button that selects the week, and after it the {@code actions} of the week, so that
+ * the month in the selected week, {@code selected}, with the parts {@code number}, {@code hours}, and {@code line}
+ * in the class of the day's status; and {@code week} cards with the id {@code week-<first day>} and the classes
+ * {@code selected} and, for a week without entries, {@code empty}. A week card holds a {@code summary}, with the
+ * parts {@code hours}, {@code count}, and {@code badges} when the week has entries, and none when it has not, which
+ * is the button that selects the week, and after it the {@code actions} of the week, so that
  * a control placed there works on its own: it is neither inside the button nor named by it, and its clicks and keys
  * do not select the week.
  */
@@ -180,16 +181,12 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
 
         Optional<TimeEntryStatus> status = ApprovalTotals.dayStatus(entries);
         if (status.isPresent()) {
-            String statusClassName = ApprovalStatusClassNames.of(status.get());
-
-            Span dot = new Span();
-            dot.addClassNames("dot", statusClassName);
-            Div hours = new Div(dot,
-                    new Span(componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time())));
+            Div hours = new Div(componentSupport.formatWorkTimeTotal(ApprovalTotals.of(entries).time()));
             hours.addClassName("hours");
 
+            // The status of the day, told once: the line under the time
             Div line = new Div();
-            line.addClassNames("line", statusClassName);
+            line.addClassNames("line", ApprovalStatusClassNames.of(status.get()));
 
             cell.add(hours, line);
         }
@@ -198,21 +195,29 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
     }
 
     private Week createWeek(List<LocalDate> row, ApprovalTotals totals, List<Div> monthDays) {
-        Div hours = new Div(componentSupport.formatWorkTimeTotal(totals.time()));
-        hours.addClassName("hours");
-
-        Span count = new Span(entryCountText(totals.count()));
-        count.addClassName("count");
-
-        Div badges = new Div();
-        badges.addClassName("badges");
+        String hoursText = componentSupport.formatWorkTimeTotal(totals.time());
+        String countText = entryCountText(totals.count());
         List<Badge> statusBadges = ApprovalStatusBadges.of(totals, componentSupport, messages, locale);
-        statusBadges.forEach(badges::add);
 
         // The button that selects the week: chosen by a click, or by Enter or Space while it has the focus, which
         // click it here. Without preventDefault, Space would also scroll the page
-        Div summary = new Div(hours, count, badges);
+        Div summary = new Div();
         summary.addClassName("summary");
+        // A week without entries shows nothing: a zero time and a zero count in every such row say only that
+        boolean empty = totals.count() == 0;
+        if (!empty) {
+            Div hours = new Div(hoursText);
+            hours.addClassName("hours");
+
+            Span count = new Span(countText);
+            count.addClassName("count");
+
+            Div badges = new Div();
+            badges.addClassName("badges");
+            statusBadges.forEach(badges::add);
+
+            summary.add(hours, count, badges);
+        }
         summary.getElement().setAttribute("role", "button");
         summary.getElement().setAttribute("tabindex", "0");
         summary.getElement()
@@ -220,9 +225,10 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
                 .setFilter("event.key === 'Enter' || event.key === ' '")
                 .preventDefault();
 
-        // The summary does not say which week it is, so its name tells it with what it shows
+        // The summary does not say which week it is, so its name tells it with what it shows, and with the zero time
+        // and count of a week without entries, which it does not show
         List<LocalDate> days = row.stream().filter(period::contains).toList();
-        List<String> spoken = new ArrayList<>(List.of(hours.getText(), count.getText()));
+        List<String> spoken = new ArrayList<>(List.of(hoursText, countText));
         statusBadges.stream().map(ApprovalStatusBadges::spokenTextOf).forEach(spoken::add);
         summary.getElement().setAttribute("aria-label", messages.formatMessage(ApprovalMonthGrid.class,
                 "weekCard.ariaLabel", locale,
@@ -235,6 +241,7 @@ final class ApprovalMonthGrid extends Composite<Div> implements HasComponents {
         Div card = new Div(summary, actions);
         card.setId("week-" + row.getFirst());
         card.addClassName("week");
+        card.setClassName("empty", empty);
 
         return new Week(card, summary, actions, monthDays);
     }

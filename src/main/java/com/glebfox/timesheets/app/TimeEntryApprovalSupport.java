@@ -291,7 +291,8 @@ public class TimeEntryApprovalSupport {
     }
 
     /**
-     * Sets the entries to Rejected with the reason, which replaces an earlier one.
+     * Sets the entries to Rejected with the reason, which replaces the reason of an earlier rejection that an approved
+     * entry may still carry.
      * <p>
      * The entries are read again by id, so a stale instance never decides what is saved. The operation either
      * changes every entry or none: all of them are saved in one {@link SaveContext}, which also lets the time
@@ -302,7 +303,7 @@ public class TimeEntryApprovalSupport {
      * @return the saved entries, one for each distinct entry given and in that order, loaded as
      * {@link #loadEntriesToApprove} loads them
      * @throws IllegalArgumentException if the reason is blank, or an entry is outside what the current user may
-     *                                  approve, or is Closed
+     *                                  approve, is Closed, or is already Rejected
      * @throws OptimisticLockException  if an entry has changed or vanished since it was loaded: it was changed,
      *                                  deleted, or moved out of reach, or its task or project was deleted
      */
@@ -314,6 +315,9 @@ public class TimeEntryApprovalSupport {
             throw new IllegalArgumentException("The rejection reason is required");
         }
         return changeStatus(entries, entry -> {
+            if (entry.getStatus() == TimeEntryStatus.REJECTED) {
+                throw new IllegalArgumentException("Time entry %s is already rejected".formatted(entry.getId()));
+            }
             entry.setStatus(TimeEntryStatus.REJECTED);
             entry.setRejectionReason(reason);
         });
@@ -326,7 +330,8 @@ public class TimeEntryApprovalSupport {
      * entry of a deleted task or project and one the user cannot reach any more, such as an entry moved to a task of
      * another project. The screen reloads on that, so it comes before any refusal, whether or not the entry is
      * still in the rule. Next, an entry that is current but outside the rule is refused. Last, the status: an entry
-     * that was approved or closed meanwhile has a new version, so it surfaces as stale, not as "already approved".
+     * that was approved, rejected, or closed meanwhile has a new version, so it surfaces as stale, not as "already
+     * approved".
      */
     private List<TimeEntry> changeStatus(Collection<TimeEntry> entries, Consumer<TimeEntry> edit) {
         if (entries.isEmpty()) {

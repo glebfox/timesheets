@@ -127,9 +127,10 @@
         flex-shrink: 0.01;
     }
 
+    /* Its width stays set: the progress is as wide as its parts' widths, not their flex bases, so with an automatic
+       width the bar would always be at its shortest */
     .time-entry-approval-view-team-progress > .approval-status-bar {
         flex: 0 1 12rem;
-        width: auto;
         min-width: 3rem;
     }
 }

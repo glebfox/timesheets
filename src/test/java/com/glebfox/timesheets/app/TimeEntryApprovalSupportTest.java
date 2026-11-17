@@ -579,10 +579,11 @@ public class TimeEntryApprovalSupportTest {
     @Test
     void rejectSetsRejectedWithTheReason() {
         TimeEntry approved = withStatus(approver2Entry, TimeEntryStatus.APPROVED, null);
-        TimeEntry rejected = withStatus(formerEntry, TimeEntryStatus.REJECTED, "old reason");
+        // Approved after an earlier rejection, whose reason it still carries
+        TimeEntry approvedAfterRejection = withStatus(formerEntry, TimeEntryStatus.APPROVED, "old reason");
 
         List<TimeEntry> result = asUser(approver1,
-                () -> approvalSupport.reject(List.of(memberEntry, approved, rejected), "new reason"));
+                () -> approvalSupport.reject(List.of(memberEntry, approved, approvedAfterRejection), "new reason"));
 
         assertThat(result).extracting(TimeEntry::getId)
                 .containsExactly(memberEntry.getId(), approver2Entry.getId(), formerEntry.getId());
@@ -605,6 +606,23 @@ public class TimeEntryApprovalSupportTest {
         TimeEntry stored = reload(memberEntry);
         assertThat(stored.getStatus()).isEqualTo(TimeEntryStatus.NEW);
         assertThat(stored.getRejectionReason()).isNull();
+    }
+
+    @Test
+    void rejectRefusesAnAlreadyRejectedEntry() {
+        TimeEntry rejected = withStatus(approver2Entry, TimeEntryStatus.REJECTED, "old reason");
+
+        assertThatThrownBy(() -> asUser(approver1, () -> approvalSupport.reject(List.of(rejected), "new reason")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is already rejected");
+        // An entry that could be rejected beside a refused one stays as it is
+        assertThatThrownBy(() -> asUser(approver1,
+                () -> approvalSupport.reject(List.of(memberEntry, rejected), "new reason")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is already rejected");
+
+        assertThat(reload(memberEntry).getStatus()).isEqualTo(TimeEntryStatus.NEW);
+        assertThat(reload(approver2Entry).getRejectionReason()).isEqualTo("old reason");
     }
 
     @Test

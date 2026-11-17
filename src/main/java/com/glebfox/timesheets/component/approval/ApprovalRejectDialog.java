@@ -29,6 +29,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.markdown.Markdown;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.function.SerializableConsumer;
 import io.jmix.core.Messages;
 import io.jmix.core.MetadataTools;
@@ -63,7 +64,8 @@ import java.util.Objects;
  * The dialog has the class {@code approval-reject-dialog}; its content has the class
  * {@code approval-reject-dialog-content}. The content holds two {@code section}s, each with a {@code section-label}:
  * the {@code entries-section}, whose {@code entries} have a {@code basket-entry} for each entry with its
- * {@code title}, {@code date}, {@code description} when it has one, and {@code remove} button, and the
+ * {@code title}, {@code date}, {@code description} when it has one, cut after two lines and whole in a tooltip of
+ * the entry, and {@code remove} button, and the
  * {@code quick-reasons-section}, whose {@code quick-reasons} are the buttons; then the {@code reason}. The ids are
  * {@code basketEntry-<id>} and {@code removeBasketEntryBtn-<id>} with the id of the entry, {@code quickReason-<name>}
  * with the name of a quick reason ({@code description}, {@code wrongTask}, {@code tooMuchTime}, or
@@ -284,6 +286,12 @@ public final class ApprovalRejectDialog {
             if (StringUtils.isNotBlank(entry.getDescription())) {
                 Div description = new Div(new Markdown(entry.getDescription()));
                 description.addClassName("description");
+                // Cut short, so the whole text shows on hover over the entry, anywhere on it, as a pointer looking
+                // for more of an entry lands on the entry, not on the two lines of its description: beside the
+                // dialog, over the screen behind it, where it covers none of the dialog's entries
+                Tooltip tooltip = Tooltip.forComponent(row);
+                tooltip.setMarkdown(entry.getDescription());
+                tooltip.setPosition(Tooltip.TooltipPosition.START_TOP);
                 row.add(description);
             }
             return row;

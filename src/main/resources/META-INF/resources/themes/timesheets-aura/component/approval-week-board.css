@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-/* Week board: a column per day, at least as wide as a compact card needs for the words of a task, a tag, and its two
-   buttons; where seven such columns do not fit, the board scrolls sideways within itself, never the page */
+/* Week board: a column per day. The days with entries share the board's width, each at least as wide as a compact
+   card needs for its status badge in either language, such as "Утвержденная" (about 110 pixels and the card's padding
+   and border), which is never cut, and a day without entries takes only the room of its header; where the columns do
+   not fit, the board scrolls sideways within itself, never the page. In a panel narrower than 768 pixels the week is
+   not a board but a list of days (the end of this file) */
 
 .approval-week-board {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(6.5rem, 1fr));
-    align-items: start;
+    display: flex;
+    align-items: flex-start;
     gap: var(--vaadin-gap-s);
     overflow-x: auto;
     /* As tall as its cards, so that the panel scrolls, not the board: a box that scrolls could otherwise shrink to the
@@ -28,18 +30,32 @@
     flex-shrink: 0;
 }
 
-/* The header and the cards of a column take their layout from the column's width */
+/* The header and the cards of a column take their layout from the column's width. A day alone with entries does not
+   take the whole board: its cards stay no wider than a readable line */
 .approval-week-board > .column {
     display: flex;
+    flex: 1 1 0;
     flex-direction: column;
     gap: var(--vaadin-gap-s);
-    min-width: 0;
+    min-width: 8rem;
+    max-width: 24rem;
     container-name: approval-day;
     container-type: inline-size;
 }
 
+/* A day without entries is as wide as its header. It is no container: a container's own width never comes from its
+   content, and nothing in it asks for its width */
+.approval-week-board > .column.empty {
+    flex: 0 0 auto;
+    min-width: 0;
+    container-type: normal;
+}
+
 /* The day and its hours on the first row, the hours below the day where both do not fit; the line and the actions,
-   when there are any, each on a row of its own, the actions at the end, as those of an entry card */
+   when there are any, each on a row of its own, the actions at the end, as those of an entry card. The card of the
+   day: bordered as the entry cards under it and the figures above it, between which a bare heading would hang in the
+   air, and without a fill, which would make it look like a disabled button; its text stands on the edge of the cards'
+   text, the same border and padding in from the column's edge */
 .approval-week-board > .column > .header {
     display: flex;
     flex-wrap: wrap;
@@ -54,8 +70,16 @@
     line-height: var(--aura-line-height-s);
 }
 
-.approval-week-board > .column.weekend > .header {
-    background: var(--vaadin-background-container);
+/* A day without entries has no cards to stand on the edge of, so its heading keeps only a narrow padding: five days
+   with entries then fit beside two without in a panel of 795 pixels, the board's narrowest at a common window, 1440
+   pixels with the navigation drawer open and a classic scrollbar */
+.approval-week-board > .column.empty > .header {
+    padding-inline: var(--vaadin-padding-xs);
+}
+
+/* A weekend's day is muted, as the month grid shades its weekends */
+.approval-week-board > .column.weekend > .header > .day {
+    color: var(--vaadin-text-color-secondary);
 }
 
 .approval-week-board > .column > .header > .day {
@@ -106,4 +130,62 @@
    the layouts around a slot leave no gap for it */
 .approval-week-board .actions:empty {
     display: none;
+}
+
+/* In a panel narrower than 768 pixels, as at 1280 pixels with the navigation drawer open (about 650), five columns
+   wide enough for their cards do not fit, so the week is a list of days, as a month's list of a week is: each day with
+   entries under another, headed by the day, its time, a rule, and its actions, with its cards as wide as the panel,
+   and a day without entries left out. The switch stays clear of the panel's widths at common windows: 795 pixels at
+   1440 with the drawer open and a classic scrollbar, and 736 at 1366 */
+@container approval-panel (width < 768px) {
+    .approval-week-board {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--vaadin-gap-m);
+        overflow-x: visible;
+    }
+
+    .approval-week-board > .column {
+        flex: 0 0 auto;
+        gap: var(--vaadin-gap-xs);
+        min-width: 0;
+        max-width: none;
+    }
+
+    .approval-week-board > .column.empty {
+        display: none;
+    }
+
+    /* As a day's header in a month's list: a plain row on the cards' outer edge, in the body size, a weekend's too */
+    .approval-week-board > .column > .header {
+        flex-wrap: nowrap;
+        align-items: center;
+        column-gap: var(--vaadin-gap-s);
+        padding: 0;
+        border: none;
+        border-radius: 0;
+
+        font-size: var(--aura-font-size-m);
+        line-height: var(--aura-line-height-m);
+    }
+
+    .approval-week-board > .column.weekend > .header > .day {
+        color: var(--vaadin-text-color);
+    }
+
+    .approval-week-board > .column > .header > .hours {
+        margin-inline-start: 0;
+    }
+
+    /* The line is the rule that fills the header up to the day's actions; the cards tell the statuses */
+    .approval-week-board > .column > .header > .line {
+        flex: 1 1 auto;
+        height: 1px;
+        border-radius: 0;
+        background: var(--vaadin-border-color-secondary);
+    }
+
+    .approval-week-board > .column > .header > .actions:not(:empty) {
+        flex: 0 0 auto;
+    }
 }

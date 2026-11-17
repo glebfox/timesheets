@@ -39,6 +39,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.function.SerializablePredicate;
 import com.vaadin.flow.shared.Registration;
@@ -70,7 +71,8 @@ import java.util.stream.Collectors;
  * The panel only shows what it is given. A click on a day or a week of the month grid, on an entry's ✓, ✕, or ↺, and
  * on a button that approves a person, a week, or a day, is passed on as an event of the panel, whose listener decides
  * what follows, such as {@link #showWeek}. Those buttons are in the {@code actions} of the person, the week card, and
- * the day, one for each that has waiting entries; which entries a button approves is asked of the function set with
+ * the day, one for the person, for each week with entries, and for each day with entries, each disabled while its
+ * stretch has none to approve; which entries a button approves is asked of the function set with
  * {@link #setEntriesToApproveProvider}, so that the count on a button and what the click approves come from one place.
  * The ids of the buttons are {@code approvePersonBtn}, {@code approveWeekBtn-<first day>}, and
  * {@code approveDayBtn-<day>}.
@@ -217,7 +219,10 @@ public final class ApprovalPersonPanel extends Composite<Div>
             entryList.addClassName("entries");
             panel.add(monthGrid, entryList);
             for (List<LocalDate> row : period.weekRows(daysOfWeek.getFirst())) {
-                addWeekButton(monthGrid.getWeekActions(row.getFirst()), row, period);
+                // A week without entries of the month has nothing that could ever be approved, so no button
+                if (row.stream().anyMatch(day -> period.contains(day) && entriesByDay.containsKey(day))) {
+                    addWeekButton(monthGrid.getWeekActions(row.getFirst()), row, period);
+                }
             }
             showWeek(selectedWeek);
         } else {
@@ -225,7 +230,10 @@ public final class ApprovalPersonPanel extends Composite<Div>
                     entry -> createEntryCard(entry, true), componentSupport, messages, locale);
             panel.add(board);
             for (LocalDate day : period.days()) {
-                addDayButton(drawnButtons, board.getDayActions(day), day, true);
+                // A day without entries has nothing that could ever be approved, so no button, not a disabled one
+                if (entriesByDay.containsKey(day)) {
+                    addDayButton(drawnButtons, board.getDayActions(day), day, true);
+                }
             }
         }
         drawnButtons.refresh();
@@ -497,31 +505,46 @@ public final class ApprovalPersonPanel extends Composite<Div>
         return card;
     }
 
+    /**
+     * Adds the person's button, which tells the number of entries it approves and, disabled while the person has
+     * nothing to approve, names what it would approve without a number.
+     */
     private void addPersonButton(Div actions, ApprovalPeriod period) {
         String key = period.mode() == ApprovalMode.MONTH ? "approvePersonBtn.month" : "approvePersonBtn.week";
+        String none = messages.getMessage(ApprovalPersonPanel.class, key + ".none", locale);
         Button button = createApproveButton("approvePersonBtn", ButtonVariant.PRIMARY, ButtonVariant.SUCCESS);
         drawnButtons.add(actions, button, new ApprovalScope(period.start(), period.end()),
-                count -> countText(key, count));
+                count -> count == 0 ? none : countText(key, count));
     }
 
     /**
-     * Adds the button of a week of the month grid, which approves the week's days of the month.
+     * Adds the button of a week of the month grid, which approves the week's days of the month and stays in its
+     * place, disabled, while the week has nothing to approve, so that the grid's row keeps its height. A narrow panel
+     * shows the button's icon alone, so the button is also named on hover, by a tooltip of the slot it stands in: a
+     * disabled button takes no pointer events, so a tooltip of its own would never open while the week has nothing to
+     * approve.
      */
     private void addWeekButton(Div actions, List<LocalDate> row, ApprovalPeriod month) {
         List<LocalDate> days = row.stream().filter(month::contains).toList();
         ApprovalScope scope = new ApprovalScope(days.getFirst(), days.getLast());
 
-        Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.PRIMARY,
+        // Without a fill, as Approve day: the person's button above is the one filled button of the panel
+        Button button = createApproveButton("approveWeekBtn-" + row.getFirst(), ButtonVariant.TERTIARY,
                 ButtonVariant.SUCCESS, ButtonVariant.SMALL);
-        button.setAriaLabel(messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
-                titles.formatDates(scope.from(), scope.to())));
+        String name = messages.formatMessage(ApprovalPersonPanel.class, "approveWeekBtn.ariaLabel", locale,
+                titles.formatDates(scope.from(), scope.to()));
+        button.setAriaLabel(name);
+        Tooltip.forComponent(actions).setText(name);
         String text = messages.getMessage(ApprovalPersonPanel.class, "approveWeekBtn.text", locale);
         drawnButtons.add(actions, button, scope, count -> text);
     }
 
     /**
-     * Adds the button of a day. On the week board, a column too narrow for the button's text shows its icon alone, so
-     * there the button also names itself on hover.
+     * Adds the button of a day, which stays in its place, disabled, while the day has nothing to approve: the day's
+     * header keeps its height, and the cards under it do not move as the day's entries are approved or put in the
+     * reject basket. On the week board, a column too narrow for the button's text shows its icon alone, so there the
+     * button is also named on hover, by a tooltip of the slot it stands in: a disabled button takes no pointer events,
+     * so a tooltip of its own would never open while the day has nothing to approve.
      */
     private void addDayButton(ApprovalBulkApproveButtons buttons, Div actions, LocalDate day, boolean onBoard) {
         Button button = createApproveButton("approveDayBtn-" + day, ButtonVariant.TERTIARY, ButtonVariant.SUCCESS,
@@ -530,7 +553,7 @@ public final class ApprovalPersonPanel extends Composite<Div>
                 titles.formatDates(day, day));
         button.setAriaLabel(name);
         if (onBoard) {
-            button.setTooltipText(name);
+            Tooltip.forComponent(actions).setText(name);
         }
         String text = messages.getMessage(ApprovalPersonPanel.class, "approveDayBtn.text", locale);
         buttons.add(actions, button, ApprovalScope.ofDay(day), count -> text);
