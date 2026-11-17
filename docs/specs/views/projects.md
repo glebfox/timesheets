@@ -2,7 +2,7 @@
 
 Source: `view/project/`, `view/projectparticipant/`, `action/TaskCloseAction.java`, `action/ChildEditAction.java`
 
-The project list, the project editor, and the participant editor. What a project is: [project](../data-model/project.md), [project participant](../data-model/project-participant.md).
+The project list, the project editor, and the participant editor. What a project is: [project](../data-model/project.md), [project participant](../data-model/project-participant.md). Who opens them: a [Manager](../roles/manager.md), on the projects where they take part, changing those they manage; an [Observer](../roles/observer.md), read only, on the projects where they take part; and [Project office](../roles/project-office.md), on every project ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## Projects
 

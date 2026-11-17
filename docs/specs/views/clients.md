@@ -2,7 +2,7 @@
 
 Source: `view/client/`, `action/ViewPermittedEditAction.java`, `component/avatarupload/`, `app/util/ComponentSupport.java`, `data/renderer/AvatarCellRenderer.java`
 
-The client list, which is also the client picker, and the client editor. What a client is: [client](../data-model/client.md).
+The client list, which is also the client picker, and the client editor. What a client is: [client](../data-model/client.md). Who opens them: [Project office](../roles/project-office.md), through [Client management](../roles/client-management.md); a [Manager](../roles/manager.md) opens the list only as the project editor's client picker, or by its URL, read only ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## Clients
 

@@ -2,13 +2,13 @@
 
 Source: `view/user/`, `action/ViewPermittedEditAction.java`, `component/avatarupload/`, `action/WorkScheduleAssignmentCreateAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `app/WorkScheduleAssignmentSupport.java`, `data/renderer/UserRenderer.java`
 
-The user list and the user editor, under the Administration menu. What a user is: [user](../data-model/user.md).
+The user list and the user editor, under the Administration menu. What a user is: [user](../data-model/user.md). Who opens them: an [Approver](../roles/approver.md), a [Manager](../roles/manager.md), and [HR](../roles/hr.md), read only, through [User: read only](../roles/user-read-only.md), HR also changing work schedule assignments in the editor; [Project office](../roles/project-office.md) opens the list only as the participant editor's user picker, or by its URL, read only; and only Full access creates and changes users and assigns their roles ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## Users
 
 `users`. Lists users by username, with the user (avatar, and full name or username), email, the status as a green Active or red Inactive badge, and time zone. It offers a filter on any attribute and pagination, both kept when the browser page is reloaded.
 
-Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, whatever screens the user may open ([decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md)). The gear menu is hidden when none of its items is left. Edit is offered only to a user who may open the user editor: a holder of [Projects: management](../roles/project-management.md) picks participants from this list without it.
+Actions: Create, Edit, Remove, and Role assignments; a gear menu holds Change password, Reset password, and User substitutions. These last four are the framework's security screens. Each of them is hidden from a user who may not open its screen. Change password and Reset password are hidden as well from a user who may not edit users, whatever screens the user may open ([decision 0003](../../decisions/0003-work-schedule-management-grants-no-update-on-users.md)). The gear menu is hidden when none of its items is left. Edit is offered only to a user who may open the user editor: a holder of [Projects: management](../roles/project-management.md) alone picks participants from this list without it.
 
 Empty, the list shows the Users icon and "No users" («Нет пользователей»), with Refresh ([empty lists and tables](README.md#empty-lists-and-tables)).
 

@@ -2,7 +2,7 @@
 
 Source: `view/task/`
 
-My tasks, the task editor, and the task picker. What a task is: [task](../data-model/task.md).
+My tasks, the task editor, and the task picker. What a task is: [task](../data-model/task.md). Who opens them: My tasks and the task picker, every job role but Observer, through [Time logging](../roles/time-logging.md), which also opens the task editor read-only, from My tasks and by its URL; the task editor, whoever opens the [project editor](projects.md), from its Tasks tab ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## My tasks
 

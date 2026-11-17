@@ -22,7 +22,7 @@ Without a row-level role the holder is unrestricted: they read every project and
 
 - The demo users `freeman`, `barney`, `rosenberg`, `gina`, `colette`, `alyx`, `odessa`, `shephard`, `rattmann`, and `chell`, in the `dev` demo data only, each with [Project scope](project-scope.md).
 
-[Approver](approver.md) and [HR](hr.md) include it, and through Approver [Manager](manager.md), so in the `dev` demo data every user but `admin` and `gman` holds it.
+[Approver](approver.md), [HR](hr.md), and [Project office](project-office.md) include it, and through Approver [Manager](manager.md), so in the `dev` demo data every user but `admin` and `gman` holds it.
 
 ## Not covered
 

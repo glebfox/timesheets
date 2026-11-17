@@ -8,14 +8,14 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 
 - `entity/<area>/` — entities and their enums, one subpackage per domain area, and `misc` for embeddables. Specs: `docs/specs/data-model/`, starting with its `README.md`.
 - `datatype/` — custom value types with their Jmix datatypes and JPA converters.
-- `app/` — beans with the domain queries and helpers that views and entity listeners call (`*Support`); `app/util/` holds the value types they return, the value types a screen loads by or computes from what it loads, such as the periods and totals of the approval screen, and the helpers that several views share.
+- `app/` — beans with the domain queries and helpers that views, entity listeners, and the predicates of row-level roles call (`*Support`); `app/util/` holds the value types they return, the value types a screen loads by or computes from what it loads, such as the periods and totals of the approval screen, and the helpers that several views share.
 - `view/<entity>/` — view controllers, one subpackage per entity and one per screen that is no entity's, such as `view/calendar/` and `view/approval/`, with the types only that screen uses; `view/dashboard/` holds the dashboard, the fragment the main view shows while no tab is open, and its blocks, each a fragment of its own. Each descriptor sits at the matching path under resources. Specs: `docs/specs/views/`.
 - `action/` — custom list actions and the helpers they share.
 - `data/renderer/` — reusable grid renderers.
 - `component/` — custom UI components and icon sets, a subpackage for each component or for each family of components that one screen is built from, such as `component/approval/`; their stylesheets are in the theme's `component/`. A component with an element of its own in descriptors is declared in `app-ui-components.xsd` and registered in `TimesheetsApplication`, and Jmix Studio learns of it from the `@StudioUiKit` holder in `component/`, with its palette icons under `meta/icon/` in resources; a descriptor declares one without such an element with the generic `component` element. The icon sets' JavaScript is in `src/main/frontend/src/component/icon/`.
 - `icon/` — the replacement of Jmix's `Icons` bean, which draws the icons the framework names by purpose, such as those of its standard actions, from the Gravity UI set. See `docs/guidelines/design-system.md`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
-- `security/` — resource roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`.
+- `security/` — the security roles, resource roles (granular blocks and the job roles composed of them) and row-level roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`, starting with its `README.md`.
 - `demo/` — the demo data that a `dev` start loads; its images are under the same package in resources.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`). See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.

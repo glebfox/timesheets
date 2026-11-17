@@ -2,7 +2,7 @@
 
 Source: `view/tasktype/`, `view/projectrole/`, `action/ViewPermittedEditAction.java`, `view/workschedule/`, `view/holidaycalendar/`, `view/holidaycalendarday/`, `component/daterange/`, `view/workscheduleassignment/`, `view/absencetype/`, `action/WorkScheduleMakeDefaultAction.java`, `action/WorkScheduleRemoveAction.java`, `action/WorkScheduleUsersAddAction.java`, `action/WorkScheduleAssignmentEditAction.java`, `action/WorkScheduleAssignmentRemoveAction.java`, `action/HolidayCalendarDaysAddAction.java`, `app/WorkScheduleAssignmentSupport.java`, `app/util/ComponentSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/PluralForms.java`, `app/util/UnsavedInputSupport.java`
 
-The catalogs under the Settings menu: task types, project roles, work schedules, holiday calendars, and absence types.
+The catalogs under the Settings menu: task types, project roles, work schedules, holiday calendars, and absence types. Who opens them: task types and project roles, [Project office](../roles/project-office.md), through [Task types and project roles](../roles/project-catalogs.md), while a [Manager](../roles/manager.md) opens their lists only as the pickers of the task and participant editors, or by their URLs, read only; work schedules, holiday calendars, and absence types, [HR](../roles/hr.md), through [Work schedule management](../roles/work-schedule-management.md) and [Absence management](../roles/absence-management.md) ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## Task types
 

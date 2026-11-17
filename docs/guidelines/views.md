@@ -1,6 +1,6 @@
 # Views and actions
 
-Mechanics of the framework's views, grids, filters, list actions, components declared in descriptors, custom fields and filters, tooltips, and avatar images that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
+Mechanics of the framework's views, grids, filters, list actions, row-level roles, components declared in descriptors, custom fields and filters, tooltips, and avatar images that the project's own views, actions, and roles are built on, and that the project skills do not state. How to write a view in general is the `jmix-create-*` skills; no skill covers custom list actions, whose rule is in `docs/conventions.md`.
 
 ## Read-only detail views
 
@@ -11,7 +11,7 @@ A detail view of a saved entity opens read-only when the current user may not up
 
 OK is not such an action, and saving has no read-only check, so OK still saves the view's data context. An action that must keep working in a read-only editor does not implement `AdjustWhenViewReadOnly` and relies on its own permission check; OK then saves only what such actions changed. The assignment actions of the user editor and the work schedule editor work this way, so a holder of Work schedule management changes assignments in a user editor that is read-only for them (`docs/specs/roles/work-schedule-management.md`).
 
-The framework's `list_edit` returns `true` from `isDisabledWhenViewReadOnly()` whenever the user may update the table's entity at entity level, even where a row-level role refuses the selected item, so in an editor that a row-level role made read-only it opens no child at all. The project and tag group editors' tables use `ChildEditAction` in `action/` instead, which the mode leaves enabled: it keeps the standard permission check and its Read label, and the child's editor opens read-only by the same permissions. The mode reaches actions only through a component that holds actions, which a drop-down button is not, so the project editor disables its Add participants button itself on each change of the mode.
+The framework's `list_edit` returns `true` from `isDisabledWhenViewReadOnly()` whenever the user may update the table's entity at entity level, even where a row-level role refuses the selected item, so in an editor that a row-level role made read-only it opens no child at all. The project and tag group editors' tables use `ChildEditAction` in `action/` instead, which the mode leaves enabled: it keeps the standard permission check and its Read label, and the child's editor opens read-only by the same permissions.
 
 ## List actions in an editor
 
@@ -27,9 +27,26 @@ Such a table uses custom actions instead, as the assignment tables of the user e
 `SecuredListDataComponentAction` is enabled only with a selected item, and its permission check is the row-level constraint of its entity operation on that item: it does not check the entity-level permission. An add action built on it could never be used on an empty table. So a custom list action:
 
 - that needs no selection, such as a create or an add, extends `ListDataComponentAction`, as the framework's `CreateAction` does, and checks the entity-level create permission;
-- that works on selected items extends `SecuredListDataComponentAction` with its entity operation, and checks the entity-level permission of that operation before the row-level one.
+- that works on selected items extends `SecuredListDataComponentAction` with its entity operation, and checks the entity-level permission of that operation before the row-level one;
+- that makes a new entity from the selected one, as Copy of time entries does, extends `SecuredListDataComponentAction` for its selection but sets no entity operation, so it asks no row-level question about the selected item, and checks the entity-level create permission (`docs/conventions.md`).
 
 The framework's `list_edit` checks the entity's permissions and its row-level constraints, never the view it opens. In a list that a role grants without its editor, as Projects: management grants the client, task type, project role, and user lists as pickers, it stays enabled, labeled Read, and fails with an access-denied error when clicked. Those lists use `ViewPermittedEditAction` in `action/`, which is offered only to a user who may also open the editor.
+
+## A screen's question to a row-level predicate
+
+A screen asks the update or delete predicate of a row-level role about an entity as it loaded it, a detached instance it has not changed: the detail view, to decide whether it opens read-only; a list action with a constraint operation, on the selected item, as `list_edit` asks UPDATE, which gives its Read label, and `list_remove` asks DELETE, which the framework's `RemoveAction` sets itself; and a screen that asks through `InMemoryCrudEntityContext`, as the calendar does before a move or before offering Remove (`CalendarView`). Change tracking reports no change on such an instance, and an old value must not be asked of it: `AttributeChangesProvider.getOldValue` throws on a detached instance. So a predicate that judges what a save changes takes an unchanged entity as a probe, judged on its current values: the time entry rules judge it as a save by its author that changes nothing, and Project scope by the project as it stands (`docs/specs/roles/time-entry-rules.md`).
+
+The instance is the one the screen loaded, so the screen's fetch plan loads every attribute and reference that a predicate reads from it, even one the screen does not show: on a detached instance a reference that is not loaded has no value to judge. The time entry rules refuse such an entry, so a list or a calendar of time entries whose fetch plan leaves out the entry's `user` gets Remove disabled on every row and every move refused, a person's own New entries included; My time entries and the calendar load it for that reason. Project scope instead reads the stored project of a detached instance loaded without it by a value query (`ProjectDataAccessSupport`).
+
+## Row-level predicates inside a save
+
+The data store asks the create, update, and delete predicates inside the save transaction, after the `EntitySavingEvent` listeners and the merge, on the merged, managed instance: a listener's change, such as the time entry listener's return to New, is already applied, and a load of the entity from a predicate would return the saved state. A predicate that judges a save against the stored state therefore reads it from the instance's change tracking, `io.jmix.data.AttributeChangesProvider`: the old value of an attribute the save changes, the current value of one it does not. Change tracking reports a changed many-to-many collection, such as a time entry's tags, with its old elements. A new instance has no stored state: every attribute reads as changed, with no old value, so a predicate judges a new instance on its current values. A reference outside the saved instance's fetch plan is not loaded on the managed instance, and its id comes from `ReferenceIdProvider` without loading it.
+
+A predicate never loads an entity and never flushes: an entity query inside the save flushes the rows the save holds, which clears the change tracking the predicate reads, and refreshes them. It reads other data, such as the person's part in a project, with a value query (`loadValue`), which has no fetch plan, so it runs without a flush and without the refresh. See `ProjectAccessSupport`, `ProjectDataAccessSupport`, and `TimeEntryAccessSupport` in `app/`.
+
+## Row-level read policies and references
+
+A JPQL read policy narrows only what a load starts from, a count or another value query included. A reference of an entity the user reads shows regardless: one in the load's fetch plan, and one loaded lazily later, when its getter first reads it, as the lazy load keeps only the in-memory constraints of the load it comes from, so no JPQL policy narrows it. An entry's user shows to whoever reads the entry, whatever Client scope says of users (`ClientScopeRoleTest`). A policy's path through a fetched reference drops the rows whose reference is soft-deleted: `docs/guidelines/database.md`.
 
 ## Lists after an editor save
 

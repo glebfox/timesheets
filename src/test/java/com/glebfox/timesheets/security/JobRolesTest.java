@@ -78,9 +78,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * The job roles, each held alone with the row-level role that the combination table gives it: Project scope for
  * Worker, Approver, Manager, and HR, Client scope for Observer, and Time entry rules for Project office.
- * {@link #WHO_CAN_DO_WHAT} is the design's who-can-do-what table as the main menu and logging time show it; the other
- * tests check the cells the menu cannot show. Saves go through the constrained {@code DataManager}, approvals through
- * {@link TimeEntryApprovalSupport}, which saves with it too.
+ * {@link #WHO_CAN_DO_WHAT} is the who-can-do-what table of {@code docs/specs/roles/README.md} as the main menu and
+ * logging time show it; the other tests check the cells the menu cannot show. Saves go through the constrained
+ * {@code DataManager}, approvals through {@link TimeEntryApprovalSupport}, which saves with it too.
  */
 @SpringBootTest
 @ExtendWith(AuthenticatedAsAdmin.class)
