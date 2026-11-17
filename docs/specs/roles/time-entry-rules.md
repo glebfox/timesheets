@@ -17,7 +17,7 @@ It grants nothing on its own; it narrows what resource roles grant on [time entr
 
 A save is judged against the entry as stored before it, not as the save leaves it, so the rule that sends a changed Approved entry back to New does not open it to its author:
 
-- A save that changes the status or the rejection reason, and nothing the entry says (its date, task, user, spent time, description, or tags), is a review: rule 4.
+- A save that changes the status or the rejection reason, and neither what the entry says (its date, task, user, spent time, description, or tags) nor whether it is deleted, is a review: rule 4.
 - Any other save, one that changes nothing included, is the author's: rules 2 and 3.
 
 So a change of the tags alone is a change of what the entry says: its author saves it on a Rejected entry, which goes back to New, and a reviewer who changes the tags together with the status is refused. Two entries approved in one save are each judged on their own.

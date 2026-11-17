@@ -56,6 +56,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -350,6 +351,20 @@ public class TimeEntryRulesRoleTest {
         // The same save with the tags as they are: the loaded tags, saved back unchanged, are no change
         as(reviewer, () -> dataManager.save(withStatus(load(newEntry), APPROVED)));
         assertThat(stored(newEntry).getStatus()).isEqualTo(APPROVED);
+    }
+
+    @Test
+    void reviewerWhoDeletesWithTheStatusIsRefused() {
+        // A save that also marks the entry deleted is no review, so it never bypasses the rule of removal
+        as(reviewer, () -> {
+            TimeEntry entry = withStatus(load(newEntry), APPROVED);
+            entry.setDeletedDate(OffsetDateTime.now());
+            entry.setDeletedBy(reviewer.getUsername());
+            refusedToSave(entry);
+        });
+
+        assertThat(dataManager.load(Id.of(newEntry)).optional()).isPresent();
+        assertThat(stored(newEntry).getStatus()).isEqualTo(NEW);
     }
 
     @Test

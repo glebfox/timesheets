@@ -66,6 +66,9 @@ public class TimeEntryAccessSupport {
 
     // What the entry says, as opposed to its status and rejection reason, which a reviewer sets
     private static final List<String> CONTENT = List.of("date", "task", "user", "spentTime", "description", "tags");
+    // Whether the entry is deleted, which a review leaves as it is: a save that deletes or restores the entry is the
+    // author's, judged as a removal is
+    private static final List<String> DELETION = List.of("deletedDate", "deletedBy");
 
     // The statuses in which the author changes or removes the entry
     private static final Set<TimeEntryStatus> OPEN_TO_AUTHOR = EnumSet.of(NEW, REJECTED);
@@ -112,7 +115,8 @@ public class TimeEntryAccessSupport {
     /**
      * Tells whether the current user may save the entry as it is, against its stored values.
      * <p>
-     * A Closed entry is changed by no one. A change of the status or the rejection reason alone is a review: the user
+     * A Closed entry is changed by no one. A change of the status or the rejection reason alone, the entry's content
+     * and whether it is deleted left as they are, is a review: the user
      * must be someone the approval rule lets review the entry's author on its project, the entry stored New,
      * Approved, or Rejected, and its new status Approved or Rejected. Any other save, one that changes nothing
      * included, is the author's: the entry is theirs and stored New or Rejected, its user and rejection reason stay as
@@ -130,7 +134,9 @@ public class TimeEntryAccessSupport {
 
         boolean statusChanged = changed(entry, "status");
         boolean reviewed = statusChanged || changed(entry, "rejectionReason");
-        if (reviewed && CONTENT.stream().noneMatch(attribute -> changed(entry, attribute))) {
+        if (reviewed
+                && CONTENT.stream().noneMatch(attribute -> changed(entry, attribute))
+                && DELETION.stream().noneMatch(attribute -> changed(entry, attribute))) {
             // The task is not changed here, so its current project is the stored one
             return REVIEWABLE.contains(storedStatus)
                     && REVIEW_RESULTS.contains(currentStatus(entry))
