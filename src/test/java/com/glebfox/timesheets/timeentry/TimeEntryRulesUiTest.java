@@ -286,22 +286,25 @@ public class TimeEntryRulesUiTest {
 
         as(limitedManager, () -> {
             View<?> list = openList(TimeEntryListView.class);
+            // Copy needs a selected entry, so only the user decides it
+            select(list, workerNew);
 
-            assertThat(Objects.requireNonNull(grid(list).getAction("create")).isVisible()).isFalse();
-            assertThat(Objects.requireNonNull(grid(list).getAction("copy")).isVisible()).isFalse();
-            assertThat(UiTestUtils.<JmixButton>getComponent(list, "createBtn").isVisible()).isFalse();
-            assertThat(UiTestUtils.<JmixButton>getComponent(list, "copyBtn").isVisible()).isFalse();
-            assertThat(UiTestUtils.<JmixButton>getComponent(list, "editBtn").isVisible()).isTrue();
+            assertThat(Objects.requireNonNull(grid(list).getAction("create")).isEnabled()).isFalse();
+            assertThat(Objects.requireNonNull(grid(list).getAction("copy")).isEnabled()).isFalse();
+            assertThat(UiTestUtils.<JmixButton>getComponent(list, "createBtn").isEnabled()).isFalse();
+            assertThat(UiTestUtils.<JmixButton>getComponent(list, "copyBtn").isEnabled()).isFalse();
+            assertThat(UiTestUtils.<JmixButton>getComponent(list, "editBtn").isEnabled()).isTrue();
         });
 
         // Full access alone
         systemAuthenticator.runWithUser("admin", () -> {
             View<?> list = openList(TimeEntryListView.class);
+            select(list, workerNew);
 
-            assertThat(Objects.requireNonNull(grid(list).getAction("create")).isVisible()).isTrue();
-            assertThat(Objects.requireNonNull(grid(list).getAction("copy")).isVisible()).isTrue();
-            assertThat(UiTestUtils.<JmixButton>getComponent(list, "createBtn").isVisible()).isTrue();
-            assertThat(UiTestUtils.<JmixButton>getComponent(list, "copyBtn").isVisible()).isTrue();
+            assertThat(Objects.requireNonNull(grid(list).getAction("create")).isEnabled()).isTrue();
+            assertThat(Objects.requireNonNull(grid(list).getAction("copy")).isEnabled()).isTrue();
+            assertThat(UiTestUtils.<JmixButton>getComponent(list, "createBtn").isEnabled()).isTrue();
+            assertThat(UiTestUtils.<JmixButton>getComponent(list, "copyBtn").isEnabled()).isTrue();
         });
     }
 

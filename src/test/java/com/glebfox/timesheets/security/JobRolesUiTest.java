@@ -205,11 +205,11 @@ public class JobRolesUiTest {
 
             // The list logs time for anyone, and the manager may not set an entry's user
             DataGrid<TimeEntry> grid = UiTestUtils.getComponent(list, "timeEntriesDataGrid");
-            assertThat(Objects.requireNonNull(grid.getAction("create")).isVisible()).isFalse();
-            assertThat(Objects.requireNonNull(grid.getAction("copy")).isVisible()).isFalse();
+            grid.select(container.getItem(memberEntry.getId()));
+            assertThat(Objects.requireNonNull(grid.getAction("create")).isEnabled()).isFalse();
+            assertThat(Objects.requireNonNull(grid.getAction("copy")).isEnabled()).isFalse();
 
             // Another person's entry opens read only: the manager reads it but may not change it
-            grid.select(container.getItem(memberEntry.getId()));
             Action edit = Objects.requireNonNull(grid.getAction("edit"));
             assertThat(edit.isEnabled()).isTrue();
             edit.actionPerform(grid);
