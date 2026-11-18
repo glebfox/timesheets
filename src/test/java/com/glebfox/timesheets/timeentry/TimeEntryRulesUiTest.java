@@ -234,7 +234,9 @@ public class TimeEntryRulesUiTest {
         UUID copyId = systemAuthenticator.withUser(worker.getUsername(), () -> {
             View<?> list = openList(MyTimeEntryListView.class);
             select(list, source);
-            Objects.requireNonNull(grid(list).getAction("copy")).actionPerform(grid(list));
+            Action copy = Objects.requireNonNull(grid(list).getAction("copy"));
+            assertThat(copy.isEnabled()).isTrue();
+            copy.actionPerform(grid(list));
 
             // Saved as opened: the editor sets the copy's tags again from its fields, the only change
             TimeEntryDetailView editor = UiTestUtils.getCurrentView();

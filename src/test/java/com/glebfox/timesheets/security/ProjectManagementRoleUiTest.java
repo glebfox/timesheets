@@ -381,7 +381,10 @@ public class ProjectManagementRoleUiTest {
     private static void assertPickerEdit(EntityComboBox<?> field, String gridId,
                                          Class<? extends View<?>> listClass, Class<? extends View<?>> editorClass,
                                          boolean offered) {
-        Objects.requireNonNull(field.getAction("entityLookup"), "the lookup of " + listClass).actionPerform(field);
+        Action lookup = Objects.requireNonNull(field.getAction("entityLookup"), "the lookup of " + listClass);
+        assertThat(lookup.isVisible()).isTrue();
+        assertThat(lookup.isEnabled()).isTrue();
+        lookup.actionPerform(field);
         View<?> list = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the lookup dialog");
         assertThat(list).isInstanceOf(listClass);
 
