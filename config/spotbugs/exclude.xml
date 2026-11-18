@@ -23,10 +23,7 @@
 
     <!-- The format strings are JPQL queries, whose line breaks are whitespace, not output -->
     <Match>
-        <Or>
-            <Class name="com.glebfox.timesheets.app.TimeEntryApprovalSupport"/>
-            <Class name="com.glebfox.timesheets.app.ProjectAccessSupport"/>
-        </Or>
+        <Class name="com.glebfox.timesheets.app.TimeEntryApprovalSupport"/>
         <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
     </Match>
 </FindBugsFilter>
