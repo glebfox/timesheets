@@ -25,7 +25,7 @@
 - **Projects** — a project belongs to a client and owns its tasks, its participants with their project roles, and its tag groups.
 - **Tags** — time entries are tagged from the tag groups of their project, and a task can make some groups required.
 - **Clients** — the clients projects belong to, each with a logo and contact details: email, phone, website, and address.
-- **Users and access** — users with avatars and time zones, access through Jmix security roles, and user substitution.
+- **Users and access** — users with avatars and time zones, and user substitution; access by job role, such as Worker, Approver, Manager, Observer, HR, or Project office, narrowed on each project to what the person's role in that project allows: the Manager of one project who is a Member of another runs the first and sees only their own time on the second.
 - **Interface** — a tabbed workspace, light and dark themes, English and Russian.
 
 <table>
@@ -57,7 +57,7 @@ Run the application with demo data:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. With the `dev` profile, an empty database gets demo data: people and organizations of the Half-Life and Portal games, with time logged over the weeks up to today; every demo user's password is their username. Without it, only the schema and the `admin` user are created.
+Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. With the `dev` profile, an empty database gets demo data: people and organizations of the Half-Life and Portal games, with time logged over the weeks up to today; every demo user's password is their username. `admin` sees everything, while each demo user holds the job roles of their part: `kleiner` sees what a project's Manager does, and `freeman` what a Worker does. Without it, only the schema and the `admin` user are created.
 
 Run the tests, which use an in-memory HSQLDB:
 

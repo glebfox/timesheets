@@ -13,9 +13,9 @@ It grants no project screens and no signing in: a holder also needs a role that 
 
 ## Holders
 
-None in code or seed data.
+None directly. [Project office](project-office.md) includes it; no user of the `dev` demo data holds it.
 
 ## Not covered
 
-- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts, and no UI test opens the client list or editor as a holder.
+- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts. `ProjectManagementRoleUiTest` opens the client list only as the project editor's client picker, for a holder who also has Projects: management, where Edit opens the client editor; no UI test opens the list from the menu, or creates, changes, or removes a client, as a holder.
 - A holder who lacks UI: minimal access: not checked.

@@ -18,4 +18,4 @@ None directly. [Worker](worker.md) and [Observer](observer.md) include it, and t
 
 ## Not covered
 
-- What the role grants: no test checks it; `DashboardUiTest` only shows the dashboard to a holder of this role alone, without My time and Log time.
+- What the role grants: signing in is checked only through the job roles that include it, each held alone (`JobRolesTest`); the main and login views and the system dialogs are not. `DashboardUiTest` only shows the dashboard to a holder of this role alone, without My time and Log time.

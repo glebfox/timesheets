@@ -51,7 +51,7 @@ After an entry is created or deleted, or its status changes, whatever saves it, 
 
 ## Rules applied when editing
 
-These rules are applied by the time-entry editor, not on save; a save through `DataManager` skips them.
+These rules are applied by the time-entry editor, not on save; a save through `DataManager` skips them. One condition of the first is also checked on save for a holder of [Time entry rules](../roles/time-entry-rules.md): a new entry, or one moved to another task, must be on a project where the person takes part in a role other than Observer ([bookable tasks](task.md#bookable-tasks)).
 
 - The task must be [bookable](task.md#bookable-tasks) for the entry's user.
 - Tags come from the tag groups of the task's project. Each of the task's required tag groups must contribute at least one tag; the other groups are optional. When an existing entry is moved to a task of another project, its saved tags from the old project stay unless the user removes them.

@@ -22,5 +22,5 @@ None directly. [Manager](manager.md) and [Observer](observer.md) include it, so 
 
 ## Not covered
 
-- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts, and no UI test opens the Time entries list or the editor as a holder.
+- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts. `JobRolesUiTest` opens the Time entries list as a [Manager](manager.md) with Project scope, listing the entries of the project they manage, offering no Create or Copy, and opening another person's entry read only; no UI test opens the list or the editor as an [Observer](observer.md).
 - A holder who lacks UI: minimal access: not checked.

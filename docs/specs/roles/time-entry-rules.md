@@ -1,6 +1,6 @@
 # Time entry rules
 
-Source: `security/TimeEntryRulesRole.java`, `app/TimeEntryAccessSupport.java`, `app/TimeEntryApprovalSupport.java`, `demo/DemoDataLoader.java`
+Source: `security/TimeEntryRulesRole.java`, `app/TimeEntryAccessSupport.java`, `app/TimeEntryApprovalSupport.java`, `app/ProjectAccessSupport.java`, `demo/DemoDataLoader.java`
 
 Row-level role `time-entry-rules`, named "Time entry rules".
 

@@ -16,9 +16,9 @@ A project role's type decides what [Project scope](project-scope.md) lets the pe
 
 ## Holders
 
-None in code or seed data.
+None directly. [Project office](project-office.md) includes it; no user of the `dev` demo data holds it.
 
 ## Not covered
 
-- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts, and no UI test opens the lists or editors as a holder. The participant editor's Create on the role field is checked for the system user (`ProjectParticipantDetailViewUiTest`), not for a holder of this role.
+- The screens as a holder sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts. `ProjectManagementRoleUiTest` opens the task type and project role lists only as the pickers of the task and participant editors, for a holder who also has Projects: management, where Edit opens their editors; no UI test opens the lists from the menu, or saves in them, as a holder. The participant editor's Create on the role field is checked for the system user (`ProjectParticipantDetailViewUiTest`), not for a holder of this role.
 - A holder who lacks UI: minimal access: not checked.

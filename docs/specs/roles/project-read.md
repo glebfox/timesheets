@@ -22,5 +22,5 @@ None directly. [Projects: management](project-management.md) and [Observer](obse
 
 ## Not covered
 
-- The screens as a holder of this role alone sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts, and no UI test opens a screen as such a holder. The project editor opening read-only on a project its holder does not manage, and its children opening read-only from it, are checked for Projects: management with Project scope (`ProjectManagementRoleUiTest`).
+- The screens as a holder of this role alone sees them: `ProjectBlocksRoleTest` checks the grants with the UI's entity, attribute, view, and menu contexts, and no UI test opens a screen as such a holder. The project editor opening read-only on a project its holder does not manage, and its children opening read-only from it, are checked for Projects: management with Project scope (`ProjectManagementRoleUiTest`). The project list and a project's editor, read only, are opened as an [Observer](observer.md) with Client scope (`JobRolesUiTest`).
 - A holder who lacks UI: minimal access: not checked.

@@ -16,7 +16,7 @@ It opens no screen: a holder creates and removes projects in the [project list](
 
 ## Holders
 
-None in code or seed data.
+None directly. [Project office](project-office.md) includes it; no user of the `dev` demo data holds it.
 
 ## Not covered
 
