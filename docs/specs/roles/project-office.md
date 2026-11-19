@@ -10,7 +10,7 @@ Resource role `project-office`, named "Project office", a job role: a person who
 - The [client list](../views/clients.md#clients) and the client editor, with the menu item.
 - The [project list](../views/projects.md#projects) and its menu item, and the project editor with its dialogs: creating, changing, and removing projects and their tasks, participants, tag groups, and tags.
 - The [task type](../views/settings.md#task-types) and [project role](../views/settings.md#project-roles) lists and editors, with their Settings menu items.
-- The user list, as the picker of the participant editor's user field and of Add participants, with no menu item. Tabbed mode also opens it by its URL, so a holder reaches it that way, read only: the user editor is not granted, and the list offers no Edit.
+- The user list, as the picker of the participant editor's user field and of Add participants, with no menu item. Tabbed mode also opens it by its URL, so a holder reaches it that way, read only: the user editor is not granted, so the list's Edit, labeled Read, ends in the framework's access-denied message.
 
 No Time entries list and no approval screen.
 

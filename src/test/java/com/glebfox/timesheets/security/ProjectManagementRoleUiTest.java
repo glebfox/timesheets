@@ -277,12 +277,6 @@ public class ProjectManagementRoleUiTest {
     }
 
     @Test
-    void pickersOfferNoEditorTheHolderMayNotOpen() {
-        // The role grants the lists to pick from, not their editors
-        systemAuthenticator.runWithUser(holder.getUsername(), () -> assertPickersOfferTheirEditors(false));
-    }
-
-    @Test
     void pickersOfferTheirEditorsToTheHoldersOfTheirRoles() {
         User editorsHolder = data.saveUser("editors-holder", "Editors", "Holder");
         for (String roleCode : List.of(UiMinimalRole.CODE, ProjectManagementRole.CODE, ClientManagementRole.CODE,
@@ -292,7 +286,7 @@ public class ProjectManagementRoleUiTest {
         assignRole(editorsHolder, ProjectScopeRole.CODE, RoleAssignmentRoleType.ROW_LEVEL);
         data.saveParticipant(managed, editorsHolder, data.saveRole(ProjectRoleType.MANAGER));
 
-        systemAuthenticator.runWithUser(editorsHolder.getUsername(), () -> assertPickersOfferTheirEditors(true));
+        systemAuthenticator.runWithUser(editorsHolder.getUsername(), this::assertPickersOpenTheirEditors);
     }
 
     @AfterEach
@@ -352,18 +346,18 @@ public class ProjectManagementRoleUiTest {
     }
 
     /**
-     * Opens each picker of the managed project's editor and its dialogs, selects a row, and checks whether Edit is
-     * offered there; where it is, it opens the list's editor.
+     * Opens each picker of the managed project's editor and its dialogs, selects a row, and checks that Edit is offered
+     * there and opens the list's editor.
      */
-    private void assertPickersOfferTheirEditors(boolean offered) {
+    private void assertPickersOpenTheirEditors() {
         ProjectDetailView editor = openEditor(managed);
         assertPickerEdit(UiTestUtils.getComponent(editor, "clientField"), "clientsDataGrid",
-                ClientListView.class, ClientDetailView.class, offered);
+                ClientListView.class, ClientDetailView.class);
 
         DataGrid<Task> tasksDataGrid = UiTestUtils.getComponent(editor, "tasksDataGrid");
         TaskDetailView taskEditor = (TaskDetailView) performForDialog(tasksDataGrid, "create");
         assertPickerEdit(UiTestUtils.getComponent(taskEditor, "typeField"), "taskTypesDataGrid",
-                TaskTypeListView.class, TaskTypeDetailView.class, offered);
+                TaskTypeListView.class, TaskTypeDetailView.class);
         taskEditor.closeWithDiscard();
 
         UiTestUtils.<JmixTabSheet>getComponent(editor, "tabSheet").setSelectedIndex(1);
@@ -372,15 +366,14 @@ public class ProjectManagementRoleUiTest {
         ProjectParticipantDetailView participantEditor =
                 (ProjectParticipantDetailView) performForDialog(participantsDataGrid, "create");
         assertPickerEdit(UiTestUtils.getComponent(participantEditor, "roleField"), "projectRolesDataGrid",
-                ProjectRoleListView.class, ProjectRoleDetailView.class, offered);
+                ProjectRoleListView.class, ProjectRoleDetailView.class);
         assertPickerEdit(UiTestUtils.getComponent(participantEditor, "userField"), "usersDataGrid",
-                UserListView.class, UserDetailView.class, offered);
+                UserListView.class, UserDetailView.class);
         participantEditor.closeWithDiscard();
     }
 
     private static void assertPickerEdit(EntityComboBox<?> field, String gridId,
-                                         Class<? extends View<?>> listClass, Class<? extends View<?>> editorClass,
-                                         boolean offered) {
+                                         Class<? extends View<?>> listClass, Class<? extends View<?>> editorClass) {
         Action lookup = Objects.requireNonNull(field.getAction("entityLookup"), "the lookup of " + listClass);
         assertThat(lookup.isVisible()).isTrue();
         assertThat(lookup.isEnabled()).isTrue();
@@ -391,13 +384,11 @@ public class ProjectManagementRoleUiTest {
         DataGrid<Object> grid = UiTestUtils.getComponent(list, gridId);
         grid.select(Objects.requireNonNull(grid.getItems()).getItems().iterator().next());
         Action edit = Objects.requireNonNull(grid.getAction("edit"), "the edit of " + listClass);
-        assertThat(edit.isEnabled()).as("edit in %s", listClass.getSimpleName()).isEqualTo(offered);
-        if (offered) {
-            edit.actionPerform(grid);
-            View<?> opened = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the editor");
-            assertThat(opened).isInstanceOf(editorClass);
-            opened.close(StandardOutcome.CLOSE);
-        }
+        assertThat(edit.isEnabled()).as("edit in %s", listClass.getSimpleName()).isTrue();
+        edit.actionPerform(grid);
+        View<?> opened = Objects.requireNonNull(UiTestUtils.getLastOpenedViewDialog(), "the editor");
+        assertThat(opened).isInstanceOf(editorClass);
+        opened.close(StandardOutcome.CLOSE);
         list.close(StandardOutcome.CLOSE);
     }
 
