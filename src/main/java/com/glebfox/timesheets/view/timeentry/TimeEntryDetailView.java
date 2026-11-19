@@ -317,6 +317,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         Collection<Tag> tags = collectTagsFromFields();
         tagsDc.setItems(tags);
 
+        // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/6026 is fixed
         // A framework defect of Jmix 3.1.0: the data context drops a new instance from its changes once its last
         // changed attribute is back to its value at open, and then saves nothing while the view reports it saved. A
         // copy opens complete, so setting its tags again above, or any change undone, would lose it; a new entry is

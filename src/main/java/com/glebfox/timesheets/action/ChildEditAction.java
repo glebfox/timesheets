@@ -43,6 +43,7 @@ public class ChildEditAction<E> extends EditAction<E> {
         super(id);
     }
 
+    // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/6027 is fixed
     @Override
     public boolean isDisabledWhenViewReadOnly() {
         return false;
