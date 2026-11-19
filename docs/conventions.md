@@ -8,7 +8,7 @@ Code, comments, documentation, commit messages, and every other repository artif
 
 ## User-visible text
 
-Every user-visible text is a message key, defined in both `messages_en.properties` and `messages_ru_RU.properties`, the bundles of the locales in `jmix.core.available-locales`. The two bundles stay key-for-key in sync: a key that one of them lacks shows that locale's users the key itself instead of a text.
+Every user-visible text is a message key, defined in both `messages_en.properties` and `messages_ru_RU.properties`, the bundles of the locales in `jmix.core.available-locales`. The two bundles stay key-for-key in sync: a key that one of them lacks shows that locale's users the key itself instead of a text. The labels of standard actions, such as Create, Edit, Remove, and Close, come from Jmix's bundles and its Russian translations, on the project's own actions too, and are not repeated in the project's bundles.
 
 A text with a count, such as "5 workdays", has one key per plural form, `<key>.one`, `<key>.few`, and `<key>.many`, in both bundles, and takes the form its count needs from `PluralForms` in `app/util/`. Russian uses all three forms; English repeats its `many` text under `few`.
 
