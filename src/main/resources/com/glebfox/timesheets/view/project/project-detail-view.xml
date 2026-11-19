@@ -101,8 +101,7 @@
                                     </properties>
                                 </action>
                                 <action id="remove" type="list_remove"/>
-                                <action id="taskClose" type="list_task_close"
-                                        text="msg://taskCloseAction.text" icon="gravity-ui:xmark"/>
+                                <action id="taskClose" type="list_task_close"/>
                             </actions>
                             <columns>
                                 <column property="name"/>

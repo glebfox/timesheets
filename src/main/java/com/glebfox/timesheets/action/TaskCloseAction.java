@@ -16,18 +16,20 @@
 
 package com.glebfox.timesheets.action;
 
+import com.glebfox.timesheets.component.icon.GravityUiIcon;
 import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
+import io.jmix.core.Messages;
 import io.jmix.core.security.EntityOp;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
 import io.jmix.flowui.action.AdjustWhenViewReadOnly;
 import io.jmix.flowui.action.list.SecuredListDataComponentAction;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Closes the {@link Task} selected in a list component: an Active task turns Inactive, and an Inactive one stays as it
- * is. It changes the task in its container only, so in an editor the change waits for the editor's save. The
- * descriptor gives its text and icon.
+ * is. It changes the task in its container only, so in an editor the change waits for the editor's save.
  * <p>
  * It is offered only to a user who may update the selected task, and a read-only editor disables it, as its save
  * would be refused there.
@@ -51,6 +53,12 @@ public class TaskCloseAction extends SecuredListDataComponentAction<TaskCloseAct
         super.initAction();
 
         setConstraintEntityOp(EntityOp.UPDATE);
+        this.icon = GravityUiIcon.XMARK.create();
+    }
+
+    @Autowired
+    public void setMessages(Messages messages) {
+        this.text = messages.getMessage("actions.Close");
     }
 
     @Override
