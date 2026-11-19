@@ -1,6 +1,6 @@
 # Time entry screens
 
-Source: `view/timeentry/`, `action/TimeEntryCopyAction.java`, `action/GeneralTimeEntryCreateAction.java`, `action/GeneralTimeEntryCopyAction.java`, `app/util/ComponentSupport.java`
+Source: `view/timeentry/`, `action/TimeEntryCopyAction.java`, `app/util/ComponentSupport.java`
 
 The screens for logging and reviewing time: My time entries, Time entries, and the time entry editor. What a time entry is and which rules apply to it: [time entry](../data-model/time-entry.md). Approving and rejecting other people's entries by project role is a screen of its own: [Approve time entries](approval.md). Who opens them: My time entries and the editor on one's own entries, every job role but Observer, through [Time logging](../roles/time-logging.md); Time entries and the editor on other people's entries, read only, a [Manager](../roles/manager.md) and an [Observer](../roles/observer.md), through [Time entries: read only](../roles/time-entry-read.md), on the projects where they are a Manager, an Approver, or an Observer; and Full access, on every entry. The editor opened by its URL, `time-entries/:id`, also shows every holder of Time logging any entry their row-level role lets them read, read only unless they may change it: under Project scope, the entries of the projects where they are a Manager, an Approver, or an Observer; for [Project office](../roles/project-office.md), every entry ([who can do what](../roles/README.md#who-can-do-what)).
 
