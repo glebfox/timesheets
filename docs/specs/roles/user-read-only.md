@@ -13,8 +13,8 @@ It grants nothing else: no signing in, no creating, changing, or deleting users,
 
 ## Holders
 
-None directly. The demo user `mossman` gets it through [Work schedule management](work-schedule-management.md), [Time entries: approval](time-entry-approval.md), and [Absence management](absence-management.md), in the `dev` demo data only.
+None directly. [Work schedule management](work-schedule-management.md), [Time entries: approval](time-entry-approval.md), and [Absence management](absence-management.md) include it, and through them [HR](hr.md), [Approver](approver.md), and [Manager](manager.md), so in the `dev` demo data `mossman` and the Managers `kleiner`, `eli`, `magnusson`, `cave`, and `caroline` hold it.
 
 ## Not covered
 
-- The role on its own: the tests check the role only as part of Work schedule management, Time entries: approval, and Absence management. That a user who may not read assignments sees "Access denied" in the Work schedule section is tested with a test role that, like this one, grants users and not assignments (`UserAssignmentsUiTest`). That one who may not read work schedules gets no line naming the default schedule is tested with the same test role.
+- The role on its own: the tests check the role as part of Work schedule management, Time entries: approval, and Absence management, and beside Projects: management, where the user list, as the participant editor's user picker, offers Edit and opens the user editor (`ProjectManagementRoleUiTest`). That a user who may not read assignments sees "Access denied" in the Work schedule section is tested with a test role that, like this one, grants users and not assignments (`UserAssignmentsUiTest`). That one who may not read work schedules gets no line naming the default schedule is tested with the same test role.

@@ -16,7 +16,7 @@
 
 ## Features
 
-- **Time logging** — log time against the tasks you can book: active tasks of open projects you take part in. Type durations the way you think of them: `4:30`, `90`, or `4h 30m`.
+- **Time logging** — log time against the tasks you can book: active tasks of open projects you work on. Type durations the way you think of them: `4:30`, `90`, or `4h 30m`.
 - **Dashboard** — what you see when no tab is open: your week against your plan, your last eight weeks, this month's time by project, what needs fixing, what is coming up, and your latest entries, with Log time and Copy to today a click away; if you approve time, also what waits for your approval, how each person's week stands, and who is away.
 - **Calendar** — your month at a glance: entries by day with daily, weekly, and monthly totals against your work schedule, with holidays and moved days named on their days and absences drawn across theirs; create, copy, or drag an entry to another day right there.
 - **Work schedules** — how long a workday is and which days of the week are worked, optionally with a holiday calendar of public holidays and moved days that several schedules can share. A user is assigned a schedule from a date, and the default schedule covers the days no assignment does.
@@ -25,7 +25,7 @@
 - **Projects** — a project belongs to a client and owns its tasks, its participants with their project roles, and its tag groups.
 - **Tags** — time entries are tagged from the tag groups of their project, and a task can make some groups required.
 - **Clients** — the clients projects belong to, each with a logo and contact details: email, phone, website, and address.
-- **Users and access** — users with avatars and time zones, access through Jmix security roles, and user substitution.
+- **Users and access** — users with avatars and time zones, and user substitution; access by job role, such as Worker, Approver, Manager, Observer, HR, or Project office, narrowed on each project to what the person's role in that project allows: the Manager of one project who is a Member of another runs the first and sees only their own time on the second.
 - **Interface** — a tabbed workspace, light and dark themes, English and Russian.
 
 <table>
@@ -57,7 +57,7 @@ Run the application with demo data:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. With the `dev` profile, an empty database gets demo data: people and organizations of the Half-Life and Portal games, with time logged over the weeks up to today; every demo user's password is their username. Without it, only the schema and the `admin` user are created.
+Open http://localhost:8080; the login form is pre-filled with `admin`/`admin`. With the `dev` profile, an empty database gets demo data: people and organizations of the Half-Life and Portal games, with time logged over the weeks up to today; every demo user's password is their username. `admin` sees everything, while each demo user holds the job roles of their part: `kleiner` sees what a project's Manager does, and `freeman` what a Worker does. Without it, only the schema and the `admin` user are created.
 
 Run the tests, which use an in-memory HSQLDB:
 

@@ -10,8 +10,7 @@ Every operation on every entity, changing every attribute, every view, every men
 
 ## Holders
 
-- The `admin` user, in every environment.
-- Every active user of the `dev` demo data except `mossman`.
+- The `admin` user, in every environment, and no other user of the `dev` demo data.
 - The system user, which code running without a signed-in user authenticates as.
 
 ## Not covered

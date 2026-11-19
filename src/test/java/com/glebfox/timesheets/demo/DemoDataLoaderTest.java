@@ -32,15 +32,20 @@ import com.glebfox.timesheets.entity.tag.TagGroup;
 import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.entity.timeentry.TimeEntryStatus;
 import com.glebfox.timesheets.entity.user.User;
-import com.glebfox.timesheets.security.AbsenceManagementRole;
-import com.glebfox.timesheets.security.TimeEntryApprovalRole;
-import com.glebfox.timesheets.security.UiMinimalRole;
-import com.glebfox.timesheets.security.WorkScheduleManagementRole;
+import com.glebfox.timesheets.security.ApproverRole;
+import com.glebfox.timesheets.security.ClientScopeRole;
+import com.glebfox.timesheets.security.FullAccessRole;
+import com.glebfox.timesheets.security.HrRole;
+import com.glebfox.timesheets.security.ManagerRole;
+import com.glebfox.timesheets.security.ObserverRole;
+import com.glebfox.timesheets.security.ProjectScopeRole;
+import com.glebfox.timesheets.security.WorkerRole;
 import io.jmix.core.DataManager;
 import io.jmix.core.FetchPlan;
 import io.jmix.core.TimeSource;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.flowui.UiEventPublisher;
+import io.jmix.security.role.assignment.RoleAssignmentRoleType;
 import io.jmix.securitydata.entity.RoleAssignmentEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +57,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.nio.ByteBuffer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -184,16 +190,53 @@ public class DemoDataLoaderTest {
     }
 
     @Test
-    void mossmanHoldsGranularRoles() {
-        List<String> roleCodes = systemAuthenticator.withSystem(() -> dataManager.load(RoleAssignmentEntity.class)
-                .query("e.username = :username")
-                .parameter("username", "mossman")
-                .list().stream()
-                .map(RoleAssignmentEntity::getRoleCode)
-                .toList());
+    void demoUsersHoldTheirJobRoles() {
+        Map<String, Set<String>> expected = new HashMap<>();
+        // The schema gives admin Full access, and the demo data adds nothing
+        expected.put("admin", Set.of(resourceRole(FullAccessRole.CODE)));
+        Stream.of("kleiner", "eli", "magnusson", "cave", "caroline").forEach(username -> expected.put(username,
+                Set.of(resourceRole(ManagerRole.CODE), rowLevelRole(ProjectScopeRole.CODE))));
+        expected.put("mossman", Set.of(resourceRole(ApproverRole.CODE), resourceRole(HrRole.CODE),
+                rowLevelRole(ProjectScopeRole.CODE)));
+        Stream.of("freeman", "barney", "rosenberg", "gina", "colette", "alyx", "odessa", "shephard", "rattmann",
+                "chell").forEach(username -> expected.put(username,
+                Set.of(resourceRole(WorkerRole.CODE), rowLevelRole(ProjectScopeRole.CODE))));
+        expected.put("gman", Set.of(resourceRole(ObserverRole.CODE), rowLevelRole(ClientScopeRole.CODE)));
 
-        assertThat(roleCodes).containsExactlyInAnyOrder(UiMinimalRole.CODE, WorkScheduleManagementRole.CODE,
-                TimeEntryApprovalRole.CODE, AbsenceManagementRole.CODE);
+        Map<String, Set<String>> roles = systemAuthenticator.withSystem(() -> dataManager
+                .load(RoleAssignmentEntity.class)
+                .all()
+                .list().stream()
+                .collect(Collectors.groupingBy(RoleAssignmentEntity::getUsername, Collectors.mapping(
+                        assignment -> assignment.getRoleType() + " " + assignment.getRoleCode(),
+                        Collectors.toSet()))));
+
+        assertThat(roles).isEqualTo(expected);
+    }
+
+    @Test
+    void gmanIsAnActiveClient() {
+        User gman = systemAuthenticator.withSystem(() -> dataManager.load(User.class)
+                .query("e.username = :username")
+                .parameter("username", "gman")
+                .one());
+        assertThat(gman.getActive()).isTrue();
+
+        // An Observer on a project of Black Mesa and one of Aperture Science: he reads those projects, their
+        // clients, and the time logged there, and logs none himself
+        Set<String> observedProjects = Set.of("Anomalous Materials", "Portal Device");
+        systemAuthenticator.runWithUser("gman", () -> {
+            assertThat(dataManager.load(Project.class).all().list())
+                    .extracting(Project::getName)
+                    .containsExactlyInAnyOrderElementsOf(observedProjects);
+            assertThat(dataManager.load(Client.class).all().list())
+                    .extracting(Client::getName)
+                    .containsExactlyInAnyOrder("Black Mesa", "Aperture Science");
+            assertThat(loadEntries())
+                    .isNotEmpty()
+                    .allMatch(entry -> observedProjects.contains(entry.getTask().getProject().getName()))
+                    .noneMatch(entry -> entry.getUser().getUsername().equals("gman"));
+        });
     }
 
     @Test
@@ -309,6 +352,14 @@ public class DemoDataLoaderTest {
                         .add("tags", tagBuilder -> tagBuilder.addFetchPlan(FetchPlan.BASE)
                                 .add("tagGroup", FetchPlan.BASE)))
                 .list();
+    }
+
+    private static String resourceRole(String code) {
+        return RoleAssignmentRoleType.RESOURCE + " " + code;
+    }
+
+    private static String rowLevelRole(String code) {
+        return RoleAssignmentRoleType.ROW_LEVEL + " " + code;
     }
 
     private List<DemoAbsence> loadAbsences() {

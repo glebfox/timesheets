@@ -1,0 +1,34 @@
+# Time entry rules
+
+Source: `security/TimeEntryRulesRole.java`, `app/TimeEntryAccessSupport.java`, `app/TimeEntryApprovalSupport.java`, `app/ProjectAccessSupport.java`, `demo/DemoDataLoader.java`
+
+Row-level role `time-entry-rules`, named "Time entry rules".
+
+## Grants
+
+It grants nothing on its own; it narrows what resource roles grant on [time entries](../data-model/time-entry.md): who creates, changes, and removes an entry, in which [status](../data-model/time-entry.md#status), and which of its attributes. The rules hold on every save, whatever screen or `DataManager` call makes it, the [approval screen](../views/approval.md)'s operations included, because attribute policies bind only the screens. A save they refuse fails with an access-denied exception and saves nothing; reading is not narrowed. The one exception is the cascade of [#8](https://github.com/glebfox/timesheets/issues/8): removing an entry also removes its tags, which no rule judges, so an author who removes their own New or Rejected entry deletes its tags, even those of another project that they put on it through `DataManager` by the tag's id. Why the rules are the role's predicates and not entity listeners: [decision 0024](../../decisions/0024-the-per-project-write-rules-live-in-row-level-predicates-not-in-listeners.md).
+
+1. A person creates entries only for themselves, only as New, and without a rejection reason.
+2. The author changes or removes their entry while it is stored New or Rejected. They never change its user or its rejection reason, and their change sets no status but New, the one a changed Rejected entry goes back to.
+3. An entry is created, or moved to another task, only on a task of a project where the person takes part in a role other than Observer ([project participant](../data-model/project-participant.md)), whatever saves it, a copy included. An entry already logged keeps its task: an author who has left a project still fixes their Rejected entry there, as long as its task stays.
+4. Someone the approval rule lets review the entry ([approval](../views/approval.md#which-entries-it-shows)) changes only its status and rejection reason, sets only Approved or Rejected, and only while the entry is stored New, Approved, or Rejected. The rule is the approval screen's own, asked about the entry as stored, so an entry the screen never shows, such as one of a deleted task, is reviewed by nobody, the project's Manager's own included.
+5. An Approved entry is therefore locked for its author, a Manager reviewing their own entries included: only a rejection opens it again, and the author's fix then sends it back to New ([decision 0012](../../decisions/0012-a-changed-approved-or-rejected-time-entry-goes-back-to-new-on-every-save.md)). A worker who finds a mistake in an approved entry asks for it to be rejected. Why: [decision 0025](../../decisions/0025-an-approved-time-entry-is-locked-for-its-author.md).
+6. A Closed entry, whose time has been paid for, is changed or removed by nobody holding the role. [Full access](system-full-access.md) holds no row-level role, so a holder of Full access alone still changes one.
+
+A save is judged against the entry as stored before it, not as the save leaves it, so the rule that sends a changed Approved entry back to New does not open it to its author:
+
+- A save that changes the status, the rejection reason, or both, and no other attribute, is a review: rule 4. A change to what the entry says (its date, task, user, spent time, description, or tags) or to whether it is deleted makes it the author's.
+- Any other save, one that changes nothing included, is the author's: rules 2 and 3.
+
+So a change of the tags alone is a change of what the entry says: its author saves it on a Rejected entry, which goes back to New, and a reviewer who changes the tags together with the status is refused. Two entries approved in one save are each judged on their own.
+
+A screen asks about an entry it has loaded and not changed, so its question is judged by rule 2 alone: an entry the person did not write, and their own Approved or Closed one, a Manager's own Approved entry included, get no. The time entry editor then opens read-only, and the calendar refuses a move; the same Manager can still reject that entry on the approval screen, as a review. The removal question is judged by rule 2 as well, so Remove is offered only on the person's own New or Rejected entry, while Copy asks nothing about the selected entry: the copy is judged by rules 1 and 3 when it is saved. An entry loaded without its user or its status gets no, as its author or its status is unknown.
+
+## Holders
+
+None directly. [Project scope](project-scope.md) includes it, and through Project scope [Client scope](client-scope.md), so in the `dev` demo data every user but `admin` holds it.
+
+## Not covered
+
+- The rules through a constrained `DataManager` save and through the approve and reject operations, each acting user holding Full access and this role: `TimeEntryRulesRoleTest`. A user working as a substitute is judged as the substituted user: `TimeEntryRulesRoleTest` checks it for a review, and `ProjectAccessSupportTest` for the user's part in a project, which the author's rules ask.
+- The screens under the role: `TimeEntryRulesUiTest` opens My time entries, the editor, and the calendar as holders of Full access and [Project scope](project-scope.md), which includes this role, and the Time entries list as a holder of UI: minimal access, a test role with a Manager's grants on time entries, and Project scope, and as `admin`, who holds Full access alone ([time entry screens](../views/time-entries.md#not-covered), [calendar](../views/calendar.md#not-covered)).

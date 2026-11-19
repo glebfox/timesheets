@@ -27,7 +27,6 @@ import com.glebfox.timesheets.entity.project.ProjectParticipant;
 import com.glebfox.timesheets.entity.project.ProjectRole;
 import com.glebfox.timesheets.entity.project.ProjectStatus;
 import com.glebfox.timesheets.entity.task.Task;
-import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.main.MainView;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
@@ -42,9 +41,7 @@ import com.vaadin.flow.router.Route;
 import io.jmix.core.DataManager;
 import io.jmix.core.MetadataTools;
 import io.jmix.flowui.DialogWindows;
-import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.select.JmixSelect;
-import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.kit.action.BaseAction;
 import io.jmix.flowui.kit.component.dropdownbutton.DropdownButton;
 import io.jmix.flowui.model.CollectionPropertyContainer;
@@ -60,8 +57,6 @@ public class ProjectDetailView extends StandardDetailView<Project> {
 
     @ViewComponent
     private JmixSelect<ProjectStatus> statusField;
-    @ViewComponent
-    private DataGrid<Task> tasksDataGrid;
     @ViewComponent
     private DropdownButton addParticipantsDropdown;
 
@@ -94,6 +89,13 @@ public class ProjectDetailView extends StandardDetailView<Project> {
     @Subscribe
     public void onReady(final ReadyEvent event) {
         updateStatusFieldIcon();
+    }
+
+    @Subscribe
+    public void onReadOnlyChange(final ReadOnlyChangeEvent event) {
+        // The view's read-only mode reaches only the actions of components that hold actions, which a drop-down
+        // button's items are not; adding participants to a project the user may not change would fail on save
+        addParticipantsDropdown.setEnabled(!isReadOnly());
     }
 
     @Supply(to = "tasksDataGrid.status", subject = "renderer")
@@ -155,17 +157,6 @@ public class ProjectDetailView extends StandardDetailView<Project> {
 
             return wrapper;
         });
-    }
-
-    @Subscribe("tasksDataGrid.taskClose")
-    public void onTasksDataGridTaskClose(final ActionPerformedEvent event) {
-        Task selectedItem = tasksDataGrid.getSingleSelectedItem();
-        if (selectedItem == null
-                || TaskStatus.INACTIVE == selectedItem.getStatus()) {
-            return;
-        }
-
-        selectedItem.setStatus(TaskStatus.INACTIVE);
     }
 
     @Supply(to = "participantsDataGrid.user", subject = "renderer")

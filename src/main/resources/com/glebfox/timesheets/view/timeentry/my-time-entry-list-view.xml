@@ -23,6 +23,9 @@
         <collection id="timeEntriesDc"
                     class="com.glebfox.timesheets.entity.timeentry.TimeEntry">
             <fetchPlan extends="_base">
+                <!-- Not shown: the time entry rules read it when Remove asks about the selected entry, and refuse an
+                     entry whose user is not loaded -->
+                <property name="user" fetchPlan="_instance_name"/>
                 <property name="tags" fetchPlan="_base"/>
             </fetchPlan>
             <loader id="timeEntriesDl" readOnly="true">

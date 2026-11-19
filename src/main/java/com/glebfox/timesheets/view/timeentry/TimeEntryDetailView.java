@@ -40,9 +40,13 @@ import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.AccessManager;
+import io.jmix.core.EntityStates;
+import io.jmix.core.Metadata;
 import io.jmix.core.usersubstitution.CurrentUserSubstitution;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.UiComponents;
+import io.jmix.flowui.accesscontext.UiEntityAttributeContext;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.formlayout.JmixFormLayout;
 import io.jmix.flowui.component.multiselectcombobox.JmixMultiSelectComboBox;
@@ -107,12 +111,19 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     private ComponentSupport componentSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private Metadata metadata;
+    @Autowired
+    private EntityStates entityStates;
 
     // Made on the first reason to show: the descriptor's markdown element can neither be declared without content nor
     // be bound to the reason, https://github.com/jmix-framework/jmix/issues/5938
     private @Nullable Markdown rejectionNoticeReason;
 
     private boolean ownTimeEntry = false;
+    private boolean userModifiable = false;
     private boolean tagsChanged = false;
 
     public void setOwnTimeEntry(boolean ownTimeEntry) {
@@ -120,11 +131,24 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     }
 
     @Subscribe
+    public void onInit(final InitEvent event) {
+        UiEntityAttributeContext context = new UiEntityAttributeContext(metadata.getClass(TimeEntry.class), "user");
+        accessManager.applyRegisteredConstraints(context);
+        userModifiable = context.canModify();
+    }
+
+    // The user is fixed for an own entry, and for anyone who may not change an entry's user: the binding locks the
+    // field for them only once, and the task–user interplay of a general entry would unlock it again
+    private boolean isUserFixed() {
+        return ownTimeEntry || !userModifiable;
+    }
+
+    @Subscribe
     public void onInitEntity(final InitEntityEvent<TimeEntry> event) {
         TimeEntry timeEntry = event.getEntity();
 
         if (timeEntry.getUser() == null) {
-            if (ownTimeEntry) {
+            if (isUserFixed()) {
                 final User user = (User) currentUserSubstitution.getEffectiveUser();
                 timeEntry.setUser(user);
             } else {
@@ -202,7 +226,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         if ("task".equals(event.getProperty())) {
             updateTagsFields();
 
-            if (!ownTimeEntry) {
+            if (!isUserFixed()) {
                 userField.setReadOnly(getEditedEntity().getTask() != null);
             }
         }
@@ -210,12 +234,12 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         updateLockTooltips();
     }
 
-    // A locked field of a general entry says why while the other field locks it; an own entry's user and the fields
-    // of a read-only editor are fixed for reasons the user cannot change, so they say nothing. The view may turn
-    // read-only before its entity is set
+    // A locked field of a general entry says why while the other field locks it; a fixed user and the fields of a
+    // read-only editor are fixed for reasons the user cannot change, so they say nothing. The view may turn read-only
+    // before its entity is set
     private void updateLockTooltips() {
         TimeEntry timeEntry = getEditedEntityContainer().getItemOrNull();
-        boolean explain = timeEntry != null && !ownTimeEntry && !isReadOnly();
+        boolean explain = timeEntry != null && !isUserFixed() && !isReadOnly();
 
         boolean taskWaitsForUser = explain && timeEntry.getUser() == null && taskField.isReadOnly();
         taskField.setTooltipText(taskWaitsForUser ? messageBundle.getMessage("taskField.lockedTooltip") : null);
@@ -292,6 +316,16 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     public void onBeforeSave(final BeforeSaveEvent event) {
         Collection<Tag> tags = collectTagsFromFields();
         tagsDc.setItems(tags);
+
+        // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/6026 is fixed
+        // A framework defect of Jmix 3.1.0: the data context drops a new instance from its changes once its last
+        // changed attribute is back to its value at open, and then saves nothing while the view reports it saved. A
+        // copy opens complete, so setting its tags again above, or any change undone, would lose it; a new entry is
+        // therefore kept among the changes whatever was changed
+        TimeEntry timeEntry = getEditedEntity();
+        if (entityStates.isNew(timeEntry)) {
+            getViewData().getDataContext().setModified(timeEntry, true);
+        }
     }
 
     @SuppressWarnings("unchecked")

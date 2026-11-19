@@ -21,7 +21,7 @@
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
-    <!-- The format string is a JPQL query, whose line breaks are whitespace, not output -->
+    <!-- The format strings are JPQL queries, whose line breaks are whitespace, not output -->
     <Match>
         <Class name="com.glebfox.timesheets.app.TimeEntryApprovalSupport"/>
         <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>

@@ -22,7 +22,6 @@ import com.glebfox.timesheets.entity.timeentry.TimeEntry;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import io.jmix.core.Messages;
 import io.jmix.core.metamodel.model.MetaClass;
-import io.jmix.core.security.EntityOp;
 import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.action.ActionType;
@@ -69,7 +68,8 @@ public class TimeEntryCopyAction extends SecuredListDataComponentAction<TimeEntr
     protected void initAction() {
         super.initAction();
 
-        setConstraintEntityOp(EntityOp.CREATE);
+        // No row-level check of the selected entry: the copy is a new entry, which the time entry rules judge when it
+        // is saved, so an Approved entry is copied as a New one
         this.icon = GravityUiIcon.COPY.create();
     }
 

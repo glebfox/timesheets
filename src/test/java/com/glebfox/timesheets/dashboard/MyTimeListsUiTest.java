@@ -449,7 +449,7 @@ public class MyTimeListsUiTest {
     }
 
     @Test
-    void plainRowsWithoutEditorAndCreatePermissionTest() {
+    void listsHiddenWithoutCreatePermissionTest() {
         // May read time entries, and may neither create them nor open the editor or My time entries
         User approver = data.saveUser("approver", "Ap", "Prover");
         assignRole(approver, TimeEntryApprovalRole.CODE);
@@ -457,18 +457,11 @@ public class MyTimeListsUiTest {
 
         systemAuthenticator.runWithUser(approver.getUsername(), () -> {
             RecentEntriesBlock block = block("recentEntriesBlock");
-            NeedsAttentionBlock attention = block("needsAttentionBlock");
             dashboard().refresh();
 
-            assertThat(rows(block)).hasSize(1);
-            // No Copy to today column at all, and the task is plain text, not a link
-            assertThat(entriesGrid(block).getColumnByKey("copy")).isNull();
-            Component name = cell(block, "task", rows(block).getFirst());
-            assertThat(name).isNotInstanceOf(JmixButton.class);
-            Component taskPart = name.getChildren().findFirst().orElseThrow();
-            assertThat(text(taskPart)).isEqualTo(task.getName());
-            // The header keeps no place for the link it does not show
-            assertThat(attention.getContent().getHeaderSuffix()).isNull();
+            // My time is for a user who may log time: it hides, and its lists load nothing of the approver's
+            assertThat(FragmentUtils.getComponent(dashboard(), "myTimeBlocks").isVisible()).isFalse();
+            assertThat(rows(block)).isEmpty();
         });
     }
 

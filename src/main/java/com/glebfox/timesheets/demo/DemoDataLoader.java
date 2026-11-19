@@ -38,11 +38,13 @@ import com.glebfox.timesheets.entity.task.Task;
 import com.glebfox.timesheets.entity.task.TaskStatus;
 import com.glebfox.timesheets.entity.task.TaskType;
 import com.glebfox.timesheets.entity.user.User;
-import com.glebfox.timesheets.security.AbsenceManagementRole;
-import com.glebfox.timesheets.security.FullAccessRole;
-import com.glebfox.timesheets.security.TimeEntryApprovalRole;
-import com.glebfox.timesheets.security.UiMinimalRole;
-import com.glebfox.timesheets.security.WorkScheduleManagementRole;
+import com.glebfox.timesheets.security.ApproverRole;
+import com.glebfox.timesheets.security.ClientScopeRole;
+import com.glebfox.timesheets.security.HrRole;
+import com.glebfox.timesheets.security.ManagerRole;
+import com.glebfox.timesheets.security.ObserverRole;
+import com.glebfox.timesheets.security.ProjectScopeRole;
+import com.glebfox.timesheets.security.WorkerRole;
 import io.jmix.core.DataManager;
 import io.jmix.core.SaveContext;
 import io.jmix.core.TimeSource;
@@ -436,21 +438,23 @@ public class DemoDataLoader {
                 User user = createUser(demoUser.username(), demoUser.firstName(), demoUser.lastName());
                 user.setEmail(demoUser.username() + "@" + demoUser.emailDomain());
                 user.setAvatar(loadImage(AVATARS, demoUser.avatar()));
-                // Judith Mossman shows a user with granular roles; everyone else may see everything
-                if (user.getUsername().equals("mossman")) {
-                    assignRole(user, UiMinimalRole.CODE);
-                    assignRole(user, WorkScheduleManagementRole.CODE);
-                    assignRole(user, TimeEntryApprovalRole.CODE);
-                    assignRole(user, AbsenceManagementRole.CODE);
-                } else {
-                    assignRole(user, FullAccessRole.CODE);
+                // The job roles, and Project scope, which narrows them to the projects where the user takes part
+                switch (user.getUsername()) {
+                    case "kleiner", "eli", "magnusson", "cave", "caroline" -> assignRole(user, ManagerRole.CODE);
+                    case "mossman" -> {
+                        assignRole(user, ApproverRole.CODE);
+                        assignRole(user, HrRole.CODE);
+                    }
+                    default -> assignRole(user, WorkerRole.CODE);
                 }
+                assignRowLevelRole(user, ProjectScopeRole.CODE);
             }
 
-            // An inactive user with no roles: cannot sign in
+            // G-Man plays a client: an Observer on the projects he follows, who logs no time
             User gman = createUser("gman", "G-Man", null);
             gman.setAvatar(loadImage(AVATARS, "g-man"));
-            gman.setActive(false);
+            assignRole(gman, ObserverRole.CODE);
+            assignRowLevelRole(gman, ClientScopeRole.CODE);
         }
 
         private User createUser(String username, @Nullable String firstName, @Nullable String lastName) {
@@ -465,10 +469,18 @@ public class DemoDataLoader {
         }
 
         private void assignRole(User user, String roleCode) {
+            assign(user, roleCode, RoleAssignmentRoleType.RESOURCE);
+        }
+
+        private void assignRowLevelRole(User user, String roleCode) {
+            assign(user, roleCode, RoleAssignmentRoleType.ROW_LEVEL);
+        }
+
+        private void assign(User user, String roleCode, String roleType) {
             RoleAssignmentEntity assignment = dataManager.create(RoleAssignmentEntity.class);
             assignment.setUsername(user.getUsername());
             assignment.setRoleCode(roleCode);
-            assignment.setRoleType(RoleAssignmentRoleType.RESOURCE);
+            assignment.setRoleType(roleType);
             context.saving(assignment);
         }
 

@@ -243,6 +243,9 @@ public class TimeEntryDetailViewUiTest {
         EntityComboBox<Task> taskField = UiTestUtils.getComponent(view, "taskField");
         EntityComboBox<User> userField = UiTestUtils.getComponent(view, "userField");
 
+        // The system user of a UI test holds Full access, which may choose an entry's user
+        assertThat(userField.getValue()).isNull();
+        assertThat(userField.isReadOnly()).isFalse();
         assertThat(tooltipOf(taskField)).isEqualTo("Choose a user first");
         assertThat(tooltipOf(userField)).isNull();
 

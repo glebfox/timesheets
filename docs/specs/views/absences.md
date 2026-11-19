@@ -2,7 +2,7 @@
 
 Source: `view/absence/`, `app/AbsenceSupport.java`, `component/daterange/`, `app/util/ComponentSupport.java`, `app/util/DateRangeFormatter.java`, `app/util/PluralForms.java`
 
-The absence list and the absence editor, under the Administration menu after Users. What an absence is: [absence](../data-model/absence.md); who opens these screens: [Absence management](../roles/absence-management.md). Absence types are under Settings ([settings](settings.md#absence-types)).
+The absence list and the absence editor, under the Administration menu after Users. What an absence is: [absence](../data-model/absence.md); who opens these screens: [Absence management](../roles/absence-management.md), which [HR](../roles/hr.md) includes. Absence types are under Settings ([settings](settings.md#absence-types)).
 
 ## Absences
 

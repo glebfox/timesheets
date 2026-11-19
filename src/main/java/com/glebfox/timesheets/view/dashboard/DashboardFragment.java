@@ -54,9 +54,10 @@ import java.util.Optional;
 
 /**
  * The dashboard: a header with a greeting, today's date, Log time, and Refresh, then the My time section and the My
- * team section, each a grid of {@link DashboardBlock}s. The My team section shows only to a user who may open the
- * approval screen and approves on at least one project; for anyone else its blocks load nothing. It loads everything
- * it shows itself, through its blocks, so it works in any host.
+ * team section, each a grid of {@link DashboardBlock}s. The My time section shows only to a user who may create time
+ * entries, as Log time does, and the My team section only to a user who may open the approval screen and approves on
+ * at least one project; for anyone else a section's blocks load nothing. It loads everything it shows itself, through
+ * its blocks, so it works in any host.
  * <p>
  * It refreshes when its host is ready and, in a host with a {@link WorkArea} whose initial layout holds it, each time
  * the initial layout is shown again, after the last tab closes; it loads nothing while a tab hides it.
@@ -123,9 +124,16 @@ public class DashboardFragment extends Fragment<Div> {
      * Reloads the dashboard: the header, every block, and which sections and headings show.
      */
     public void refresh() {
-        updateHeader();
+        boolean logsTime = timeEntryEditorOpener.isCreatePermitted();
+        updateHeader(logsTime);
 
-        refreshBlocks(myTimeBlocks);
+        // The time section is for a user who may log time: it loads nothing for anyone else
+        if (logsTime) {
+            refreshBlocks(myTimeBlocks);
+        } else {
+            myTimeBlocks.setVisible(false);
+        }
+
         // The team section is for a user who approves: it loads nothing for anyone else
         if (isTeamPermitted()) {
             refreshBlocks(myTeamBlocks);
@@ -156,7 +164,7 @@ public class DashboardFragment extends Fragment<Div> {
                 : Optional.empty();
     }
 
-    private void updateHeader() {
+    private void updateHeader(boolean logsTime) {
         Locale locale = currentAuthentication.getLocale();
         ZonedDateTime now = userTimeZoneSupport.now();
 
@@ -170,7 +178,7 @@ public class DashboardFragment extends Fragment<Div> {
         today.setText(messages.formatMessage(DashboardFragment.class, "dashboard.today", locale, weekday,
                 dashboardDates.formatDate(date), week));
 
-        logTimeButton.setVisible(timeEntryEditorOpener.isCreatePermitted());
+        logTimeButton.setVisible(logsTime);
     }
 
     private String userName() {

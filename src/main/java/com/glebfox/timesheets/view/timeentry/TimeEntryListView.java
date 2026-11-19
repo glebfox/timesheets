@@ -26,7 +26,10 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.AccessManager;
+import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
+import io.jmix.flowui.accesscontext.UiEntityAttributeContext;
 import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.model.CollectionContainer;
 import io.jmix.flowui.view.*;
@@ -49,6 +52,10 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
     private MetadataTools metadataTools;
     @Autowired
     private ComponentSupport componentSupport;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private Metadata metadata;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -63,6 +70,27 @@ public class TimeEntryListView extends StandardListView<TimeEntry> {
         // The browser sizes the auto-width columns to the rows it shows first, while a Rejected badge, the widest
         // with its icon, may come only with another page, a filter, or a reload
         timeEntriesDataGrid.recalculateColumnWidths();
+    }
+
+    @Install(to = "timeEntriesDataGrid.create", subject = "enabledRule")
+    private boolean timeEntriesDataGridCreateEnabledRule() {
+        return isUserModifiable();
+    }
+
+    @Install(to = "timeEntriesDataGrid.copy", subject = "enabledRule")
+    private boolean timeEntriesDataGridCopyEnabledRule() {
+        return isUserModifiable();
+    }
+
+    /**
+     * Create and Copy open a general entry, whose user is chosen in the editor, so they log time for any person, which
+     * only someone who may set an entry's user does; everyone else logs their own time on the screens that open an own
+     * entry.
+     */
+    private boolean isUserModifiable() {
+        UiEntityAttributeContext context = new UiEntityAttributeContext(metadata.getClass(TimeEntry.class), "user");
+        accessManager.applyRegisteredConstraints(context);
+        return context.canModify();
     }
 
     @Supply(to = "timeEntriesDataGrid.status", subject = "renderer")

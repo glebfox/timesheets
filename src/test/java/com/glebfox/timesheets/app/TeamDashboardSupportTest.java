@@ -164,7 +164,7 @@ public class TeamDashboardSupportTest {
         List<User> people = asUser(manager, () -> approvalSupport.loadApprovedPeople());
 
         assertThat(people).extracting(User::getUsername)
-                .containsExactly(approver.getUsername(), member.getUsername(), observer.getUsername());
+                .containsExactly(approver.getUsername(), member.getUsername());
         assertThat(asUser(manager, () -> teamSupport.approvesAnywhere())).isTrue();
     }
 
@@ -190,9 +190,9 @@ public class TeamDashboardSupportTest {
         List<User> afterQ = asUser(approver, () -> approvalSupport.loadApprovedPeople());
 
         assertThat(beforeQ).extracting(User::getUsername)
-                .containsExactly(member.getUsername(), observer.getUsername());
+                .containsExactly(member.getUsername());
         assertThat(afterQ).extracting(User::getUsername)
-                .containsExactly(manager.getUsername(), member.getUsername(), observer.getUsername());
+                .containsExactly(manager.getUsername(), member.getUsername());
     }
 
     @Test
@@ -218,6 +218,26 @@ public class TeamDashboardSupportTest {
 
         assertThat(people).extracting(User::getUsername)
                 .doesNotContain(inactive.getUsername(), deleted.getUsername(), manager.getUsername());
+    }
+
+    @Test
+    void anObserverIsNoOnesTeam() {
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+        assertThat(asUser(manager, () -> approvalSupport.loadApprovedPeople())).extracting(User::getUsername)
+                .doesNotContain(observer.getUsername());
+        assertThat(asUser(approver, () -> approvalSupport.loadApprovedPeople())).extracting(User::getUsername)
+                .doesNotContain(observer.getUsername());
+        assertThat(asUser(manager, () -> teamSupport.loadTeamWeek(monday, monday.plusDays(6))))
+                .extracting(w -> w.user().getUsername())
+                .doesNotContain(observer.getUsername());
+
+        // An Observer of P who works on Q is on the team of Q's Manager
+        Project projectQ = data.saveProject("Q", client);
+        data.saveParticipant(projectQ, manager, managerRole);
+        data.saveParticipant(projectQ, observer, memberRole);
+        assertThat(asUser(manager, () -> approvalSupport.loadApprovedPeople())).extracting(User::getUsername)
+                .contains(observer.getUsername());
     }
 
     @Test
@@ -285,7 +305,7 @@ public class TeamDashboardSupportTest {
         List<PersonWeek> week = asUser(manager, () -> teamSupport.loadTeamWeek(monday, sunday));
 
         assertThat(week).extracting(w -> w.user().getUsername())
-                .containsExactly(approver.getUsername(), member.getUsername(), observer.getUsername());
+                .containsExactly(approver.getUsername(), member.getUsername());
         PersonWeek memberWeek = week.get(1);
         assertThat(memberWeek.approvable()).containsOnly(
                 entry(TimeEntryStatus.APPROVED, WorkTime.ofHours(8)),
@@ -299,17 +319,17 @@ public class TeamDashboardSupportTest {
     @Test
     void teamWeekPersonWithoutEntriesTest() {
         LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        data.saveEntryOf(rTask, observer, monday, TimeEntryStatus.NEW, WorkTime.ofHours(3));
+        data.saveEntryOf(rTask, member, monday, TimeEntryStatus.NEW, WorkTime.ofHours(3));
 
-        // The manager of P is no participant of R: the observer's time there is another project's
+        // The manager of P is no participant of R: the member's time there is another project's
         List<PersonWeek> week = asUser(manager, () -> teamSupport.loadTeamWeek(monday, monday.plusDays(6)));
 
         assertThat(week).extracting(w -> w.user().getUsername())
-                .containsExactly(approver.getUsername(), member.getUsername(), observer.getUsername());
+                .containsExactly(approver.getUsername(), member.getUsername());
         assertThat(week).allSatisfy(w -> assertThat(w.hasEntries()).isFalse());
         assertThat(week.get(0).otherProjects()).isEqualTo(WorkTime.ZERO);
-        assertThat(week.get(2).otherProjects()).isEqualTo(WorkTime.ofHours(3));
-        assertThat(week.get(2).approvable()).isEmpty();
+        assertThat(week.get(1).otherProjects()).isEqualTo(WorkTime.ofHours(3));
+        assertThat(week.get(1).approvable()).isEmpty();
     }
 
     @Test
@@ -317,9 +337,10 @@ public class TeamDashboardSupportTest {
         AbsenceType vacation = data.save(dataManager.create(AbsenceType.class), t -> t.setName("vacation"));
         saveAbsence(member, vacation, today.minusDays(10), today.minusDays(5), "before");
         Absence across = saveAbsence(member, vacation, today.plusDays(12), today.plusDays(20), "across");
-        Absence inside = saveAbsence(observer, vacation, today.plusDays(2), today.plusDays(3), "inside");
+        Absence inside = saveAbsence(approver, vacation, today.plusDays(2), today.plusDays(3), "inside");
         saveAbsence(approver, vacation, today.plusDays(14), today.plusDays(15), "after");
         saveAbsence(former, vacation, today.plusDays(1), today.plusDays(2), "not on the team");
+        saveAbsence(observer, vacation, today.plusDays(1), today.plusDays(2), "an observer, not on the team");
 
         List<PersonAbsence> absences = asUser(manager, () -> teamSupport.loadTeamAbsences(today, today.plusDays(13)));
 
@@ -327,7 +348,7 @@ public class TeamDashboardSupportTest {
                 .extracting(a -> a.user().getUsername(), a -> a.absence().id(), a -> a.absence().typeName(),
                         a -> a.absence().firstDay(), a -> a.absence().lastDay())
                 .containsExactly(
-                        tuple(observer.getUsername(), inside.getId(), "vacation", today.plusDays(2),
+                        tuple(approver.getUsername(), inside.getId(), "vacation", today.plusDays(2),
                                 today.plusDays(3)),
                         tuple(member.getUsername(), across.getId(), "vacation", today.plusDays(12),
                                 today.plusDays(20)));
@@ -346,7 +367,7 @@ public class TeamDashboardSupportTest {
         });
 
         assertThat(people).extracting(User::getUsername)
-                .containsExactly(approver.getUsername(), member.getUsername(), observer.getUsername());
+                .containsExactly(approver.getUsername(), member.getUsername());
     }
 
     private Absence saveAbsence(User user, AbsenceType type, LocalDate firstDay, LocalDate lastDay, String comment) {

@@ -1,8 +1,8 @@
 # Project screens
 
-Source: `view/project/`, `view/projectparticipant/`
+Source: `view/project/`, `view/projectparticipant/`, `action/TaskCloseAction.java`, `action/ChildEditAction.java`
 
-The project list, the project editor, and the participant editor. What a project is: [project](../data-model/project.md), [project participant](../data-model/project-participant.md).
+The project list, the project editor, and the participant editor. What a project is: [project](../data-model/project.md), [project participant](../data-model/project-participant.md). Who opens them: a [Manager](../roles/manager.md), on the projects where they take part, changing those they manage; an [Observer](../roles/observer.md), read only, on the projects where they take part; and [Project office](../roles/project-office.md), on every project ([who can do what](../roles/README.md#who-can-do-what)).
 
 ## Projects
 
@@ -18,11 +18,13 @@ The project list, the project editor, and the participant editor. What a project
 
 Three tabs below hold what the project owns. Their changes, including those made in the dialogs they open, reach the database only when the project is saved. The one exception is a project role created from the participant editor: it is saved at once.
 
-- **Tasks** — name, type, status as a badge (Active green, Inactive red), and description, cut short with the full text in a popover. Create and Edit open the [task editor](tasks.md#task-editor) in a dialog; Remove; **Close** turns the selected Active task Inactive and does nothing to an Inactive one.
+- **Tasks** — name, type, status as a badge (Active green, Inactive red), and description, cut short with the full text in a popover. Create and Edit open the [task editor](tasks.md#task-editor) in a dialog; Remove; **Close** turns the selected Active task Inactive and does nothing to an Inactive one, and is offered only to a user who may change the selected task.
 - **Participants** — the user (avatar, name, and an Active or Inactive badge) and the role as a badge colored by role type: Manager primary, Approver green, Observer neutral, Member plain. Create and Edit open the participant editor in a dialog; Remove; **Add participants** lists every project role, and choosing one opens the user picker in multi-select mode and adds each chosen user with that role. Users who already participate are not filtered out: adding one again breaks the one-participation rule, and the save fails on PostgreSQL.
 - **Tag groups** — the name. Create and Edit open the [tag group editor](tags.md#tag-group-editor) in a dialog; Remove.
 
 An empty tab's table shows an icon and what is missing, with no Refresh ([empty lists and tables](README.md#empty-lists-and-tables)): Tasks the My tasks icon and "No tasks" («Нет задач»), Participants the Users icon and "No participants" («Нет участников»), and Tag groups the tag group icon and "No tag groups" («Нет групп тегов»).
+
+A user who may not change the project, by their roles or because they are not its Manager ([Project scope](../roles/project-scope.md)), gets the editor read-only. Its fields cannot be changed, and Create, Remove, Close, and Add participants are unavailable. Edit, labeled Read, still opens the selected task, participant, or tag group read-only in its dialog, so a user who reads a project reads everything it holds.
 
 ## Participant editor
 
@@ -30,10 +32,10 @@ An empty tab's table shows an icon and what is missing, with no Refresh ([empty 
 
 - **User** — a drop-down searched by username, first name, or last name, case-insensitively, showing each user's avatar, name, and Active or Inactive badge; or the user picker.
 - **Project** — shown only when the participant has no project yet, which happens only when the editor is opened by URL.
-- **Role** — a drop-down of project roles by name, showing each role's type beside the name, smaller and muted, on one line; or the role picker. Its Create action opens the [project role editor](settings.md#project-roles) in a dialog and selects the new role.
+- **Role** — a drop-down of project roles by name, showing each role's type beside the name, smaller and muted, on one line; or the role picker. Its Create action, shown only to a user who may create project roles, opens the [project role editor](settings.md#project-roles) in a dialog and selects the new role; a holder of [Projects: management](../roles/project-management.md) without [Task types and project roles](../roles/project-catalogs.md) picks one of the existing roles.
 
 ## Not covered
 
-- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`), and the editor's client picker opening the client list (`ClientListViewUiTest`): no UI test exists for them.
+- All of these screens beyond the empty states of the list and the editor's three tables (`GridEmptyStatesUiTest`), the editor's client picker opening the client list (`ClientListViewUiTest`), the participant editor's Create on the role field, offered to a user who may create project roles (`ProjectParticipantDetailViewUiTest`), and what `ProjectManagementRoleUiTest` checks for a holder of Projects: management with Project scope ([Projects: management](../roles/project-management.md#not-covered)): no UI test exists for them.
 - The failed save when a participating user is added again: PostgreSQL only, so no test can check it.
 - How the participant editor's role drop-down shows its roles, which no test sees (`docs/guidelines/testing.md`). A live check on 2026-11-15, as freeman on `dev` demo data, in English, in the dark theme, opened it on a new participant: each role showed its type beside its name, smaller and muted, on one line.

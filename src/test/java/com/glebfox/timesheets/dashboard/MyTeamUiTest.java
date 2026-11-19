@@ -157,9 +157,33 @@ public class MyTeamUiTest {
             dashboard.refresh();
 
             assertThat(component(dashboard, "myTeamBlocks").isVisible()).isTrue();
-            assertThat(component(dashboard, "myTimeBlocks").isVisible()).isTrue();
-            assertThat(component(dashboard, "myTimeHeading").isVisible()).isTrue();
-            assertThat(component(dashboard, "myTeamHeading").isVisible()).isTrue();
+            // The approver may not log time, so My time hides, and the headings with it
+            assertThat(component(dashboard, "myTimeBlocks").isVisible()).isFalse();
+            assertThat(component(dashboard, "myTimeHeading").isVisible()).isFalse();
+            assertThat(component(dashboard, "myTeamHeading").isVisible()).isFalse();
+        });
+    }
+
+    @Test
+    void teamLeavesOutObservers() {
+        saveMember("member", "Cid");
+        User observer = data.saveUser("observer", "Dan", "Zimmer");
+        data.saveParticipant(project, observer, data.saveRole(ProjectRoleType.OBSERVER));
+        AbsenceType vacation = saveAbsenceType("vacation");
+        saveAbsence(observer, vacation, today, today);
+
+        systemAuthenticator.runWithUser(approver.getUsername(), () -> {
+            TeamWeekBlock teamWeek = block("teamWeekBlock");
+            Fragment<?> teamAway = block("teamAwayBlock");
+            dashboard().refresh();
+
+            // Team this week has a bar for the member alone
+            List<MapDataItem> items = items(chart(teamWeek));
+            assertThat(items).hasSize(1);
+            assertThat((String) items.getFirst().getValue(TeamWeekBlock.PERSON)).contains("Cid");
+            // Team away leaves out the observer's absence
+            assertThat(isShown(teamAway, component(teamAway, "emptyState"))).isTrue();
+            assertThat(isShown(teamAway, component(teamAway, "rows"))).isFalse();
         });
     }
 
@@ -181,7 +205,7 @@ public class MyTeamUiTest {
         assignRole(member, UiMinimalRole.CODE);
         assignRole(member, TimeEntryApprovalRole.CODE);
 
-        systemAuthenticator.runWithUser(member.getUsername(), () -> assertTeamHidden(dashboard()));
+        systemAuthenticator.runWithUser(member.getUsername(), () -> assertTeamHidden(dashboard(), false));
     }
 
     @Test
@@ -190,7 +214,7 @@ public class MyTeamUiTest {
         assignRole(other, UiMinimalRole.CODE);
         data.saveParticipant(project, other, approverRole);
 
-        systemAuthenticator.runWithUser(other.getUsername(), () -> assertTeamHidden(dashboard()));
+        systemAuthenticator.runWithUser(other.getUsername(), () -> assertTeamHidden(dashboard(), false));
     }
 
     @Test
@@ -198,7 +222,7 @@ public class MyTeamUiTest {
         User full = data.saveUser("full", "Full", "Access");
         assignRole(full, FullAccessRole.CODE);
 
-        systemAuthenticator.runWithUser(full.getUsername(), () -> assertTeamHidden(dashboard()));
+        systemAuthenticator.runWithUser(full.getUsername(), () -> assertTeamHidden(dashboard(), true));
     }
 
     @Test
@@ -497,11 +521,14 @@ public class MyTeamUiTest {
         });
     }
 
-    private void assertTeamHidden(DashboardFragment dashboard) {
+    /**
+     * Asserts that My team and both headings hide, and that My time shows only to a user who may log time.
+     */
+    private void assertTeamHidden(DashboardFragment dashboard, boolean myTimeShown) {
         dashboard.refresh();
 
         assertThat(component(dashboard, "myTeamBlocks").isVisible()).isFalse();
-        assertThat(component(dashboard, "myTimeBlocks").isVisible()).isTrue();
+        assertThat(component(dashboard, "myTimeBlocks").isVisible()).isEqualTo(myTimeShown);
         assertThat(component(dashboard, "myTimeHeading").isVisible()).isFalse();
         assertThat(component(dashboard, "myTeamHeading").isVisible()).isFalse();
     }

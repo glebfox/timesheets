@@ -50,7 +50,8 @@ import java.util.stream.Collectors;
  * <p>
  * The approver is always the effective user, so under user substitution it is the substituted user.
  * The rule is written once, as the constant {@code APPROVABLE_ENTRY}, and every query of this bean that applies
- * it embeds that constant. The operations, {@link #approve} and {@link #reject}, check it again before they save.
+ * it embeds that constant. The operations, {@link #approve} and {@link #reject}, check it again before they save, and
+ * the time entry rules ask {@link #canApprove} before a review is saved.
  */
 @Component("ts_TimeEntryApprovalSupport")
 public class TimeEntryApprovalSupport {
@@ -59,6 +60,8 @@ public class TimeEntryApprovalSupport {
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.MANAGER)";
     private static final String APPROVER =
             "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.APPROVER)";
+    private static final String OBSERVER =
+            "@enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER)";
 
     /**
      * Who approves whose entries. A JPQL condition on a time entry with the alias {@code e}, with the parameter
@@ -84,9 +87,11 @@ public class TimeEntryApprovalSupport {
      * {@code PersistenceHints.SOFT_DELETION} hint off, a written {@code x.deletedDate is null} is printed as
      * {@code (0=0)}, so the deleted participants, roles, tasks, and projects would no longer be dropped.
      * <p>
-     * {@link #loadProjectsToApprove} repeats this rule's Manager-or-Approver role-type fragment, and
-     * {@link #loadApprovedPeople} states the same rule by participation, so a change to the rule touches all
-     * three.
+     * The rule judges entries, so the two queries that name what the user approves without an entry state it
+     * otherwise, and a change to the rule touches them too: {@link #loadProjectsToApprove} repeats its
+     * Manager-or-Approver role-type fragment, as a project with no entries yet is still one to approve, and
+     * {@link #loadApprovedPeople} states it by participation, as a person with no entries is still on the team; it
+     * also leaves out the Observers, whose entries the rule still names.
      */
     private static final String APPROVABLE_ENTRY = """
             (exists (select p from ts_ProjectParticipant p
@@ -136,11 +141,12 @@ public class TimeEntryApprovalSupport {
     }
 
     /**
-     * Loads the people whose entries the current user approves by participation, the people the dashboard's team
-     * is made of: every participant of a project where the user is a Manager, and every participant of a project
-     * where the user is an Approver except that project's Managers. The current user, inactive users, and deleted
-     * users are left out. Soft deletion applies to the participants, the roles, and the projects: a deleted one
-     * grants nothing.
+     * Loads the people whose entries the current user approves by participation, the people the dashboard's team is
+     * made of: every participant of a project where the user is a Manager, and every participant of a project where the
+     * user is an Approver except that project's Managers. Either way the project's Observers are left out, as they do
+     * not work on it, and so are the current user, inactive users, and deleted users. Soft deletion applies to the
+     * participants, the roles, and the projects: a deleted one grants nothing, and a participant whose role is deleted
+     * takes part in no role, so is left out too.
      * <p>
      * The users are read without the current user's own permissions, as the approval screen shows the user of every
      * entry it lists, and only with their username, names, avatar, and active flag.
@@ -154,6 +160,7 @@ public class TimeEntryApprovalSupport {
                         where u.id <> :approverId and u.active = true
                         and exists (select pt from ts_ProjectParticipant pt, ts_ProjectParticipant my
                                     where pt.user = u
+                                    and pt.role.type <> %3$s
                                     and my.project = pt.project
                                     and my.user.id = :approverId
                                     and exists (select pr from ts_Project pr where pr = my.project)
@@ -163,7 +170,7 @@ public class TimeEntryApprovalSupport {
                                                              where m.project = pt.project
                                                              and m.user = pt.user
                                                              and m.role.type = %1$s))))
-                        """.formatted(MANAGER, APPROVER))
+                        """.formatted(MANAGER, APPROVER, OBSERVER))
                 .parameter("approverId", approverId())
                 // Only what the dashboard shows of a person and their instance name needs, so no password hash or
                 // other credentials leave the database
@@ -176,8 +183,8 @@ public class TimeEntryApprovalSupport {
     /**
      * Loads the entries in status New that the current user may approve, of any date.
      * <p>
-     * They include the entries of deleted users, of inactive users, and of users who are no longer participants,
-     * which {@link #loadApprovedPeople} leaves out.
+     * They include the entries of deleted users, of inactive users, of users who are no longer participants, and of
+     * Observers, which {@link #loadApprovedPeople} leaves out.
      *
      * @return the entries with their user, whose own attributes and user are the only ones loaded
      */
@@ -251,13 +258,22 @@ public class TimeEntryApprovalSupport {
 
     /**
      * Tells whether the current user may approve the entry. The entry is read from the database by its id, so
-     * the answer follows the entry's current user and project, not the state of the object passed in.
+     * the answer follows the entry's stored user and task, not the state of the object passed in, and an entry that
+     * is not stored, or is deleted, or whose task or project is deleted, gets {@code false}.
+     * <p>
+     * The time entry rules ask this inside a save, so the entry is read without the user's own permissions, as the
+     * answer must not depend on what the user may read, and by a value query: it runs with the commit flush mode, so
+     * it reads the stored row without flushing the rows the save holds, which would clear the change tracking the
+     * rules read ({@code JmixEclipseLinkQuery}).
      *
      * @param entry the entry to check
      * @return {@code true} if the rule lets the current user approve the entry
      */
     public boolean canApprove(TimeEntry entry) {
-        Long count = dataManager
+        if (entry.getId() == null) {
+            return false;
+        }
+        Long count = unconstrainedDataManager
                 .loadValue("select count(e) from ts_TimeEntry e where e.id = :entryId and " + APPROVABLE_ENTRY,
                         Long.class)
                 .parameter("entryId", entry.getId())

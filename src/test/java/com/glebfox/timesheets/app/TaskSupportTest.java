@@ -122,6 +122,66 @@ public class TaskSupportTest {
         assertThat(userActiveTasks).hasSize(1);
     }
 
+    @Test
+    void tasksOfAnObservedProjectAreNotOffered() {
+        entities = new ArrayList<>();
+        String suffix = RandomStringUtils.insecure().nextAlphabetic(5);
+
+        User user = dataManager.create(User.class);
+        user.setUsername("test-user-" + suffix);
+        entities.add(user);
+
+        Client client = dataManager.create(Client.class);
+        client.setName("Test Client " + suffix);
+        entities.add(client);
+
+        TaskType taskType = dataManager.create(TaskType.class);
+        taskType.setName("Test TaskType " + suffix);
+        entities.add(taskType);
+
+        ProjectRole memberRole = addRole(ProjectRoleType.MEMBER, suffix);
+        ProjectRole observerRole = addRole(ProjectRoleType.OBSERVER, suffix);
+        Task workedTask = addProjectWithTask("Test Project P " + suffix, client, taskType);
+        Task observedTask = addProjectWithTask("Test Project Q " + suffix, client, taskType);
+        addParticipant(user, workedTask.getProject(), memberRole);
+        addParticipant(user, observedTask.getProject(), observerRole);
+
+        dataManager.saveAll(entities);
+
+        assertThat(support.getUserActiveTasks(user)).extracting(Task::getId)
+                .containsExactly(workedTask.getId());
+    }
+
+    private ProjectRole addRole(ProjectRoleType type, String suffix) {
+        ProjectRole role = dataManager.create(ProjectRole.class);
+        role.setName("Test ProjectRole " + type.getId() + " " + suffix);
+        role.setType(type);
+        entities.add(role);
+        return role;
+    }
+
+    private Task addProjectWithTask(String projectName, Client client, TaskType taskType) {
+        Project project = dataManager.create(Project.class);
+        project.setName(projectName);
+        project.setClient(client);
+        entities.add(project);
+
+        Task task = dataManager.create(Task.class);
+        task.setName("Test Task " + RandomStringUtils.insecure().nextAlphabetic(5));
+        task.setProject(project);
+        task.setType(taskType);
+        entities.add(task);
+        return task;
+    }
+
+    private void addParticipant(User user, Project project, ProjectRole role) {
+        ProjectParticipant participant = dataManager.create(ProjectParticipant.class);
+        participant.setUser(user);
+        participant.setProject(project);
+        participant.setRole(role);
+        entities.add(participant);
+    }
+
     @AfterEach
     void tearDown() {
         if (CollectionUtils.isEmpty(entities)) {

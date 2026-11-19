@@ -75,8 +75,8 @@ public class TeamDashboardSupport {
 
     /**
      * Loads what waits for the current user's approval: every New entry the approval rule lets the user approve,
-     * of any date. The entries of deleted users, inactive users, and former participants count, so the number
-     * matches the approval screen's, and such a user may be one of the people.
+     * of any date. The entries of deleted users, inactive users, former participants, and Observers count, so the
+     * number matches the approval screen's, and such a user may be one of the people.
      *
      * @return the number of entries, their total time, the date of the oldest, and the people with the most entries
      * first, then by name

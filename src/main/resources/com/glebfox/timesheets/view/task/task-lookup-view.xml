@@ -35,8 +35,9 @@
                     <condition>
                         <and>
                             <c:jpql>
-                                <c:where>(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF
-                                    e.project.participants
+                                <c:where><![CDATA[(select pp from ts_ProjectParticipant pp where pp.user = :user
+                                    and pp.role.type <> @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER))
+                                    MEMBER OF e.project.participants]]>
                                 </c:where>
                             </c:jpql>
                         </and>
@@ -54,8 +55,9 @@
                     <condition>
                         <and>
                             <c:jpql>
-                                <c:where>(select pp from ts_ProjectParticipant pp where pp.user = :user) MEMBER OF
-                                    e.participants
+                                <c:where><![CDATA[(select pp from ts_ProjectParticipant pp where pp.user = :user
+                                    and pp.role.type <> @enum(com.glebfox.timesheets.entity.project.ProjectRoleType.OBSERVER))
+                                    MEMBER OF e.participants]]>
                                 </c:where>
                             </c:jpql>
                         </and>

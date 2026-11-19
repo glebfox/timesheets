@@ -25,10 +25,14 @@ import com.glebfox.timesheets.view.main.MainView;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.AccessManager;
+import io.jmix.core.Metadata;
 import io.jmix.core.MetadataTools;
 import io.jmix.flowui.DialogWindows;
+import io.jmix.flowui.accesscontext.UiEntityContext;
 import io.jmix.flowui.component.combobox.EntityComboBox;
 import io.jmix.flowui.component.valuepicker.EntityPicker;
+import io.jmix.flowui.kit.action.Action;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,8 @@ public class ProjectParticipantDetailView extends StandardDetailView<ProjectPart
     private EntityPicker<Project> projectField;
     @ViewComponent
     private EntityComboBox<ProjectRole> roleField;
+    @ViewComponent("roleField.entityCreate")
+    private Action roleFieldEntityCreate;
 
     @Autowired
     private DialogWindows dialogWindows;
@@ -51,6 +57,10 @@ public class ProjectParticipantDetailView extends StandardDetailView<ProjectPart
     private MetadataTools metadataTools;
     @Autowired
     private ComponentSupport componentSupport;
+    @Autowired
+    private AccessManager accessManager;
+    @Autowired
+    private Metadata metadata;
 
     @Supply(to = "userField", subject = "renderer")
     private Renderer<User> userFieldRenderer() {
@@ -68,6 +78,14 @@ public class ProjectParticipantDetailView extends StandardDetailView<ProjectPart
                 .withProperty("name", ProjectRole::getName)
                 .withProperty("type", projectRole ->
                         metadataTools.format(projectRole.getType()));
+    }
+
+    @Subscribe
+    public void onInit(final InitEvent event) {
+        // Create shows only to whoever may create project roles; Projects: management lets a holder pick a role only
+        UiEntityContext context = new UiEntityContext(metadata.getClass(ProjectRole.class));
+        accessManager.applyRegisteredConstraints(context);
+        roleFieldEntityCreate.setVisible(context.isCreatePermitted());
     }
 
     @Subscribe

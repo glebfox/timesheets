@@ -152,19 +152,27 @@ public class DashboardUiTest {
     }
 
     @Test
-    void logTimeHiddenWithoutCreatePermissionTest() {
+    void myTimeHiddenWithoutCreatePermission() {
         User minimal = data.saveUser("minimal", "Minimal", "Access");
         assignRole(minimal, UiMinimalRole.CODE);
         User full = data.saveUser("full", "Full", "Access");
         assignRole(full, FullAccessRole.CODE);
         DashboardFragment dashboard = dashboard();
+        Component myTimeBlocks = component(dashboard, "myTimeBlocks");
         JmixButton logTimeButton = component(dashboard, "logTimeButton");
+        CountingTestBlock block = addBlock(dashboard, "myTimeBlocks");
+        int before = block.getRefreshes();
 
+        // My time is for a user who may log time: for anyone else it hides and loads nothing
         systemAuthenticator.runWithUser(minimal.getUsername(), dashboard::refresh);
+        assertThat(myTimeBlocks.isVisible()).isFalse();
         assertThat(logTimeButton.isVisible()).isFalse();
+        assertThat(block.getRefreshes()).isEqualTo(before);
 
         systemAuthenticator.runWithUser(full.getUsername(), dashboard::refresh);
+        assertThat(myTimeBlocks.isVisible()).isTrue();
         assertThat(logTimeButton.isVisible()).isTrue();
+        assertThat(block.getRefreshes()).isEqualTo(before + 1);
     }
 
     @Test
