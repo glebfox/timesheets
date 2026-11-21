@@ -84,7 +84,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     @ViewComponent
     private Div rejectionNotice;
     @ViewComponent
-    private Div rejectionNoticeBody;
+    private Markdown rejectionNoticeReason;
     @ViewComponent
     private H4 tagsTitle;
     @ViewComponent
@@ -117,10 +117,6 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
     private Metadata metadata;
     @Autowired
     private EntityStates entityStates;
-
-    // Made on the first reason to show: the descriptor's markdown element can neither be declared without content nor
-    // be bound to the reason, https://github.com/jmix-framework/jmix/issues/5938
-    private @Nullable Markdown rejectionNoticeReason;
 
     private boolean ownTimeEntry = false;
     private boolean userModifiable = false;
@@ -318,7 +314,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         tagsDc.setItems(tags);
 
         // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/6026 is fixed
-        // A framework defect of Jmix 3.1.0: the data context drops a new instance from its changes once its last
+        // A framework defect: the data context drops a new instance from its changes once its last
         // changed attribute is back to its value at open, and then saves nothing while the view reports it saved. A
         // copy opens complete, so setting its tags again above, or any change undone, would lose it; a new entry is
         // therefore kept among the changes whatever was changed
@@ -359,17 +355,7 @@ public class TimeEntryDetailView extends StandardDetailView<TimeEntry> {
         rejectionNotice.setVisible(rejected);
 
         String reason = rejected ? timeEntry.getRejectionReason() : null;
-        boolean hasReason = StringUtils.isNotBlank(reason);
-        if (hasReason && rejectionNoticeReason == null) {
-            rejectionNoticeReason = uiComponents.create(Markdown.class);
-            rejectionNoticeReason.setId("rejectionNoticeReason");
-            rejectionNoticeReason.addClassName("reason");
-            rejectionNoticeBody.add(rejectionNoticeReason);
-        }
-        if (rejectionNoticeReason != null) {
-            rejectionNoticeReason.setContent(hasReason ? reason : "");
-            rejectionNoticeReason.setVisible(hasReason);
-        }
+        rejectionNoticeReason.setVisible(StringUtils.isNotBlank(reason));
     }
 
     @Subscribe("statusField")
