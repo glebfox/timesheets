@@ -36,8 +36,6 @@ import io.jmix.flowui.model.InstanceContainer;
 import io.jmix.flowui.view.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-
 @Route(value = "tasks/:id", layout = MainView.class)
 @ViewController("ts_Task.detail")
 @ViewDescriptor("task-detail-view.xml")
@@ -99,12 +97,8 @@ public class TaskDetailView extends StandardDetailView<Task> {
 
     @Subscribe("requiredTagGroupsField.entityLookup")
     public void onRequiredTagGroupsFieldEntityLookup(final ActionPerformedEvent event) {
-        DialogWindow<TagGroupLookupView> dialogWindow = dialogWindows.lookup(this, TagGroup.class)
+        DialogWindow<TagGroupLookupView> dialogWindow = dialogWindows.lookup(requiredTagGroupsField)
                 .withViewClass(TagGroupLookupView.class)
-                // TODO: gg, remove after jmix-framework/jmix#3473 and jmix-framework/jmix#3474 are fixed
-                .withSelectHandler(tagGroups ->
-                        requiredTagGroupsField.setTypedValue(new ArrayList<>(tagGroups)))
-                .withLookupComponentMultiSelect(true)
                 .build();
 
         dialogWindow.getView().setProject(getEditedEntity().getProject());

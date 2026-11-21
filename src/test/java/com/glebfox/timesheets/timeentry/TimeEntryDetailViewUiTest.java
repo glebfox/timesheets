@@ -144,7 +144,8 @@ public class TimeEntryDetailViewUiTest {
 
         Div notice = UiTestUtils.getComponent(view, "rejectionNotice");
         assertThat(notice.isVisible()).isTrue();
-        assertThat(UiComponentUtils.findComponent(view, "rejectionNoticeReason")).isEmpty();
+        Markdown reason = UiTestUtils.getComponent(view, "rejectionNoticeReason");
+        assertThat(reason.isVisible()).isFalse();
     }
 
     @Test
@@ -173,7 +174,7 @@ public class TimeEntryDetailViewUiTest {
         Div notice = UiTestUtils.getComponent(view, "rejectionNotice");
         Div body = UiTestUtils.getComponent(view, "rejectionNoticeBody");
         assertThat(notice.isVisible()).isTrue();
-        // The reason's Markdown is the one made for the first entry, given the new reason
+        // The notice keeps its one Markdown, which shows the new item's reason
         assertThat(body.getChildren().filter(Markdown.class::isInstance))
                 .singleElement()
                 .satisfies(reason -> assertThat(((Markdown) reason).getContent()).isEqualTo("Duplicate"));

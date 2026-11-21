@@ -45,6 +45,8 @@
                 <div id="rejectionNoticeBody" classNames="body">
                     <span id="rejectionNoticeTitle" classNames="title"
                           text="msg://com.glebfox.timesheets.entity.timeentry/TimeEntryStatus.REJECTED"/>
+                    <markdown id="rejectionNoticeReason" classNames="reason"
+                              dataContainer="timeEntryDc" property="rejectionReason"/>
                 </div>
             </div>
             <formLayout id="form"

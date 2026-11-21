@@ -147,7 +147,8 @@ public class DateRangeField extends CustomField<DateRange>
         // Once the picker has opened, Vaadin 25.3's overlay keeps the month of its first opening: a later change of
         // the first day moves the minimum and the position set here, but not the month the picker opens at, as
         // vaadin-date-picker-mixin's _getInitialPosition prefers the overlay content's own initialPosition. Seen
-        // live on 2026-11-04; left as it is, since a workaround would reach into the component's internals
+        // live on 2026-11-04, and again on Vaadin 25.3.5 on 2026-11-21; left as it is, since a workaround would reach
+        // into the component's internals
         endPicker.setInitialPosition(start);
     }
 

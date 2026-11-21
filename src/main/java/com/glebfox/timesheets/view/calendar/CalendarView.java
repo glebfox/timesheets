@@ -314,7 +314,6 @@ public class CalendarView extends StandardView {
         spentTimeByDay = calendarSupport.calculateSpentTimeByDay(event.getSource().getItems());
 
         updateHoursSummary();
-        resetDayCellBottomTextClassNames();
     }
 
     /**
@@ -464,18 +463,6 @@ public class CalendarView extends StandardView {
         } else {
             return MATCHING_TIME_CLASS_NAME;
         }
-    }
-
-    private void resetDayCellBottomTextClassNames() {
-        // The calendar adds the generated class names to the bottom text, but never removes
-        // the previous ones, so a day whose time changes would keep the old state's colors.
-        // The bottom text is regenerated after the calendar receives the changed events,
-        // which happens after this script runs.
-        // TODO: gg, remove when https://github.com/jmix-framework/jmix/issues/5840 is fixed
-        calendar.getElement().executeJs("""
-                this.querySelectorAll('.jmix-day-cell-bottom-text')
-                    .forEach(bottomText => bottomText.className = 'jmix-day-cell-bottom-text');
-                """);
     }
 
     private void loadTimeEntries(LocalDate startDate, LocalDate endDate) {
