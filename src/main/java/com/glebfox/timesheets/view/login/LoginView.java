@@ -16,11 +16,15 @@
 
 package com.glebfox.timesheets.view.login;
 
+import com.glebfox.timesheets.demo.DemoDataLoadState;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.ModalityMode;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
 import com.vaadin.flow.i18n.LocaleChangeObserver;
@@ -29,6 +33,7 @@ import com.vaadin.flow.server.VaadinSession;
 import io.jmix.core.CoreProperties;
 import io.jmix.core.MessageTools;
 import io.jmix.core.security.AccessDeniedException;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.kit.component.ComponentUtils;
@@ -39,6 +44,7 @@ import io.jmix.securityflowui.authentication.LoginViewSupport;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -68,6 +74,13 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
 
     @Autowired
     private MessageTools messageTools;
+
+    @Autowired
+    private UiComponents uiComponents;
+
+    // Only a dev start has one
+    @Autowired
+    private ObjectProvider<DemoDataLoadState> demoDataLoadState;
 
     @ViewComponent
     private JmixLoginForm login;
@@ -114,6 +127,45 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         if (StringUtils.isNotBlank(defaultPassword)) {
             login.setPassword(defaultPassword);
         }
+    }
+
+    @Subscribe
+    public void onReady(final ReadyEvent event) {
+        demoDataLoadState.ifAvailable(this::waitForDemoData);
+    }
+
+    // Jmix's UiEventPublisher cannot end the wait: it reaches only the sessions whose security context holds a
+    // signed-in user (SessionHolder.getActiveSessionsForUsernames), and a login page's session has none
+    private void waitForDemoData(DemoDataLoadState loadState) {
+        Dialog dialog = createDemoDataDialog();
+        UI ui = UI.getCurrent();
+        loadState.whenLoadEnds(() -> ui.access(dialog::close)).ifPresent(registration -> {
+            dialog.open();
+            // The dialog belongs to the UI, not to the view, so it would outlive the view. View has no detach
+            // event to subscribe to, and a method named onDetach would override the one that removes the view's
+            // application listeners.
+            addDetachListener(detach -> {
+                registration.remove();
+                dialog.close();
+            });
+        });
+    }
+
+    private Dialog createDemoDataDialog() {
+        Dialog dialog = uiComponents.create(Dialog.class);
+        // A Vaadin 25 dialog is ModalityMode.VISUAL by default, which blocks the page only in the browser.
+        // STRICT makes the server ignore the events of everything outside the dialog, the login form's included.
+        dialog.setModality(ModalityMode.STRICT);
+        dialog.setCloseOnEsc(false);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setHeaderTitle(messageBundle.getMessage("demoDataDialog.title"));
+
+        Span text = uiComponents.create(Span.class);
+        text.setText(messageBundle.getMessage("demoDataDialog.text"));
+        ProgressBar progressBar = uiComponents.create(ProgressBar.class);
+        progressBar.setIndeterminate(true);
+        dialog.add(text, progressBar);
+        return dialog;
     }
 
     @Subscribe("localeSwitch")

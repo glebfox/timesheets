@@ -17,8 +17,13 @@
 package com.glebfox.timesheets.view.login;
 
 import com.glebfox.timesheets.TimesheetsApplication;
+import com.glebfox.timesheets.demo.DemoDataLoadState;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ModalityMode;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
 import io.jmix.flowui.component.image.JmixImage;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
@@ -30,10 +35,16 @@ import io.jmix.tabbedmode.testassist.UiTestUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @UiTest
 @SpringBootTest(classes = {TimesheetsApplication.class, TabbedModeTestAssistConfiguration.class})
@@ -46,6 +57,12 @@ class LoginViewUiTest {
 
     @Autowired
     Messages messages;
+
+    // The test profile has no demo data load: Mockito's empty Optional tells the view that none is under way
+    @MockitoBean
+    DemoDataLoadState demoDataLoadState;
+
+    private final AtomicReference<Runnable> loadEnd = new AtomicReference<>();
 
     @Test
     void localeSwitchOffersEveryAvailableLocaleNamedInItsOwnLanguage() {
@@ -104,6 +121,43 @@ class LoginViewUiTest {
     }
 
     @Test
+    void showsAStrictlyModalDialogWhileTheDemoDataLoads() {
+        startALoad();
+        openLoginView();
+
+        Dialog dialog = openedDialog();
+        assertThat(dialog.isOpened()).isTrue();
+        assertThat(dialog.getModality()).isEqualTo(ModalityMode.STRICT);
+        assertThat(UI.getCurrent().hasModalComponent()).isTrue();
+        assertThat(dialog.isCloseOnEsc()).isFalse();
+        assertThat(dialog.isCloseOnOutsideClick()).isFalse();
+        assertThat(dialog.getHeaderTitle()).isEqualTo("Creating demo data");
+    }
+
+    @Test
+    void theEndOfTheLoadClosesTheDialog() {
+        startALoad();
+        openLoginView();
+        Dialog dialog = openedDialog();
+
+        loadEnd.get().run();
+
+        // The close goes through UI.access, which a UI test only queues: its session's unlock runs nothing
+        assertThat(dialog.isOpened()).isTrue();
+        VaadinSession session = VaadinSession.getCurrent();
+        session.getService().runPendingAccessTasks(session);
+        assertThat(dialog.isOpened()).isFalse();
+    }
+
+    @Test
+    void showsNoDialogWithoutALoadUnderWay() {
+        openLoginView();
+
+        assertThat(dialogs()).isEmpty();
+        assertThat(UI.getCurrent().hasModalComponent()).isFalse();
+    }
+
+    @Test
     void loginTextsExistInBothLanguages() {
         String group = "com.glebfox.timesheets.view.login/";
         assertThat(messages.getMessage(group + "loginForm.headerTitle", Locale.ENGLISH)).isEqualTo("Log in");
@@ -114,6 +168,35 @@ class LoginViewUiTest {
         assertThat(messages.getMessage(group + "localeSwitch.ariaLabel", RUSSIAN)).isEqualTo("Язык");
         assertThat(messages.getMessage(group + "logo.alternateText", Locale.ENGLISH)).isEqualTo("Timesheets");
         assertThat(messages.getMessage(group + "logo.alternateText", RUSSIAN)).isEqualTo("Timesheets");
+        assertThat(messages.getMessage(group + "demoDataDialog.title", Locale.ENGLISH))
+                .isEqualTo("Creating demo data");
+        assertThat(messages.getMessage(group + "demoDataDialog.title", RUSSIAN)).isEqualTo("Создаём демо-данные");
+        assertThat(messages.getMessage(group + "demoDataDialog.text", Locale.ENGLISH))
+                .isEqualTo("Login opens by itself when the data is ready.");
+        assertThat(messages.getMessage(group + "demoDataDialog.text", RUSSIAN))
+                .isEqualTo("Вход откроется сам, когда данные будут готовы.");
+    }
+
+    private void startALoad() {
+        when(demoDataLoadState.whenLoadEnds(any())).thenAnswer(invocation -> {
+            loadEnd.set(invocation.getArgument(0));
+            return Optional.of((Registration) () -> loadEnd.set(null));
+        });
+    }
+
+    // An opened dialog is added to the UI, and its modality applied, only before the response to the browser
+    private static List<Dialog> dialogs() {
+        UI.getCurrent().getInternals().getStateTree().runExecutionsBeforeClientResponse();
+        return UI.getCurrent().getChildren()
+                .filter(Dialog.class::isInstance)
+                .map(Dialog.class::cast)
+                .toList();
+    }
+
+    // The view opens as a tab of a blank initial view, so the only dialog under the UI is the view's
+    private static Dialog openedDialog() {
+        assertThat(dialogs()).hasSize(1);
+        return dialogs().getFirst();
     }
 
     private LoginView openLoginView() {
