@@ -128,14 +128,22 @@ public class DemoDataLoader {
         transactionTemplate.executeWithoutResult(status -> load());
     }
 
-    private void load() {
-        boolean hasClients = dataManager.load(Client.class)
+    /**
+     * Whether the database has a client, a deleted one included: a database with one gets no demo
+     * data. Runs under the system user, so it works on the startup thread.
+     */
+    @Authenticated
+    public boolean hasData() {
+        return dataManager.load(Client.class)
                 .all()
                 .hint(PersistenceHints.SOFT_DELETION, false)
                 .maxResults(1)
                 .optional()
                 .isPresent();
-        if (hasClients) {
+    }
+
+    private void load() {
+        if (hasData()) {
             log.info("Demo data skipped: the database already has clients");
             return;
         }

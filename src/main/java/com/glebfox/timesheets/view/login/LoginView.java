@@ -16,11 +16,16 @@
 
 package com.glebfox.timesheets.view.login;
 
+import com.glebfox.timesheets.demo.DemoDataLoadState;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.ModalityMode;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
 import com.vaadin.flow.i18n.LocaleChangeObserver;
@@ -29,6 +34,7 @@ import com.vaadin.flow.server.VaadinSession;
 import io.jmix.core.CoreProperties;
 import io.jmix.core.MessageTools;
 import io.jmix.core.security.AccessDeniedException;
+import io.jmix.flowui.UiComponents;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
 import io.jmix.flowui.kit.component.ComponentUtils;
@@ -37,8 +43,10 @@ import io.jmix.flowui.view.*;
 import io.jmix.securityflowui.authentication.AuthDetails;
 import io.jmix.securityflowui.authentication.LoginViewSupport;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -69,6 +77,13 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     @Autowired
     private MessageTools messageTools;
 
+    @Autowired
+    private UiComponents uiComponents;
+
+    // Only a dev start has one
+    @Autowired
+    private ObjectProvider<DemoDataLoadState> demoDataLoadState;
+
     @ViewComponent
     private JmixLoginForm login;
 
@@ -80,6 +95,9 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
 
     @Value("${ui.login.defaultPassword:}")
     private String defaultPassword;
+
+    // Set while the page waits for the demo data
+    private @Nullable Runnable stopWaitingForDemoData;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -114,6 +132,55 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         if (StringUtils.isNotBlank(defaultPassword)) {
             login.setPassword(defaultPassword);
         }
+    }
+
+    @Subscribe
+    public void onReady(final ReadyEvent event) {
+        demoDataLoadState.ifAvailable(this::waitForDemoData);
+    }
+
+    // Jmix's UiEventPublisher cannot end the wait: it reaches only the sessions whose security context holds a
+    // signed-in user (SessionHolder.getActiveSessionsForUsernames), and a login page's session has none
+    private void waitForDemoData(DemoDataLoadState loadState) {
+        Dialog dialog = createDemoDataDialog();
+        UI ui = UI.getCurrent();
+        loadState.whenLoadEnds(() -> ui.access(dialog::close)).ifPresent(registration -> {
+            dialog.open();
+            stopWaitingForDemoData = () -> {
+                registration.remove();
+                dialog.close();
+            };
+        });
+    }
+
+    // The dialog belongs to the UI, not to the view, so it would outlive the view. Not named onDetach, which would
+    // override the View method that removes the view's application listeners.
+    @Subscribe
+    public void onViewDetach(final DetachEvent event) {
+        if (stopWaitingForDemoData != null) {
+            stopWaitingForDemoData.run();
+            stopWaitingForDemoData = null;
+        }
+    }
+
+    private Dialog createDemoDataDialog() {
+        // A Vaadin dialog, not one of Jmix's Dialogs: the message dialog always has an OK button, the option dialog's
+        // builder cannot keep Esc or a click outside from closing it, and the background task dialog runs a task of
+        // its own, where this page only waits for the start's
+        Dialog dialog = uiComponents.create(Dialog.class);
+        // A Vaadin 25 dialog is ModalityMode.VISUAL by default, which blocks the page only in the browser.
+        // STRICT makes the server ignore the events of everything outside the dialog, the login form's included.
+        dialog.setModality(ModalityMode.STRICT);
+        dialog.setCloseOnEsc(false);
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setHeaderTitle(messageBundle.getMessage("demoDataDialog.title"));
+
+        ProgressBar progressBar = uiComponents.create(ProgressBar.class);
+        progressBar.setIndeterminate(true);
+        // A progress bar needs a name of its own, and Vaadin's has no setter for it
+        progressBar.getElement().setAttribute("aria-label", messageBundle.getMessage("demoDataDialog.title"));
+        dialog.add(progressBar);
+        return dialog;
     }
 
     @Subscribe("localeSwitch")

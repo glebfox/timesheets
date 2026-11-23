@@ -16,7 +16,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `icon/` — the replacement of Jmix's `Icons` bean, which draws the icons the framework names by purpose, such as those of its standard actions, from the Gravity UI set. See `docs/guidelines/design-system.md`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — the security roles, resource roles (granular blocks and the job roles composed of them) and row-level roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`, starting with its `README.md`.
-- `demo/` — the demo data that a `dev` start loads; its images are under the same package in resources.
+- `demo/` — the demo data that a `dev` start loads, and the state of its load, which the login page waits on; its images are under the same package in resources.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`). See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.
@@ -27,7 +27,7 @@ Agent tooling sits outside `src/`. Skills are in `.skills/`, one directory each;
 ## Profiles
 
 - Default (`application.properties`): PostgreSQL database `ts` on `localhost`; Liquibase creates the schema, the `admin` user, and the default work schedule, with no demo data.
-- `dev`: on a start against a database without clients, the application loads the demo data: people and organizations of the Half-Life and Portal games, their projects, their absences in the past, current, and coming weeks and over the next public holiday, and time logged over the eight weeks before the current week and the current week up to the day of the start, none of it on their absences. Every demo user's password is their username. A database that has clients, deleted ones included, is left as it is: to get the demo data again, recreate the database. The login form is pre-filled with `admin`/`admin`.
+- `dev`: on a start against a database without clients, the application loads the demo data: people and organizations of the Half-Life and Portal games, their projects, their absences in the past, current, and coming weeks and over the next public holiday, and time logged over the eight weeks before the current week and the current week up to the day of the start, none of it on their absences. Every demo user's password is their username. A database that has clients, deleted ones included, is left as it is: to get the demo data again, recreate the database. While the demo data loads, the login page shows a dialog that blocks sign-in until the data is ready. The login form is pre-filled with `admin`/`admin`.
 - `test`: in-memory HSQLDB.
 
 ## Commands
