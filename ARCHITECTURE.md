@@ -16,7 +16,7 @@ Java code is under `com.glebfox.timesheets` in `src/main/java`; view descriptors
 - `icon/` — the replacement of Jmix's `Icons` bean, which draws the icons the framework names by purpose, such as those of its standard actions, from the Gravity UI set. See `docs/guidelines/design-system.md`.
 - `listener/`, `event/` — entity event listeners, which keep the rules that hold on every save and publish UI events to open sessions, and those UI events.
 - `security/` — the security roles, resource roles (granular blocks and the job roles composed of them) and row-level roles, the database user repository, and the security configuration. Specs: `docs/specs/roles/`, starting with its `README.md`.
-- `demo/` — the demo data that a `dev` start loads; its images are under the same package in resources.
+- `demo/` — the demo data that a `dev` start loads, and the state of its load, which the login page waits on; its images are under the same package in resources.
 - `liquibase/changelog/` — schema changelogs by date (`YYYY/MM/`). See `docs/guidelines/database.md`.
 - `menu.xml`, `messages_*.properties` — the main menu and the message bundles, one per locale.
 - `META-INF/resources/themes/timesheets-aura/` — the application theme, built on Aura.

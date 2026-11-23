@@ -18,6 +18,7 @@ package com.glebfox.timesheets.view.login;
 
 import com.glebfox.timesheets.demo.DemoDataLoadState;
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.ModalityMode;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -43,6 +44,7 @@ import io.jmix.flowui.view.*;
 import io.jmix.securityflowui.authentication.AuthDetails;
 import io.jmix.securityflowui.authentication.LoginViewSupport;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -95,6 +97,9 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     @Value("${ui.login.defaultPassword:}")
     private String defaultPassword;
 
+    // Set while the page waits for the demo data
+    private @Nullable Runnable stopWaitingForDemoData;
+
     @Subscribe
     public void onInit(final InitEvent event) {
         initLocales();
@@ -142,14 +147,21 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         UI ui = UI.getCurrent();
         loadState.whenLoadEnds(() -> ui.access(dialog::close)).ifPresent(registration -> {
             dialog.open();
-            // The dialog belongs to the UI, not to the view, so it would outlive the view. View has no detach
-            // event to subscribe to, and a method named onDetach would override the one that removes the view's
-            // application listeners.
-            addDetachListener(detach -> {
+            stopWaitingForDemoData = () -> {
                 registration.remove();
                 dialog.close();
-            });
+            };
         });
+    }
+
+    // The dialog belongs to the UI, not to the view, so it would outlive the view. Not named onDetach, which would
+    // override the View method that removes the view's application listeners.
+    @Subscribe
+    public void onViewDetach(final DetachEvent event) {
+        if (stopWaitingForDemoData != null) {
+            stopWaitingForDemoData.run();
+            stopWaitingForDemoData = null;
+        }
     }
 
     private Dialog createDemoDataDialog() {
@@ -165,6 +177,8 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         text.setText(messageBundle.getMessage("demoDataDialog.text"));
         ProgressBar progressBar = uiComponents.create(ProgressBar.class);
         progressBar.setIndeterminate(true);
+        // A progress bar needs a name of its own, and Vaadin's has no setter for it
+        progressBar.getElement().setAttribute("aria-label", messageBundle.getMessage("demoDataDialog.title"));
         // Without the layout's gap, the bar touches the text's descenders
         VerticalLayout content = uiComponents.create(VerticalLayout.class);
         content.setPadding(false);

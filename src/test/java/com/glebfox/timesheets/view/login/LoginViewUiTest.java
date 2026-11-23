@@ -30,6 +30,7 @@ import io.jmix.core.Messages;
 import io.jmix.flowui.component.image.JmixImage;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
 import io.jmix.flowui.component.radiobuttongroup.JmixRadioButtonGroup;
+import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.tabbedmode.ViewBuilders;
 import io.jmix.tabbedmode.testassist.TabbedModeTestAssistConfiguration;
 import io.jmix.tabbedmode.testassist.UiTest;
@@ -150,6 +151,31 @@ class LoginViewUiTest {
         assertThat(parts.get(0).getElement().getText()).isEqualTo("Login opens by itself when the data is ready.");
         assertThat(parts.get(1)).isInstanceOfSatisfying(ProgressBar.class,
                 progressBar -> assertThat(progressBar.isIndeterminate()).isTrue());
+    }
+
+    @Test
+    void namesTheProgressBarForAssistiveTechnology() {
+        startALoad();
+        openLoginView();
+
+        ProgressBar progressBar = (ProgressBar) ((VerticalLayout) openedDialog().getChildren().findFirst().orElseThrow())
+                .getChildren()
+                .filter(ProgressBar.class::isInstance)
+                .findFirst()
+                .orElseThrow();
+        assertThat(progressBar.getElement().getAttribute("aria-label")).isEqualTo("Creating demo data");
+    }
+
+    @Test
+    void leavingThePageStopsWaitingAndClosesTheDialog() {
+        startALoad();
+        LoginView view = openLoginView();
+        Dialog dialog = openedDialog();
+
+        view.close(StandardOutcome.CLOSE);
+
+        assertThat(loadEnd.get()).isNull();
+        assertThat(dialog.isOpened()).isFalse();
     }
 
     @Test
