@@ -39,13 +39,18 @@ import com.glebfox.timesheets.entity.user.User;
 import com.glebfox.timesheets.view.calendar.CalendarView;
 import com.glebfox.timesheets.view.timeentry.TimeEntryDetailView;
 import com.google.common.collect.Lists;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.internal.UIInternals;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import io.jmix.core.DataManager;
 import io.jmix.core.Id;
 import io.jmix.core.SaveContext;
+import io.jmix.core.security.ClientDetails;
+import io.jmix.core.security.SecurityContextHelper;
 import io.jmix.core.security.SystemAuthenticator;
 import io.jmix.data.PersistenceHints;
 import io.jmix.flowui.component.textfield.TypedTextField;
@@ -72,11 +77,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -100,6 +107,7 @@ public class CalendarUiTest {
     static final String ABSENCE_TYPE_NAME = "Calendar UI Test Absence Type";
 
     static final String USERNAME = "admin";
+    static final Locale RUSSIAN = Locale.of("ru", "RU");
 
     @Autowired
     DataManager dataManager;
@@ -380,6 +388,53 @@ public class CalendarUiTest {
         });
     }
 
+    @Test
+    void monthBarIsNamedTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* When */
+            CalendarView calendarView = openCalendar();
+
+            /* Then */
+            assertThat(getMonthBarName(calendarView)).isEqualTo("Logged of the month target");
+        });
+    }
+
+    @Test
+    void weekBarsAreNamedByTheirDatesTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* When */
+            CalendarView calendarView = openCalendar();
+
+            /* Then */
+            // Weeks start on Sunday in English, and a week counts only the days of the month
+            assertThat(getWeekBarNames(calendarView)).containsExactly(
+                    "Week 01/12/2024 – 07/12/2024: logged of the plan",
+                    "Week 08/12/2024 – 14/12/2024: logged of the plan",
+                    "Week 15/12/2024 – 21/12/2024: logged of the plan",
+                    "Week 22/12/2024 – 28/12/2024: logged of the plan",
+                    "Week 29/12/2024 – 31/12/2024: logged of the plan");
+        });
+    }
+
+    @Test
+    void barsAreNamedInTheUserLanguageTest() {
+        systemAuthenticator.runWithUser(USERNAME, () -> {
+            /* Given */
+            ((AbstractAuthenticationToken) Objects.requireNonNull(SecurityContextHelper.getAuthentication()))
+                    .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
+
+            /* When */
+            CalendarView calendarView = openCalendar();
+
+            /* Then */
+            assertThat(getMonthBarName(calendarView)).isEqualTo("Отработано от плана на месяц");
+            // The weeks start on the day the browser's grid does, and the test reports the same grid as in English
+            assertThat(getWeekBarNames(calendarView)).startsWith(
+                    "Неделя 01.12.2024 – 07.12.2024: отработано от плана",
+                    "Неделя 08.12.2024 – 14.12.2024: отработано от плана");
+        });
+    }
+
     @AfterEach
     void tearDown() {
         // The tests change and remove what they created, so the instances in the list are stale
@@ -496,6 +551,21 @@ public class CalendarUiTest {
         ListCalendarDataProvider absencesProvider = Objects.requireNonNull(
                 calendar.getDataProvider(CalendarView.ABSENCES_PROVIDER_ID), "The calendar has no absence bars");
         return absencesProvider.getItems();
+    }
+
+    private static String getMonthBarName(CalendarView calendarView) {
+        ProgressBar monthPercentBar = UiTestUtils.getComponent(calendarView, "monthPercentBar");
+        return monthPercentBar.getElement().getAttribute("aria-label");
+    }
+
+    // Each week card holds one bar
+    private static List<String> getWeekBarNames(CalendarView calendarView) {
+        FlexLayout weeksSummaryWrapper = UiTestUtils.getComponent(calendarView, "weeksSummaryWrapper");
+        return weeksSummaryWrapper.getChildren()
+                .flatMap(Component::getChildren)
+                .filter(ProgressBar.class::isInstance)
+                .map(progressBar -> progressBar.getElement().getAttribute("aria-label"))
+                .toList();
     }
 
     // The days of the absence plan nothing, so each is marked as a day without a plan

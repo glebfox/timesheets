@@ -21,6 +21,7 @@ import com.glebfox.timesheets.app.CalendarSupport;
 import com.glebfox.timesheets.app.UserTimeZoneSupport;
 import com.glebfox.timesheets.app.WorkPlanSupport;
 import com.glebfox.timesheets.app.util.ComponentSupport;
+import com.glebfox.timesheets.app.util.DateRangeFormatter;
 import com.glebfox.timesheets.app.util.FactAndPlan;
 import com.glebfox.timesheets.app.util.WeekStatus;
 import com.glebfox.timesheets.app.util.WeekSummary;
@@ -149,6 +150,8 @@ public class CalendarView extends StandardView {
     private UserTimeZoneSupport userTimeZoneSupport;
     @Autowired
     private CurrentUserSubstitution currentUserSubstitution;
+    @Autowired
+    private DateRangeFormatter dateRangeFormatter;
 
     @ViewComponent
     private MessageBundle messageBundle;
@@ -177,8 +180,14 @@ public class CalendarView extends StandardView {
     @Subscribe
     private void onInit(final InitEvent event) {
         initMonthHeader();
+        initMonthPercentBar();
         initDayMarks();
         initCalendarContextMenu();
+    }
+
+    private void initMonthPercentBar() {
+        // ProgressBar has no setter for its accessible name, so it goes on the element
+        monthPercentBar.getElement().setAttribute("aria-label", messageBundle.getMessage("monthPercentBar.ariaLabel"));
     }
 
     private void initMonthHeader() {
@@ -422,6 +431,10 @@ public class CalendarView extends StandardView {
         ProgressBar progress = new ProgressBar();
         progress.setValue(getProgress(total));
         progress.setClassName("calendar-view-week-summary-progress");
+        // ProgressBar has no setter for its accessible name, so it goes on the element; the card does not say which
+        // week it is, so the name does
+        progress.getElement().setAttribute("aria-label", messageBundle.formatMessage("weekSummary.progress.ariaLabel",
+                dateRangeFormatter.formatDates(week.firstDay(), week.lastDay())));
 
         Span note = new Span(componentSupport.formatWeekStatusNote(status, total));
         note.setClassName("calendar-view-week-summary-note");
