@@ -97,6 +97,9 @@ public class CalendarUiTest {
     // December 2024 starts on Sunday, so its month grid runs from December 1 to January 4
     static final LocalDate GRID_START = LocalDate.of(2024, 12, 1);
     static final LocalDate GRID_END = LocalDate.of(2025, 1, 5);
+    // The same month with weeks that start on Monday, as in Russian: from November 25 to January 5
+    static final LocalDate MONDAY_GRID_START = LocalDate.of(2024, 11, 25);
+    static final LocalDate MONDAY_GRID_END = LocalDate.of(2025, 1, 6);
     static final LocalDate DAY = LocalDate.of(2024, 12, 3);
     // January 2025 starts on Wednesday, so its month grid runs from December 29 to February 1
     static final LocalDate JANUARY_GRID_START = LocalDate.of(2024, 12, 29);
@@ -424,14 +427,25 @@ public class CalendarUiTest {
                     .setDetails(ClientDetails.builder().locale(RUSSIAN).build());
 
             /* When */
-            CalendarView calendarView = openCalendar();
+            viewBuilders.view(UiTestUtils.getCurrentView(), CalendarView.class).open();
+            CalendarView calendarView = UiTestUtils.getCurrentView();
+            // In Russian the browser's grid starts on Monday, so December 2024 runs from November 25 to January 5
+            FullCalendar calendar = UiTestUtils.getComponent(calendarView, "calendar");
+            ComponentUtil.fireEvent(calendar,
+                    new DatesSetEvent(calendar, true, MONDAY_GRID_START, MONDAY_GRID_END,
+                            new DisplayModeInfo(MONDAY_GRID_START, MONDAY_GRID_END,
+                                    GRID_START, GRID_START.plusMonths(1), CalendarDisplayModes.DAY_GRID_MONTH)));
 
             /* Then */
             assertThat(getMonthBarName(calendarView)).isEqualTo("Отработано от плана на месяц");
-            // The weeks start on the day the browser's grid does, and the test reports the same grid as in English
-            assertThat(getWeekBarNames(calendarView)).startsWith(
-                    "Неделя 01.12.2024 – 07.12.2024: отработано от плана",
-                    "Неделя 08.12.2024 – 14.12.2024: отработано от плана");
+            // A week counts only the days of the month, so Sunday, Dec 1, is a week of one day
+            assertThat(getWeekBarNames(calendarView)).containsExactly(
+                    "Неделя 01.12.2024: отработано от плана",
+                    "Неделя 02.12.2024 – 08.12.2024: отработано от плана",
+                    "Неделя 09.12.2024 – 15.12.2024: отработано от плана",
+                    "Неделя 16.12.2024 – 22.12.2024: отработано от плана",
+                    "Неделя 23.12.2024 – 29.12.2024: отработано от плана",
+                    "Неделя 30.12.2024 – 31.12.2024: отработано от плана");
         });
     }
 
