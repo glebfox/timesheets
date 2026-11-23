@@ -1,6 +1,6 @@
 # UX
 
-How a screen helps its user understand it: the hints it gives and the names of its controls. How a screen looks is `design-system.md`.
+How a screen helps its user understand it: the hints it gives and the names of its controls and progress bars. How a screen looks is `design-system.md`.
 
 ## When a hint earns its place
 
@@ -28,3 +28,7 @@ A tooltip is a Vaadin tooltip, never a `title` attribute, which the browser draw
 ## Buttons with only an icon
 
 A button that shows an icon and no text has a tooltip that names what it does, such as the period arrows of the calendar and of the approval screen, and the approval board's Approve day: an icon alone does not say for certain what the button does, and the tooltip is the only text the button has.
+
+## Progress bars
+
+Every progress bar has an accessible name, in the user's language, that says what it measures, such as the calendar's month bar, "Logged of the month target"; a bar that repeats on a screen also says which one it is, as each of the calendar's week cards does with the week's dates. An endless bar, such as the login page's while the demo data loads, takes the name of what it waits for, there its dialog's title. ARIA requires a name on an element with the `progressbar` role, which Vaadin's progress bar has: without one, a screen reader announces only "progress bar" and a value, and accessibility checkers report it. Vaadin's `ProgressBar` has no setter for the name, so it is the element's `aria-label`.
