@@ -24,6 +24,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
@@ -164,7 +165,11 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         text.setText(messageBundle.getMessage("demoDataDialog.text"));
         ProgressBar progressBar = uiComponents.create(ProgressBar.class);
         progressBar.setIndeterminate(true);
-        dialog.add(text, progressBar);
+        // Without the layout's gap, the bar touches the text's descenders
+        VerticalLayout content = uiComponents.create(VerticalLayout.class);
+        content.setPadding(false);
+        content.add(text, progressBar);
+        dialog.add(content);
         return dialog;
     }
 

@@ -22,6 +22,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ModalityMode;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.Registration;
 import io.jmix.core.Messages;
@@ -132,6 +134,22 @@ class LoginViewUiTest {
         assertThat(dialog.isCloseOnEsc()).isFalse();
         assertThat(dialog.isCloseOnOutsideClick()).isFalse();
         assertThat(dialog.getHeaderTitle()).isEqualTo("Creating demo data");
+    }
+
+    @Test
+    void stacksTheTextAboveAnEndlessProgressBarWithSpaceBetween() {
+        startALoad();
+        openLoginView();
+
+        // The dialog's own padding surrounds the stack, and the layout's gap keeps the bar off the text
+        VerticalLayout content = (VerticalLayout) openedDialog().getChildren().findFirst().orElseThrow();
+        assertThat(content.isPadding()).isFalse();
+        assertThat(content.isSpacing()).isTrue();
+        List<Component> parts = content.getChildren().toList();
+        assertThat(parts).hasSize(2);
+        assertThat(parts.get(0).getElement().getText()).isEqualTo("Login opens by itself when the data is ready.");
+        assertThat(parts.get(1)).isInstanceOfSatisfying(ProgressBar.class,
+                progressBar -> assertThat(progressBar.isIndeterminate()).isTrue());
     }
 
     @Test
