@@ -91,6 +91,8 @@ public class DemoDataLoaderTest {
     SystemAuthenticator systemAuthenticator;
     @Autowired
     TimeSource timeSource;
+    @Autowired
+    DemoDataLoadState loadState;
     // Not reset after each test: the calls to check come from the load on startup
     @MockitoBean(reset = MockReset.NONE)
     UiEventPublisher uiEventPublisher;
@@ -107,6 +109,12 @@ public class DemoDataLoaderTest {
                     .satisfies(admin -> assertThat(admin.getLastName()).isEqualTo("Breen"));
             assertThat(loadEntries()).hasSizeGreaterThan(500);
         });
+    }
+
+    @Test
+    void theLoadIsOverOnceTheStartIsReady() {
+        assertThat(loadState.whenLoadEnds(() -> {
+        })).isEmpty();
     }
 
     @Test
