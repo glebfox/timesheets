@@ -22,7 +22,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ModalityMode;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.Registration;
@@ -138,19 +137,14 @@ class LoginViewUiTest {
     }
 
     @Test
-    void stacksTheTextAboveAnEndlessProgressBarWithSpaceBetween() {
+    void showsOnlyAnEndlessProgressBarUnderItsTitle() {
         startALoad();
         openLoginView();
 
-        // The dialog's own padding surrounds the stack, and the layout's gap keeps the bar off the text
-        VerticalLayout content = (VerticalLayout) openedDialog().getChildren().findFirst().orElseThrow();
-        assertThat(content.isPadding()).isFalse();
-        assertThat(content.isSpacing()).isTrue();
-        List<Component> parts = content.getChildren().toList();
-        assertThat(parts).hasSize(2);
-        assertThat(parts.get(0).getElement().getText()).isEqualTo("Login opens by itself when the data is ready.");
-        assertThat(parts.get(1)).isInstanceOfSatisfying(ProgressBar.class,
-                progressBar -> assertThat(progressBar.isIndeterminate()).isTrue());
+        assertThat(openedDialog().getChildren().toList())
+                .singleElement()
+                .isInstanceOfSatisfying(ProgressBar.class,
+                        progressBar -> assertThat(progressBar.isIndeterminate()).isTrue());
     }
 
     @Test
@@ -158,11 +152,7 @@ class LoginViewUiTest {
         startALoad();
         openLoginView();
 
-        ProgressBar progressBar = (ProgressBar) ((VerticalLayout) openedDialog().getChildren().findFirst().orElseThrow())
-                .getChildren()
-                .filter(ProgressBar.class::isInstance)
-                .findFirst()
-                .orElseThrow();
+        ProgressBar progressBar = (ProgressBar) openedDialog().getChildren().findFirst().orElseThrow();
         assertThat(progressBar.getElement().getAttribute("aria-label")).isEqualTo("Creating demo data");
     }
 
@@ -215,10 +205,6 @@ class LoginViewUiTest {
         assertThat(messages.getMessage(group + "demoDataDialog.title", Locale.ENGLISH))
                 .isEqualTo("Creating demo data");
         assertThat(messages.getMessage(group + "demoDataDialog.title", RUSSIAN)).isEqualTo("Создаём демо-данные");
-        assertThat(messages.getMessage(group + "demoDataDialog.text", Locale.ENGLISH))
-                .isEqualTo("Login opens by itself when the data is ready.");
-        assertThat(messages.getMessage(group + "demoDataDialog.text", RUSSIAN))
-                .isEqualTo("Вход откроется сам, когда данные будут готовы.");
     }
 
     private void startALoad() {
