@@ -24,8 +24,9 @@
 }
 
 /* The backdrop stays outside the work area's card. Aura paints the card as a translucent surface over
-   --aura-app-background, so the gradient would tint the content; inside the card the property is the plain
-   background color. */
+   --aura-app-background, so the backdrop would show through: the light theme's spots would tint the content, and
+   the dark theme's gray would lift the card above the drawer. Inside the card the property is the plain background
+   color. */
 vaadin-app-layout::part(content) {
     --aura-app-background: var(--aura-background-color);
 }

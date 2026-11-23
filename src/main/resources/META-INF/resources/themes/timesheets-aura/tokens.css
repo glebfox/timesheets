@@ -56,7 +56,7 @@ html {
 
     --aura-contrast-level: 2;
 
-    /* A white and a black background, so the content card is plain and the drawer's backdrop carries the color */
+    /* A white and a black background, so the content card is plain and stands apart from the drawer's backdrop */
     --aura-background-color-light: oklch(1 0 0);
     --aura-background-color-dark: oklch(0 0 0);
 
@@ -65,15 +65,18 @@ html {
        so the spots sit at the left, where the drawer shows them, and the inset around the work area catches their
        edges; the work area's card keeps the plain background (view/main-view.css).
        Light theme, frosted glass: the brand's mint behind the logo, its blue in the middle of the drawer, and a
-       faint mint again at the bottom. Dark theme, a fire behind the app: the top stays dark behind the ivory logo,
-       an ember barely shows in the middle, and amber rises from the bottom left with a deeper ember ring. */
-    --ts-backdrop-base: light-dark(oklch(0.975 0.004 240), oklch(0.15 0.006 60));
+       faint mint again at the bottom. The dark theme is plain: its spots are transparent, since light-dark()
+       switches a color but not a gradient, so only its base shows, a neutral gray that suits the monochrome accent.
+       Aura renders the work area as a translucent surface over the black background (view/main-view.css), which
+       comes out a dark gray, and a card in it a step lighter; the base is lighter than the work area and as light
+       as its cards, so the drawer reads as a raised panel. */
+    --ts-backdrop-base: light-dark(oklch(0.975 0.004 240), oklch(0.22 0 0));
     --ts-backdrop-top: light-dark(oklch(0.9 0.08 165 / 0.55), transparent);
     --ts-backdrop-top-ring: light-dark(oklch(0.93 0.05 175 / 0.3), transparent);
-    --ts-backdrop-middle: light-dark(oklch(0.86 0.07 250 / 0.4), oklch(0.5 0.11 52 / 0.22));
-    --ts-backdrop-middle-ring: light-dark(oklch(0.9 0.04 240 / 0.2), oklch(0.4 0.08 45 / 0.1));
-    --ts-backdrop-bottom: light-dark(oklch(0.92 0.06 170 / 0.4), oklch(0.62 0.15 68 / 0.6));
-    --ts-backdrop-bottom-ring: light-dark(oklch(0.94 0.03 200 / 0.2), oklch(0.45 0.14 42 / 0.32));
+    --ts-backdrop-middle: light-dark(oklch(0.86 0.07 250 / 0.4), transparent);
+    --ts-backdrop-middle-ring: light-dark(oklch(0.9 0.04 240 / 0.2), transparent);
+    --ts-backdrop-bottom: light-dark(oklch(0.92 0.06 170 / 0.4), transparent);
+    --ts-backdrop-bottom-ring: light-dark(oklch(0.94 0.03 200 / 0.2), transparent);
     --aura-app-background:
             radial-gradient(ellipse 34% 32% at 2% 0%,
                     var(--ts-backdrop-top), var(--ts-backdrop-top-ring) 45%, transparent),
