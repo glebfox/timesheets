@@ -53,8 +53,9 @@ public class DemoDataInitializer implements DemoDataLoadState, SmartInitializing
      * Decides whether this start loads the demo data. It runs after every singleton, Liquibase
      * included, and before the web server starts, which happens when the context finishes its
      * refresh: so the login page knows of the load from the first request. The load itself runs
-     * on {@link ApplicationReadyEvent}, after the web server has started; on an empty database it
-     * takes about 7 s, and the event comes about 70 ms after the web server's start.
+     * on {@link ApplicationReadyEvent}, after the web server has started: in a measured start on
+     * an empty database, its data was saved about 8 s after the web server's start, and the
+     * listeners that run after its commit took about 10 s more.
      */
     @Override
     public void afterSingletonsInstantiated() {
@@ -74,6 +75,8 @@ public class DemoDataInitializer implements DemoDataLoadState, SmartInitializing
         try {
             demoDataLoader.loadIfEmpty();
         } finally {
+            // Only now, after the listeners that run after the load's commit: they tell the user of
+            // each new time entry, and a session signed in before them would get all those events
             endLoad();
         }
     }
