@@ -164,6 +164,9 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     }
 
     private Dialog createDemoDataDialog() {
+        // A Vaadin dialog, not one of Jmix's Dialogs: the message dialog always has an OK button, the option dialog's
+        // builder cannot keep Esc or a click outside from closing it, and the background task dialog runs a task of
+        // its own, where this page only waits for the start's
         Dialog dialog = uiComponents.create(Dialog.class);
         // A Vaadin 25 dialog is ModalityMode.VISUAL by default, which blocks the page only in the browser.
         // STRICT makes the server ignore the events of everything outside the dialog, the login form's included.
